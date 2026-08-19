@@ -1,0 +1,38 @@
+# Template for julia/ReadCon/Artifacts.toml.
+# After a GitHub Release, copy to Artifacts.toml and fill sha256 /
+# git-tree-sha1 from scripts/package-clib.sh (sha256 of the tarball;
+# git-tree-sha1 of the unpacked prefix via Pkg.Artifacts / Tar.tree_hash).
+# lazy = true so first using ReadCon can download.
+#
+# Windows chemfiles is not in the Windows clib tarball.
+
+[[libreadcon_core]]
+arch = "x86_64"
+os = "linux"
+libc = "glibc"
+git-tree-sha1 = "@GIT_TREE_SHA1_X86_64_UNKNOWN_LINUX_GNU@"
+lazy = true
+
+    [[libreadcon_core.download]]
+    url = "https://github.com/lode-org/readcon-core/releases/download/v@VERSION@/readcon-core-clib-@VERSION@-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 = "@SHA256_X86_64_UNKNOWN_LINUX_GNU@"
+
+[[libreadcon_core]]
+arch = "aarch64"
+os = "macos"
+git-tree-sha1 = "@GIT_TREE_SHA1_AARCH64_APPLE_DARWIN@"
+lazy = true
+
+    [[libreadcon_core.download]]
+    url = "https://github.com/lode-org/readcon-core/releases/download/v@VERSION@/readcon-core-clib-@VERSION@-aarch64-apple-darwin.tar.gz"
+    sha256 = "@SHA256_AARCH64_APPLE_DARWIN@"
+
+[[libreadcon_core]]
+arch = "x86_64"
+os = "windows"
+git-tree-sha1 = "@GIT_TREE_SHA1_X86_64_PC_WINDOWS_MSVC@"
+lazy = true
+
+    [[libreadcon_core.download]]
+    url = "https://github.com/lode-org/readcon-core/releases/download/v@VERSION@/readcon-core-clib-@VERSION@-x86_64-pc-windows-msvc.tar.gz"
+    sha256 = "@SHA256_X86_64_PC_WINDOWS_MSVC@"
