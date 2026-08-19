@@ -39,7 +39,7 @@ task.
 | gzip / .gz round-trip | yes | yes | yes | yes | yes | yes |
 | zstd / .zst round-trip | yes (~zstd~ feature) | yes (~zstd~ feature) | yes (~zstd~ feature) | yes (~zstd~ feature) | yes (~zstd~ feature) | yes (~zstd~ feature) |
 | Per-atom ~energies~ section | yes | yes | yes | yes | yes | yes |
-| Symbol <-> Z helpers | yes | derived from Atom | yes | ~rkr_symbol_to_z~ / ~rkr_z_to_symbol~ | ~rkr_symbol_to_z~ / ~rkr_z_to_symbol~ | ~readcon::symbol_to_z~ / ~z_to_symbol~ |
+| Symbol <-> Z helpers | yes | yes | yes | ~rkr_symbol_to_z~ / ~rkr_z_to_symbol~ | ~rkr_symbol_to_z~ / ~rkr_z_to_symbol~ | ~readcon::symbol_to_z~ / ~z_to_symbol~ |
 | ~atom_id~ reverse index | ~build_atom_id_index~ | ~build_atom_id_index~ | ~build_atom_id_index~ | ~rkr_frame_atom_index_by_id~ | ~rkr_frame_atom_index_by_id~ | ~ConFrame::atom_index_by_id~ |
 | Coords / forces / velocities / energies as NumPy ndarray | n/a (use AoS) | yes (~numpy~ ndarray + DLPack via NumPy 1.22+) | n/a | n/a | n/a | n/a |
 | Builder DLPack 1.0 export (owned ~DLManagedTensorVersioned~) | yes (~dlpk~) | via NumPy | n/a | yes (all six sections + ~dlpack_inspect~) | yes (~rkr_frame_builder_*_dlpack~ + ~rkr_dlpack_delete~) | yes (same C ABI) |

@@ -1,6 +1,6 @@
 //! Element symbol and atomic number lookup.
 //!
-//! Both lookups cover hydrogen through uranium (Z = 1..=92) plus the
+//! Both lookups cover hydrogen through oganesson (Z = 1..=118) plus the
 //! hydrogen isotopes deuterium ("D") and tritium ("T") which both
 //! map to Z = 1 since they share hydrogen's nucleon charge. The
 //! reverse lookup ([`atomic_number_to_symbol`]) returns the standard
@@ -116,6 +116,32 @@ pub fn symbol_to_atomic_number(symbol: &str) -> u64 {
         "Th" => 90,
         "Pa" => 91,
         "U" => 92,
+        "Np" => 93,
+        "Pu" => 94,
+        "Am" => 95,
+        "Cm" => 96,
+        "Bk" => 97,
+        "Cf" => 98,
+        "Es" => 99,
+        "Fm" => 100,
+        "Md" => 101,
+        "No" => 102,
+        "Lr" => 103,
+        "Rf" => 104,
+        "Db" => 105,
+        "Sg" => 106,
+        "Bh" => 107,
+        "Hs" => 108,
+        "Mt" => 109,
+        "Ds" => 110,
+        "Rg" => 111,
+        "Cn" => 112,
+        "Nh" => 113,
+        "Fl" => 114,
+        "Mc" => 115,
+        "Lv" => 116,
+        "Ts" => 117,
+        "Og" => 118,
         _ => 0, // Unknown
     }
 }
@@ -215,6 +241,32 @@ pub fn atomic_number_to_symbol(atomic_number: u64) -> &'static str {
         90 => "Th",
         91 => "Pa",
         92 => "U",
+        93 => "Np",
+        94 => "Pu",
+        95 => "Am",
+        96 => "Cm",
+        97 => "Bk",
+        98 => "Cf",
+        99 => "Es",
+        100 => "Fm",
+        101 => "Md",
+        102 => "No",
+        103 => "Lr",
+        104 => "Rf",
+        105 => "Db",
+        106 => "Sg",
+        107 => "Bh",
+        108 => "Hs",
+        109 => "Mt",
+        110 => "Ds",
+        111 => "Rg",
+        112 => "Cn",
+        113 => "Nh",
+        114 => "Fl",
+        115 => "Mc",
+        116 => "Lv",
+        117 => "Ts",
+        118 => "Og",
         _ => "X", // Represents an unknown element
     }
 }
@@ -225,7 +277,7 @@ mod tests {
 
     #[test]
     fn known_round_trip() {
-        for z in 1u64..=92 {
+        for z in 1u64..=118 {
             let symbol = atomic_number_to_symbol(z);
             assert_eq!(
                 symbol_to_atomic_number(symbol),
@@ -249,8 +301,9 @@ mod tests {
         // round-trip isotope identity store it out of band.
         assert_eq!(symbol_to_atomic_number("D"), 1);
         assert_eq!(symbol_to_atomic_number("T"), 1);
+        assert_eq!(atomic_number_to_symbol(1), "H");
         // Ghost-atom / dummy-site placeholders (anything outside
-        // H..U plus D/T) stay sentinel-0 so consumers can detect
+        // H..Og plus D/T) stay sentinel-0 so consumers can detect
         // and route them differently.
         assert_eq!(symbol_to_atomic_number("Gh"), 0);
         assert_eq!(symbol_to_atomic_number("Dum"), 0);
@@ -258,9 +311,17 @@ mod tests {
     }
 
     #[test]
+    fn transuranic_and_oganesson() {
+        assert_eq!(symbol_to_atomic_number("Np"), 93);
+        assert_eq!(atomic_number_to_symbol(93), "Np");
+        assert_eq!(symbol_to_atomic_number("Og"), 118);
+        assert_eq!(atomic_number_to_symbol(118), "Og");
+    }
+
+    #[test]
     fn unknown_z_returns_x() {
         assert_eq!(atomic_number_to_symbol(0), "X");
-        assert_eq!(atomic_number_to_symbol(93), "X");
+        assert_eq!(atomic_number_to_symbol(119), "X");
         assert_eq!(atomic_number_to_symbol(u64::MAX), "X");
     }
 }

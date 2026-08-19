@@ -838,7 +838,7 @@ inline std::string status_message(RKRStatus status) {
 
 /**
  * @brief Returns the atomic number for a chemical symbol, or 0 if the
- *        symbol is unknown. Coverage is H..U (Z = 1..=92);
+ *        symbol is unknown. Coverage is H..Og (Z = 1..=118);
  *        case-sensitive.
  */
 inline uint64_t symbol_to_z(const std::string &symbol) {

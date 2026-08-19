@@ -515,3 +515,23 @@ def test_read_all_frames_matches_read_con():
     b = readcon.read_all_frames(str(tiny))
     assert len(a) == len(b) >= 1
     assert a[0].coords_array().shape == b[0].coords_array().shape
+
+
+class TestSymbolHelpers:
+    def test_known_edges_and_isotopes(self):
+        assert readcon.symbol_to_atomic_number("H") == 1
+        assert readcon.symbol_to_atomic_number("D") == 1
+        assert readcon.symbol_to_atomic_number("T") == 1
+        assert readcon.atomic_number_to_symbol(1) == "H"
+        assert readcon.symbol_to_atomic_number("U") == 92
+        assert readcon.symbol_to_atomic_number("Np") == 93
+        assert readcon.atomic_number_to_symbol(93) == "Np"
+        assert readcon.symbol_to_atomic_number("Og") == 118
+        assert readcon.atomic_number_to_symbol(118) == "Og"
+
+    def test_unknown_sentinels(self):
+        assert readcon.symbol_to_atomic_number("") == 0
+        assert readcon.symbol_to_atomic_number("Xx") == 0
+        assert readcon.symbol_to_atomic_number("h") == 0
+        assert readcon.atomic_number_to_symbol(0) == "X"
+        assert readcon.atomic_number_to_symbol(119) == "X"

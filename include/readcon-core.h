@@ -414,7 +414,7 @@ uint64_t rkr_frame_atom_index_by_id(const struct RKRConFrame *frame_handle,
 
 /**
  * Returns the atomic number for a chemical symbol, or 0 if the symbol
- * is unknown or `symbol` is NULL. Lookup covers H..U (Z = 1..=92) and
+ * is unknown or `symbol` is NULL. Lookup covers H..Og (Z = 1..=118) and
  * is case-sensitive: "Fe" works, "fe" does not.
  *
  * # Safety
@@ -426,8 +426,8 @@ uint64_t rkr_symbol_to_z(const char *symbol);
 
 /**
  * Returns a pointer to a static, NUL-terminated chemical symbol for an
- * atomic number, or "X" for unknown values. Coverage is H..U
- * (Z = 1..=92). The returned pointer is valid for the lifetime of the
+ * atomic number, or "X" for unknown values. Coverage is H..Og
+ * (Z = 1..=118). The returned pointer is valid for the lifetime of the
  * process; do NOT free it.
  */
 const char *rkr_z_to_symbol(uint64_t z);

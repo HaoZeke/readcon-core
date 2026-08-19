@@ -1549,6 +1549,21 @@ fn pyconframe_from_ase(py: Python<'_>, ase_atoms: &Bound<'_, PyAny>) -> PyResult
     })
 }
 
+/// Atomic number for a chemical symbol, or 0 if unknown.
+///
+/// Covers H through Og (Z = 1..=118). Deuterium (``D``) and tritium
+/// (``T``) both map to 1. Reverse lookup of 1 is ``H``.
+#[pyfunction]
+fn symbol_to_atomic_number(symbol: &str) -> u64 {
+    crate::helpers::symbol_to_atomic_number(symbol)
+}
+
+/// Chemical symbol for an atomic number, or ``X`` if unknown.
+#[pyfunction]
+fn atomic_number_to_symbol(atomic_number: u64) -> &'static str {
+    crate::helpers::atomic_number_to_symbol(atomic_number)
+}
+
 /// readcon Python module implemented in Rust.
 #[pymodule]
 fn readcon(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1557,6 +1572,8 @@ fn readcon(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAtomDatum>()?;
     m.add_class::<PyConFrame>()?;
     m.add_class::<PyConFrameIterator>()?;
+    m.add_function(wrap_pyfunction!(symbol_to_atomic_number, m)?)?;
+    m.add_function(wrap_pyfunction!(atomic_number_to_symbol, m)?)?;
     m.add_function(wrap_pyfunction!(read_con, m)?)?;
     // Ergonomic alias for multi-language matrix (batch all frames).
     m.add_function(wrap_pyfunction!(read_all_frames, m)?)?;
