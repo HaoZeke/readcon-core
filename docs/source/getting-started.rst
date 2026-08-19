@@ -28,9 +28,9 @@ Pick **one** language. Version pins match this tree (``0.14.7``).
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
     | Campaign store     | ``cargo add readcon-db`` / ``pip install readcon-db``                               | `docs <https://lode-org.github.io/readcon-db/>`_ · `docs.rs <https://docs.rs/readcon-db>`_ · `PyPI <https://pypi.org/project/readcon-db/>`_ |
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
-    | Julia              | from this repo: ``julia --project=julia/ReadCon -e 'using Pkg; Pkg.instantiate()'`` | :doc:`bindings`                                                                                                                  |
+    | Julia              | from this repo: ``julia --project=julia/ReadCon -e 'using Pkg; Pkg.instantiate()'`` | :doc:`bindings`                                                                                                                             |
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
-    | C / C++ / Fortran  | CMake FetchContent, Meson wrap, or ``pkg-config readcon-core``                      | :doc:`bindings`                                                                                                                  |
+    | C / C++ / Fortran  | prebuilt clib tarball + ``pkg-config``, or CMake FetchContent / Meson wrap        | :doc:`bindings`                                                                                                                               |
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
 
 Python: CON I/O
@@ -81,16 +81,41 @@ From a checkout of this repository:
 
     julia --project=julia/ReadCon -e 'using Pkg; Pkg.instantiate()'
 
+The wrapper loads ``libreadcon_core`` in this order: Julia artifact
+(``julia/ReadCon/Artifacts.toml``, filled from ``Artifacts.toml.in`` after
+a clib release), ``READCON_LIB_PATH``, ``READCON_CORE_LIB``, then a local
+``target/{release,debug}`` build.
+
 Language API notes: :doc:`bindings`.
 
 Fortran / C / C++
 ~~~~~~~~~~~~~~~~~
 
 Headers in ``include/`` are shipped. cbindgen is **not** required.
+
+Prebuilt C ABI tarballs (``readcon-core-clib-$VERSION-$target.tar.gz``)
+on the GitHub Release ship ``include/``, ``lib/libreadcon_core.*``, and
+``lib/pkgconfig/readcon-core.pc``. Targets: manylinux x86_64
+(``x86_64-unknown-linux-gnu``), macOS aarch64 (``aarch64-apple-darwin``),
+and Windows MSVC lean (``x86_64-pc-windows-msvc``). Windows chemfiles
+is not in this tarball.
+
+.. code:: shell
+
+    VER=0.14.7
+    TARGET=x86_64-unknown-linux-gnu
+    prefix=$PWD/prefix
+    mkdir -p "$prefix"
+    curl -fsSL \
+      "https://github.com/lode-org/readcon-core/releases/download/v${VER}/readcon-core-clib-${VER}-${TARGET}.tar.gz" \
+      | tar -xz -C "$prefix"
+    export PKG_CONFIG_PATH=$prefix/lib/pkgconfig
+    pkg-config --cflags --libs readcon-core
+
 CMake FetchContent / ``find_package(readcon-core)``, Meson
 ``dependency('readcon-core')``, or ``pkg-config --libs readcon-core``
-after a prefix install. The cxx tarball on the GitHub Release is
-``readcon-core-cxx-$VERSION.tar.gz``.
+after a prefix install. The cxx *source* tarball on the GitHub Release
+is ``readcon-core-cxx-$VERSION.tar.gz``.
 
 .. code:: cmake
 
@@ -127,6 +152,16 @@ Fortran smoke from a checkout (after a release build of the cdylib):
 
     cd fortran/ReadCon && fpm test --flag "-L../../target/release" \
       --link-flag "-L../../target/release -lreadcon_core -ldl -lpthread -lm"
+
+Fortran against the prebuilt prefix (``fpm.toml`` already has
+``link = ["readcon_core"]``):
+
+.. code:: shell
+
+    export PKG_CONFIG_PATH=$prefix/lib/pkgconfig
+    cd fortran/ReadCon
+    fpm test --flag "$(pkg-config --cflags readcon-core)" \
+      --link-flag "$(pkg-config --libs readcon-core)"
 
 Smoke test
 ----------

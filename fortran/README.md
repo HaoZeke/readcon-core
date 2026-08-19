@@ -25,6 +25,20 @@ READCON_FORTRAN_FEATURES=chemfiles,metatensor scripts/run_fortran_tests.sh
 
 CI: **Fortran (fpm)** workflow runs both lean and metatensor-enabled jobs via the same script.
 
+## Prebuilt C ABI (fpm against a prefix)
+
+Unpack `readcon-core-clib-$VERSION-$target.tar.gz` from the GitHub Release
+to `$prefix` (`include/`, `lib/`, `lib/pkgconfig/readcon-core.pc`).
+`fpm.toml` already has `link = ["readcon_core"]`. Windows chemfiles is not
+in the Windows clib tarball.
+
+```bash
+export PKG_CONFIG_PATH=$prefix/lib/pkgconfig
+cd fortran/ReadCon
+fpm test --flag "$(pkg-config --cflags readcon-core)" \
+  --link-flag "$(pkg-config --libs readcon-core)"
+```
+
 ## DLPack (builder, full C ABI parity)
 
 All six owned exports plus delete; inspect primary fields without a second metadata API:
