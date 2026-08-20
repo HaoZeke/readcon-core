@@ -759,7 +759,7 @@ Sample labels ``atom_id``; properties ``xyz`` (0/1/2) or single ``energy``. No f
 .. code:: toml
 
     [dependencies]
-    readcon-core = { version = "0.13", features = ["metatensor"] }
+    readcon-core = { version = "=0.14.7", features = ["metatensor"] }
 
 .. code:: rust
 
