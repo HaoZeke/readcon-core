@@ -4,10 +4,11 @@
 #
 # Live dashboard: https://app.codecov.io/gh/lode-org/readcon-core
 #
-# Auth: Codecov GitHub App is installed on lode-org (all repos). Uploads use
-# OIDC (use_oidc: true) so a HaoZeke-scoped CODECOV_TOKEN is not required and
-# will not 404 "Repository not found" for the org slug. Optional CODECOV_TOKEN
-# remains unused when OIDC is enabled. fail_ci_if_error: false soft-fails
+# Auth: Codecov GitHub App is installed on lode-org (all repos). Trusted
+# uploads (push / workflow_dispatch) use OIDC (use_oidc: true) so a
+# HaoZeke-scoped CODECOV_TOKEN is not required and will not 404
+# "Repository not found" for the org slug. PR jobs generate LCOV artifacts
+# only; they do not mint id-token. fail_ci_if_error: false soft-fails
 # upload issues so coverage generation still greens the job.
 
 name: Coverage
@@ -22,8 +23,7 @@ concurrency:
   group: coverage-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-# Generate jobs run on PRs with contents:read only. OIDC lives on
-# upload-codecov, which is push-to-main only.
+# PR jobs execute checked-out code; OIDC stays on the upload jobs.
 permissions:
   contents: read
 
@@ -254,59 +254,96 @@ jobs:
           path: fortran_coverage.info
           if-no-files-found: error
 
-  upload-codecov:
-    name: upload codecov
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs:
-      - coverage-rust
-      - coverage-python
-      - coverage-julia
-      - coverage-fortran
+  upload-coverage-rust:
+    name: rust coverage upload
+    if: github.event_name != 'pull_request'
+    needs: coverage-rust
     runs-on: ubuntu-22.04
     permissions:
       contents: read
       id-token: write
     steps:
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
-          pattern: coverage-*
-          path: cov
-          merge-multiple: false
-
+          name: coverage-rust
+          path: .
       - name: Upload rust coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: cov/coverage-rust/lcov.info,cov/coverage-rust/rust_codecov.json
+          files: lcov.info,rust_codecov.json
           flags: rust
           name: readcon-core-rust
           use_oidc: true
           fail_ci_if_error: false
           verbose: true
 
+  upload-coverage-python:
+    name: python coverage upload
+    if: github.event_name != 'pull_request'
+    needs: coverage-python
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-python
+          path: .
       - name: Upload python coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: cov/coverage-python/python_lcov.info
+          files: python_lcov.info
           flags: python
           name: readcon-core-python
           use_oidc: true
           fail_ci_if_error: false
           verbose: true
 
+  upload-coverage-julia:
+    name: julia coverage upload
+    if: github.event_name != 'pull_request'
+    needs: coverage-julia
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-julia
+          path: .
       - name: Upload julia coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: cov/coverage-julia/julia_lcov.info
+          files: julia_lcov.info
           flags: julia
           name: readcon-core-julia
           use_oidc: true
           fail_ci_if_error: false
           verbose: true
 
+  upload-coverage-fortran:
+    name: fortran coverage upload
+    if: github.event_name != 'pull_request'
+    needs: coverage-fortran
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-fortran
+          path: .
       - name: Upload fortran coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: cov/coverage-fortran/fortran_coverage.info
+          files: fortran_coverage.info
           flags: fortran
           name: readcon-core-fortran
           use_oidc: true
