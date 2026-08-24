@@ -1,8 +1,8 @@
 use crate::helpers::symbol_to_atomic_number;
 use crate::iterators::{self, ConFrameIterator};
-use crate::types::{meta, ConFrame, ConFrameBuilder};
+use crate::types::{ConFrame, ConFrameBuilder, meta};
 use crate::writer::ConFrameWriter;
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 use std::fs::File;
 use std::path::Path;
 use std::ptr;
@@ -5256,8 +5256,8 @@ mod tests {
 
     #[test]
     fn file_iterator_reads_gzip_when_present() {
-        use flate2::write::GzEncoder;
         use flate2::Compression;
+        use flate2::write::GzEncoder;
         use std::io::Write;
         let plain = std::fs::read("resources/test/tiny_cuh2.con").expect("fixture");
         let dir = tempfile::tempdir().expect("tempdir");
