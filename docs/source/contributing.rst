@@ -342,15 +342,20 @@ cargo-dist release-PR path
    updates) the GitHub Release with those artifacts and notes derived from
    the changelog.
 
-Regenerate the workflow after editing ``dist-workspace.toml`` (never hand-edit
-``release.yml`` long-term):
+Regenerate the workflow after editing ``dist-workspace.toml``. cargo-dist 0.28
+has no ``github-action-commits``, so ``release.yml`` keeps SHA pins and
+checksummed installs by hand (``allow-dirty = ["ci"]``). After ``dist generate``,
+re-apply those pins and restore ``scripts/install-cargo-dist.sh`` /
+``scripts/install-rustup-pinned.sh`` in place of curl-pipe installers, then run
+the pin gate:
 
 .. code:: shell
 
     # cargo-dist 0.28+ installs the `dist` binary (also linked as cargo-dist)
-    curl --proto '=https' --tlsv1.2 -LsSf \
-      https://github.com/axodotdev/cargo-dist/releases/download/v0.28.0/cargo-dist-installer.sh | sh
+    bash scripts/install-cargo-dist.sh
     dist generate --mode=ci
+    # re-pin uses: lines to 40-char SHAs and restore checksummed install steps
+    bash scripts/check_release_workflow_pins.sh
     git add .github/workflows/release.yml dist-workspace.toml
 
 crates.io publish workflow and ``CARGO_REGISTRY_TOKEN``

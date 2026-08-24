@@ -29,3 +29,6 @@ targets = [
 github-releases = true
 # Create GitHub releases from the tag; PR mode only plans.
 create-release = true
+# cargo-dist 0.28 has no github-action-commits. release.yml keeps SHA pins and
+# checksummed installs by hand; this stops `dist plan` from failing the dirty CI.
+allow-dirty = ["ci"]
