@@ -414,6 +414,11 @@ eOn and the amsel campaign stack consume CON as the checkpoint
 between potential evaluations and saddle searches.
 =readcon-db= indexes those files for energy, formula, and
 section presence.
+Table \ref{tab:fair-campaign} is the companion campaign-store
+comparison on a shared CON ladder. It is not a main-claim parse
+timing.
+
+#+LATEX: \input{figures/generated/fair_campaign_table}
 
 =resources/examples/neb_band.con= is a four-image spec-3
 band (two atoms). =resources/examples/cuh2_band.con= is the same

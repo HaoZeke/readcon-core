@@ -17,7 +17,7 @@ check-capi-headers = { cmd = "scripts/regen-capi-headers.sh --check", descriptio
 check-cxx-dist = { cmd = "scripts/check-cxx-dist.sh", description = "Gate: CMake/Meson/pkg-config never require cbindgen" }
 package-cxx = { cmd = "scripts/package-cxx.sh dist-cxx", description = "Assemble readcon-core-cxx-$VERSION.tar.gz" }
 prek = { cmd = "prek run -a", description = "Run prek hooks on all files" }
-cpc-tables = { cmd = "python paper/cpc/scripts/gen_tables.py", description = "Write CPC table fragments from committed bench JSON" }
+cpc-tables = { cmd = "python paper/cpc/scripts/gen_tables.py && python paper/cpc/scripts/gen_fair_table.py", description = "Write CPC table fragments from committed bench JSON and the campaign freeze" }
 cpc-tex = { cmd = "emacs -nl --script paper/cpc/scripts/org2tex.el paper/cpc/src/rg_main.org", depends-on = [
   "cpc-tables",
 ], description = "Export paper/cpc/src/rg_main.org to LaTeX" }
