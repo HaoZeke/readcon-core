@@ -242,25 +242,29 @@ contains
     if (g%n_atoms < 1 .or. g%n_atoms > max_atoms) return
 
     if (.not. json_array_blob(text, "symbols", blob)) return
-    p = 1
+    p = after_open_bracket(blob)
+    if (p <= 0) return
     do i = 1, g%n_atoms
       if (.not. next_json_string(blob, p, g%symbols(i))) return
     end do
 
     if (.not. json_array_blob(text, "atom_ids", blob)) return
-    p = 1
+    p = after_open_bracket(blob)
+    if (p <= 0) return
     do i = 1, g%n_atoms
       if (.not. next_json_int64(blob, p, g%atom_ids(i))) return
     end do
 
     if (.not. json_array_blob(text, "fixed", blob)) return
-    p = 1
+    p = after_open_bracket(blob)
+    if (p <= 0) return
     do i = 1, g%n_atoms
       if (.not. next_bool3(blob, p, g%fixed(:, i))) return
     end do
 
     if (.not. json_array_blob(text, "positions", blob)) return
-    p = 1
+    p = after_open_bracket(blob)
+    if (p <= 0) return
     do i = 1, g%n_atoms
       if (.not. next_real3(blob, p, g%positions(:, i))) return
     end do
@@ -345,6 +349,16 @@ contains
         end if
       end if
     end do
+  end function
+
+  integer function after_open_bracket(text) result(p)
+    character(len=*), intent(in) :: text
+    p = skip_ws(text, 1)
+    if (p > len(text) .or. text(p:p) /= "[") then
+      p = 0
+      return
+    end if
+    p = p + 1
   end function
 
   integer function skip_ws(text, p0) result(p)
