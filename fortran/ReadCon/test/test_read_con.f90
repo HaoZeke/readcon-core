@@ -1,5 +1,6 @@
 program test_read_con
   use readcon
+  use conformance_goldens
   use, intrinsic :: iso_c_binding
   use, intrinsic :: iso_fortran_env, only: real64, int64
   use, intrinsic :: ieee_exceptions
@@ -307,6 +308,15 @@ program test_read_con
   end block
 
   call fr%free()
+
+  ! Phase A corpus: same goldens as Python/C/Julia
+  block
+    integer :: ng
+    ng = run_conformance_goldens(trim(root))
+    print *, "conformance_goldens nfail=", ng
+    nfail = nfail + ng
+  end block
+
   if (nfail /= 0) then
     print *, "FAIL", nfail
     error stop nfail

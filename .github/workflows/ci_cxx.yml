@@ -83,6 +83,13 @@ jobs:
           meson setup tests/meson-wrap build/meson-wrap --buildtype=release
           meson compile -C build/meson-wrap
           ./build/meson-wrap/c-main
+          cc -std=c99 -O2 tests/c/test_conformance_goldens.c \
+            -I"$GITHUB_WORKSPACE/meson-prefix/include" \
+            -L"$GITHUB_WORKSPACE/meson-prefix/lib" \
+            -Wl,-rpath,"$GITHUB_WORKSPACE/meson-prefix/lib" \
+            -lreadcon_core -ldl -lpthread -lm \
+            -o /tmp/test_c_conformance_goldens
+          READCON_CORE_ROOT="$GITHUB_WORKSPACE" /tmp/test_c_conformance_goldens
 
       - name: cxx tarball FetchContent (file:// URL)
         run: |

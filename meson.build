@@ -118,6 +118,21 @@ if get_option('with_tests')
         args: ['test', '--manifest-path', _msproot / 'Cargo.toml', '--locked'],
         timeout: 300,
     )
+    test(
+        'c-conformance-goldens',
+        executable(
+            'test_c_conformance_goldens',
+            files('tests/c/test_conformance_goldens.c'),
+            dependencies: readcon_dep,
+            include_directories: _incdir,
+            build_rpath: meson.project_build_root(),
+        ),
+        env: {
+            'LD_LIBRARY_PATH': meson.project_build_root(),
+            'READCON_CORE_ROOT': _msproot,
+        },
+        timeout: 60,
+    )
 endif
 
 if get_option('with_examples')
