@@ -74,10 +74,10 @@ if awk '
 else
   die "coverage.yml id-token: write is not on a dedicated upload job"
 fi
-if grep -B20 'id-token:[[:space:]]*write' "$COV" | grep -qE 'github.event_name == .push.|refs/heads/main'; then
-  ok "coverage.yml OIDC job is push/main gated"
+if grep -B20 'id-token:[[:space:]]*write' "$COV" | grep -qE "github.event_name == .push.|github.event_name != .pull_request.|refs/heads/main"; then
+  ok "coverage.yml OIDC job is trusted-event gated"
 else
-  die "coverage.yml OIDC job is not restricted to trusted push"
+  die "coverage.yml OIDC job is not restricted to trusted events"
 fi
 
 if [[ "$fail" -ne 0 ]]; then
