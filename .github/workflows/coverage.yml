@@ -4,11 +4,12 @@
 #
 # Live dashboard: https://app.codecov.io/gh/lode-org/readcon-core
 #
-# Auth: Codecov GitHub App is installed on lode-org (all repos). Uploads use
-# OIDC (use_oidc: true) so a HaoZeke-scoped CODECOV_TOKEN is not required and
-# will not 404 "Repository not found" for the org slug. Optional CODECOV_TOKEN
-# remains unused when OIDC is enabled. fail_ci_if_error: false soft-fails
-# upload issues so coverage generation still greens the job.
+# Auth: Codecov GitHub App is installed on lode-org (all repos). Trusted
+# publication uses OIDC (use_oidc: true) so a HaoZeke-scoped CODECOV_TOKEN
+# is not required and will not 404 "Repository not found" for the org slug.
+# pull_request jobs generate artifacts only; OIDC stays on the push /
+# workflow_dispatch upload job. fail_ci_if_error: false soft-fails upload
+# issues so coverage generation still greens the language jobs.
 
 name: Coverage
 
@@ -22,10 +23,10 @@ concurrency:
   group: coverage-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-# OIDC for codecov-action (required when use_oidc: true)
+# Language jobs execute checked-out PR code and stay contents: read.
+# id-token: write is requested only on the trusted publication job.
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   coverage-rust:
@@ -89,16 +90,6 @@ jobs:
             rust_codecov.json
           if-no-files-found: error
 
-      - name: Upload rust coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: lcov.info,rust_codecov.json
-          flags: rust
-          name: readcon-core-rust
-          use_oidc: true
-          fail_ci_if_error: false
-          verbose: true
-
   coverage-python:
     runs-on: ubuntu-22.04
     name: python coverage
@@ -153,16 +144,6 @@ jobs:
           path: python_lcov.info
           if-no-files-found: error
 
-      - name: Upload python coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: python_lcov.info
-          flags: python
-          name: readcon-core-python
-          use_oidc: true
-          fail_ci_if_error: false
-          verbose: true
-
   coverage-julia:
     runs-on: ubuntu-22.04
     name: julia coverage
@@ -211,16 +192,6 @@ jobs:
           name: coverage-julia
           path: julia_lcov.info
           if-no-files-found: error
-
-      - name: Upload julia coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: julia_lcov.info
-          flags: julia
-          name: readcon-core-julia
-          use_oidc: true
-          fail_ci_if_error: false
-          verbose: true
 
   coverage-fortran:
     runs-on: ubuntu-22.04
@@ -284,10 +255,63 @@ jobs:
           path: fortran_coverage.info
           if-no-files-found: error
 
-      - name: Upload fortran coverage to Codecov
+  codecov-upload:
+    name: upload coverage
+    if: ${{ always() && github.event_name != 'pull_request' }}
+    needs: [coverage-rust, coverage-python, coverage-julia, coverage-fortran]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+          path: coverage-out
+          if-no-files-found: ignore
+
+      - name: Upload rust coverage to Codecov
+        if: hashFiles('coverage-out/lcov.info', 'coverage-out/rust_codecov.json') != ''
         uses: codecov/codecov-action@v5
         with:
-          files: fortran_coverage.info
+          files: coverage-out/lcov.info,coverage-out/rust_codecov.json
+          flags: rust
+          name: readcon-core-rust
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload python coverage to Codecov
+        if: hashFiles('coverage-out/python_lcov.info') != ''
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage-out/python_lcov.info
+          flags: python
+          name: readcon-core-python
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload julia coverage to Codecov
+        if: hashFiles('coverage-out/julia_lcov.info') != ''
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage-out/julia_lcov.info
+          flags: julia
+          name: readcon-core-julia
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload fortran coverage to Codecov
+        if: hashFiles('coverage-out/fortran_coverage.info') != ''
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage-out/fortran_coverage.info
           flags: fortran
           name: readcon-core-fortran
           use_oidc: true
