@@ -59,12 +59,15 @@ fn is_pipe_to_shell(line: &str) -> bool {
     if t.starts_with('#') {
         return false;
     }
-    let has_pipe_sh = t.contains('|')
-        && (t.contains("| sh")
-            || t.contains("|sh")
-            || t.contains("| sh -s")
-            || t.contains(" sh -s"));
-    has_pipe_sh || t.contains("| iex") || t.contains("|iex")
+    // curl ... | sh / irm ... | iex. Do not treat `| sha256sum` as a shell pipe.
+    t.split('|').skip(1).any(|rhs| {
+        let cmd = rhs.trim();
+        cmd == "sh"
+            || cmd.starts_with("sh ")
+            || cmd.starts_with("sh\t")
+            || cmd == "iex"
+            || cmd.starts_with("iex ")
+    })
 }
 
 #[test]
