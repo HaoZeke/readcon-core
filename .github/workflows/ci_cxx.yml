@@ -29,6 +29,9 @@ jobs:
       - name: Structural gate (no cbindgen required)
         run: bash scripts/check-cxx-dist.sh
 
+      - name: Wrap SHA matches v0.14.7 cxx tarball
+        run: bash scripts/check_wrap_hash.sh
+
       - name: Note cbindgen is unused
         run: |
           if command -v cbindgen >/dev/null 2>&1; then
