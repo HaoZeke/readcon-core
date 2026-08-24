@@ -29,3 +29,7 @@ targets = [
 github-releases = true
 # Create GitHub releases from the tag; PR mode only plans.
 create-release = true
+# release.yml action SHA pins and installer checksums are hand-maintained.
+# cargo-dist 0.28 emits floating @v4 tags and curl|sh installers.
+# github-action-commits exists only in cargo-dist >= 0.29.
+allow-dirty = ["ci"]

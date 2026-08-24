@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. See [conven
 #### Features
 - chemfiles import stamps internal units (Å, ps, amu) on CON line 2
 - chemfiles `read_step` skip/nth/nsteps, topology file, residues, `guess_bonds`
+#### CI
+- pin release.yml actions to commit SHAs and checksum-verify cargo-dist/rustup
 
 ## v0.14.7 - 2026-08-15
 #### Bug Fixes
