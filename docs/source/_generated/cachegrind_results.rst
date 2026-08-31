@@ -14,7 +14,7 @@
      - 4,925,104
      - forward() skip (50×)
    * - ``convel_multi``
-     - 7,283,997
+     - 7,283,992
      - coords + velocities (50×)
    * - ``parse_100_frames``
      - 29,193,632
@@ -35,16 +35,16 @@
      - 35,233,921
      - buffer writer (10×)
    * - ``chemfiles_xyz_path``
-     - 9,194,930
+     - 9,193,730
      - XYZ path → ConFrame (50×)
    * - ``chemfiles_xyz_memory``
-     - 9,062,901
+     - 9,063,201
      - XYZ memory → ConFrame (50×)
    * - ``chemfiles_select_name_O``
      - 6,070,089
      - selection ``name O`` (50×)
 
-Generated **2026-08-24T11:00:22Z** from commit ``952b38a``
+Generated **2026-08-31T10:53:25Z** from commit ``eef03e8``
 (Cargo features: ``chemfiles-from-sources``). Metric: Valgrind Cachegrind **I refs**.
 Lower is better for the same scenario. Comparable across commits on the same CI image/Valgrind.
 
