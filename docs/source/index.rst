@@ -23,7 +23,9 @@ spec and the shared ``rkr_*`` ABI so Fortran, C, C++, Python, Julia, and
 Rust read and write the same file everywhere. Optional chemfiles conversion brings
 XYZ, PDB, and GRO in; DLPack and metatensor export the same arrays out.
 `readcon-db <https://lode-org.github.io/readcon-db/docs/>`_ indexes
-CON corpora.
+CON corpora. `minimage <https://lode-org.github.io/minimage/>`_ is the
+shared H-lattice minimum-image wrap. The org catalog is
+`lode-org.github.io <https://lode-org.github.io/>`_.
 
 :doc:`getting-started` · :doc:`tutorial` · :doc:`migrate` · :doc:`spec` ·
 :doc:`faq` · :doc:`benchmarks`
