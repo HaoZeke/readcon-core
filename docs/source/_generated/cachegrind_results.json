@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-05T11:29:14Z",
-  "git_sha": "dac7186",
+  "generated_at": "2026-10-12T11:58:25Z",
+  "git_sha": "943cadb",
   "features": "chemfiles-from-sources",
   "tool": "cachegrind",
   "metric": "I_refs",
