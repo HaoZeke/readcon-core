@@ -1,2 +1,2 @@
 readcon-core 0.17.2 commit 5c849d1b1d3dede45e20665c5730abe3d5f18f84
-restart walls: pixi run cpc-restart-walls
+restart walls: pixi run cpc-restart-walls (WALL_REPEATS=10)

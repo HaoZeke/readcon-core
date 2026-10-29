@@ -1,0 +1,11 @@
+% Written by paper/cpc/scripts/gen_e2_prose.py from e2_layered.json / e2_speedup_bca.json.
+The \eTwoNScale-repeat pool sweep in Section~\ref{sec:perf-read} is the campaign on the same \(10{,}000\)-frame file.
+Paired one-thread/two-thread Python speedups have median \(\eTwoPyTwoMed\) with BCa interval \([\eTwoPyTwoLo, \eTwoPyTwoHi]\);
+four threads give \(\eTwoPyFourMed\) with \([\eTwoPyFourLo, \eTwoPyFourHi]\);
+eight threads give \(\eTwoPyEightMed\) with \([\eTwoPyEightLo, \eTwoPyEightHi]\).
+Those three intervals are the \texttt{python\_full} entries of \texttt{e2\_speedup\_bca.json} (\texttt{pixi run cpc-e2-speedup-bca}).
+The in-process file read is \(\eTwoFileRead\,\mathrm{s}\) and the boundary scan is \(\eTwoScan\,\mathrm{s}\).
+Their sum is \(\eTwoFloorSum\,\mathrm{s}\), which is \(\eTwoFloorFrac\) of the 15-repeat one-thread median \(\eTwoRustOneNative\,\mathrm{s}\).
+That quotient is not the serial fraction of Figure~\ref{fig:roofline}.
+The figure has no Amdahl curve.
+

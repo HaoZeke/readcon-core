@@ -351,7 +351,7 @@ def main() -> None:
             lambda row: row in pairs,
             "The same climbing-image band through each writer and reader among Python, C, C++, Fortran and Julia. "
             "Each pair reads the restart file written by the other. "
-            "The columns are the columns of Table~\\ref{tab:restartfmt}.",
+            "Steps, barrier, displacement and free modes are reported; wall seconds and force calls were timed only for the Table~\\ref{tab:restartfmt} routes.",
             "tab:restart-pairs",
         ),
     )

@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 """Time Table 12 resume routes: wall seconds and NEB force evaluations.
 
-Runs the same interrupted climbing-image protocol as ``restart_formats.py`` /
-``cloud-run/run_05.py`` for the routes printed in Table~\\ref{tab:restartfmt},
-logs wall-clock seconds (perf_counter) and the number of ``NEB.get_forces``
-calls on the resume leg, and writes:
+Repeats each Table-12 route ``WALL_REPEATS`` times (default 10) and writes the
+median wall and median force-call count. Physics columns (steps, barrier, …)
+come from the first successful repeat.
 
-* ``paper/cpc/data/cloud-runs-2/05/restart_formats.csv`` — merged columns
-  ``wall_s`` and ``force_calls`` onto every Table-12 route (other CSV rows
-  keep empty wall/force cells).
-* ``paper/cpc/data/cloud-runs-2/05/restart_walls.csv`` — one row per timed
-  route (committed companion).
+Outputs:
 
-Requires the venv that has ASE + readcon 0.17.2. Set ``READCON_CORE_ROOT`` /
-``READCON_CORE_LIB`` when a specific build must be named in ``build.txt``.
+* ``paper/cpc/data/cloud-runs-2/05/restart_formats.csv`` — merged ``wall_s`` /
+  ``force_calls``
+* ``paper/cpc/data/cloud-runs-2/05/restart_walls.csv`` — one summary row per route
+* ``paper/cpc/data/cloud-runs-2/05/restart_walls_repeats.csv`` — every repeat
 
 Driver: ``pixi run cpc-restart-walls``.
 """
@@ -31,14 +28,15 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = ROOT.parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "data" / "cloud-runs-2" / "cloud-run"))
 os.chdir(ROOT)
 
 import restart_formats as rf  # noqa: E402
 
 OUT = Path(os.environ.get("RUN05_OUT", ROOT / "data" / "cloud-runs-2" / "05"))
-# Routes printed in Table 12 (main text), matching gen_cloud_tables.main_names.
+WALL_REPEATS = int(os.environ.get("WALL_REPEATS", "10"))
+
 TABLE12 = [
     "uninterrupted",
     "CON 3.1, shortest round trip",
@@ -58,8 +56,6 @@ TABLE12 = [
 
 
 class CountingNEB:
-    """Wrap ASE NEB so each get_forces call is counted."""
-
     def __init__(self, neb):
         self._neb = neb
         self.force_calls = 0
@@ -103,14 +99,49 @@ def run_counted(imgs, start=0, stop=None):
     )
 
 
-def time_route(name: str, fn, eps, ref) -> dict:
+def with_ids(imgs):
+    out = []
+    for im in imgs:
+        a = im.copy()
+        a.set_array("id", np.array([17 + 3 * i for i in range(len(a))], dtype=np.int64))
+        out.append(a)
+    return out
+
+
+def traj_ids(imgs, d):
+    import ase.io
+
+    out = []
+    for i, im in enumerate(with_ids(imgs)):
+        p = d / f"img{i}.traj"
+        ase.io.write(str(p), im, format="traj")
+        out.append(ase.io.read(str(p), format="traj"))
+    return out
+
+
+def h5_fns():
+    import run_05 as r5
+
+    def make(wr, rd):
+        def go(imgs, d):
+            return r5.h5_roundtrip(wr, rd, imgs)
+
+        return go
+
+    return {
+        "H5MD MDAnalysis to MDAnalysis": make(r5.w_mda_convention, r5.fm.r_mda("H5MD")),
+        "H5MD MDAnalysis to h5py": make(r5.w_mda_convention, r5.r_h5py),
+        "H5MD h5py to h5py": make(r5.w_h5py, r5.r_h5py),
+        "H5MD h5py to MDAnalysis": make(r5.w_h5py, r5.fm.r_mda("H5MD")),
+    }
+
+
+def time_route_once(name: str, fn, eps, ref) -> dict:
     row = dict(route=name, wall_s="", force_calls="", error="")
     t0 = time.perf_counter()
     try:
         if name == "uninterrupted":
-            # Wall and forces for the full uninterrupted climb (same as Table 12).
-            imgs = rf.make_band(eps)
-            res = run_counted(imgs)
+            res = run_counted(rf.make_band(eps))
             wall = time.perf_counter() - t0
             row.update(
                 steps=res["step"],
@@ -168,6 +199,31 @@ def time_route(name: str, fn, eps, ref) -> dict:
     return row
 
 
+def median_summary(name: str, repeats: list[dict]) -> dict:
+    ok = [r for r in repeats if not r.get("error")]
+    walls = [float(r["wall_s"]) for r in repeats if r.get("wall_s") not in ("", None)]
+    forces = [
+        float(r["force_calls"])
+        for r in ok
+        if r.get("force_calls") not in ("", None)
+    ]
+    base = dict(ok[0]) if ok else dict(repeats[0])
+    base["route"] = name
+    base["wall_s"] = f"{float(np.median(walls)):.6f}" if walls else ""
+    base["force_calls"] = str(int(round(float(np.median(forces))))) if forces else ""
+    base["n_repeats"] = len(repeats)
+    base["n_ok"] = len(ok)
+    base["notes"] = (
+        f"median of {len(walls)} walls"
+        + (f"; first error {repeats[0].get('error','')[:80]}" if not ok and repeats else "")
+    )
+    if not ok and repeats:
+        base["error"] = repeats[0].get("error", "")
+    elif ok:
+        base["error"] = ""
+    return base
+
+
 def merge_into_restart_csv(timed: dict[str, dict]) -> None:
     path = OUT / "restart_formats.csv"
     if not path.exists():
@@ -183,7 +239,6 @@ def merge_into_restart_csv(timed: dict[str, dict]) -> None:
         if hit:
             row["wall_s"] = hit.get("wall_s", "")
             row["force_calls"] = hit.get("force_calls", "")
-            # Refresh physics columns for Table-12 routes from this timed run.
             for k in (
                 "steps",
                 "converged",
@@ -207,12 +262,11 @@ def merge_into_restart_csv(timed: dict[str, dict]) -> None:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    print(f"WALL_REPEATS={WALL_REPEATS}", flush=True)
     print("building endpoints", flush=True)
     eps = rf.endpoints()
-    # Reference uninterrupted band (also timed as the first Table-12 row).
     print("uninterrupted reference", flush=True)
-    ref_imgs = rf.make_band(eps)
-    ref = run_counted(ref_imgs)
+    ref = run_counted(rf.make_band(eps))
     print(
         f"uninterrupted steps={ref['step']} barrier={ref['barrier']:.9f} "
         f"force_calls={ref['force_calls']}",
@@ -220,51 +274,64 @@ def main() -> None:
     )
 
     route_fns = {name: fn for name, fn in rf.ROUTES}
-    timed_rows = []
-    # uninterrupted
-    t0 = time.perf_counter()
-    # Re-run so wall covers a fresh climb (ref already measured forces).
-    res = run_counted(rf.make_band(eps))
-    wall = time.perf_counter() - t0
-    timed_rows.append(
-        dict(
-            route="uninterrupted",
-            steps=res["step"],
-            converged=res["converged"],
-            barrier_eV=f"{res['barrier']:.9f}",
-            d_barrier_eV="0",
-            max_disp_A="0",
-            file_dpos_A="",
-            free_modes_mid=rf.free_modes(rf.make_band(eps)[3]),
-            wall_s=f"{wall:.6f}",
-            force_calls=res["force_calls"],
-            error="",
-            notes="",
-        )
-    )
-    print(
-        f"uninterrupted wall={wall:.3f}s force_calls={res['force_calls']}",
-        flush=True,
-    )
+    route_fns["ASE trajectory, id array"] = traj_ids
+    try:
+        route_fns.update(h5_fns())
+    except Exception as e:
+        print(f"H5MD routes unavailable: {e}", flush=True)
 
+    all_repeats: list[dict] = []
+    timed_rows: list[dict] = []
     for name in TABLE12:
-        if name == "uninterrupted":
-            continue
-        fn = route_fns.get(name)
-        if fn is None:
+        fn = None if name == "uninterrupted" else route_fns.get(name)
+        if name != "uninterrupted" and fn is None:
             print(f"skip missing route fn: {name}", flush=True)
             continue
-        row = time_route(name, fn, eps, ref)
-        timed_rows.append(row)
+        reps = []
+        for i in range(WALL_REPEATS):
+            row = time_route_once(name, fn, eps, ref)
+            row["repeat"] = i
+            reps.append(row)
+            all_repeats.append(dict(row))
+            print(
+                f"{name}[{i}]: wall={row.get('wall_s')} force_calls={row.get('force_calls')} "
+                f"steps={row.get('steps')} err={str(row.get('error',''))[:60]}",
+                flush=True,
+            )
+        summary = median_summary(name, reps)
+        timed_rows.append(summary)
         print(
-            f"{name}: wall={row.get('wall_s')} force_calls={row.get('force_calls')} "
-            f"steps={row.get('steps')} err={str(row.get('error',''))[:80]}",
+            f"{name} MEDIAN wall={summary['wall_s']} force_calls={summary['force_calls']} "
+            f"n={summary['n_repeats']}",
             flush=True,
         )
 
-    walls_path = OUT / "restart_walls.csv"
     wfields = [
         "route",
+        "steps",
+        "converged",
+        "barrier_eV",
+        "d_barrier_eV",
+        "max_disp_A",
+        "file_dpos_A",
+        "free_modes_mid",
+        "wall_s",
+        "force_calls",
+        "n_repeats",
+        "n_ok",
+        "error",
+        "notes",
+    ]
+    walls_path = OUT / "restart_walls.csv"
+    with walls_path.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=wfields)
+        w.writeheader()
+        for r in timed_rows:
+            w.writerow({k: r.get(k, "") for k in wfields})
+
+    rfields = [
+        "route",
+        "repeat",
         "steps",
         "converged",
         "barrier_eV",
@@ -277,18 +344,17 @@ def main() -> None:
         "error",
         "notes",
     ]
-    with walls_path.open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=wfields)
+    with (OUT / "restart_walls_repeats.csv").open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=rfields)
         w.writeheader()
-        for r in timed_rows:
-            w.writerow({k: r.get(k, "") for k in wfields})
+        for r in all_repeats:
+            w.writerow({k: r.get(k, "") for k in rfields})
 
     timed = {r["route"]: r for r in timed_rows}
     merge_into_restart_csv(timed)
 
-    # Stamp build note when core env is set.
-    core = os.environ.get("READCON_CORE_ROOT")
     sha = os.environ.get("READCON_SHA", "")
+    core = os.environ.get("READCON_CORE_ROOT")
     if core and Path(core).exists() and not sha:
         try:
             import subprocess
@@ -301,12 +367,13 @@ def main() -> None:
     if sha:
         (OUT / "build.txt").write_text(
             f"readcon-core 0.17.2 commit {sha}\n"
-            f"restart walls: pixi run cpc-restart-walls\n"
+            f"restart walls: pixi run cpc-restart-walls (WALL_REPEATS={WALL_REPEATS})\n"
         )
     (OUT / "restart_walls.json").write_text(
         json.dumps(
             {
                 "host": os.uname().nodename,
+                "wall_repeats": WALL_REPEATS,
                 "routes": timed_rows,
                 "readcon_sha": sha,
             },
@@ -315,12 +382,10 @@ def main() -> None:
         )
     )
     print(f"wrote {walls_path}", flush=True)
-    print(f"merged wall_s/force_calls into {OUT / 'restart_formats.csv'}", flush=True)
-    print("Table 12 walls:", flush=True)
     for r in timed_rows:
         print(
             f"  {r['route']}: wall_s={r.get('wall_s')} force_calls={r.get('force_calls')} "
-            f"steps={r.get('steps')}",
+            f"n={r.get('n_repeats')}",
             flush=True,
         )
 

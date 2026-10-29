@@ -86,7 +86,21 @@ def require(path: Path) -> None:
 
 
 def sig(value: float, n: int = 3) -> str:
-    return f"{value:.{n}g}"
+    """Format to ``n`` significant figures, keeping trailing zeros (1.60 not 1.6)."""
+    if value == 0:
+        return "0"
+    from math import floor, isfinite, log10
+
+    if not isfinite(value):
+        return str(value)
+    order = floor(log10(abs(value)))
+    decimals = n - 1 - order
+    if decimals < 0:
+        return f"{round(value, decimals):.0f}"
+    rounded = round(value, decimals)
+    if decimals == 0:
+        return f"{int(rounded)}"
+    return f"{rounded:.{decimals}f}"
 
 
 def gen_ratios(rows: list[dict[str, str]]) -> str:

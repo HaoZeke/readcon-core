@@ -69,7 +69,9 @@ def _bench_rustc() -> str:
 
 N_NATIVE = 15
 N_PYTHON = 9
-N_SCALE = 5
+# Thread-scaling paired speedups need ≥30 repeats so BCa medians are not
+# discrete on n=5 order statistics (v7.9 O10).
+N_SCALE = int(os.environ.get("E2_N_SCALE", "30"))
 THREADS = (1, 2, 4, 8)
 
 

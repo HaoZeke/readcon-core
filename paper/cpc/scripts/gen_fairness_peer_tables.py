@@ -33,9 +33,27 @@ PAYLOAD = {
 
 
 def sig(x: float, n: int = 3) -> str:
+    """Format ``x`` to ``n`` significant figures, keeping trailing zeros.
+
+    ``f\"{1.60249:.3g}\"`` collapses to ``1.6``; this returns ``1.60``.
+    ``50.998`` with ``n=3`` returns ``51.0``.
+    """
     if x == 0:
         return "0"
-    return f"{x:.{n}g}"
+    from math import floor, isfinite, log10
+
+    if not isfinite(x):
+        return str(x)
+    order = floor(log10(abs(x)))
+    decimals = n - 1 - order
+    if decimals < 0:
+        # Large magnitude: round to significant integer digits.
+        rounded = round(x, decimals)
+        return f"{rounded:.0f}"
+    rounded = round(x, decimals)
+    if decimals == 0:
+        return f"{int(rounded)}"
+    return f"{rounded:.{decimals}f}"
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:

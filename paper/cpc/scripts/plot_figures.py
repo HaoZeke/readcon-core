@@ -829,8 +829,8 @@ def _heatmap(ax, data, rows, cols, cmap, norm, formatter) -> object:
 def roofline(theme, png_dir: Path | None) -> None:
     """Throughput against threads and the memory-copy ceiling.
 
-    Points are the five-repeat scaling block. The file-read and
-    boundary-scan markers are stage medians from the 15-repeat block.
+    Points are the N_SCALE-repeat scaling block (default 30). The file-read
+    and boundary-scan markers are stage medians from the 15-repeat block.
     They are not an Amdahl curve for the points.
     """
     from matplotlib.ticker import FixedLocator, FormatStrFormatter, NullFormatter

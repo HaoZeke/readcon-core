@@ -1,0 +1,19 @@
+% Written by paper/cpc/scripts/gen_e2_prose.py from e2_layered.json / e2_speedup_bca.json.
+\begin{table}[ht]
+\centering
+\small
+\caption{Warm read of \(10{,}000\) frames, \(167{,}710{,}000\) bytes, readcon-core 0.17.2 at commit~\readconcommitshort{}. Native rows are 15 repeats. The Python row is 9 repeats. The interval is a bias-corrected and accelerated 95 percent interval of the median.}
+\label{tab:perf}
+\begin{tabular}{lrrl}
+\toprule
+Reader & Median (s) & MB/s & Interval (s) \\
+\midrule
+Rust, automatic pool & 0.089914 & 1865 & [0.086395, 0.091667] \\
+C++ wrapper, automatic pool & 0.091697 & 1829 & [0.089092, 0.092808] \\
+Rust, 1 thread & 0.238034 & 704.6 & [0.236897, 0.244376] \\
+C++ wrapper, 1 thread & 0.246677 & 679.9 & [0.2409, 0.250434] \\
+Python, full objects & 0.870851 & 192.6 & [0.832618, 0.879402] \\
+\bottomrule
+\end{tabular}
+\end{table}
+

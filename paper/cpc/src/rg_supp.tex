@@ -51,6 +51,7 @@ Elsevier%
 \let\bibcite\readcon@bibcite
 \makeatother
 \input{affilfix}
+\input{figures/generated/e2_macros}
 \lstset{
 basicstyle=\ttfamily\footnotesize,
 breaklines=true,
@@ -458,18 +459,9 @@ i-PI, MDI \cite{ceriottiIpiPythonInterface2014,kapilIpi20Universal2019,litmanIpi
 \end{tabular}
 \end{table}
 
-\section{Second Python thread sweep}
+\section{Python thread-scaling intervals}
 \label{sec:supp-threads}
-The five-repeat pool sweep in Section \ref{sec:perf-read} and the thirty-pair sweep here are different campaigns on the same \(10{,}000\)-frame file.
-The thirty-pair one-thread median is \(1.35258\,\mathrm{s}\).
-Two threads give speedup \(1.148\) with interval \([1.126, 1.157]\), four give \(1.209\) with \([1.194, 1.223]\), and eight give \(1.284\) with \([1.263, 1.313]\).
-The five-repeat Python speedup at eight threads is \(1.15\).
-Both numbers stand.
-The file read itself, measured by sending the bytes to the null device, has median \(0.018511\,\mathrm{s}\), \(9059.8\,\mathrm{MB/s}\).
-Reading the bytes in the process takes \(0.094481528\,\mathrm{s}\), and scanning frame boundaries takes \(0.034419954\,\mathrm{s}\).
-Their sum is \(0.128901482\,\mathrm{s}\), which is \(0.266523\) of the 15-repeat one-thread median \(0.483640922\,\mathrm{s}\).
-That quotient is not the serial fraction of Figure \ref{fig:roofline}.
-The figure has no Amdahl curve.
+\input{figures/generated/e2_supp_threads}
 
 \section{ABNF of one frame}
 \label{sec:appendix-abnf}
