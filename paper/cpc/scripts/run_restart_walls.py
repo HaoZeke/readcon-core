@@ -372,7 +372,6 @@ def main() -> None:
     (OUT / "restart_walls.json").write_text(
         json.dumps(
             {
-                "host": os.uname().nodename,
                 "wall_repeats": WALL_REPEATS,
                 "routes": timed_rows,
                 "readcon_sha": sha,

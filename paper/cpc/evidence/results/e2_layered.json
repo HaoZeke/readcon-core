@@ -12,7 +12,7 @@
     "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
     "gxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
     "python": "3.12.3",
-    "readcon_file": "/tmp/v76-benchenv/lib/python3.12/site-packages/readcon/__init__.py",
+    "readcon_file": "readcon/__init__.py",
     "ase": "3.29.0"
   },
   "file": {

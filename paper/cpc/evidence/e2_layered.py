@@ -33,6 +33,17 @@ import readcon
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
 RESULTS = ROOT / "results"
+
+
+def package_module_path(module_file: str) -> str:
+    """Return a package-relative path such as ``readcon/__init__.py``."""
+    path = Path(module_file)
+    parts = path.parts
+    if "readcon" in parts:
+        i = parts.index("readcon")
+        return str(Path(*parts[i:]))
+    return path.name
+
 WORK = ROOT / "work" / "e2"
 
 
@@ -429,7 +440,7 @@ def main() -> None:
             "rustc": rustc,
             "gxx": gxx,
             "python": platform.python_version(),
-            "readcon_file": readcon.__file__,
+            "readcon_file": package_module_path(readcon.__file__),
             "ase": __import__("ase").__version__,
         },
         "file": {

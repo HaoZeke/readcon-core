@@ -195,6 +195,44 @@ def assert_delta_s_matches_code() -> None:
         raise SystemExit("restart_formats.py ALPHA is not 0.02 Å²/eV")
 
 
+ABS_PATH = re.compile(
+    r"(?:^|[\s\"'=,:\[\{])(/(?:tmp|home|root|Users|workspace|opt|var|usr)"
+    r"(?:/[^\"'\s,\]\}]*)?)"
+)
+HOST_KEY = re.compile(r'["\'](?:host|hostname|nodename)["\']\s*:', re.I)
+
+
+def _scan_text_for_leaks(rel: Path, text: str) -> list[str]:
+    hits: list[str] = []
+    for match in HOST_KEY.finditer(text):
+        hits.append(f"{rel}: hostname key {match.group(0)!r}")
+    for match in ABS_PATH.finditer(text):
+        hits.append(f"{rel}: absolute path {match.group(1)}")
+    return hits
+
+
+def assert_no_host_or_abs_paths_in_data() -> None:
+    """Refuse hostnames and absolute install paths in data/evidence JSON/CSV."""
+    roots = (ROOT / "data", ROOT / "evidence")
+    hits: list[str] = []
+    for base in roots:
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in {".json", ".csv"}:
+                continue
+            rel = path.relative_to(ROOT)
+            try:
+                text = path.read_text(errors="replace")
+            except OSError as exc:
+                raise SystemExit(f"cannot read {rel}: {exc}") from exc
+            hits.extend(_scan_text_for_leaks(rel, text))
+    if hits:
+        raise SystemExit("host or absolute-path leaks:\n  " + "\n  ".join(hits))
+
+
 def main() -> None:
     org = ORG.read_text()
     n_words = abstract_words(org)
@@ -213,9 +251,10 @@ def main() -> None:
     assert_no_stale_speedups()
     assert_walls_repeats()
     assert_delta_s_matches_code()
+    assert_no_host_or_abs_paths_in_data()
     print(
         f"abstract words: {n_words}; highlights: {len(lines)}; "
-        "PDF TODO check clean; e2/peer/walls/Δs JSON checks clean"
+        "PDF TODO check clean; e2/peer/walls/Δs/path JSON checks clean"
     )
 
 

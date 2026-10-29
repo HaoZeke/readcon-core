@@ -36,6 +36,17 @@ from ase.mep import NEB
 from ase.optimize import FIRE
 
 ROOT = Path(__file__).resolve().parent
+
+
+def package_module_path(module_file: str) -> str:
+    """Return a package-relative path such as ``readcon/__init__.py``."""
+    path = Path(module_file)
+    parts = path.parts
+    if "readcon" in parts:
+        i = parts.index("readcon")
+        return str(Path(*parts[i:]))
+    return path.name
+
 WORK = ROOT / "work" / "e1"
 RESULTS = ROOT / "results"
 EON = os.environ.get("EONCLIENT") or shutil.which("eonclient") or str(ROOT.parents[2] / "eon-env" / "bin" / "eonclient")
@@ -1051,7 +1062,7 @@ def main() -> None:
         "cpu": cpu_name(),
         "python": platform.python_version(),
         "ase": ase.__version__,
-        "readcon": readcon.__file__,
+        "readcon": package_module_path(readcon.__file__),
         "eonclient": eon_version(),
         "potential": "morse_pt",
         "system": "Pt(100) 3x3x3 orthogonal slab plus one Pt adatom, hollow to neighboring hollow",

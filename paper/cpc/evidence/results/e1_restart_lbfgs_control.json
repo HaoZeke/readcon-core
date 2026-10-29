@@ -2,7 +2,7 @@
   "cpu": "Intel(R) Xeon(R) Processor, family 6, model 207, 8 hardware threads",
   "python": "3.12.3",
   "ase": "3.29.0",
-  "readcon": "/home/ubuntu/.local/lib/python3.12/site-packages/readcon/__init__.py",
+  "readcon": "readcon/__init__.py",
   "eonclient": "3.6.0 (c4efc62)",
   "potential": "morse_pt",
   "system": "Pt(100) 3x3x3 orthogonal slab plus one Pt adatom, hollow to neighboring hollow",
