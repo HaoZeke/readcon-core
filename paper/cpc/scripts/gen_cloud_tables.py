@@ -320,7 +320,8 @@ def main() -> None:
         restart_table(
             restart,
             lambda row: row in pairs,
-            "Harness result for the same climbing-image band through each writer and reader among Python, C, C++, Fortran and Julia. "
+            "The same climbing-image band through each writer and reader among Python, C, C++, Fortran and Julia. "
+            "Each pair reads the restart file written by the other. "
             "The columns are the columns of Table~\\ref{tab:restartfmt}.",
             "tab:restart-pairs",
         ),

@@ -62,6 +62,9 @@ belowskip=0.4em
  pdfkeywords={restart, specification, saddle search, conformance, nudged elastic band},
  pdfsubject={},
  pdflang={English}}
+% Release pin. One definition. Fill this line when the 0.17.2 tag is approved.
+\newcommand{\readconversion}{TODO(verify: 0.17.2 tag and DOI)}
+\newcommand{\readcondoi}{\readconversion}
 \begin{document}
 
 \begin{frontmatter}
@@ -75,8 +78,8 @@ On one masked Pt(100) frame, every common format tested here drops at least one 
 An ASE POSCAR round trip drops the adatom's height constraint, and the resumed climbing-image band finishes \(70.2\,\mathrm{meV}\) below the uninterrupted barrier of \(0.644561366\,\mathrm{eV}\).
 Five extended XYZ readers return four answers for one file.
 CON 3.1 is the versioned grammar of the text eOn already writes, checked by a conformance corpus and implemented once: a Rust core behind a C interface for C, C++, Python, Julia and Fortran.
-A harness of twenty-five writer-reader pairs among those languages resumes that band at the uninterrupted barrier.
-A warm read of \(10{,}000\) frames of 218 atoms, recorded with readcon-core 0.17.0, takes \(12.6\,\mu\mathrm{s}\) per frame.
+Twenty-five writer-reader pairs resume that band from each other's restart files.
+A warm read of \(10{,}000\) frames of 218 atoms, recorded with readcon-core 0.17.1, takes \(12.6\,\mu\mathrm{s}\) per frame.
 On that file a chemfiles read of the XYZ coordinates is \(2.15\) times as fast.
 h5py is \(67.1\) times as fast when the timed object is one numeric array, not the mask, the identifier, the cell and the periodic flags.
 \end{abstract}
@@ -124,9 +127,9 @@ Files written by earlier eOn releases are grammar version 1: column 4 is 0 or 1 
 A 3.1 reader accepts them under that column rule, and a 3.1 writer emits the versioned header.
 The memory-mapped store keeps each CON text and indexes on composition, energy and maximum force.
 The map starts at 2 GiB and the caller can raise it.
-Thread, peer and MPI timings used readcon-core 0.17.0.
+Thread, peer and MPI timings used readcon-core 0.17.1.
 The store timings used readcon-core 0.16.2 and readcon-db 0.1.8.
-The release version and its DOI are the data-availability statement.
+The release is readcon-core \readconversion{} (\readcondoi).
 \end{small}
 
 \end{frontmatter}
@@ -456,7 +459,8 @@ It holds 10 legal files and 8 illegal files, split as in Table \ref{tab:corpus}.
 A conforming reader accepts the first group and rejects the second.
 The conformance goldens are Python, C, Fortran and Julia.
 There is no C++ golden.
-C++ is in the resume harness of Section \ref{sec:cases}, which is a separate measurement from the corpus.
+C++ joins the twenty-five writer-reader pairs in Section \ref{sec:cases}.
+That test is separate from the corpus.
 
 \begin{table}[ht]
 \centering
@@ -505,7 +509,7 @@ One C interface is the waist every other caller uses.
 C++ wraps it for eOn 3.6.0.
 Python exposes array views \cite{harrisArrayProgrammingNumpy2020}.
 Julia calls the C interface \cite{bezansonJuliaFreshApproach2017}.
-The resume harness calls that interface from Fortran 2008.
+Those writer-reader pairs call that interface from Fortran 2008.
 chemfiles took the same route for trajectories: one core and several language bindings \cite{frauxChemfileschemfilesVersion01042023}.
 Decimal fields go through one correctly rounded conversion on that shared path \cite{adamsRyFastFloattostring2018}.
 
@@ -553,13 +557,13 @@ The band is interrupted after 25 steps, written, read back, and resumed to \(0.0
 Uninterrupted, it converges in 60 steps with barrier \(0.644561366\,\mathrm{eV}\) and 56 free modes on the middle image.
 Table \ref{tab:restartfmt} is every completed route.
 Figure \ref{fig:restartfmt} is three of those bands.
-Table \ref{tab:restart-pairs} is the harness of 25 writer-reader pairs among Python, C, C++, Fortran and Julia.
+Table \ref{tab:restart-pairs} is the 25 writer-reader pairs among Python, C, C++, Fortran and Julia. Each pair reads the restart file written by the other.
 
 \input{figures/generated/restart_main}
 
 The shortest CON round trip changes no coordinate.
 The barrier moves by \(-5.68\times10^{-14}\,\mathrm{eV}\) and the images by at most \(2.66\times10^{-15}\,\text{\AA}\).
-Each of the 25 harness pairs also changes no coordinate, keeps 56 modes, and finishes in 60 steps at the same printed barrier.
+Each of the 25 pairs also changes no coordinate, keeps 56 modes, and finishes in 60 steps at the same printed barrier.
 Their barrier shift is \(-2.31\times10^{-14}\,\mathrm{eV}\) and their largest displacement is \(3.55\times10^{-15}\,\text{\AA}\).
 The two floors are both at the level of rebuilding the calculator.
 The table keeps them separate.
@@ -689,7 +693,8 @@ None of the logs records a clock frequency, so none is stated.
 
 \subsection{Threads}
 \label{sec:perf-read}
-The file is \(10{,}000\) copies of one 218-atom frame, \(167{,}710{,}000\) bytes, read by readcon-core 0.17.0 built with rustc 1.88.0.
+The file holds \(10{,}000\) copies of one 218-atom frame, \(167{,}710{,}000\) bytes.
+readcon-core 0.17.1, built with rustc 1.88.0, reads it.
 OpenMP and BLAS are pinned to one thread outside the pool under test.
 Table \ref{tab:perf} is the warm-cache read.
 The native Rust pool finishes in \(0.125501\,\mathrm{s}\), \(1336\,\mathrm{MB/s}\), \(79681\) frames/s, which is \(12.6\,\mu\mathrm{s}\) per frame.
@@ -704,7 +709,7 @@ The in-process Morse timing from the band study is \(3.036\times10^{-4}\,\mathrm
 \begin{table}[ht]
 \centering
 \small
-\caption{Warm read of \(10{,}000\) frames, \(167{,}710{,}000\) bytes, readcon-core 0.17.0.
+\caption{Warm read of \(10{,}000\) frames, \(167{,}710{,}000\) bytes, readcon-core 0.17.1.
 Native rows are 15 repeats.
 The Python row is 9 repeats.
 The interval is a bias-corrected and accelerated 95 percent interval of the median.}
@@ -747,7 +752,7 @@ That quotient is not a serial fraction of the five-repeat sweep.
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/generated/roofline.pdf}
-\caption{Five-repeat scaling rates for Rust, C++ and Python on readcon-core 0.17.0.
+\caption{Five-repeat scaling rates for Rust, C++ and Python on readcon-core 0.17.1.
 The dashed line is the hot-cache copy, \(9.06\,\mathrm{GB/s}\).
 The triangles are the 15-repeat file-read and boundary-scan rates.
 They are not an Amdahl curve for the scaling points.}
@@ -757,7 +762,8 @@ They are not an Amdahl curve for the scaling points.}
 \subsection{Peers}
 \label{sec:perf-peers}
 Table \ref{tab:peers} is readcon-core through its Python binding at one worker, divided by the peer, so a ratio below 1 means readcon-core finished sooner.
-Campaign A, readcon-core 0.17.0 and rustc 1.88.0, thirty interleaved pairs, compares the ASE eon reader, chemfiles XYZ, h5py and MDAnalysis H5MD.
+Campaign A used readcon-core 0.17.1 and rustc 1.88.0.
+Thirty interleaved pairs compare the ASE eon reader, chemfiles XYZ, h5py and MDAnalysis H5MD.
 On \(10{,}000\) frames the ratios are \(0.337\) against ASE eon (readcon-core \(1.269\,\mathrm{s}\), ASE \(3.745\,\mathrm{s}\)), \(2.15\) against a chemfiles read of the XYZ coordinates, \(67.1\) against h5py when h5py returns one numeric array (peer \(0.01899\,\mathrm{s}\)), and \(0.207\) against MDAnalysis H5MD (peer \(6.179\,\mathrm{s}\)).
 The CON reader returns the mask, the identifier, the cell and the periodic flags.
 The \(67.1\) ratio is that full frame against the numeric array, which is what Table \ref{tab:peers} records in its fields column.
@@ -773,7 +779,7 @@ On one frame the open dominates, and h5py and chemfiles lose the lead they have 
 
 \subsection{MPI}
 \label{sec:perf-mpi}
-The MPI campaign used readcon-core 0.17.0 and readcon-db 0.1.8 on the eight-core host named above.
+The MPI run used readcon-core 0.17.1 and readcon-db 0.1.8 on the eight-core host named above.
 Ranks 16 and 32 were not run.
 MPICH 4.2.3 used the ch4:ofi device, bound to cores, with UCX and libfabric on TCP.
 Each rank is one thread.
@@ -865,17 +871,19 @@ The ASE POSCAR resume drops the height constraint and finishes \(70.2\,\mathrm{m
 Five extended XYZ readers return four answers for one file.
 CON 3.1 states the grammar and the corpus decides the listed files.
 The conformance goldens are Python, C, Fortran and Julia.
-The resume harness runs the same parser from Python, C, C++, Fortran and Julia, and its twenty-five writer-reader pairs finish at the uninterrupted barrier of \(0.644561366\,\mathrm{eV}\).
+Twenty-five writer-reader pairs run one parser from Python, C, C++, Fortran and Julia.
+They finish at the same barrier, \(0.644561366\,\mathrm{eV}\).
 With the height held, the Vineyard prefactor of the EMT hop is \(3.2438730218892426\times10^{10}\,\mathrm{Hz}\).
 The ASE eon reading of the same band has no imaginary mode, so that ratio is undefined.
-A warm read of \(10{,}000\) frames of 218 atoms takes \(12.6\,\mu\mathrm{s}\) per frame on the 0.17.0 build named in Section \ref{sec:performance}.
+A warm read of \(10{,}000\) frames of 218 atoms takes \(12.6\,\mu\mathrm{s}\) per frame on the 0.17.1 build named in Section \ref{sec:performance}.
 On that file a chemfiles read of the XYZ coordinates is \(2.15\) times as fast, and h5py is \(67.1\) times as fast when the timed object is one numeric array.
 Shared MPI reads speed up by \(6.04\) from one rank to eight on this host.
 Under weak scaling the four-shard ingest grows by \(4.68\) because every rank writes the same device.
 
 \section*{Data availability}
 \label{sec:data}
-The release version and its DOI are TODO(verify: 0.17.2 pin).
+\setlength{\emergencystretch}{2em}
+The release is readcon-core \readconversion{} (\readcondoi).
 The concept record is \url{https://doi.org/10.5281/zenodo.18753567} \cite{goswamiReadconcoreConConvel2026}.
 readcon-core 0.16.2, the reader used for the store timings, is \url{https://doi.org/10.5281/zenodo.23264985} \cite{goswamiReadconcoreV0162Conconvel2026}.
 The companion store is archived at \url{https://doi.org/10.5281/zenodo.23652386} \cite{goswamiReadcondbMmapCon2026}.
