@@ -62,9 +62,9 @@ belowskip=0.4em
  pdfkeywords={restart, specification, saddle search, conformance, nudged elastic band},
  pdfsubject={},
  pdflang={English}}
-% Release pin. One definition. Fill this line when the 0.17.2 tag is approved.
-\newcommand{\readconversion}{TODO(verify: 0.17.2 tag and DOI)}
-\newcommand{\readcondoi}{\readconversion}
+% Release pin. Two definitions. Fill these lines when the 0.17.2 tag is approved.
+\newcommand{\readconversion}{TODO(verify: 0.17.2 tag)}
+\newcommand{\readcondoi}{TODO(verify: 0.17.2 DOI)}
 \begin{document}
 
 \begin{frontmatter}
@@ -79,7 +79,7 @@ An ASE POSCAR round trip drops the adatom's height constraint, and the resumed c
 Five extended XYZ readers return four answers for one file.
 CON 3.1 is the versioned grammar of the text eOn already writes, checked by a conformance corpus and implemented once: a Rust core behind a C interface for C, C++, Python, Julia and Fortran.
 Twenty-five writer-reader pairs resume that band from each other's restart files.
-A warm read of \(10{,}000\) frames of 218 atoms, recorded with readcon-core 0.17.1, takes \(12.6\,\mu\mathrm{s}\) per frame.
+A warm read of \(10{,}000\) frames of 218 atoms, recorded with readcon-core 0.17.0 (commit 26d9382), takes \(12.6\,\mu\mathrm{s}\) per frame.
 On that file a chemfiles read of the XYZ coordinates is \(2.15\) times as fast.
 h5py is \(67.1\) times as fast when the timed object is one numeric array, not the mask, the identifier, the cell and the periodic flags.
 \end{abstract}
@@ -127,9 +127,9 @@ Files written by earlier eOn releases are grammar version 1: column 4 is 0 or 1 
 A 3.1 reader accepts them under that column rule, and a 3.1 writer emits the versioned header.
 The memory-mapped store keeps each CON text and indexes on composition, energy and maximum force.
 The map starts at 2 GiB and the caller can raise it.
-Thread, peer and MPI timings used readcon-core 0.17.1.
+Thread and peer timings used 0.17.0.
+The MPI timings used readcon-core 0.17.0 (commit af8aabb).
 The store timings used readcon-core 0.16.2 and readcon-db 0.1.8.
-The release is readcon-core \readconversion{} (\readcondoi).
 \end{small}
 
 \end{frontmatter}
@@ -694,7 +694,7 @@ None of the logs records a clock frequency, so none is stated.
 \subsection{Threads}
 \label{sec:perf-read}
 The file holds \(10{,}000\) copies of one 218-atom frame, \(167{,}710{,}000\) bytes.
-readcon-core 0.17.1, built with rustc 1.88.0, reads it.
+readcon-core 0.17.0, built with rustc 1.88.0, reads it.
 OpenMP and BLAS are pinned to one thread outside the pool under test.
 Table \ref{tab:perf} is the warm-cache read.
 The native Rust pool finishes in \(0.125501\,\mathrm{s}\), \(1336\,\mathrm{MB/s}\), \(79681\) frames/s, which is \(12.6\,\mu\mathrm{s}\) per frame.
@@ -709,7 +709,7 @@ The in-process Morse timing from the band study is \(3.036\times10^{-4}\,\mathrm
 \begin{table}[ht]
 \centering
 \small
-\caption{Warm read of \(10{,}000\) frames, \(167{,}710{,}000\) bytes, readcon-core 0.17.1.
+\caption{Warm read of \(10{,}000\) frames, \(167{,}710{,}000\) bytes, readcon-core 0.17.0.
 Native rows are 15 repeats.
 The Python row is 9 repeats.
 The interval is a bias-corrected and accelerated 95 percent interval of the median.}
@@ -752,7 +752,7 @@ That quotient is not a serial fraction of the five-repeat sweep.
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/generated/roofline.pdf}
-\caption{Five-repeat scaling rates for Rust, C++ and Python on readcon-core 0.17.1.
+\caption{Five-repeat scaling rates for Rust, C++ and Python on readcon-core 0.17.0.
 The dashed line is the hot-cache copy, \(9.06\,\mathrm{GB/s}\).
 The triangles are the 15-repeat file-read and boundary-scan rates.
 They are not an Amdahl curve for the scaling points.}
@@ -762,7 +762,7 @@ They are not an Amdahl curve for the scaling points.}
 \subsection{Peers}
 \label{sec:perf-peers}
 Table \ref{tab:peers} is readcon-core through its Python binding at one worker, divided by the peer, so a ratio below 1 means readcon-core finished sooner.
-Campaign A used readcon-core 0.17.1 and rustc 1.88.0.
+Campaign A used readcon-core 0.17.0 and rustc 1.88.0.
 Thirty interleaved pairs compare the ASE eon reader, chemfiles XYZ, h5py and MDAnalysis H5MD.
 On \(10{,}000\) frames the ratios are \(0.337\) against ASE eon (readcon-core \(1.269\,\mathrm{s}\), ASE \(3.745\,\mathrm{s}\)), \(2.15\) against a chemfiles read of the XYZ coordinates, \(67.1\) against h5py when h5py returns one numeric array (peer \(0.01899\,\mathrm{s}\)), and \(0.207\) against MDAnalysis H5MD (peer \(6.179\,\mathrm{s}\)).
 The CON reader returns the mask, the identifier, the cell and the periodic flags.
@@ -779,7 +779,7 @@ On one frame the open dominates, and h5py and chemfiles lose the lead they have 
 
 \subsection{MPI}
 \label{sec:perf-mpi}
-The MPI run used readcon-core 0.17.1 and readcon-db 0.1.8 on the eight-core host named above.
+The MPI run used readcon-core 0.17.0 and readcon-db 0.1.8 on the eight-core host named above.
 Ranks 16 and 32 were not run.
 MPICH 4.2.3 used the ch4:ofi device, bound to cores, with UCX and libfabric on TCP.
 Each rank is one thread.
@@ -875,7 +875,7 @@ Twenty-five writer-reader pairs run one parser from Python, C, C++, Fortran and 
 They finish at the same barrier, \(0.644561366\,\mathrm{eV}\).
 With the height held, the Vineyard prefactor of the EMT hop is \(3.2438730218892426\times10^{10}\,\mathrm{Hz}\).
 The ASE eon reading of the same band has no imaginary mode, so that ratio is undefined.
-A warm read of \(10{,}000\) frames of 218 atoms takes \(12.6\,\mu\mathrm{s}\) per frame on the 0.17.1 build named in Section \ref{sec:performance}.
+A warm read of \(10{,}000\) frames of 218 atoms takes \(12.6\,\mu\mathrm{s}\) per frame on the 0.17.0 build named in Section \ref{sec:performance}.
 On that file a chemfiles read of the XYZ coordinates is \(2.15\) times as fast, and h5py is \(67.1\) times as fast when the timed object is one numeric array.
 Shared MPI reads speed up by \(6.04\) from one rank to eight on this host.
 Under weak scaling the four-shard ingest grows by \(4.68\) because every rank writes the same device.
