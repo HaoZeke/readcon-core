@@ -1,4 +1,4 @@
-% Fairness campaign: full_fields vs coords_accum. Wall times are medians from repeats_v76_fairness.csv.
+% Written by paper/cpc/scripts/gen_fairness_peer_tables.py.
 \begin{table}[ht]
 \centering
 \small
@@ -17,12 +17,12 @@ The driver is \texttt{paper/cpc/bench/run\_fairness.py} (\texttt{pixi run cpc-fa
 \toprule
 Mode & Peer & Fields & readcon (s) & peer (s) & Ratio & Interval \\
 \midrule
-full\_fields & chemfiles XYZ & coordinates & 0.962 & 0.550 & 1.73 & [1.72, 1.77] \\
-full\_fields & h5py & one binary array & 0.953 & 0.0182 & 51.9 & [51.0, 53.9] \\
-full\_fields & MDAnalysis H5MD & coordinates & 0.927 & 6.000 & 0.154 & [0.151, 0.164] \\
-coords\_accum & chemfiles XYZ & coordinates & 0.908 & 0.553 & 1.63 & [1.61, 1.65] \\
-coords\_accum & h5py & one binary array & 0.984 & 0.0278 & 36.4 & [32.8, 37.2] \\
-coords\_accum & MDAnalysis H5MD & coordinates & 0.947 & 5.945 & 0.160 & [0.157, 0.164] \\
+full\_fields & chemfiles XYZ & coordinates & 0.946 & 0.65 & 1.45 & [1.44, 1.48] \\
+full\_fields & h5py & one binary array & 0.894 & 0.0167 & 52.9 & [52.3, 53.5] \\
+full\_fields & MDAnalysis H5MD & coordinates & 0.937 & 5.95 & 0.155 & [0.154, 0.159] \\
+coords\_accum & chemfiles XYZ & coordinates & 0.949 & 0.653 & 1.45 & [1.45, 1.46] \\
+coords\_accum & h5py & one binary array & 0.898 & 0.0223 & 40.3 & [40.1, 40.4] \\
+coords\_accum & MDAnalysis H5MD & coordinates & 0.972 & 5.99 & 0.162 & [0.155, 0.168] \\
 \bottomrule
 \end{tabular}}
 \end{table}

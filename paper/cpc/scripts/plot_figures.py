@@ -790,7 +790,7 @@ def layers(theme, png_dir: Path | None) -> None:
     ax.set_yticks(y)
     ax.set_yticklabels(LAYER_NAMES)
     ax.set_xlabel("throughput (MB/s)")
-    ax.set_xlim(0, 1700)
+    ax.set_xlim(0, 2400)
     for yi, value in zip(y, rates, strict=True):
         ax.text(value + 24, yi, f"{value:.0f}", va="center", fontsize=9)
     _theme_axes([ax], theme)

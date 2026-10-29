@@ -149,41 +149,67 @@ def restart_cell(row: dict[str, str], key: str) -> str:
     return value
 
 
+def _wall_force(row: dict[str, str]) -> tuple[str, str]:
+    wall = row.get("wall_s", "").strip()
+    force = row.get("force_calls", "").strip()
+    wall_tex = f"{float(wall):.3f}" if wall else "--"
+    force_tex = str(int(float(force))) if force else "--"
+    return wall_tex, force_tex
+
+
 def restart_table(rows: list[dict[str, str]], keep, caption: str, label: str) -> str:
+    has_walls = any((row.get("wall_s") or "").strip() for row in rows if keep(row))
+    if has_walls:
+        cols = r"@{}lcccccccc@{}"
+        header = (
+            r"Route & File (\AA) & Modes & Steps & Force calls & Wall (s) & "
+            r"$\Delta E^\ddagger$ (eV) & Max displacement (\AA) \\"
+        )
+        span = 7
+    else:
+        cols = r"@{}lccccc@{}"
+        header = (
+            r"Route & File (\AA) & Modes & Steps & $\Delta E^\ddagger$ (eV) & "
+            r"Max displacement (\AA) \\"
+        )
+        span = 5
     body = [
         r"\begin{table}[ht]",
         r"\centering",
         r"\scriptsize",
         r"\caption{" + caption + "}",
         r"\label{" + label + "}",
-        r"\setlength{\tabcolsep}{3pt}",
+        r"\setlength{\tabcolsep}{2.5pt}",
         r"\resizebox{\textwidth}{!}{%",
-        r"\begin{tabular}{@{}lccccc@{}}",
+        rf"\begin{{tabular}}{{{cols}}}",
         r"\toprule",
-        r"Route & File (\AA) & Modes & Steps & $\Delta E^\ddagger$ (eV) & Max displacement (\AA) \\",
+        header,
         r"\midrule",
     ]
     for row in rows:
         if keep(row):
             if row.get("error"):
                 body.append(
-                    r"legacy CON (ASE eon writer) & \multicolumn{5}{l}{no file: "
+                    rf"legacy CON (ASE eon writer) & \multicolumn{{{span}}}{{l}}{{no file: "
                     r"a per-axis constraint is rejected} \\"
                 )
                 continue
-            body.append(
-                " & ".join(
-                    [
-                        row["route"],
-                        restart_cell(row, "file_dpos_A"),
-                        row["free_modes_mid"],
-                        restart_cell(row, "steps"),
-                        restart_cell(row, "d_barrier_eV"),
-                        restart_cell(row, "max_disp_A"),
-                    ]
-                )
-                + r" \\"
+            cells = [
+                row["route"],
+                restart_cell(row, "file_dpos_A"),
+                row["free_modes_mid"],
+                restart_cell(row, "steps"),
+            ]
+            if has_walls:
+                wall_tex, force_tex = _wall_force(row)
+                cells.extend([force_tex, wall_tex])
+            cells.extend(
+                [
+                    restart_cell(row, "d_barrier_eV"),
+                    restart_cell(row, "max_disp_A"),
+                ]
             )
+            body.append(" & ".join(cells) + r" \\")
     body += [r"\bottomrule", r"\end{tabular}}", r"\end{table}", ""]
     return "\n".join(body)
 
@@ -308,6 +334,9 @@ def main() -> None:
         "Modes are the free Cartesian degrees of freedom of the middle image (56 when the masks survive). "
         "$\\Delta E^\\ddagger$ and the displacement are against the uninterrupted band, whose barrier is "
         "$0.644561366\\,\\mathrm{eV}$. "
+        "Force calls are the number of climbing-image ``get\\_forces`` evaluations on the timed leg; "
+        "wall is the median wall-clock seconds of that leg from "
+        "\\texttt{restart\\_walls.csv} (\\texttt{pixi run cpc-restart-walls}). "
         "\\textsuperscript{a}Not converged at 4000 steps. "
         "The 25 language pairs are Table~\\ref{tab:restart-pairs}."
     )

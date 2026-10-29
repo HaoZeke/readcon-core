@@ -44,7 +44,13 @@ Elsevier%
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{xr-hyper}
+% Import labels from the supplement without its \\bibcite entries (same keys in both aux files).
+\makeatletter
+\let\readcon@bibcite\bibcite
+\def\bibcite#1#2{}%
 \externaldocument{rg_supp}
+\let\bibcite\readcon@bibcite
+\makeatother
 \input{affilfix}
 % Release pin. Package version and the commit that produced Section 6.
 % The Zenodo version DOI for readcon-core 0.17.2 is pending the deposit; cite the concept DOI only until then.
@@ -81,8 +87,10 @@ A saddle search resumes from a geometry file that must keep a per-axis mask, a p
 An ASE POSCAR round trip drops the adatom height constraint, and the resumed climbing-image band finishes \(70.2\,\mathrm{meV}\) below the uninterrupted barrier of \(0.644561366\,\mathrm{eV}\).
 CON 3.1 is that grammar for the text eOn already writes, checked by a conformance corpus and implemented once behind C, C++, Python, Julia and Fortran.
 Twenty-five writer-reader pairs resume that band from each other's restart files.
-On \(10{,}000\) frames, a full-field Python read finishes at \(0.154\) times MDAnalysis H5MD, \(1.73\) times chemfiles XYZ and \(51.9\) times h5py; coordinate accumulation alone changes those ratios to \(0.160\), \(1.63\) and \(36.4\).
-A warm native read on readcon-core~\readconversion{} (commit~\readconcommitshort{}) takes \(9.70\,\mu\mathrm{s}\) per frame.
+On \(10{,}000\) frames, a full-field Python read finishes at \(0.155\) times MDAnalysis H5MD.
+The same read is \(1.45\) times chemfiles XYZ and \(52.9\) times h5py.
+Coordinate accumulation alone changes those ratios to \(0.162\), \(1.45\) and \(40.3\).
+A warm native read on readcon-core~\readconversion{} (commit~\readconcommitshort{}) takes \(8.07\,\mu\mathrm{s}\) per frame.
 \end{abstract}
 
 \begin{keyword}
@@ -234,9 +242,9 @@ Section \ref{sec:cases} measures that difference on one band.
 \includegraphics[width=\textwidth]{figures/generated/structures.pdf}
 \caption{Benchmark structures used in this paper.
 (a)~Four-atom CuH\(_2\) survey frame (\texttt{resources/test/tiny\_cuh2.con}).
-(b)~218-atom CuH\(_2\) frame that is repeated for the \(10{,}000\)-frame timings (\texttt{resources/test/cuh2.con}).
+(b)~218-atom CuH\(_2\) frame that is repeated for the \(10{,}000\)-frame timings (\texttt{resources/test/cuh2.con}); xyzrender cannot load that CON directly, so the panel is written through ASE as XYZ and then rendered.
 (c)~Middle image of the EMT Pt(100) adatom hop from the uninterrupted climbing-image band.
-Drawn with xyzrender under the Ruhi palette (\texttt{pixi run cpc-structures}).}
+Drawn with xyzrender under the Ruhi palette and Atkinson Hyperlegible (\texttt{pixi run cpc-structures}).}
 \label{fig:structures}
 \end{figure}
 
@@ -409,32 +417,8 @@ Acceptance of a later minor of a known major, with unknown keys retained, is
 \mathrm{accept}(M.m) \iff M\in\mathcal{M}_{\mathrm{known}}\ \mathrm{and}\ m\ge 0,
 \end{equation}
 where \(\mathcal{M}_{\mathrm{known}}=\{1,2,3\}\) in this release.
-Algorithm~\ref{alg:accept} is that decision procedure.
+The reader that enforces Eqs.~\eqref{eq:mask}--\eqref{eq:version} is the parser state machine of Algorithm~\ref{alg:parser}; Section~\ref{sec:implementation} states its cost.
 
-\begin{algorithm}[ht]
-\caption{Accept or reject one CON frame}
-\label{alg:accept}
-\begin{algorithmic}[1]
-\Require bytes of one frame, known majors \(\mathcal{M}_{\mathrm{known}}\)
-\Ensure accepted fields, or reject
-\State Unwrap gzip or zstd if present; parse the header for major \(M\) and minor \(m\)
-\If{\(M\notin\mathcal{M}_{\mathrm{known}}\)}
-  \State \textbf{reject} unknown major
-\EndIf
-\State Read type counts, cell, periodic flags, and each atom row \((x,y,z,m_{\mathrm{col}},\mathrm{id})\)
-\If{\(M\ge 2\) and \(m_{\mathrm{col}}\notin\{0,\ldots,7\}\)}
-  \State \textbf{reject} illegal mask
-\ElsIf{\(M=1\) and \(m_{\mathrm{col}}\notin\{0,1\}\)}
-  \State \textbf{reject} illegal mask
-\EndIf
-\State Decode fixed axes from \(m_{\mathrm{col}}\) by Eq.~\eqref{eq:mask} (or the version-1 rule)
-\If{a velocity section is present and \(m\ge 1\) and \texttt{units.time} is absent}
-  \State \textbf{reject} missing time unit
-\EndIf
-\State Keep unknown JSON keys; skip unknown sections whose width is declared
-\State \textbf{accept} the frame
-\end{algorithmic}
-\end{algorithm}
 The reader rules are Table \ref{tab:rules}.
 The grammar of one frame is the listing in Section \ref{sec:appendix-abnf}.
 The prose specification wins where the listing and the prose disagree.
@@ -585,6 +569,13 @@ Those writer-reader pairs call that interface from Fortran 2008.
 chemfiles took the same route for trajectories: one core and several language bindings \cite{frauxChemfileschemfilesVersion01042023}.
 Decimal fields go through one correctly rounded conversion on that shared path \cite{adamsRyFastFloattostring2018}.
 
+Existing CON and neighbour-format readers are not that machine.
+ASE's eon reader is a line-oriented Python walk with no versioned section arity and no memory map \cite{larsenAtomicSimulationEnvironmenta2017}.
+chemfiles is a multi-format C++ core whose XYZ path does not define per-axis masks or persistent CON identifiers \cite{frauxChemfileschemfilesVersion01042023}.
+pymatgen's structure I/O targets crystallographic containers and has no CON 3.1 mask grammar \cite{ongPythonMaterialsGenomics2013}.
+MDAnalysis targets MD trajectories (XTC, DCD, H5MD) and returns single-precision coordinates without a per-axis restart mask \cite{gowersMdanalysisPythonPackage2016}.
+Algorithm~\ref{alg:parser} is the CON 3.1 reader those four lack: one tokenizer, one header automaton, per-frame section dispatch with declared arity, and a lazy mmap path.
+
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.92\textwidth]{figures/generated/architecture.pdf}
@@ -593,6 +584,63 @@ The C interface is the waist.
 eOn 3.6.0 calls the C++ wrapper.}
 \label{fig:architecture}
 \end{figure}
+
+Let \(B\) be the byte length of the file after optional gzip or zstd unwrap, \(F\) the frame count, \(N_f\) the atom count of frame \(f\), and \(S_f\) the number of optional section rows on that frame.
+Files with \(B<64\,\mathrm{KiB}\) are read into an owned buffer; larger files are memory-mapped.
+A serial boundary scan costs \(\Theta(B)\) and emits frame starts \(0=s_0<\cdots<s_F=B\).
+Each frame is then tokenized and parsed independently.
+The sequential cost is
+\begin{equation}
+\label{eq:parse-cost}
+T_{\mathrm{seq}}(B,\{N_f,S_f\})
+=
+\Theta(B)+\sum_{f=1}^{F}\Theta(N_f+S_f).
+\end{equation}
+With \(P\) workers and \(B\ge 48\,\mathrm{KiB}\), Rayon parses frames after the boundary scan, so
+\begin{equation}
+\label{eq:parse-par}
+T_{\mathrm{par}}
+=
+\Theta(B)+\Theta\!\Bigl(\tfrac{1}{P}\sum_{f=1}^{F}(N_f+S_f)\Bigr)
+\end{equation}
+up to scheduling; a lazy iterator yields one frame without materialising the rest.
+Algorithm~\ref{alg:parser} is that state machine.
+
+\begin{algorithm}[ht]
+\caption{Parse a CON 3.1 file (tokenizer, header, section dispatch, mmap)}
+\label{alg:parser}
+\begin{algorithmic}[1]
+\Require path to a CON file; known majors \(\mathcal{M}_{\mathrm{known}}\); optional worker count \(P\)
+\Ensure sequence of accepted frames, or reject
+\State Recognise gzip or zstd by content; unwrap to \(B\) bytes if compressed
+\If{\(B<64\,\mathrm{KiB}\)}
+  \State Read into an owned buffer
+\Else
+  \State Memory-map the bytes (lazy page faults)
+\EndIf
+\State \textbf{Boundary scan} (serial): walk type counts to record frame starts \(s_0,\ldots,s_F\) in \(\Theta(B)\)
+\For{each frame interval \([s_{f-1},s_f)\) (sequential, or Rayon when \(P\ge 2\) and \(B\ge 48\,\mathrm{KiB}\))}
+  \State \textbf{Tokenize} the header line; parse JSON for major \(M\), minor \(m\), units, \texttt{section\_arity}
+  \If{\(M\notin\mathcal{M}_{\mathrm{known}}\)}
+    \State \textbf{reject} unknown major
+  \EndIf
+  \State Read type counts, cell, periodic flags
+  \For{each atom row \((x,y,z,m_{\mathrm{col}},\mathrm{id})\)}
+    \State Correctly rounded binary64 parse of \(x,y,z\); decode mask by Eq.~\eqref{eq:mask}
+    \If{mask illegal for \(M\)}
+      \State \textbf{reject}
+    \EndIf
+  \EndFor
+  \While{a blank line opens a declared section}
+    \State \textbf{Dispatch} on the section name; read \(S\) rows of the declared arity; skip unknown sections with arity
+  \EndWhile
+  \If{a velocity section is present and \(m\ge 1\) and \texttt{units.time} is absent}
+    \State \textbf{reject} missing time unit
+  \EndIf
+  \State Keep unknown JSON keys; \textbf{accept} the frame (lazy callers yield here)
+\EndFor
+\end{algorithmic}
+\end{algorithm}
 
 The caller owns a frame handle and frees it.
 Structure-of-arrays accessors return a pointer into that frame.
@@ -783,19 +831,19 @@ The file holds \(10{,}000\) copies of one 218-atom frame, \(167{,}710{,}000\) by
 readcon-core 0.17.2, built with rustc 1.88.0, reads it.
 OpenMP and BLAS are pinned to one thread outside the pool under test.
 Table \ref{tab:perf} is the warm-cache read.
-The native Rust pool finishes in \(0.096961\,\mathrm{s}\), \(1730\,\mathrm{MB/s}\), \(103134\) frames/s, which is \(9.70\,\mu\mathrm{s}\) per frame.
-The C++ wrapper eOn calls finishes in \(0.102333\,\mathrm{s}\).
-The median of the paired Rust-to-C++ ratios is \(0.942\), with interval \([0.933, 0.992]\).
+The native Rust pool finishes in \(0.080672\,\mathrm{s}\), \(2079\,\mathrm{MB/s}\), \(123959\) frames/s, which is \(8.07\,\mu\mathrm{s}\) per frame.
+The C++ wrapper eOn calls finishes in \(0.079557\,\mathrm{s}\).
+The median of the paired Rust-to-C++ ratios is \(0.966\), with interval \([0.928, 1.030]\).
 That interval belongs to the paired ratios, not to the quotient of the two medians just given.
-At one thread the medians are \(0.249621\,\mathrm{s}\) and \(0.260032\,\mathrm{s}\), and the median of the paired ratios is \(0.963\).
-Building a Python object per frame takes \(0.879852\,\mathrm{s}\).
-One EMT force call on this host has median \(5.200\times10^{-5}\,\mathrm{s}\), so the native read of the whole file is \(1864.6\) such calls.
-The in-process Morse timing from the band study is \(3.036\times10^{-4}\,\mathrm{s}\) per call, and the same file is \(319.4\) of those calls.
+At one thread the medians are \(0.236704\,\mathrm{s}\) and \(0.241746\,\mathrm{s}\), and the median of the paired ratios is \(0.984\).
+Building a Python object per frame takes \(0.862351\,\mathrm{s}\).
+One EMT force call on this host has median \(5.328\times10^{-5}\,\mathrm{s}\), so the native read of the whole file is \(1514\) such calls.
+The in-process Morse timing from the band study is \(3.036\times10^{-4}\,\mathrm{s}\) per call, and the same file is \(266\) of those calls.
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Warm read of \(10{,}000\) frames, \(167{,}710{,}000\) bytes, readcon-core 0.17.2.
+\caption{Warm read of \(10{,}000\) frames, \(167{,}710{,}000\) bytes, readcon-core 0.17.2 at commit~\readconcommitshort{}.
 Native rows are 15 repeats.
 The Python row is 9 repeats.
 The interval is a bias-corrected and accelerated 95 percent interval of the median.}
@@ -804,27 +852,28 @@ The interval is a bias-corrected and accelerated 95 percent interval of the medi
 \toprule
 Reader & Median (s) & MB/s & Interval (s) \\
 \midrule
-Rust, automatic pool & 0.096961 & 1730 & [0.095046, 0.099329] \\
-C++ wrapper, automatic pool & 0.102333 & 1639 & [0.095919, 0.106351] \\
-Rust, 1 thread & 0.249621 & 671.9 & [0.238949, 0.253467] \\
-C++ wrapper, 1 thread & 0.260032 & 645.0 & [0.245996, 0.269355] \\
-Python, full objects & 0.879852 & 190.6 & [0.857167, 1.393448] \\
+Rust, automatic pool & 0.080672 & 2079 & [0.076386, 0.083995] \\
+C++ wrapper, automatic pool & 0.079557 & 2108 & [0.078332, 0.083834] \\
+Rust, 1 thread & 0.236704 & 708.5 & [0.234537, 0.238555] \\
+C++ wrapper, 1 thread & 0.241746 & 693.7 & [0.237819, 0.242730] \\
+Python, full objects & 0.862351 & 194.5 & [0.849375, 0.870378] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 A separate five-repeat sweep on the same file sets the pool size.
 The printed speedups are medians of the paired one-thread/eight-thread ratios, each with its bias-corrected and accelerated 95 percent BCa interval from \texttt{e2\_speedup\_bca.json} (\texttt{pixi run cpc-e2-speedup-bca}); they are not the quotients of the two endpoint medians.
-Rust goes from \(0.24435\,\mathrm{s}\) at one thread to \(0.08695\,\mathrm{s}\) at eight; the paired-ratio median is \(2.84\) with BCa interval \([2.67, 3.08]\).
-C++ goes from \(0.24929\,\mathrm{s}\) to \(0.09113\,\mathrm{s}\); the paired-ratio median is \(2.66\) with BCa interval \([2.63, 2.76]\).
-Python full objects go from \(0.9033\,\mathrm{s}\) to \(0.8209\,\mathrm{s}\); the paired-ratio median is \(1.14\) with BCa interval \([0.84, 1.18]\).
+Rust goes from \(0.24913\,\mathrm{s}\) at one thread to \(0.08957\,\mathrm{s}\) at eight; the paired-ratio median is \(2.85\) with BCa interval \([2.70, 2.85]\).
+C++ goes from \(0.24794\,\mathrm{s}\) to \(0.09175\,\mathrm{s}\); the paired-ratio median is \(2.69\) with BCa interval \([2.59, 2.85]\).
+Python full objects go from \(0.8889\,\mathrm{s}\) to \(0.8262\,\mathrm{s}\); the paired-ratio median is \(1.08\) with BCa interval \([0.964, 1.081]\).
+That Python interval includes 1: the five-repeat sweep shows no significant eight-thread speedup for full Python objects.
 Section \ref{sec:supp-threads} records the thirty-pair Python sweep from the earlier campaign.
 Hashes of the returned fields at 1, 2, 3, 4 and 8 threads are identical.
 Figure \ref{fig:layers} is the automatic-pool rates.
 Figure \ref{fig:roofline} places the five-repeat scaling rates under the memory-copy rate.
 No Amdahl curve is drawn.
-The in-process file read is \(0.090867964\,\mathrm{s}\) and the boundary scan is \(0.034595311\,\mathrm{s}\).
-Their sum, \(0.125463275\,\mathrm{s}\), is \(0.502615\) of the 15-repeat one-thread median \(0.249621235\,\mathrm{s}\).
+The in-process file read is \(0.078486363\,\mathrm{s}\) and the boundary scan is \(0.033353353\,\mathrm{s}\).
+Their sum, \(0.111839716\,\mathrm{s}\), is \(0.472487\) of the 15-repeat one-thread median \(0.236704096\,\mathrm{s}\).
 That quotient is not a serial fraction of the five-repeat sweep.
 
 \begin{figure}[ht]
@@ -848,12 +897,12 @@ They are not an Amdahl curve for the scaling points.}
 \label{sec:perf-peers}
 Table \ref{tab:peers} is the fairness campaign on readcon-core~\readconversion{} (commit~\readconcommitshort{}) and rustc 1.88.0 on the family-6 model-173 host named above.
 Thirty interleaved pairs compare a full-field Python read and a coordinates-only accumulation against chemfiles XYZ, h5py and MDAnalysis H5MD.
-On \(10{,}000\) frames the full-field ratios are \(1.73\) against chemfiles, \(51.9\) against h5py and \(0.154\) against MDAnalysis H5MD; the coordinates-only accumulation changes those ratios to \(1.63\), \(36.4\) and \(0.160\).
+On \(10{,}000\) frames the full-field ratios are \(1.45\) against chemfiles, \(52.9\) against h5py and \(0.155\) against MDAnalysis H5MD; the coordinates-only accumulation changes those ratios to \(1.45\), \(40.3\) and \(0.162\).
 Those six numbers are Table~\ref{tab:peers} and the abstract; the driver is \texttt{pixi run cpc-fairness}.
 Table \ref{tab:peers-ab} is the separate campaign-A and campaign-B survey against ASE eon, chemfiles, h5py, MDAnalysis, ASE extended XYZ and the ASE trajectory on the same host.
-Campaign A reports \(0.253\) against ASE eon, \(1.58\) against chemfiles, \(47.6\) against h5py and \(0.160\) against MDAnalysis H5MD on the long file.
-Campaign B reproduces the ASE eon ratio at \(0.257\) and adds ASE extended XYZ (\(0.251\)) and the ASE trajectory (\(0.774\) on the long file, \(2.95\) on one slab).
-Absolute readcon-core medians are \(0.935\,\mathrm{s}\) in B and \(0.914\,\mathrm{s}\) in A.
+Campaign A reports \(0.259\) against ASE eon, \(1.60\) against chemfiles, \(50.6\) against h5py and \(0.158\) against MDAnalysis H5MD on the long file.
+Campaign B reproduces the ASE eon ratio at \(0.244\) and adds ASE extended XYZ (\(0.236\)) and the ASE trajectory (\(0.736\) on the long file, \(2.83\) on one slab).
+Absolute readcon-core medians are \(0.909\,\mathrm{s}\) in B and \(0.959\,\mathrm{s}\) in A.
 Section \ref{sec:appendix-peers} extends campaign A to the 1-frame and 100-frame files.
 On one frame the open dominates, and h5py and chemfiles lose the lead they have on the long file.
 
@@ -967,8 +1016,10 @@ Twenty-five writer-reader pairs run one parser from Python, C, C++, Fortran and 
 They finish at the same barrier, \(0.644561366\,\mathrm{eV}\).
 With the height held, the Vineyard prefactor of the EMT hop is \(3.2438730218892426\times10^{10}\,\mathrm{Hz}\).
 The ASE eon reading of the same band has no imaginary mode, so that ratio is undefined.
-A warm read of \(10{,}000\) frames of 218 atoms takes \(9.70\,\mu\mathrm{s}\) per frame on the 0.17.2 build named in Section \ref{sec:performance}.
-On that file a full-field Python read finishes at \(0.154\) times MDAnalysis H5MD, \(1.73\) times chemfiles XYZ and \(51.9\) times h5py; coordinate accumulation alone changes those ratios to \(0.160\), \(1.63\) and \(36.4\).
+A warm read of \(10{,}000\) frames of 218 atoms takes \(8.07\,\mu\mathrm{s}\) per frame on the 0.17.2 build named in Section \ref{sec:performance}.
+On that file a full-field Python read finishes at \(0.155\) times MDAnalysis H5MD.
+It is \(1.45\) times chemfiles XYZ and \(52.9\) times h5py.
+Coordinate accumulation alone changes those ratios to \(0.162\), \(1.45\) and \(40.3\).
 Shared MPI reads speed up by \(6.04\) from one rank to eight on this host.
 Under weak scaling the four-shard ingest grows by \(4.68\) because every rank writes the same device.
 
@@ -989,13 +1040,14 @@ readcon-core 0.16.2, used for the store timings, is
 The companion store is archived at
 \url{https://doi.org/10.5281/zenodo.23652386}
 \cite{goswamiReadcondbMmapCon2026}.
-The archived tree at that commit regenerates every number in this paper.
+The archived tree at that commit regenerates every number in this paper, including the Table~\ref{tab:restartfmt} wall times and force-call counts.
 The ten-thousand-frame timing file is rebuilt by repeating
 \path{resources/test/cuh2.con} into
 \path{paper/cpc/bench/work/frames-10000.con}.
 Section~6 is rebuilt by \texttt{python}
 \path{paper/cpc/data/cloud-runs-2/cloud-run/run_05.py}
 with \texttt{READCON\_CORE\_ROOT} at that commit.
+Table~\ref{tab:restartfmt} walls and force calls are rebuilt by \texttt{pixi run cpc-restart-walls}.
 Table~\ref{tab:peers} is rebuilt by \texttt{pixi run cpc-fairness}.
 The thread speedup BCa intervals are rebuilt by \texttt{pixi run cpc-e2-speedup-bca}.
 The specification, the grammar, the corpus and the campaign results are the supplementary material.

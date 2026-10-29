@@ -1,4 +1,5 @@
 {
+  "cpu_model": "Intel(R) Xeon(R) Processor",
   "family": "6",
   "model": "173",
   "mhz": 2700.0,

@@ -1,12 +1,8 @@
-% Campaign A / B peer survey. Wall times are medians from ratios.csv and repeats_v76_b.csv.
+% Written by paper/cpc/scripts/gen_fairness_peer_tables.py.
 \begin{table}[ht]
 \centering
 \small
-\caption{Campaign A and B peer ratios on the same host (family 6, model 173, \(2700\,\mathrm{MHz}\)), thirty interleaved pairs each.
-Wall columns are median wall-clock seconds from the committed repeat CSVs (\texttt{ratios.csv}, \texttt{repeats\_v76\_b.csv}).
-The evaluation count on the long file is \(10{,}000\) frames; the slab rows are one frame.
-Campaign B adds ASE extended XYZ and the ASE trajectory; its ASE eon ratio on the \(10{,}000\)-frame file is \(0.257\) against \(0.253\) in A.
-These rows are not the fairness modes of Table~\ref{tab:peers}.}
+\caption{Campaign A and B peer ratios on the same host (family 6, model 173, \(2700\,\mathrm{MHz}\)), thirty interleaved pairs each. Wall columns are median wall-clock seconds from the committed repeat CSVs (\texttt{ratios.csv}, \texttt{ratios\_ase\_formats.csv}). The evaluation count on the long file is \(10{,}000\) frames; the slab rows are one frame. Campaign B adds ASE extended XYZ and the ASE trajectory; its ASE eon ratio on the \(10{,}000\)-frame file is 0.244 against 0.259 in A. These rows are not the fairness modes of Table~\ref{tab:peers}.}
 \label{tab:peers-ab}
 \scriptsize
 \setlength{\tabcolsep}{2pt}
@@ -15,18 +11,18 @@ These rows are not the fairness modes of Table~\ref{tab:peers}.}
 \toprule
 Payload & Peer & Fields & readcon (s) & peer (s) & Ratio & Interval \\
 \midrule
-10000 frames & ASE eon & same CON text & 0.914 & 3.614 & 0.253 & [0.251, 0.256] \\
-10000 frames & chemfiles XYZ & coordinates & 0.886 & 0.563 & 1.58 & [1.57, 1.6] \\
-10000 frames & h5py & one binary array & 0.993 & 0.0208 & 47.6 & [46.7, 48.5] \\
-10000 frames & MDAnalysis H5MD & coordinates & 0.930 & 5.844 & 0.160 & [0.157, 0.162] \\
-Pt slab & ASE eon & same CON text & 0.00215 & 0.00993 & 0.215 & [0.211, 0.218] \\
-Pt slab & chemfiles XYZ & coordinates & 0.00212 & 0.00204 & 1.04 & [1.03, 1.04] \\
-Pt slab & h5py & one binary array & 0.00213 & 0.000521 & 4.1 & [4.06, 4.13] \\
-Pt slab & MDAnalysis H5MD & coordinates & 0.00216 & 0.00592 & 0.365 & [0.359, 0.368] \\
-10000 frames & ASE extended XYZ & ASE atoms & 0.975 & 3.858 & 0.251 & [0.243, 0.254] \\
-10000 frames & ASE trajectory & ASE atoms & 0.956 & 1.233 & 0.774 & [0.761, 0.787] \\
-Pt slab & ASE extended XYZ & ASE atoms & 0.00222 & 0.0143 & 0.154 & [0.154, 0.155] \\
-Pt slab & ASE trajectory & ASE atoms & 0.00221 & 0.000751 & 2.95 & [2.92, 3.05] \\
+10000 frames & ASE eon & same CON text & 0.959 & 3.66 & 0.259 & [0.255, 0.264] \\
+10000 frames & chemfiles XYZ & coordinates & 0.901 & 0.561 & 1.6 & [1.59, 1.62] \\
+10000 frames & h5py & one binary array & 0.866 & 0.0171 & 50.6 & [50.3, 51] \\
+10000 frames & MDAnalysis H5MD & coordinates & 0.92 & 5.85 & 0.158 & [0.156, 0.159] \\
+Pt slab & ASE eon & same CON text & 0.00184 & 0.00955 & 0.194 & [0.191, 0.195] \\
+Pt slab & chemfiles XYZ & coordinates & 0.00182 & 0.00191 & 0.954 & [0.945, 0.961] \\
+Pt slab & h5py & one binary array & 0.00178 & 0.000383 & 4.73 & [4.64, 4.77] \\
+Pt slab & MDAnalysis H5MD & coordinates & 0.00184 & 0.00519 & 0.354 & [0.347, 0.36] \\
+10000 frames & ASE extended XYZ & ASE atoms & 0.913 & 3.87 & 0.236 & [0.234, 0.237] \\
+10000 frames & ASE trajectory & ASE atoms & 0.909 & 1.24 & 0.736 & [0.731, 0.74] \\
+Pt slab & ASE extended XYZ & ASE atoms & 0.00185 & 0.0141 & 0.131 & [0.129, 0.133] \\
+Pt slab & ASE trajectory & ASE atoms & 0.00185 & 0.000652 & 2.83 & [2.8, 2.86] \\
 \bottomrule
 \end{tabular}}
 \end{table}

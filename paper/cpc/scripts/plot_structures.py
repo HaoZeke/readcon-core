@@ -71,7 +71,13 @@ def render_png(source: Path | Atoms, dest: Path, *, canvas: int = 480) -> Path:
         canvas_size=canvas,
         transparent=False,
     )
-    # Rasterise via cairosvg for embedding
+    # Drop atom-label <text> nodes: xyzrender embeds Arial/DejaVu, which
+    # would otherwise enter the manuscript PDF. Panel titles use Atkinson.
+    import re
+
+    svg = svg_path.read_text(encoding="utf-8")
+    svg = re.sub(r"<text\b[^>]*>.*?</text>", "", svg, flags=re.DOTALL)
+    svg_path.write_text(svg, encoding="utf-8")
     import cairosvg
 
     cairosvg.svg2png(url=str(svg_path), write_to=str(dest), output_width=canvas, output_height=canvas)
@@ -87,12 +93,26 @@ def pt_slab_middle() -> Atoms:
 
 def main() -> None:
     use_vendored_font()
+    import matplotlib as mpl
+
+    mpl.rcParams.update(
+        {
+            "font.family": FAMILY,
+            "font.sans-serif": [FAMILY],
+            "mathtext.fontset": "custom",
+            "mathtext.rm": FAMILY,
+            "mathtext.it": FAMILY,
+            "mathtext.bf": FAMILY,
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
+        }
+    )
     OUT.mkdir(parents=True, exist_ok=True)
     WORK.mkdir(parents=True, exist_ok=True)
 
     panels = [
-        ("(a) survey CuH$_2$", REPO / "resources/test/tiny_cuh2.con", "tiny_cuh2.png"),
-        ("(b) timing CuH$_2$", REPO / "resources/test/cuh2.con", "cuh2.png"),
+        ("(a) survey CuH2", REPO / "resources/test/tiny_cuh2.con", "tiny_cuh2.png"),
+        ("(b) timing CuH2", REPO / "resources/test/cuh2.con", "cuh2.png"),
         ("(c) EMT Pt(100) hop", pt_slab_middle(), "pt_slab.png"),
     ]
     pngs = []

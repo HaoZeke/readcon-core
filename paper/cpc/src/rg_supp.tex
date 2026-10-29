@@ -44,7 +44,12 @@ Elsevier%
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{xr-hyper}
+\makeatletter
+\let\readcon@bibcite\bibcite
+\def\bibcite#1#2{}%
 \externaldocument{rg_main}
+\let\bibcite\readcon@bibcite
+\makeatother
 \input{affilfix}
 \lstset{
 basicstyle=\ttfamily\footnotesize,

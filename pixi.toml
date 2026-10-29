@@ -90,6 +90,8 @@ cpc-figure-05 = { cmd = "python paper/cpc/data/cloud-runs-2/cloud-run/plot_05.py
 cpc-fairness = { cmd = "python paper/cpc/bench/run_fairness.py", description = "Full-field vs coords-accumulation peer ratios for the abstract" }
 cpc-e2-speedup-bca = { cmd = "python paper/cpc/evidence/compute_e2_speedup_bca.py", description = "BCa intervals for five-repeat e2 thread-scaling speedups" }
 cpc-structures = { cmd = "python paper/cpc/scripts/plot_structures.py", description = "xyzrender panels of the survey, timing and Pt-slab geometries" }
+cpc-restart-walls = { cmd = "python paper/cpc/scripts/run_restart_walls.py", description = "Table 12 resume-route wall times and NEB force-call counts" }
+cpc-fairness-tables = { cmd = "python paper/cpc/scripts/gen_fairness_peer_tables.py", description = "Regenerate fairness and campaign-A/B peer TeX tables from CSVs" }
 
 [environments]
 default = { solve-group = "default" }
