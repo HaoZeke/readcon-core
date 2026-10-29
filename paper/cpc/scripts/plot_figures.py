@@ -292,6 +292,8 @@ def _mark_ends(ax, s, d, energy) -> None:
     )
     for artist in ax.collections:
         if artist.get_label() == "SP":
+            artist.set_facecolor(SUNSHINE)
+            artist.set_edgecolor(BLACK)
             artist.set_label("_nolegend_")
 
 
@@ -321,7 +323,7 @@ def _companion(ax, s, energy, color, marker, linestyle, label: str | None, saddl
         energy[peak],
         marker="*",
         s=70,
-        c="#FFD700",
+        c=SUNSHINE,
         edgecolors=BLACK,
         linewidths=0.4,
         zorder=5,
@@ -710,8 +712,6 @@ def ase_mask(theme, settings, png_dir: Path | None) -> None:
             abs(ax.get_ylim()[1] - ax.get_ylim()[0]),
         )
         separation = max(abs(marked[0][0] - marked[1][0]), abs(marked[0][1] - marked[1][1]))
-        if separation < 0.02 * span:
-            _saddle_inset(ax, theme, marked)
         _nudge_variance_labels(ax, marked)
         _landscape_labels(ax, ax is axes[0])
         _companion(
@@ -827,12 +827,11 @@ def _heatmap(ax, data, rows, cols, cmap, norm, formatter) -> object:
 
 
 def roofline(theme, png_dir: Path | None) -> None:
-    """Throughput against threads, the memory-copy ceiling and an Amdahl curve.
+    """Throughput against threads and the memory-copy ceiling.
 
-    Points are the stored thread sweep. The curve is anchored to the
-    one-thread Rust rate of that sweep. Its serial fraction is the
-    string-load plus boundary-scan time divided by the one-thread parse
-    in the main timing block.
+    Points are the five-repeat scaling block. The file-read and
+    boundary-scan markers are stage medians from the 15-repeat block.
+    They are not an Amdahl curve for the points.
     """
     from matplotlib.ticker import FixedLocator, FormatStrFormatter, NullFormatter
 
@@ -852,12 +851,6 @@ def roofline(theme, png_dir: Path | None) -> None:
     ax.axhline(floor, color=BLACK, ls=(0, (4, 2)), lw=1.1, label="memory copy", zorder=2)
     file_read = float(payload["stages"]["file_read"]["median_s"])
     scan = float(payload["stages"]["boundary_scan"]["median_s"])
-    one_thread = float(payload["native"]["rust_1"]["median_s"])
-    serial = (file_read + scan) / one_thread
-    rust_one = payload["scaling"]["rust"]["1"]["MB_per_s"] / 1000.0
-    dense = np.logspace(0.0, np.log10(8.0), 80)
-    speedup = 1.0 / (serial + (1.0 - serial) / dense)
-    ax.plot(dense, rust_one * speedup, color=SUNSHINE, lw=1.8, label="Amdahl", zorder=2)
     ax.scatter(
         [1.0],
         [nbytes / file_read / 1e9],

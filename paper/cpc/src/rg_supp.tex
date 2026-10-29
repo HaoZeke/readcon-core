@@ -37,6 +37,7 @@ Elsevier%
 \let\@evenfoot\@oddfoot}
 \makeatother
 \usepackage{amssymb,amsmath}
+\setlength{\emergencystretch}{2em}
 \usepackage{booktabs}
 \usepackage{listings}
 \usepackage{xurl}
@@ -93,7 +94,7 @@ The final column is the band after the five steepest-descent steps.
 \centering
 \includegraphics[width=\textwidth]{figures/generated/restart_diff.pdf}
 \caption{Minimum-image maximum component of the displacement, in \AA, between the uninterrupted Morse band and each resume.
-The checkpoint column is bitwise exact for the round-trip printer and about \(5\times10^{-7}\,\text{\AA}\) for six decimals.
+The checkpoint column is bitwise exact for the round-trip printer and \(4.90\times10^{-7}\,\text{\AA}\) for six decimals.
 The final column is at most \(8.9\times10^{-15}\,\text{\AA}\) for the round trip and \(4.9\times10^{-7}\,\text{\AA}\) for six decimals.
 Intermediate columns differ by up to \(0.050\,\text{\AA}\) because the search has taken further steps after the load.}
 \label{fig:supp-restart}
@@ -128,6 +129,7 @@ A grey cell is a time unit the source frame did not carry.}
 The frame is the 28-atom velocity file, 3,826 bytes.
 The timed files are 400 copies of that frame and 400 copies with the velocity section removed.
 The reported times are medians of 31 paired reads.
+Figure \ref{fig:supp-anatomy} is the byte width of each span and the parse time of those files.
 
 \begin{figure}[ht]
 \centering
@@ -141,8 +143,9 @@ Masks and ids share the coordinate line, so their parse time is inside that \(13
 \section{Velocity mislabel}
 \label{sec:supp-velocity}
 The kinetic energies and the Verlet step are the illustration in Section \ref{sec:cases}.
-The conversion from the natural unit to femtoseconds is the factor used for that illustration.
+The conversion from the natural unit to femtoseconds is \(10.180505710759414\,\mathrm{fs}\), and the kinetic factor is its square.
 The cell is the slab cell of the file.
+Figure \ref{fig:supp-velocity} is the displacement after that step.
 
 \begin{figure}[ht]
 \centering
@@ -155,9 +158,11 @@ The arrows are drawn at 10 times that displacement.}
 \end{figure}
 \section{Illegal-file classes}
 \label{sec:supp-errors}
-The eight illegal files are the conformance corpus named in Section \ref{sec:cases}.
+These are the eight illegal files from the corpus in Section \ref{sec:conformance}.
+The corpus also holds 10 legal files.
 readcon raises a message that names the class.
 ASE 3.29.0 reads the same files with its eon reader.
+Figure \ref{fig:supp-errors} is the class of each file.
 
 \begin{figure}[ht]
 \centering
@@ -180,6 +185,7 @@ On the reactant the only differing line is the metadata line.
 The printed curvature products differ by one byte, 2,507 bytes against 2,506, and the coordinate rows match.
 The product frame differs only in that same metadata line.
 The five intermediate images differ in the metadata line and in coordinate rows at the last printed digits, which is the \(8.9\times10^{-15}\,\text{\AA}\) displacement.
+Figure \ref{fig:supp-dedup} is the query: 35 images and 35 hashes, with no hash shared.
 Figure \ref{fig:supp-neb} is the same five bands on the \((s, d)\) plane \cite{goswamiTwodimensionalRmsdProjections2026}.
 
 \begin{figure}[ht]
@@ -286,8 +292,8 @@ The software was Python 3.12.3, rustc 1.88.0, readcon-db 0.1.8, readcon-core 0.1
 Threads were pinned to one so that readcon-db, ASE's database and the CON directory ran under the same cap.
 The parallel ingest is the MPI campaign in Section \ref{sec:supp-mpi}.
 A megabyte is \(10^{6}\) bytes.
-A cold query asks the kernel to drop the file from the cache, then runs in a fresh process.
-The run did not drop the page cache.
+The page cache was not dropped, so none of these queries is a cold-cache time.
+A fresh-process query starts a new process with the cache left in place.
 A warm query is the next query in that same process.
 The timed corpora repeat ASE effective-medium searches: a hydrogen cyanide band, a copper adatom band, a platinum-hydrogen band and a platinum adatom dimer.
 Every frame in those corpora has its own xxHash3-128, at both 1,000 and 10,000 frames, so the ingest timing is the cost of storing distinct texts.
@@ -301,6 +307,7 @@ Inside a single ASE transaction the writer still commits every 5,000 rows, so 1,
 The other ASE column commits on every write.
 At 1,000 frames the medians are \(0.0329\,\mathrm{s}\) (30,400 frames/s) for readcon-db, \(0.646\,\mathrm{s}\) (1,550 frames/s) for one transaction, and \(5.03\,\mathrm{s}\) (199 frames/s) for a commit on every write.
 At 10,000 frames readcon-db writes at \(35.1\,\mathrm{MB/s}\) (33.0 to 38.0), the single transaction at \(1.83\,\mathrm{MB/s}\), and the per-write commits at \(0.226\,\mathrm{MB/s}\).
+Figure \ref{fig:db-throughput} is the ingest rate and Figure \ref{fig:db-bandwidth} is the bandwidth.
 
 \begin{table}[ht]
 \centering
@@ -336,11 +343,10 @@ A megabyte is \(10^{6}\) bytes.}
 \label{fig:db-bandwidth}
 \end{figure}
 
-On composition, energy and maximum force at 10,000 frames, readcon-db takes about 8 to 10 ms when cold and about 0.2 ms when warm.
-The cold medians are 8.14 ms (5.12 to 10.7), 10.1 ms (8.11 to 14.4) and 9.57 ms (7.70 to 11.6), in that query order.
+On composition, energy and maximum force at 10,000 frames, the readcon-db fresh-process medians are 8.14 ms (5.12 to 10.7), 10.1 ms (8.11 to 14.4) and 9.57 ms (7.70 to 11.6), in that query order.
 The warm medians are 0.176 ms, 0.211 ms and 0.208 ms.
-The ASE database takes 0.286 s, 0.223 s and 0.225 s on the cold queries, and 0.258 s, 0.203 s and 0.206 s when warm.
-A directory of the same CON text, in 64-frame chunks, takes 0.193 s, 0.193 s and 0.197 s cold, and 0.140 s, 0.138 s and 0.138 s warm.
+The ASE database takes 0.286 s, 0.223 s and 0.225 s in a fresh process, and 0.258 s, 0.203 s and 0.206 s when warm.
+A directory of the same CON text, in 64-frame chunks, takes 0.193 s, 0.193 s and 0.197 s in a fresh process, and 0.140 s, 0.138 s and 0.138 s warm.
 Figure \ref{fig:db-query} shows both corpus sizes.
 
 \begin{figure}[ht]
@@ -348,7 +354,8 @@ Figure \ref{fig:db-query} shows both corpus sizes.
 \includegraphics[width=\textwidth]{figures/generated/db_query_latency.pdf}
 \caption{Median query time for composition, energy and maximum force, from the stored measurements.
 Each panel is one corpus size.
-Rows pair the store with a cold or warm cache.}
+Rows pair the store with a fresh process, cache left in place, or with the next query in that process.
+The page cache was not dropped.}
 \label{fig:db-query}
 \end{figure}
 
@@ -385,12 +392,12 @@ They cover a round trip, identical bytes sharing one hash entry, a one-digit coo
 In readcon-db 0.1.8 the map starts at 2 GiB.
 The caller can raise that limit, and a full map grows and retries.
 These tables were collected with that 2 GiB ceiling, so one million frames exceed it.
-A \(100{,}000\)-frame ingest was left out of the timed table, because the ASE database at about 200 frames/s exceeds two minutes.
+A \(100{,}000\)-frame ingest was left out of the timed table, because the ASE database at 207 frames/s exceeds two minutes.
 gzip and zstd in Figure \ref{fig:db-disk} are wrappers of the CON text.
 The store keeps each text, so the stored blob bytes of the \(24{,}000\)-frame trace equal the raw file, and the indexes sit beside that text.
 \section{Language pairs}
 \label{sec:supp-pairs}
-Table \ref{tab:restart-pairs} is the climbing-image band through each writer and reader among Python, C, C++, Fortran and Julia.
+Table \ref{tab:restart-pairs} is the harness result for the climbing-image band through each writer and reader among Python, C, C++, Fortran and Julia.
 \input{figures/generated/restart_pairs}
 \section{MPI ranks}
 \label{sec:supp-mpi}
@@ -455,8 +462,10 @@ Two threads give speedup \(1.148\) with interval \([1.126, 1.157]\), four give \
 The five-repeat Python speedup at eight threads is \(1.15\).
 Both numbers stand.
 The file read itself, measured by sending the bytes to the null device, has median \(0.018511\,\mathrm{s}\), \(9059.8\,\mathrm{MB/s}\).
-Reading the bytes in the process takes \(0.094482\,\mathrm{s}\), and scanning frame boundaries takes \(0.034420\,\mathrm{s}\).
-Those two stages are \(0.267\) of the one-thread native median, which is the serial fraction in Figure \ref{fig:roofline}.
+Reading the bytes in the process takes \(0.094481528\,\mathrm{s}\), and scanning frame boundaries takes \(0.034419954\,\mathrm{s}\).
+Their sum is \(0.128901482\,\mathrm{s}\), which is \(0.266523\) of the 15-repeat one-thread median \(0.483640922\,\mathrm{s}\).
+That quotient is not the serial fraction of Figure \ref{fig:roofline}.
+The figure has no Amdahl curve.
 
 \section{ABNF of one frame}
 \label{sec:appendix-abnf}
@@ -465,6 +474,40 @@ An empty first header line is the user line, an empty second header line is impl
 The listing has 50 rules.
 The specification wins where the two disagree.
 \input{figures/generated/con_abnf}
+
+\section{Reproduction}
+\label{sec:supp-repro}
+The commands below rewrite every table and figure in the manuscript from the committed measurements.
+They do not repeat the wall-clock campaigns.
+Thread, peer and MPI timings were taken with \texttt{OMP\_NUM\_THREADS=1}, \texttt{OPENBLAS\_NUM\_THREADS=1} and \texttt{MKL\_NUM\_THREADS=1}.
+The thread and peer-A binaries were built with rustc 1.88.0 and g++ 13.3.0.
+Peer campaign B and the MPI binaries were built with rustc 1.99.0.
+The store evaluation used rustc 1.88.0.
+Run the commands from the repository root.
+
+\begin{lstlisting}[caption={Rebuild of the manuscript tables and figures.},label={lst:repro}]
+python3 paper/cpc/scripts/gen_tables.py
+python3 paper/cpc/scripts/gen_cloud_tables.py
+python3 paper/cpc/scripts/gen_failure_tables.py
+python3 paper/cpc/scripts/file_sizes.py
+python3 paper/cpc/scripts/trace_claimed.py
+python3 paper/cpc/scripts/gen_figures.py
+python3 paper/cpc/scripts/plot_figures.py
+python3 paper/cpc/scripts/plot_supp.py
+python3 paper/cpc/scripts/plot_restart_formats.py
+python3 paper/cpc/scripts/plot_mpi_cloud.py
+\end{lstlisting}
+
+\texttt{gen\_tables.py} writes the peer table, the ratio table, the HCN table and the macro file.
+\texttt{gen\_cloud\_tables.py} writes the restart tables and the MPI rank tables.
+\texttt{gen\_failure\_tables.py} writes the survey, the extended-XYZ drift table and the version-safety table.
+\texttt{file\_sizes.py} writes the byte-cost table.
+\texttt{trace\_claimed.py} writes the weak-scaling rate table.
+\texttt{gen\_figures.py} writes the architecture figure and the ABNF listing.
+\texttt{plot\_figures.py} writes the Morse restart, the layer rates, the scaling rates, the mask bands and the store figures.
+\texttt{plot\_supp.py} writes the restart-difference heatmap, the fidelity matrix, the frame anatomy, the velocity step, the illegal-file classes, the hash graph and the five-band maps.
+\texttt{plot\_restart\_formats.py} writes the three resumed-band panels.
+\texttt{plot\_mpi\_cloud.py} writes the strong-scaling and weak-scaling figures.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{rg_main}

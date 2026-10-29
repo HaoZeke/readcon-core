@@ -303,7 +303,12 @@ def _corpus_counts() -> None:
             {
                 "n_valid": str(len(doc.get("valid", []))),
                 "n_invalid": str(len(doc.get("invalid", []))),
-                "n_bindings": "5",
+                "n_bindings": str(sum(1 for path in (
+                    readcon_src() / "tests/python/test_conformance_goldens.py",
+                    readcon_src() / "tests/c/test_conformance_goldens.c",
+                    readcon_src() / "fortran/ReadCon/test_conformance",
+                    readcon_src() / "julia/ReadCon/test/test_conformance_goldens.jl",
+                ) if path.exists())),
             }
         ],
     )

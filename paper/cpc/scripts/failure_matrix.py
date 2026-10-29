@@ -23,7 +23,9 @@ import numpy as np
 warnings.filterwarnings("ignore")
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "failure"
-NAT_FS = 10.180505671156723  # (amu*A^2/eV)^0.5 in fs, CODATA 2018
+# (amu*angstrom^2/eV)^0.5 in fs, the value unit_conversion_factor returns
+# for the CODATA 2018 constants (src/units.rs).
+NAT_FS = 10.180505710759414
 
 
 def fixture():

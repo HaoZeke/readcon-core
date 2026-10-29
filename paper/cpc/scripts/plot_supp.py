@@ -62,7 +62,7 @@ def restart_heatmap(theme, png_dir: Path | None) -> None:
     positive = np.concatenate([matrix[matrix > 0] for matrix in matrices])
     norm = LogNorm(vmin=float(positive.min()), vmax=float(positive.max()))
     cmap = pf.SEQUENTIAL.copy()
-    cmap.set_bad("#F4F1EA")
+    cmap.set_bad("#FFFFFF")
     fig, axes = plt.subplots(1, 2, figsize=(7.4, 3.8), layout="constrained", sharey=True)
     image = None
     for ax, (title, block), matrix in zip(axes, panels, matrices, strict=True):
@@ -105,7 +105,7 @@ def fidelity_matrix(theme, png_dir: Path | None) -> None:
     columns = ("mask", "id", "time_unit", "binary64")
     headers = ("mask", "id", "time unit", "binary64")
     data = np.array([[GRADE[row[name]] for name in columns] for row in rows], dtype=float)
-    cmap = ListedColormap([EXACT, APPROX, LOST, "#E6E6E6"])
+    cmap = ListedColormap([EXACT, APPROX, LOST, "#FFFFFF"])
     fig, ax = plt.subplots(figsize=(6.6, 5.0), layout="constrained")
     ax.imshow(data, cmap=cmap, vmin=-0.5, vmax=3.5, aspect="auto")
     ax.set_xticks(range(len(headers)))
@@ -270,7 +270,8 @@ def error_taxonomy(theme, png_dir: Path | None) -> None:
     for case in cases:
         counts[case["readcon_class"]] = counts.get(case["readcon_class"], 0) + 1
     ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
-    colours = [pf.SEQUENTIAL(value) for value in np.linspace(0.08, 0.92, len(ordered))]
+    palette = [pf.TEAL, pf.SKY, pf.MAGENTA, pf.CORAL, pf.SUNSHINE, pf.BLACK]
+    colours = [palette[i % len(palette)] for i in range(len(ordered))]
     fig, axes = plt.subplots(
         3,
         1,
@@ -284,7 +285,10 @@ def error_taxonomy(theme, png_dir: Path | None) -> None:
     axes[0].set_title("readcon")
     for (name, count, x, y, w, h), colour in zip(_treemap(ordered), colours, strict=True):
         axes[0].add_patch(Rectangle((x, y), w, h, facecolor=colour, edgecolor="white", linewidth=1.2))
-        luminance = 0.3 * colour[0] + 0.6 * colour[1] + 0.1 * colour[2]
+        red = int(colour[1:3], 16) / 255.0
+        green = int(colour[3:5], 16) / 255.0
+        blue = int(colour[5:7], 16) / 255.0
+        luminance = 0.3 * red + 0.6 * green + 0.1 * blue
         axes[0].text(
             x + w / 2,
             y + h / 2,
