@@ -14,17 +14,29 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+matplotlib.rcParams["pdf.fonttype"] = 42
+matplotlib.rcParams["ps.fonttype"] = 42
+matplotlib.rcParams["font.size"] = 9
+matplotlib.rcParams["font.family"] = "Atkinson Hyperlegible"
+matplotlib.rcParams["axes.linewidth"] = 0.6
+
 ROOT = Path(__file__).resolve().parents[1]
 CLOUD = ROOT / "data" / "cloud-runs-2" / "04"
 OUT = ROOT / "src" / "figures" / "generated"
 
+# chemparseplot.plot.theme.RUHI_COLORS
+TEAL = "#004D40"
+SKY = "#1E88E5"
+MAGENTA = "#D81B60"
+CORAL = "#FF655D"
+
 SERIES = (
-    ("readcon-core", "read", "shared", "read, shared", "#0f6f6a", "o"),
-    ("readcon-core", "read", "scatter", "read, scatter", "#c4493a", "s"),
-    ("readcon-core", "write", "mpiio", "write, MPI-IO", "#3c6e9a", "D"),
-    ("readcon-core", "write", "gather", "write, gather", "#b05a8a", "^"),
-    ("readcon-db", "ingest", "single", "ingest, one writer", "#0f6f6a", "o"),
-    ("readcon-db", "ingest", "sharded", "ingest, four shards", "#c4493a", "s"),
+    ("readcon-core", "read", "shared", "read, shared", TEAL, "o"),
+    ("readcon-core", "read", "scatter", "read, scatter", CORAL, "s"),
+    ("readcon-core", "write", "mpiio", "write, MPI-IO", SKY, "D"),
+    ("readcon-core", "write", "gather", "write, gather", MAGENTA, "^"),
+    ("readcon-db", "ingest", "single", "ingest, one writer", TEAL, "o"),
+    ("readcon-db", "ingest", "sharded", "ingest, four shards", CORAL, "s"),
 )
 
 

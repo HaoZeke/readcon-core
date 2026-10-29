@@ -168,7 +168,7 @@ def restart_table(rows: list[dict[str, str]], keep, caption: str, label: str) ->
             if row.get("error"):
                 body.append(
                     r"legacy CON (ASE eon writer) & \multicolumn{5}{l}{no file: "
-                    r"TypeError, FixCartesian is not a per-axis constraint} \\"
+                    r"a per-axis constraint is rejected} \\"
                 )
                 continue
             body.append(
@@ -320,8 +320,7 @@ def main() -> None:
         restart_table(
             restart,
             lambda row: row in pairs,
-            "The same band through each writer and reader pair among Python, C, C++, Fortran and Julia. "
-            "Fortran calls \\texttt{rkr\\_frame\\_add\\_atom\\_full} in the C header order. "
+            "The same climbing-image band through each writer and reader among Python, C, C++, Fortran and Julia. "
             "The columns are the columns of Table~\\ref{tab:restartfmt}.",
             "tab:restart-pairs",
         ),

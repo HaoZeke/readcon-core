@@ -15,19 +15,23 @@ matplotlib.use("Agg")
 matplotlib.rcParams["pdf.fonttype"] = 42
 matplotlib.rcParams["ps.fonttype"] = 42
 matplotlib.rcParams["font.size"] = 9
+matplotlib.rcParams["font.family"] = "Atkinson Hyperlegible"
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch
 
 OUT = Path(__file__).resolve().parents[1] / "src" / "figures" / "generated"
 
-ORANGE = "#E69F00"
-SKY = "#56B4E9"
-GREEN = "#009E73"
-BLUE = "#0072B2"
+# chemparseplot.plot.theme.RUHI_COLORS. Dark teal takes white type.
+TEAL = "#004D40"
+SKY = "#1E88E5"
+MAGENTA = "#D81B60"
+CORAL = "#FF655D"
+SUNSHINE = "#F1DB4B"
 BLACK = "#000000"
+WHITE = "#FFFFFF"
 
 
-def _box(ax, x, y, w, h, text, color):
+def _box(ax, x, y, w, h, text, color, ink=BLACK):
     ax.add_patch(
         FancyBboxPatch(
             (x, y),
@@ -39,7 +43,7 @@ def _box(ax, x, y, w, h, text, color):
             linewidth=0.6,
         )
     )
-    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=8, color=BLACK)
+    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=8, color=ink)
 
 
 def workflow() -> None:
@@ -49,9 +53,9 @@ def workflow() -> None:
     ax.axis("off")
     boxes = [
         (0.08, "Search writes\na frame", SKY),
-        (1.08, "Queue or client\nstops the job", ORANGE),
-        (2.08, "Next client\nreads the frame", GREEN),
-        (3.08, "Search continues\non that state", BLUE),
+        (1.08, "Queue or client\nstops the job", SUNSHINE),
+        (2.08, "Next client\nreads the frame", TEAL),
+        (3.08, "Search continues\non that state", CORAL),
     ]
     for x, text, color in boxes:
         _box(ax, x, 0.28, 0.84, 0.48, text, color)
@@ -73,8 +77,8 @@ def architecture() -> None:
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 6)
     ax.axis("off")
-    _box(ax, 3.15, 4.55, 3.7, 1.05, "Rust core\nparse and write", SKY)
-    _box(ax, 3.15, 2.85, 3.7, 1.05, "C ABI\nnull on failure, caller frees", ORANGE)
+    _box(ax, 3.15, 4.55, 3.7, 1.05, "Rust core\nparse and write", TEAL, WHITE)
+    _box(ax, 3.15, 2.85, 3.7, 1.05, "C interface", SKY)
     callers = [
         (0.25, "C"),
         (2.15, "C++\neOn"),
@@ -83,7 +87,7 @@ def architecture() -> None:
         (7.85, "Fortran"),
     ]
     for x, name in callers:
-        _box(ax, x, 0.55, 1.75, 0.95, name, GREEN)
+        _box(ax, x, 0.55, 1.75, 0.95, name, CORAL)
     ax.annotate(
         "",
         xy=(5.0, 3.95),

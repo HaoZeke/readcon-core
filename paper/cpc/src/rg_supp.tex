@@ -62,13 +62,12 @@ belowskip=0.4em
 \AtBeginDocument{\renewcommand{\thelstlisting}{S\arabic{lstlisting}}}
 \hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue!50!black}
 \date{\today}
-\title{Supplementary material for CON 3.1}
+\title{Supplementary material: CON 3.1}
 \hypersetup{
  pdfauthor={Rohit Goswami},
- pdftitle={Supplementary material for CON 3.1},
- pdfkeywords={checkpoint, specification, restart, saddle},
+ pdftitle={Supplementary material: CON 3.1},
+ pdfkeywords={restart, specification, saddle search, conformance},
  pdfsubject={},
- pdfcreator={Emacs 30.1 (Org mode 9.7.11)}, 
  pdflang={English}}
 \begin{document}
 
@@ -77,9 +76,10 @@ belowskip=0.4em
 \input{authors.tex}
 \begin{abstract}
 These notes record the measurements behind the CON 3.1 paper.
-The restart displacements, the format matrix, the frame bytes, the velocity step and the illegal-file classes are reads of the campaign files and the conformance corpus.
-The language-pair table and the MPI rank tables are the cloud campaign.
-The ingest tables are the readcon-db evaluation at commit \texttt{6146c3b}.
+The restart displacements, the format matrix, the frame bytes, the velocity step and the illegal-file classes are the campaign results and the conformance corpus.
+The language-pair table and the MPI rank tables are the distributed campaign.
+The ingest tables are the readcon-db 0.1.8 evaluation.
+The archived store release is 0.2.0.
 \end{abstract}
 \end{frontmatter}
 \section{Restart difference}
@@ -106,9 +106,7 @@ That frame already carries mask 4, a \(z\)-only hold, on the adatom, together wi
 It carries no velocities and no time unit, so the time-unit cell on those rows is absent.
 The velocity-file row is a separate round trip of the unmodified 28-atom velocity fixture, whose time unit is the natural unit.
 Neither file was edited.
-The library conversion into ASE atoms passes energy and forces as positional arguments.
-ASE 3.29.0 accepts those values only as keywords, so the measurement supplies them as the keywords that constructor requires.
-The grades are the fields that come back from a write and a read after that conversion.
+The grades are the fields that come back from a write and a read.
 
 \begin{figure}[ht]
 \centering
@@ -281,24 +279,22 @@ On one frame the fixed cost of opening the file dominates, which is why h5py and
 \section{Stored ingest timings}
 \label{sec:appendix-db}
 readcon-db answers composition, energy and maximum-force queries over CON frames.
-The numbers are the evaluation at commit \texttt{6146c3b}: five interleaved repeats, median then minimum and maximum.
-The machine was an Intel Xeon with 8 CPUs and 47.07 GiB of memory.
+The numbers are the readcon-db 0.1.8 evaluation: five interleaved repeats, median then minimum and maximum.
+The machine was an Intel(R) Xeon(R) Processor with 8 CPUs and 47.07 GiB of memory.
+TODO(verify): commercial CPU SKU, family and model, clock frequency and operating-system release for this host.
 The software was Python 3.12.3, rustc 1.88.0, readcon-db 0.1.8, readcon-core 0.16.2, ASE 3.29.0 and numpy 2.5.4.
 Threads were pinned to one so that readcon-db, ASE's database and the CON directory ran under the same cap.
 The parallel ingest is the MPI campaign in Section \ref{sec:supp-mpi}.
 A megabyte is \(10^{6}\) bytes.
-A cold query follows \texttt{posix\_fadvise} with \texttt{DONTNEED}, then runs in a fresh process.
+A cold query asks the kernel to drop the file from the cache, then runs in a fresh process.
 The run did not drop the page cache.
 A warm query is the next query in that same process.
 The timed corpora repeat ASE effective-medium searches: a hydrogen cyanide band, a copper adatom band, a platinum-hydrogen band and a platinum adatom dimer.
 Every frame in those corpora has its own xxHash3-128, at both 1,000 and 10,000 frames, so the ingest timing is the cost of storing distinct texts.
 The clock starts before the write and stops after a composition check.
 The ingest table has 30 rows and the query table has 180, and every row matched the hit count and the sum of frame indexes.
-Python \texttt{ConCorpus.select} always applies an atom-count range, including the default from 0 to \(2^{32}-1\), so a Python query walks that index.
-The timed queries use the Rust select and do not add the predicate.
-\texttt{readcon.iter\_con} skips a leading newline, so an empty user line shifts the header.
-The evaluation writes the user line \texttt{cpc-eval}.
-\texttt{read\_con} on one frame keeps an empty user line, which the grammar allows.
+The timed queries do not add an atom-count predicate.
+The evaluation corpus begins with a user line, which the grammar keeps.
 
 Table \ref{tab:db-ingest} is the ingest of 10,000 frames.
 Inside a single ASE transaction the writer still commits every 5,000 rows, so 1,000 frames is one commit and 10,000 frames is two commits, plus the commit that closes the block.
@@ -386,17 +382,15 @@ The right panel is allocated bytes for the full corpus and for a corpus of the u
 
 Nine correctness checks pass on that store.
 They cover a round trip, identical bytes sharing one hash entry, a one-digit coordinate change, a missing force or velocity section, periodicity taken only from the declared mask, a rebuild of the indexes from the stored text, a second rebuild, an ignored numeric cache, and a hash entry that remains after a duplicate is rewritten.
-In readcon-db 0.1.8 the LMDB map defaults to 2 GiB (\texttt{DEFAULT\_MAP\_SIZE}).
-\texttt{open\_with\_map\_size} and \texttt{READCON\_DB\_MAP\_SIZE} raise it, and a full map grows and retries.
-The tables in this note were collected at commit \texttt{6146c3b}, where the map was that 2 GiB constant, so one million frames returned \texttt{MDB\_MAP\_FULL}.
+In readcon-db 0.1.8 the map starts at 2 GiB.
+The caller can raise that limit, and a full map grows and retries.
+These tables were collected with that 2 GiB ceiling, so one million frames exceed it.
 A \(100{,}000\)-frame ingest was left out of the timed table, because the ASE database at about 200 frames/s exceeds two minutes.
 gzip and zstd in Figure \ref{fig:db-disk} are wrappers of the CON text.
 The store keeps each text, so the stored blob bytes of the \(24{,}000\)-frame trace equal the raw file, and the indexes sit beside that text.
 \section{Language pairs}
 \label{sec:supp-pairs}
 Table \ref{tab:restart-pairs} is the climbing-image band through each writer and reader among Python, C, C++, Fortran and Julia.
-The Fortran rows call \path{rkr_frame_add_atom_full} in the C header order.
-The public Fortran \path{add_atom} wrapper binds a different argument order, returns status \(-4\), and is not one of these rows.
 \input{figures/generated/restart_pairs}
 \section{MPI ranks}
 \label{sec:supp-mpi}
@@ -408,6 +402,62 @@ Every repeat matched the serial bytes.
 \input{figures/generated/mpi_strong_warm_full}
 \input{figures/generated/mpi_weak_cold}
 \input{figures/generated/mpi_weak_warm_full}
+\section{Records beside the checkpoint}
+\label{sec:supp-neighbours}
+Table \ref{tab:compare} answers four questions for the checkpoint and for the records that sit beside a saddle search.
+Restart-exact means binary64 coordinates, the per-axis mask, the persistent identifier and the periodic flags all come back.
+Velocities means a velocity block whose time unit is written in the file.
+Metadata means a version or a schema a second reader can apply.
+Indexed means frame \(k\) can be opened without a scan whose length is the number of earlier frames.
+The first six rows are the round trips in Table \ref{tab:survey}.
+Rows below the second rule are what the cited specification stores.
+
+\begin{table}[ht]
+\centering
+\scriptsize
+\caption{Restart record against neighbouring records.
+The first six rows are measured in Table \ref{tab:survey}.
+Later rows follow the cited specification.
+``Scan'' means the reader walks the file to find a frame.
+``Offsets'' means the reader records a byte offset after that scan, which stays serial because each start depends on the counts before it.}
+\label{tab:compare}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.34\linewidth}llll@{}}
+\toprule
+Record & Restart-exact & Velocities & Metadata & Indexed \\
+\midrule
+CON 3.1 & yes & declared & versioned & offsets \\
+extended XYZ & no & omitted & comment & scan \\
+ASE trajectory & coordinates & unnamed & code & yes \\
+POSCAR & mask changed & omitted & selective & no \\
+H5MD & single precision & declared & versioned & HDF5 \\
+ASE eon on CON & collapsed & rejected & none & no \\
+\midrule
+TNG, GROMACS, CHARMM, AMBER/NetCDF \cite{spangbergTrajectoryNgPortable2011,lundborgEfficientExtensibleFormat2014,abrahamGromacsHighPerformance2015,brooksCharmmBiomolecularSimulation2009,caseAmberBiomolecularSimulation2005,rewNetcdfInterfaceScientific1990} & trajectory & MD fields & container & frames \\
+PDB, wwPDB, mmCIF \cite{bermanProteinDataBank2000,bermanAnnouncingWorldwideProtein2003,westbrookStarmmcifOntologyMacromolecular2000} & archive & omitted & ontology & archive id \\
+LAMMPS, Atomsk, Open Babel \cite{thompsonLammpsFlexibleSimulation2022,hirelAtomskToolManipulating2015,oboyleOpenBabelOpen2011} & columns & deck units & converter & no \\
+cclib, IOData, TREXIO, QCArchive \cite{oboyleCclibLibraryPackageindependent2008,verstraelenIodataPythonLibrary2021,posenitskiyTrexioFileFormat2023,smithMolssiQcaRchive2021} & QC object & omitted & schema & result index \\
+OPTIMADE, NOMAD, Catalysis-Hub, Transition1x, OC20 \cite{andersenOptimadeApiExchanging2021,draxlNomadLaboratoryData2019,wintherCatalysishuborgOpenElectronic2019,schreinerTransition1xDatasetBuilding2022,chanussotOpenCatalyst20202021} & published geometry & omitted & schema & yes \\
+MDTraj, VMD, OVITO, d-SEAMS, essential dynamics, MPI H5MD \cite{mcgibbonMdtrajModernOpen2015,humphreyVmdVisualMolecular1996,stukowskiVisualizationAnalysisAtomistic2010,goswamiDseamsDeferredStructural2020,meyerEssentialDynamicsTool2006,jakupovicMpiparallelMolecularDynamics2021} & analysis & from the file & the tool & opened file \\
+Zarr, ADIOS2, portable scientific data \cite{opengeospatialconsortiumZarrStorageSpecification2022,godoyAdios2Adaptable2020,brownSoftwarePortableScientific1993} & arrays & omitted & container & chunks \\
+PACKMOL \cite{martinezPackmolPackageBuilding2009} & initial box & omitted & none & no \\
+PLUMED, ESPResSo \cite{tribelloPlumed2New2014,weikEspresso40Extensible2019} & program state & program & checkpoint & no \\
+i-PI, MDI \cite{ceriottiIpiPythonInterface2014,kapilIpi20Universal2019,litmanIpi30Flexible2024,barnesMolssiDriverInterface2021} & live step & in the step & interface & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Second Python thread sweep}
+\label{sec:supp-threads}
+The five-repeat pool sweep in Section \ref{sec:perf-read} and the thirty-pair sweep here are different campaigns on the same \(10{,}000\)-frame file.
+The thirty-pair one-thread median is \(1.35258\,\mathrm{s}\).
+Two threads give speedup \(1.148\) with interval \([1.126, 1.157]\), four give \(1.209\) with \([1.194, 1.223]\), and eight give \(1.284\) with \([1.263, 1.313]\).
+The five-repeat Python speedup at eight threads is \(1.15\).
+Both numbers stand.
+The file read itself, measured by sending the bytes to the null device, has median \(0.018511\,\mathrm{s}\), \(9059.8\,\mathrm{MB/s}\).
+Reading the bytes in the process takes \(0.094482\,\mathrm{s}\), and scanning frame boundaries takes \(0.034420\,\mathrm{s}\).
+Those two stages are \(0.267\) of the one-thread native median, which is the serial fraction in Figure \ref{fig:roofline}.
+
 \section{ABNF of one frame}
 \label{sec:appendix-abnf}
 The non-normative ABNF of one frame follows.
