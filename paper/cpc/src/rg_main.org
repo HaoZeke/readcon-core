@@ -492,7 +492,7 @@ A specification has to close that gap; the column layout is the easy part.
 :PROPERTIES:
 :CUSTOM_ID: sec:implementation
 :END:
-readcon-core 0.17.0 is the reference reader and writer \cite{goswamiReadconcoreConconvelReaderwriter2026}.
+readcon-core 0.17.2 is the reference reader and writer \cite{goswamiReadconcoreConconvelReaderwriter2026}.
 Figure \ref{fig:architecture} is the layering.
 One Rust core parses and writes, and one C interface is the waist every other caller uses.
 C++ wraps it for eOn, Python binds it with array accessors \cite{harrisArrayProgrammingNumpy2020}, Julia calls it through its foreign-function interface \cite{bezansonJuliaFreshApproach2017}, and Fortran 2008 reaches the same symbols through its C interoperability.
@@ -554,10 +554,10 @@ Table \ref{tab:restartfmt} and Figure \ref{fig:restartfmt} are the result.
 \input{figures/generated/restartfmt_table}
 #+END_EXPORT
 
-The CON 3.1 resume reads back the written coordinates bit for bit and ends within \(2.7\times10^{-15}\,\text{\AA}\) and \(6\times10^{-14}\,\mathrm{eV}\) of the uninterrupted band.
+The CON 3.1 resume reads the written coordinates back with no change in the file and ends \(3.55\times10^{-15}\,\text{\AA}\) and \(2.31\times10^{-14}\,\mathrm{eV}\) from the uninterrupted band.
 The ASE trajectory reaches the same floor.
 That floor is not the file: a fresh force-field object on identical coordinates already differs at that level.
-Six decimals move the band by \(6.2\times10^{-7}\,\text{\AA}\) and extended XYZ by \(4.9\times10^{-9}\,\text{\AA}\); both still converge in 60 steps.
+Six decimals move the images by \(5.69\times10^{-7}\,\text{\AA}\) and finish at a barrier of \(0.644561378\,\mathrm{eV}\). Extended XYZ moves the band by \(4.9\times10^{-9}\,\text{\AA}\). Both still converge in 60 steps.
 The ASE POSCAR route is the instructive failure.
 Its coordinates are exact to \(5\times10^{-17}\,\text{\AA}\), and the adatom's height constraint is gone, so the middle image gains a mode.
 The band relaxes the adatom toward the surface and converges in 98 steps to a barrier \(70\,\mathrm{meV}\) lower, a different saddle on a different surface.
@@ -647,7 +647,7 @@ The ASE eon reader does not accept a velocity block and, on the coordinate block
 :CUSTOM_ID: sec:perf-read
 :END:
 A resume reads its checkpoint once per force call at most, so a read has to stay cheap beside that call.
-The timings use one file on one Intel Xeon processor of family 6, model 207, with 8 hardware threads, rustc 1.88, g++ 13.3 and Python 3.12.
+The timings use one file on one Intel Xeon processor of family 6, model 173, at 2700 MHz, with 8 hardware threads, rustc 1.88, g++ 13.3 and Python 3.12.
 The layer and thread timings use a \(167.71\,\mathrm{MB}\) file of 10,000 copies of one 218-atom frame, read from a warm page cache, so the rate is the cost of this frame.
 The peer comparison and the readcon-db ingest use a 10,000-frame velocity Verlet EMT trajectory of the same frame at \(1\,\mathrm{fs}\) and \(300\,\mathrm{K}\), in which the two free hydrogen atoms move and every frame is distinct; its CON file is \(92.03\,\mathrm{MB}\).
 An interval is a bias-corrected and accelerated 95 percent interval of the median \cite{efronBetterBootstrapConfidence1987,kaliberaRigorousBenchmarkingReasonable2013,mytkowiczProducingWrongData2009,hoeflerScientificBenchmarkingParallel2015}.
@@ -815,18 +815,6 @@ Every output has the bytes of the serial one.}
 #+END_EXPORT
 
 
-* Limitations
-:PROPERTIES:
-:CUSTOM_ID: sec:limitations
-:END:
-CON 3.1 is a text format for the frames a search checkpoints, not for analysis trajectories.
-Text costs space and a parse (Table \ref{tab:sizes}), which the core pays at \(1.3\,\mathrm{GB/s}\).
-Indexed random access and campaign storage are readcon-db's part of the design \cite{goswamiReadcondbMmapCon2026}.
-A frame specifies geometry and its labels, not optimiser state, so an L-BFGS resume restarts its history; a key for that history is the natural next minor version.
-The conformance corpus fixes what a conforming reader decides on each listed file, and it says nothing about a reader on files outside it.
-A single core behind every binding makes the bindings agree by construction, which is a property of this implementation and not evidence about a second one.
-The resume studies are one symmetric and one asymmetric EMT hop and one Morse band; they show what a lost field does to a saddle, and they are not a survey of reactions.
-The peer comparisons hold for the library versions named in Section \ref{sec:requirements}.
 
 * Conclusions
 :PROPERTIES:
@@ -843,7 +831,7 @@ A band resumed through it matches the uninterrupted band to the floor set by res
 :CUSTOM_ID: sec:data
 :UNNUMBERED: t
 :END:
-The version 0.17.0 archive is \url{https://doi.org/10.5281/zenodo.23302640} \cite{goswamiReadconcoreConconvelReaderwriter2026}, and the concept record is \url{https://doi.org/10.5281/zenodo.18753567} \cite{goswamiReadconcoreConConvel2026}.
+The release measured here is readcon-core 0.17.2 at commit 5c849d1b1d3dede45e20665c5730abe3d5f18f84 \cite{goswamiReadconcoreConconvelReaderwriter2026}, and the concept record is \url{https://doi.org/10.5281/zenodo.18753567} \cite{goswamiReadconcoreConConvel2026}.
 A citation to the software is owed to that archived record \cite{smithSoftwareCitationPrinciples2016,wilkinsonFairGuidingPrinciples2016,barkerIntroducingFairPrinciples2022,lamprechtTowardsFairPrinciples2020}.
 Publishing a finished saddle remains the job of a repository interface, a materials archive or a reaction database, downstream of this checkpoint \cite{andersenOptimadeApiExchanging2021,draxlNomadLaboratoryData2019,wintherCatalysishuborgOpenElectronic2019,schreinerTransition1xDatasetBuilding2022,chanussotOpenCatalyst20202021}.
 The HCN coordinates used in the cross-reader check are the public endpoints of that isomerisation \cite{vanmourikAbInitioGlobal2001,goswamiReproducibleOrchestrationBest2026}.
@@ -864,12 +852,6 @@ Rohit Goswami: Conceptualization, Methodology, Software, Visualization, Writing 
 :END:
 The author declares that he has no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
-* Funding
-:PROPERTIES:
-:CUSTOM_ID: sec:funding
-:UNNUMBERED: t
-:END:
-This work received no funding.
 
 * Acknowledgements
 :PROPERTIES:

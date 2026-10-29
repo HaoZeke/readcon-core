@@ -10,7 +10,7 @@ separate job.
 Writes data/failure/version_safety.csv.
 """
 from __future__ import annotations
-import csv, ctypes, json, tempfile, warnings
+import csv, ctypes, json, os, tempfile, warnings
 from pathlib import Path
 warnings.filterwarnings("ignore")
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,7 +40,10 @@ def make(path, header, mask9=False):
 
 
 def lib():
-    p = Path("/workspace/.cargo-target/release/libreadcon_core.so")
+    raw = os.environ.get("READCON_LIB", "")
+    p = Path(raw) if raw else REPO / ".cargo-target/release/libreadcon_core.so"
+    if raw and not p.is_absolute():
+        p = (REPO / p).resolve()
     L = ctypes.CDLL(str(p))
     L.rkr_read_all_frames.restype = ctypes.c_void_p
     L.rkr_read_all_frames.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_size_t)]

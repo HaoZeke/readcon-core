@@ -25,11 +25,11 @@ CON 3.1,C++,C,kept,kept,declared,bit-exact,kept,0.0,,cross-binding
 CON 3.1,C++,C++,kept,kept,declared,bit-exact,kept,0.0,,cross-binding
 CON 3.1,C++,Fortran,kept,kept,declared,bit-exact,kept,0.0,,cross-binding
 CON 3.1,C++,Julia,kept,kept,declared,bit-exact,kept,0.0,,cross-binding
-CON 3.1,Fortran,Python,kept,kept,declared,bit-exact,kept,0.0,,"Fortran calls rkr_frame_add_atom_full with the C header order. The public module add_atom binding swaps id/mass with the fixed flags and cannot write this frame (status -4, atom id 1 repeated)."
-CON 3.1,Fortran,C,kept,kept,declared,bit-exact,kept,0.0,,"Fortran calls rkr_frame_add_atom_full with the C header order. The public module add_atom binding swaps id/mass with the fixed flags and cannot write this frame (status -4, atom id 1 repeated)."
-CON 3.1,Fortran,C++,kept,kept,declared,bit-exact,kept,0.0,,"Fortran calls rkr_frame_add_atom_full with the C header order. The public module add_atom binding swaps id/mass with the fixed flags and cannot write this frame (status -4, atom id 1 repeated)."
-CON 3.1,Fortran,Fortran,kept,kept,declared,bit-exact,kept,0.0,,"Fortran calls rkr_frame_add_atom_full with the C header order. The public module add_atom binding swaps id/mass with the fixed flags and cannot write this frame (status -4, atom id 1 repeated)."
-CON 3.1,Fortran,Julia,kept,kept,declared,bit-exact,kept,0.0,,"Fortran calls rkr_frame_add_atom_full with the C header order. The public module add_atom binding swaps id/mass with the fixed flags and cannot write this frame (status -4, atom id 1 repeated)."
+CON 3.1,Fortran,Python,kept,kept,declared,bit-exact,kept,0.0,,Fortran writes through builder%add_atom
+CON 3.1,Fortran,C,kept,kept,declared,bit-exact,kept,0.0,,Fortran writes through builder%add_atom
+CON 3.1,Fortran,C++,kept,kept,declared,bit-exact,kept,0.0,,Fortran writes through builder%add_atom
+CON 3.1,Fortran,Fortran,kept,kept,declared,bit-exact,kept,0.0,,Fortran writes through builder%add_atom
+CON 3.1,Fortran,Julia,kept,kept,declared,bit-exact,kept,0.0,,Fortran writes through builder%add_atom
 CON 3.1,Julia,Python,kept,kept,declared,bit-exact,kept,0.0,,cross-binding
 CON 3.1,Julia,C,kept,kept,declared,bit-exact,kept,0.0,,cross-binding
 CON 3.1,Julia,C++,kept,kept,declared,bit-exact,kept,0.0,,cross-binding

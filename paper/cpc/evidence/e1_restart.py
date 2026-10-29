@@ -38,7 +38,7 @@ from ase.optimize import FIRE
 ROOT = Path(__file__).resolve().parent
 WORK = ROOT / "work" / "e1"
 RESULTS = ROOT / "results"
-EON = os.environ.get("EONCLIENT", "/tmp/eon-env/bin/eonclient")
+EON = os.environ.get("EONCLIENT") or shutil.which("eonclient") or str(ROOT.parents[2] / "eon-env" / "bin" / "eonclient")
 # readcon unit_conversion_factor(natural, "fs"); see src/units.rs.
 NATURAL_TO_FS = 10.180505710759414
 FULL_ITERS = 6

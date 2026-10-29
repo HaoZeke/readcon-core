@@ -31,9 +31,21 @@ from scipy.stats import norm
 import readcon
 
 ROOT = Path(__file__).resolve().parent
+REPO = ROOT.parents[2]
 RESULTS = ROOT / "results"
 WORK = ROOT / "work" / "e2"
-BENCH_CON = Path("/workspace/paper/cpc/bench/work/frames-10000.con")
+
+
+def _from_env(name: str, default: Path) -> Path:
+    raw = os.environ.get(name)
+    if not raw:
+        return default
+    path = Path(raw)
+    return path if path.is_absolute() else (REPO / path).resolve()
+
+
+BENCH_CON = _from_env("E2_BENCH_CON", REPO / "paper/cpc/bench/work/frames-10000.con")
+INCLUDE = _from_env("READCON_INCLUDE", REPO / "include")
 RUST_BIN = ROOT / "e2_bench" / "target" / "release" / "e2-bench"
 CPP_BIN = WORK / "e2_cpp_read"
 CPP_SRC = ROOT / "e2_cpp_read.cpp"
@@ -114,7 +126,7 @@ def build_cpp() -> None:
         "-O3",
         "-std=c++17",
         str(CPP_SRC),
-        "-I/workspace/include",
+        "-I" + str(INCLUDE),
         str(STATICLIB),
         "-pthread",
         "-ldl",

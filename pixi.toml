@@ -19,9 +19,9 @@ check-wrap-hash = { cmd = "scripts/check_wrap_hash.sh", description = "Gate: wra
 package-cxx = { cmd = "scripts/package-cxx.sh dist-cxx", description = "Assemble readcon-core-cxx-$VERSION.tar.gz" }
 prek = { cmd = "prek run -a", description = "Run prek hooks on all files" }
 cpc-tables = { cmd = "python paper/cpc/scripts/gen_tables.py", description = "Write CPC table fragments from committed bench JSON" }
-cpc-tex = { cmd = "emacs -nl --script paper/cpc/scripts/org2tex.el paper/cpc/src/rg_main.org", depends-on = [
+cpc-tex = { cmd = "bash -lc 'cd paper/cpc/src && for i in 1 2; do lualatex -interaction=nonstopmode rg_supp.tex; lualatex -interaction=nonstopmode rg_main.tex; done; bibtex rg_supp; bibtex rg_main; for i in 1 2 3; do lualatex -interaction=nonstopmode rg_supp.tex; lualatex -interaction=nonstopmode rg_main.tex; done' && python3 paper/cpc/scripts/check_manuscript.py", depends-on = [
   "cpc-tables",
-], description = "Export paper/cpc/src/rg_main.org to LaTeX" }
+], description = "LuaLaTeX build of rg_main.tex and rg_supp.tex" }
 prek-install = { cmd = "prek install", description = "Install prek git hooks in this checkout" }
 
 [dependencies]
@@ -70,8 +70,31 @@ linkcheck = { cmd = "lychee --config lychee.toml 'docs/build/**/*.html'", depend
   "docbld",
 ], description = "Lychee link check on built HTML" }
 
+# Figures for paper/cpc. The conda chemparseplot does not pull in its polars,
+# h5py and jax extras, so they are listed here. Atkinson Hyperlegible is not on
+# conda-forge, so the TTFs and their OFL licence are vendored under paper/cpc/fonts.
+[feature.figures.dependencies]
+python = "3.12.*"
+chemparseplot = "==1.11.0"
+rgpycrumbs = "==1.10.10"
+polars = "*"
+h5py = "*"
+jax = "*"
+ase = "*"
+numpy = "*"
+scipy = "*"
+matplotlib-base = "==3.11.2"
+cycler = "*"
+[feature.figures.tasks]
+cpc-figure-05 = { cmd = "python paper/cpc/data/cloud-runs-2/cloud-run/plot_05.py", description = "Draw the section 05 restart figure from the committed bands" }
+cpc-fairness = { cmd = "python paper/cpc/bench/run_fairness.py", description = "Full-field vs coords-accumulation peer ratios for the abstract" }
+cpc-e2-speedup-bca = { cmd = "python paper/cpc/evidence/compute_e2_speedup_bca.py", description = "BCa intervals for five-repeat e2 thread-scaling speedups" }
+
 [environments]
 default = { solve-group = "default" }
 python = { features = ["python"], solve-group = "default" }
 julia = { features = ["julia"], solve-group = "julia" }
 docs = { features = ["docs"], solve-group = "default" }
+figures = { features = [
+  "figures",
+], no-default-feature = true, solve-group = "figures" }

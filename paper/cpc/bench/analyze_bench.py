@@ -237,6 +237,11 @@ def _write(name: str, rows: list[dict]) -> None:
 
 def main() -> None:
     analyze_ratios()
+    # Campaign A/B peer runs set BENCH_NO_THREADS and never write threads.csv.
+    if os.environ.get("BENCH_NO_THREADS"):
+        return
+    if not (RESULTS / "threads.csv").is_file():
+        return
     analyze_threads()
 
 

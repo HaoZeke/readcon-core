@@ -1,0 +1,7 @@
+C ABI check against readcon-core 0.17.2 commit 5c849d1b1d3dede45e20665c5730abe3d5f18f84
+header: include/readcon-core.h
+library: target/release/libreadcon_core.so
+command: gcc -O2 -Iinclude cabi_check.c -Ltarget/release -lreadcon_core
+output: version=0.17.2
+exit: 0
+host: Intel(R) Xeon(R) Processor family 6 model 173 2700 MHz Ubuntu 24.04

@@ -1,6 +1,6 @@
 {
   "run_id": 1,
-  "fixture": "/tmp/readcon-db-fair/resources/test/tiny_cuh2.con",
+  "fixture": "resources/test/tiny_cuh2.con",
   "ladder": [
     10,
     50,

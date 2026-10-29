@@ -1,1 +1,4 @@
-Fortran writer uses a local prototype of rkr_frame_add_atom_full (x, y, z, fixed_x, fixed_y, fixed_z, atom_id, mass, velocity, force) and stores velocities. The public ReadCon add_atom binds rkr_frame_add_atom_with_fixed_mask as (x, y, z, atom_id, mass, fx, fy, fz). The C function is (x, y, z, fx, fy, fz, atom_id, mass). A write through that binding returns status -4: CON validation failed: atom id 1 is repeated in the frame. The public add_atom also has no velocity argument.
+readcon-core 0.17.2 commit 5c849d1b1d3dede45e20665c5730abe3d5f18f84
+Fortran writer calls builder%add_atom with its optional velocity argument.
+Host: Intel(R) Xeon(R) Processor, family 6, model 173, 2700.000 MHz, 8 CPUs, 49342768 kB, Ubuntu 24.04, kernel 6.12.94+.
+rustc 1.88.0 (6b00bc388 2025-06-23); g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; Python 3.12.3.

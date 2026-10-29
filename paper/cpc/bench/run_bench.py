@@ -47,6 +47,9 @@ PEERS = tuple(os.environ.get("BENCH_PEERS", ",".join(ALL_PEERS[:4])).split(","))
 RAW_FIELDS = [
     "host",
     "cpu_model",
+    "cpu_family",
+    "cpu_model_id",
+    "cpu_mhz",
     "nproc",
     "commit",
     "readcon_sha",
@@ -113,9 +116,23 @@ def meta(src: Path) -> dict[str, str]:
             nproc = str(counted)
     except OSError:
         nproc = subprocess.check_output(["nproc", "--all"], text=True).strip()
+    family = model = mhz = ""
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("cpu family") and not family:
+                family = line.split(":", 1)[1].strip()
+            elif line.startswith("model") and not line.startswith("model name") and not model:
+                model = line.split(":", 1)[1].strip()
+            elif line.startswith("cpu MHz") and not mhz:
+                mhz = line.split(":", 1)[1].strip()
+    except OSError:
+        pass
     return {
         "host": "bench-vm",
         "cpu_model": cpu,
+        "cpu_family": family,
+        "cpu_model_id": model,
+        "cpu_mhz": mhz,
         "nproc": nproc,
         "commit": script,
         "readcon_sha": readcon_sha,
@@ -417,6 +434,9 @@ def main() -> None:
     fields = [
         "host",
         "cpu_model",
+        "cpu_family",
+        "cpu_model_id",
+        "cpu_mhz",
         "nproc",
         "commit",
         "readcon_sha",

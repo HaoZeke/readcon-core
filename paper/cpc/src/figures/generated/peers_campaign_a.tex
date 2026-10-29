@@ -1,0 +1,30 @@
+% Campaign A / B peer survey (secondary to the fairness Table~\ref{tab:peers}).
+\begin{table}[ht]
+\centering
+\small
+\caption{Campaign A and B peer ratios on the same host (family 6, model 173, \(2700\,\mathrm{MHz}\)), thirty interleaved pairs each.
+Campaign A compares the ASE eon reader, chemfiles XYZ, h5py and MDAnalysis H5MD.
+Campaign B adds ASE extended XYZ and the ASE trajectory; its ASE eon ratio on the \(10{,}000\)-frame file is \(0.257\) against \(0.253\) in A.
+These rows are not the fairness modes of Table~\ref{tab:peers}.}
+\label{tab:peers-ab}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllrl}
+\toprule
+Payload & Peer & Fields & Ratio & Interval \\
+\midrule
+10000 frames & ASE eon & same CON text & 0.253 & [0.251, 0.256] \\
+10000 frames & chemfiles XYZ & coordinates & 1.58 & [1.57, 1.6] \\
+10000 frames & h5py & one binary array & 47.6 & [46.7, 48.5] \\
+10000 frames & MDAnalysis H5MD & coordinates & 0.16 & [0.157, 0.162] \\
+Pt slab & ASE eon & same CON text & 0.215 & [0.211, 0.218] \\
+Pt slab & chemfiles XYZ & coordinates & 1.04 & [1.03, 1.04] \\
+Pt slab & h5py & one binary array & 4.1 & [4.06, 4.13] \\
+Pt slab & MDAnalysis H5MD & coordinates & 0.365 & [0.359, 0.368] \\
+10000 frames & ASE extended XYZ & ASE atoms & 0.251 & [0.243, 0.254] \\
+10000 frames & ASE trajectory & ASE atoms & 0.774 & [0.761, 0.787] \\
+Pt slab & ASE extended XYZ & ASE atoms & 0.154 & [0.154, 0.155] \\
+Pt slab & ASE trajectory & ASE atoms & 2.95 & [2.92, 3.05] \\
+\bottomrule
+\end{tabular}
+\end{table}

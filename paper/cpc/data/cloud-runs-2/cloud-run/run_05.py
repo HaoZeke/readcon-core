@@ -1,28 +1,101 @@
 #!/usr/bin/env python3
-"""Cross-binding, measured H5MD, and ASE-trajectory restart on one harness.
+"""Cross-binding, measured H5MD, and ASE-trajectory restart on one cloud-run driver.
 
 Outputs go under paper/cpc/data/cloud-runs-2/05. The manuscript prose and the
 existing data/failure tables are left untouched.
 """
 from __future__ import annotations
 
-import csv, json, os, shutil, subprocess, sys, tempfile, textwrap, traceback
+import csv, json, os, re, shutil, subprocess, sys, tempfile, textwrap, tomllib, traceback
 from pathlib import Path
 
 import numpy as np
 
-ROOT = Path("/workspace/paper/cpc")
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 os.chdir(ROOT)
 import failure_matrix as fm
 import restart_formats as rf
 
-OUT = Path("/workspace/paper/cpc/data/cloud-runs-2/05")
-LIB = Path("/workspace/target/release/libreadcon_core.so")
-CAMP = Path("/tmp/campaign")
+# READCON_CORE_ROOT is the readcon-core checkout whose library, headers,
+# Fortran module and Julia package are under test.
+CORE = Path(os.environ.get("READCON_CORE_ROOT", ROOT.parents[1]))
+OUT = Path(os.environ.get("RUN05_OUT", HERE.parent / "05"))
+LIB = Path(os.environ.get("READCON_CORE_LIB", CORE / "target" / "release" / "libreadcon_core.so"))
+CAMP = Path(os.environ.get("RUN05_BUILD", Path(tempfile.gettempdir()) / "campaign"))
+JULIA = os.environ.get("JULIA", "julia")
 NAT = fm.NAT_FS
 
 LANGS = ["Python", "C", "C++", "Fortran", "Julia"]
+
+# Before 0.17.2 builder%add_atom has no velocity argument, and in 0.17.1 it
+# passes the atom id where rkr_frame_add_atom_with_fixed_mask takes the mask.
+# The version alone does not show the new_builder header argument, which
+# arrived within 0.17.2 at 5c849d1, so the module is also compiled against a probe.
+MIN_CORE = (0, 17, 2)
+MIN_CORE_COMMIT = "5c849d1"
+PROBE = """\
+program probe
+  use readcon
+  use, intrinsic :: iso_fortran_env, only: real64, int64
+  type(builder_t) :: b
+  integer :: s
+  b = new_builder([1.0_real64, 1.0_real64, 1.0_real64], [90.0_real64, 90.0_real64, 90.0_real64], &
+       header="image 0")
+  s = b%add_atom("H", 0.0_real64, 0.0_real64, 0.0_real64, 1_int64, 1.0_real64, &
+       .false., .false., .false., velocity=[0.0_real64, 0.0_real64, 0.0_real64])
+end program
+"""
+
+
+def _version(text):
+    m = re.match(r"(\d+)\.(\d+)\.(\d+)", text or "")
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def require_fixed_core():
+    import ctypes
+    need = ".".join(map(str, MIN_CORE))
+    problems = []
+    manifest = CORE / "Cargo.toml"
+    try:
+        src = tomllib.loads(manifest.read_text())["package"]["version"]
+    except (OSError, KeyError, tomllib.TOMLDecodeError) as e:
+        src = None
+        problems.append(f"cannot read the version from {manifest}: {e}")
+    if src is not None and (_version(src) or (0,)) < MIN_CORE:
+        problems.append(f"{manifest} is readcon-core {src}")
+    try:
+        lib = ctypes.CDLL(str(LIB))
+        lib.rkr_library_version.restype = ctypes.c_char_p
+        built = lib.rkr_library_version().decode()
+    except (OSError, AttributeError) as e:
+        built = None
+        problems.append(f"cannot load rkr_library_version from {LIB}: {e}")
+    if built is not None and (_version(built) or (0,)) < MIN_CORE:
+        problems.append(f"{LIB} reports readcon-core {built}")
+    module = CORE / "fortran" / "ReadCon" / "src" / "readcon.f90"
+    with tempfile.TemporaryDirectory() as tmp:
+        probe = Path(tmp) / "probe.f90"
+        probe.write_text(PROBE)
+        try:
+            p = subprocess.run(["gfortran", "-fsyntax-only", "-ffree-line-length-none", "-J", tmp,
+                                str(module), str(probe)],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if p.returncode != 0:
+                errors = [line for line in p.stderr.splitlines() if line.startswith("Error")]
+                problems.append(f"{module} lacks new_builder(header=) or add_atom(velocity=)\n    "
+                                + "\n    ".join(errors or [p.stderr[-800:]]))
+        except OSError as e:
+            problems.append(f"cannot run gfortran on {module}: {e}")
+    if problems:
+        sys.exit(
+            f"run_05: the Fortran column needs readcon-core {need} at {MIN_CORE_COMMIT} or later.\n  "
+            + "\n  ".join(problems)
+            + "\nSet READCON_CORE_ROOT to such a checkout and READCON_CORE_LIB to its library."
+        )
+    return src, built
 
 
 def meta_of(pbc):
@@ -384,8 +457,8 @@ class Bridge:
             directory.mkdir(parents=True)
             band = directory / "_in.txt"
             dump_band(band, frames)
-            p = subprocess.run(["/opt/julia/bin/julia", "--project=/workspace/julia/ReadCon",
-                                str(CAMP / "julia_io.jl"), "write", str(band), str(directory)],
+            p = subprocess.run([JULIA, f"--project={CORE / 'julia' / 'ReadCon'}",
+                                str(HERE / "julia_io.jl"), "write", str(band), str(directory)],
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
             if p.returncode != 0:
                 raise RuntimeError(p.stderr[-1000:] or p.stdout[-1000:])
@@ -405,8 +478,8 @@ class Bridge:
             env = os.environ.copy()
             env["READCON_CORE_LIB"] = str(LIB)
             out = Path(directory) / "_out.txt"
-            p = subprocess.run(["/opt/julia/bin/julia", "--project=/workspace/julia/ReadCon",
-                                str(CAMP / "julia_io.jl"), "read", str(directory), str(out)],
+            p = subprocess.run([JULIA, f"--project={CORE / 'julia' / 'ReadCon'}",
+                                str(HERE / "julia_io.jl"), "read", str(directory), str(out)],
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
             if p.returncode != 0:
                 raise RuntimeError(p.stderr[-1000:] or p.stdout[-1000:])
@@ -542,10 +615,11 @@ def compile_bindings():
         available["C"] = True
     except Exception as e:
         notes.append(f"C ABI: {type(e).__name__}: {e}")
+    CAMP.mkdir(parents=True, exist_ok=True)
     cpp = CAMP / "cpp_io"
     p = subprocess.run(["g++", "-std=c++17", "-O2", "-Wno-deprecated-declarations",
-                        "-I", "/workspace/include",
-                        str(CAMP / "cpp_io.cpp"), "-L", str(LIB.parent), "-lreadcon_core",
+                        "-I", str(CORE / "include"),
+                        str(HERE / "cpp_io.cpp"), "-L", str(LIB.parent), "-lreadcon_core",
                         "-Wl,-rpath," + str(LIB.parent), "-o", str(cpp)],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if p.returncode == 0:
@@ -553,27 +627,19 @@ def compile_bindings():
     else:
         notes.append("C++ build failed:\n" + p.stderr[-2000:])
     fort = CAMP / "fortran_io"
-    p = subprocess.run(["gfortran", "-O2", "-ffree-line-length-none", "-J", "/tmp/campaign",
-                        "/workspace/fortran/ReadCon/src/readcon.f90",
-                        str(CAMP / "fortran_io.f90"), "-L", str(LIB.parent), "-lreadcon_core",
+    p = subprocess.run(["gfortran", "-O2", "-ffree-line-length-none", "-J", str(CAMP),
+                        str(CORE / "fortran" / "ReadCon" / "src" / "readcon.f90"),
+                        str(HERE / "fortran_io.f90"), "-L", str(LIB.parent), "-lreadcon_core",
                         "-Wl,-rpath," + str(LIB.parent), "-o", str(fort)],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if p.returncode == 0:
         available["Fortran"] = True
-        notes.append(
-            "Fortran writer uses a local prototype of rkr_frame_add_atom_full "
-            "(x, y, z, fixed_x, fixed_y, fixed_z, atom_id, mass, velocity, force) "
-            "and stores velocities. The public ReadCon add_atom binds "
-            "rkr_frame_add_atom_with_fixed_mask as (x, y, z, atom_id, mass, fx, fy, fz). "
-            "The C function is (x, y, z, fx, fy, fz, atom_id, mass). A write through that "
-            "binding returns status -4: CON validation failed: atom id 1 is repeated in the frame. "
-            "The public add_atom also has no velocity argument."
-        )
+        notes.append("Fortran writer calls builder%add_atom with its optional velocity argument.")
     else:
-        notes.append("Fortran build failed:\n" + p.stderr[-2000:])
+        sys.exit(f"run_05: fortran_io did not compile against {CORE}.\n" + p.stderr[-2000:])
     envj = env.copy()
     envj["READCON_CORE_LIB"] = str(LIB)
-    p = subprocess.run(["/opt/julia/bin/julia", "--project=/workspace/julia/ReadCon", "-e",
+    p = subprocess.run([JULIA, f"--project={CORE / 'julia' / 'ReadCon'}", "-e",
                         "using ReadCon; println(ReadCon.read_con)"],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=envj)
     if p.returncode == 0:
@@ -621,6 +687,8 @@ def h5_roundtrip(writer, reader, images):
 
 
 def main():
+    src, built = require_fixed_core()
+    print(f"readcon-core source {src}, library {built}", flush=True)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "logs").mkdir(exist_ok=True)
     available, notes, env = compile_bindings()
@@ -668,11 +736,7 @@ def main():
                     row.update(fm.grade(fx, got_for_grade(got)))
                     row["error"] = ""
                     if wr == "Fortran":
-                        row["notes"] = (
-                            "Fortran calls rkr_frame_add_atom_full with the C header order. "
-                            "The public module add_atom binding swaps id/mass with the fixed flags "
-                            "and cannot write this frame (status -4, atom id 1 repeated)."
-                        )
+                        row["notes"] = "Fortran writes through builder%add_atom"
                 except BaseException as e:
                     row.update(R1="error", R2="error", R3="error", R4="error", pbc="", dpos="",
                                error=f"{type(e).__name__}: {e}"[:300])
@@ -797,7 +861,7 @@ def main():
     for wr in langs:
         for rdn in langs:
             add_route(f"CON 3.1 {wr} to {rdn}", cross(wr, rdn),
-                      notes=("Fortran calls rkr_frame_add_atom_full; the public module add_atom binding does not match the C header"
+                      notes=("Fortran writes through builder%add_atom"
                              if wr == "Fortran" else "cross-binding"))
 
     def h5_route(writer, reader):

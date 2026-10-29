@@ -128,20 +128,21 @@ def gen_ratios(rows: list[dict[str, str]]) -> str:
     return "\n".join(body)
 
 
-def gen_peers(rows: list[dict[str, str]]) -> str:
+def gen_peers(rows: list[dict[str, str]], ase_note: str = "") -> str:
     """One table for every peer on the two production-sized payloads."""
+    caption = (
+        r"\caption{Paired ratios of the one-worker Python read to each peer, "
+        r"readcon-core time over peer time, so a value below 1 means readcon-core finished sooner. "
+        r"Each cell is 30 interleaved pairs; the interval is a bias-corrected and accelerated "
+        r"95 percent interval of the median. The fields column says what the peer returns. "
+        + ase_note
+        + "}"
+    )
     body = [
         r"\begin{table}[ht]",
         r"\centering",
         r"\small",
-        (
-            r"\caption{Paired ratios of the one-worker Python read to each peer, "
-            r"readcon-core time over peer time, so a value below 1 means readcon-core finished sooner. "
-            r"Each cell is 30 interleaved pairs; the interval is a bias-corrected and accelerated "
-            r"95 percent interval of the median. The fields column says what the peer returns. "
-            r"The two ASE rows beyond the eon reader come from a second campaign on a shared host, "
-            r"in which the ASE eon ratio on the 10000-frame file reproduced at 0.348 against 0.337.}"
-        ),
+        caption,
         r"\label{tab:peers}",
         r"\footnotesize",
         r"\setlength{\tabcolsep}{4pt}",
@@ -384,13 +385,59 @@ def main() -> None:
     write("macros.tex", gen_macros(ratios, threads, velocity, host, corpus, roundtrip, slab))
     write("ratio_table.tex", gen_ratios(ratios))
     extra = RESULTS / "ratios_ase_formats.csv"
-    peer_rows = ratios + [
-        r for r in (read_csv(extra) if extra.exists() else []) if r["peer"] != "ase_eon"
-    ]
-    write("peer_table.tex", gen_peers(peer_rows))
+    ase_rows = read_csv(extra) if extra.exists() else []
+    peer_rows = ratios + [r for r in ase_rows if r["peer"] != "ase_eon"]
+    a_ratio = next(
+        (
+            float(r["median_ratio_readcon_over_peer"])
+            for r in ratios
+            if r["payload"] == "frames-10000" and r["peer"] == "ase_eon" and r.get("bca_low")
+        ),
+        None,
+    )
+    b_ratio = next(
+        (
+            float(r["median_ratio_readcon_over_peer"])
+            for r in ase_rows
+            if r["payload"] == "frames-10000" and r["peer"] == "ase_eon" and r.get("bca_low")
+        ),
+        None,
+    )
+    ase_host = ""
+    ase_repeats = RESULTS / "repeats_ase_formats.csv"
+    if ase_repeats.exists():
+        ah = read_csv(ase_repeats)[0]
+        fam = ah.get("cpu_family", "")
+        mid = ah.get("cpu_model_id", "")
+        mhz = ah.get("cpu_mhz", "")
+        if fam and mid and mhz:
+            ase_host = (
+                f"family {fam}, model {mid}, {mhz} MHz"
+            )
+    if a_ratio is not None and b_ratio is not None and ase_host:
+        ase_note = (
+            rf"The two ASE rows beyond the eon reader come from a second campaign on the same host "
+            rf"({ase_host}), in which the ASE eon ratio on the 10000-frame file reproduced at "
+            rf"{sig(b_ratio)} against {sig(a_ratio)}."
+        )
+    elif a_ratio is not None and b_ratio is not None:
+        ase_note = (
+            rf"The two ASE rows beyond the eon reader come from a second campaign on a shared host, "
+            rf"in which the ASE eon ratio on the 10000-frame file reproduced at "
+            rf"{sig(b_ratio)} against {sig(a_ratio)}."
+        )
+    else:
+        ase_note = (
+            r"The two ASE rows beyond the eon reader come from a second campaign on a shared host."
+        )
+    write("peer_table.tex", gen_peers(peer_rows, ase_note=ase_note))
     write("compat_table.tex", gen_compat(compat))
     write("hcn_table.tex", gen_hcn(loss, read_csv(DATA / "slab_masks.csv")))
-    subprocess.check_call([sys.executable, str(CPC / "scripts" / "gen_figures.py")])
+    try:
+        subprocess.check_call([sys.executable, str(CPC / "scripts" / "gen_figures.py")])
+    except subprocess.CalledProcessError as exc:
+        # Tables are already written. Figure redraw needs optional deps (ira_mod).
+        print(f"gen_figures skipped after table write: {exc}", flush=True)
     print(f"wrote tables under {OUT}")
 
 

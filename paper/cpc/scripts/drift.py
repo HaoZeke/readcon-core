@@ -118,7 +118,12 @@ def part_a():
 
 
 def _lib():
-    for cand in [os.environ.get("READCON_LIB", ""), "/workspace/.cargo-target/release/libreadcon_core.so"]:
+    default = REPO / ".cargo-target/release/libreadcon_core.so"
+    raw = os.environ.get("READCON_LIB", "")
+    chosen = Path(raw) if raw else default
+    if raw and not chosen.is_absolute():
+        chosen = (REPO / chosen).resolve()
+    for cand in [str(chosen)]:
         if cand and Path(cand).exists():
             lib = ctypes.CDLL(cand)
             lib.rkr_read_all_frames.restype = ctypes.POINTER(ctypes.c_void_p)

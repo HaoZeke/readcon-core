@@ -1,27 +1,26 @@
-% Written by paper/cpc/scripts/gen_tables.py.
+% Fairness campaign: full_fields vs coords_accum. Generated for v7.7 from ratios_v76_fairness.csv.
 \begin{table}[ht]
 \centering
 \small
-\caption{Paired ratios of the one-worker Python read to each peer, readcon-core time over peer time, so a value below 1 means readcon-core finished sooner. Each cell is 30 interleaved pairs; the interval is a bias-corrected and accelerated 95 percent interval of the median. The fields column says what the peer returns. The two ASE rows beyond the eon reader come from a second campaign on a shared host, in which the ASE eon ratio on the 10000-frame file reproduced at 0.348 against 0.337.}
+\caption{Paired ratios of the one-worker Python readcon-core time to each peer on \(10{,}000\) frames, so a value below 1 means readcon-core finished sooner.
+Each cell is 30 interleaved pairs; the interval is the median of those paired ratios with its bias-corrected and accelerated 95 percent BCa interval.
+Mode \texttt{full\_fields} keeps the parsed frames (mask, identifier, cell and periodic flags available).
+Mode \texttt{coords\_accum} runs the same parse and then accumulates only the first atom's \(x+y+z\).
+Peers return chemfiles XYZ coordinates, one h5py numeric array, or MDAnalysis H5MD coordinates.
+The driver is \texttt{paper/cpc/bench/run\_fairness.py} (\texttt{pixi run cpc-fairness}).}
 \label{tab:peers}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{lllrl}
 \toprule
-Payload & Peer & Fields & Ratio & Interval \\
+Mode & Peer & Fields & Ratio & Interval \\
 \midrule
-10000 frames & ASE eon & same CON text & 0.337 & [0.335, 0.345] \\
-10000 frames & chemfiles XYZ & coordinates & 2.15 & [2.14, 2.17] \\
-10000 frames & h5py & one binary array & 67.1 & [66.5, 67.3] \\
-10000 frames & MDAnalysis H5MD & coordinates & 0.207 & [0.204, 0.213] \\
-Pt slab & ASE eon & same CON text & 0.233 & [0.231, 0.241] \\
-Pt slab & chemfiles XYZ & coordinates & 1.14 & [1.13, 1.16] \\
-Pt slab & h5py & one binary array & 6.05 & [5.91, 6.27] \\
-Pt slab & MDAnalysis H5MD & coordinates & 0.394 & [0.387, 0.404] \\
-10000 frames & ASE extended XYZ & ASE atoms & 0.392 & [0.338, 0.42] \\
-10000 frames & ASE trajectory & ASE atoms & 1.02 & [0.948, 1.08] \\
-Pt slab & ASE extended XYZ & ASE atoms & 0.184 & [0.18, 0.192] \\
-Pt slab & ASE trajectory & ASE atoms & 3.19 & [3.08, 3.28] \\
+full\_fields & chemfiles XYZ & coordinates & 1.73 & [1.72, 1.77] \\
+full\_fields & h5py & one binary array & 51.9 & [51.0, 53.9] \\
+full\_fields & MDAnalysis H5MD & coordinates & 0.154 & [0.151, 0.164] \\
+coords\_accum & chemfiles XYZ & coordinates & 1.63 & [1.61, 1.65] \\
+coords\_accum & h5py & one binary array & 36.4 & [32.8, 37.2] \\
+coords\_accum & MDAnalysis H5MD & coordinates & 0.160 & [0.157, 0.164] \\
 \bottomrule
 \end{tabular}
 \end{table}

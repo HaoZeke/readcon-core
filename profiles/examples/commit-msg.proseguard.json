@@ -1,0 +1,9 @@
+{
+  "max_sentence_words": 40,
+  "readability_grade": 16,
+  "personal_dictionary": [
+    "readcon", "readcon-core", "BCa", "CSV", "DOI", "VM", "LuaLaTeX",
+    "chemfiles", "h5py", "MDAnalysis", "CON", "eOn", "ASE", "MPI"
+  ],
+  "extensions": [".txt", ".md"]
+}

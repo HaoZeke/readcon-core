@@ -1,14 +1,9 @@
-! Fortran round trip through the C ABI.
+! Fortran round trip through the public ReadCon module.
 !
-! The public ReadCon module procedure add_atom binds
-! rkr_frame_add_atom_with_fixed_mask with the argument order
-! (x, y, z, atom_id, mass, fixed_x, fixed_y, fixed_z). The C function
-! is (x, y, z, fixed_x, fixed_y, fixed_z, atom_id, mass). On the
-! System V ABI that places the z fixed flag in the atom-id register,
-! so every atom id becomes 0 or 1 and the writer returns
-! RKR_STATUS_IO_ERROR (-4): "atom id 1 is repeated in the frame".
-! This program declares the prototype from readcon-core.h and calls
-! rkr_frame_add_atom_full, which also carries a velocity.
+! The writer builds every frame with builder%add_atom, the procedure a
+! Fortran user calls, and passes velocities through its optional argument.
+! Line 1 of each frame is "image N", as in the C, C++, Python and Julia
+! writers.
 !
 !   fortran_io write BAND.txt DIR
 !   fortran_io read  DIR BAND.txt
@@ -43,80 +38,18 @@ contains
     error stop 1
   end subroutine
 
-  subroutine to_c(s, c)
-    character(len=*), intent(in) :: s
-    character(kind=c_char), allocatable, intent(out) :: c(:)
-    integer :: i, n
-    n = len_trim(s)
-    allocate(c(n + 1))
-    do i = 1, n
-      c(i) = s(i:i)
-    end do
-    c(n + 1) = c_null_char
-  end subroutine
-
   subroutine do_write(band, dir)
     character(len=*), intent(in) :: band, dir
-    interface
-      function c_frame_new(cell, angles, p0, p1, q0, q1) bind(C, name="rkr_frame_new")
-        import :: c_ptr, c_double, c_char
-        real(c_double), intent(in) :: cell(*), angles(*)
-        type(c_ptr), value :: p0, p1, q0, q1
-        type(c_ptr) :: c_frame_new
-      end function
-      function c_set_meta(b, j) bind(C, name="rkr_frame_builder_set_metadata_json")
-        import :: c_ptr, c_char, c_int
-        type(c_ptr), value :: b
-        character(kind=c_char), intent(in) :: j(*)
-        integer(c_int) :: c_set_meta
-      end function
-      function c_add_full(b, sym, x, y, z, fx, fy, fz, aid, mass, vel, frc) &
-           bind(C, name="rkr_frame_add_atom_full")
-        import :: c_ptr, c_char, c_double, c_bool, c_int64_t, c_int
-        type(c_ptr), value :: b, vel, frc
-        character(kind=c_char), intent(in) :: sym(*)
-        real(c_double), value :: x, y, z, mass
-        logical(c_bool), value :: fx, fy, fz
-        integer(c_int64_t), value :: aid
-        integer(c_int) :: c_add_full
-      end function
-      function c_build(b) bind(C, name="rkr_frame_builder_build")
-        import :: c_ptr
-        type(c_ptr), value :: b
-        type(c_ptr) :: c_build
-      end function
-      function c_writer(path) bind(C, name="create_writer_from_path_c")
-        import :: c_ptr, c_char
-        character(kind=c_char), intent(in) :: path(*)
-        type(c_ptr) :: c_writer
-      end function
-      function c_extend(w, frames, n) bind(C, name="rkr_writer_extend")
-        import :: c_ptr, c_size_t, c_int
-        type(c_ptr), value :: w
-        type(c_ptr), intent(in) :: frames(*)
-        integer(c_size_t), value :: n
-        integer(c_int) :: c_extend
-      end function
-      subroutine c_free_writer(w) bind(C, name="free_rkr_writer")
-        import :: c_ptr
-        type(c_ptr), value :: w
-      end subroutine
-      subroutine c_free_frame(f) bind(C, name="free_rkr_frame")
-        import :: c_ptr
-        type(c_ptr), value :: f
-      end subroutine
-    end interface
     integer :: u, stat, nframes, i, natoms, a, fx, fy, fz, hv, ios
     integer(int64) :: id
     real(real64) :: cell(3), angles(3), x, y, z, mass, vx, vy, vz
-    real(c_double), target :: ccell(3), cangles(3), vel(3)
     character(len=16) :: tag, sym
     character(len=1024) :: meta, path
-    character(len=32) :: pre
     character(len=8) :: idx
-    character(kind=c_char), allocatable :: csym(:), cmeta(:), cpath(:)
-    character(kind=c_char), target :: cpre(64)
-    type(c_ptr) :: bld, fr, wr, handles(1)
+    character(len=32) :: pre
+    type(builder_t) :: bld
+    type(frame_t) :: fr
+    type(writer_t) :: wr
     open(newunit=u, file=band, status="old", action="read", iostat=ios)
     if (ios /= 0) call die("cannot open band")
     read(u, *) tag, nframes
@@ -136,57 +69,39 @@ contains
       read(u, '(A)') meta
       if (meta(1:5) == "META ") meta = meta(6:)
       read(u, *) tag
-      ccell = real(cell, c_double)
-      cangles = real(angles, c_double)
       write(pre, '(A,1X,I0)') "image", i - 1
-      cpre = c_null_char
-      do a = 1, len_trim(pre)
-        cpre(a) = pre(a:a)
-      end do
-      bld = c_frame_new(ccell, cangles, c_loc(cpre), c_null_ptr, c_null_ptr, c_null_ptr)
-      if (.not. c_associated(bld)) call die("rkr_frame_new failed")
-      call to_c(trim(meta), cmeta)
-      stat = c_set_meta(bld, cmeta)
+      bld = new_builder(cell, angles, header=trim(pre))
+      if (.not. bld%valid()) call die("new_builder failed")
+      stat = bld%set_metadata_json(trim(meta))
       if (stat /= 0) then
         write(0, *) "meta stat", stat
         call die("set_metadata_json failed")
       end if
       do a = 1, natoms
         read(u, *) sym, x, y, z, id, mass, fx, fy, fz, vx, vy, vz, hv
-        call to_c(trim(sym), csym)
         if (hv /= 0) then
-          vel(1) = real(vx, c_double)
-          vel(2) = real(vy, c_double)
-          vel(3) = real(vz, c_double)
-          stat = c_add_full(bld, csym, real(x, c_double), real(y, c_double), real(z, c_double), &
-               logical(fx /= 0, c_bool), logical(fy /= 0, c_bool), logical(fz /= 0, c_bool), &
-               int(id, c_int64_t), real(mass, c_double), c_loc(vel), c_null_ptr)
+          stat = bld%add_atom(trim(sym), x, y, z, id, mass, fx /= 0, fy /= 0, fz /= 0, &
+               velocity=[vx, vy, vz])
         else
-          stat = c_add_full(bld, csym, real(x, c_double), real(y, c_double), real(z, c_double), &
-               logical(fx /= 0, c_bool), logical(fy /= 0, c_bool), logical(fz /= 0, c_bool), &
-               int(id, c_int64_t), real(mass, c_double), c_null_ptr, c_null_ptr)
+          stat = bld%add_atom(trim(sym), x, y, z, id, mass, fx /= 0, fy /= 0, fz /= 0)
         end if
         if (stat /= 0) then
           write(0, *) "add stat", stat, trim(sym), id
-          call die("rkr_frame_add_atom_full failed")
+          call die("builder%add_atom failed")
         end if
       end do
       read(u, *) tag
-      fr = c_build(bld)
-      if (.not. c_associated(fr)) call die("build failed")
+      fr = bld%build()
+      if (.not. fr%valid()) call die("build failed")
       write(idx, '(I3.3)') i - 1
       path = trim(dir)//"/frame_"//trim(idx)//".con"
-      call to_c(trim(path), cpath)
-      wr = c_writer(cpath)
-      if (.not. c_associated(wr)) call die("create_writer failed")
-      handles(1) = fr
-      stat = c_extend(wr, handles, 1_c_size_t)
-      call c_free_writer(wr)
-      call c_free_frame(fr)
-      if (stat /= 0) then
-        write(0, *) "extend stat", stat, trim(path)
-        call die("rkr_writer_extend failed")
-      end if
+      wr = open_writer(trim(path))
+      if (.not. wr%valid()) call die("open_writer failed")
+      stat = wr%extend_one(fr)
+      if (stat /= 0) write(0, *) "extend stat", stat, trim(path), " ", last_error_message()
+      call wr%free()
+      call fr%free()
+      if (stat /= 0) call die("extend_one failed")
     end do
     close(u)
   end subroutine

@@ -29,7 +29,7 @@ Recorded on the host before the MPI series (`04/host.txt`).
 
 ## Campaign 04: MPI strong and weak scaling
 
-Each point is 5 repeats. Cold repeats run `sync` and `echo 3 > /proc/sys/vm/drop_caches` first. Warm repeats follow one untimed warmup and do not drop the cache. The recorded time is the harness timer only: `distributed_ms` for reads, `write_ms` for writes, `mpi_s` for ingest. The serial reference that the same process runs afterwards is not included in the seconds below. `sha_match` is the harness `identical` or `match` flag. All 480 repeats matched.
+Each point is 5 repeats. Cold repeats run `sync` and `echo 3 > /proc/sys/vm/drop_caches` first. Warm repeats follow one untimed warmup and do not drop the cache. The recorded time is the cloud-run timer only: `distributed_ms` for reads, `write_ms` for writes, `mpi_s` for ingest. The serial reference that the same process runs afterwards is not included in the seconds below. `sha_match` is the recorded `identical` or `match` flag. All 480 repeats matched.
 
 ### Files
 
@@ -37,7 +37,7 @@ The core file is not a 218-atom trajectory. `resources/test/tiny_multi_cuh2.con`
 
 The database strong file was written by `readcon-db/bench/gen_con.py` with 30,965 frames of 1,000 atoms. Its size is 1,074,071,389 bytes. Each ingest passes that path four times, so `bytes_total` is 4,296,284,756. The weak database file has 7,700 frames of 1,000 atoms per rank. Sizes: r1 254,687,189 bytes, r2 509,374,389, r4 1,018,748,789, r8 2,136,707,894. Four copies, so `bytes_total` is four times the file size. Batch size 4096, 4 shards, first trajectory id 1.
 
-`frames_per_rank` is the harness frame count divided by the rank count. For database ingests the harness frame count sums the four copies, so the strong rows show 123,860, 61,930, 30,965, and 15,482.5 (that is 30,965 times 4, divided by the rank count) and every weak database row shows 30,800 (7,700 times 4).
+`frames_per_rank` is the recorded frame count divided by the rank count. For database ingests the recorded frame count sums the four copies, so the strong rows show 123,860, 61,930, 30,965, and 15,482.5 (that is 30,965 times 4, divided by the rank count) and every weak database row shows 30,800 (7,700 times 4).
 
 ### Medians
 
@@ -151,7 +151,7 @@ Median is the third of the five sorted repeats. `sha_match` is true for every ro
 
 ### Every repeat
 
-Seconds are the harness times. The raw timing line is the rank-0 print from the example.
+Seconds are the recorded times. The raw timing line is the rank-0 print from the example.
 
 | scale | system | operation | mode | ranks | cache | rep | seconds | frames | sha_match | line |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -640,7 +640,7 @@ Per-run stdout, stderr, and the mpiexec command are in `04/logs/`. `04/repeats.j
 
 ## Campaign 05: cross-binding, H5MD, and ASE trajectory
 
-Harness: `paper/cpc/scripts/failure_matrix.py` and `restart_formats.py` on `paper/cpc-v4a`, driven by `harness/run_05.py`. Outputs are under `05/`. The reference barrier is 0.644561366 eV. The uninterrupted band reached it in 60 steps with 56 free modes on the middle image.
+Cloud-run drivers: `paper/cpc/scripts/failure_matrix.py` and `restart_formats.py` on `paper/cpc-v4a`, driven by `cloud-run/run_05.py`. Outputs are under `05/`. The reference barrier is 0.644561366 eV. The uninterrupted band reached it in 60 steps with 56 free modes on the middle image.
 
 ### Failure matrix
 
@@ -700,7 +700,7 @@ The same two strings are the published `data/failure/matrix.csv` errors. The coo
 
 All 25 language pairs (Python, C ABI via ctypes, C++ wrapper, Fortran, Julia) are R1 kept, R2 kept, R3 declared, R4 bit-exact, periodicity kept, on the 9-atom failure-matrix frame.
 
-The Fortran writer in `harness/fortran_io.f90` calls `rkr_frame_add_atom_full` with the C header order `(x, y, z, fixed_x, fixed_y, fixed_z, atom_id, mass, velocity, force)` and stores velocities. The public `ReadCon` module procedure `add_atom` binds `rkr_frame_add_atom_with_fixed_mask` as `(x, y, z, atom_id, mass, fx, fy, fz)`. The C function is `(x, y, z, fx, fy, fz, atom_id, mass)`. A write through that public binding returns status -4. With the library instrumented for one diagnosis, the swallowed cause was:
+The Fortran writer in `cloud-run/fortran_io.f90` calls `rkr_frame_add_atom_full` with the C header order `(x, y, z, fixed_x, fixed_y, fixed_z, atom_id, mass, velocity, force)` and stores velocities. The public `ReadCon` module procedure `add_atom` binds `rkr_frame_add_atom_with_fixed_mask` as `(x, y, z, atom_id, mass, fx, fy, fz)`. The C function is `(x, y, z, fx, fy, fz, atom_id, mass)`. A write through that public binding returns status -4. With the library instrumented for one diagnosis, the swallowed cause was:
 
 ```
 rkr_writer_extend: CON validation failed: atom id 1 is repeated in the frame
@@ -726,8 +726,8 @@ The measured routes write a per-axis mask at `/particles/trajectory/fixed` (bool
 | route | steps | converged | barrier_eV | d_barrier_eV | max_disp_A | file_dpos_A | free_modes_mid | error | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | uninterrupted | 60 | True | 0.644561366 | 0 | 0 |  | 56 |  |  |
-| CON 3.1, shortest round trip | 60 | True | 0.644561366 | -5.68e-14 | 2.66e-15 | 0.0e+00 | 56 |  |  |
-| CON 3.1, six decimals | 60 | True | 0.644560952 | -4.14e-07 | 6.22e-07 | 4.9e-07 | 56 |  |  |
+| CON 3.1, shortest round trip | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  |  |
+| CON 3.1, six decimals | 60 | True | 0.644561378 | 1.19e-08 | 5.69e-07 | 4.9e-07 | 56 |  |  |
 | CON 3.1 read by the ASE eon reader | 4000 | False | 0.292282514 | -3.52e-01 | 5.43e+00 | 0.0e+00 | 54 |  |  |
 | same, periodicity restored by hand | 127 | True | 0.644558431 | -2.93e-06 | 4.21e-02 | 0.0e+00 | 54 |  |  |
 | extended XYZ (ASE) | 60 | True | 0.644561367 | 1.09e-09 | 4.94e-09 | 5.0e-09 | 56 |  |  |
@@ -750,11 +750,11 @@ The measured routes write a per-axis mask at `/particles/trajectory/fixed` (bool
 | CON 3.1 C++ to C++ | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | cross-binding |
 | CON 3.1 C++ to Fortran | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | cross-binding |
 | CON 3.1 C++ to Julia | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | cross-binding |
-| CON 3.1 Fortran to Python | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran calls rkr_frame_add_atom_full; the public module add_atom binding does not match the C header |
-| CON 3.1 Fortran to C | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran calls rkr_frame_add_atom_full; the public module add_atom binding does not match the C header |
-| CON 3.1 Fortran to C++ | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran calls rkr_frame_add_atom_full; the public module add_atom binding does not match the C header |
-| CON 3.1 Fortran to Fortran | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran calls rkr_frame_add_atom_full; the public module add_atom binding does not match the C header |
-| CON 3.1 Fortran to Julia | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran calls rkr_frame_add_atom_full; the public module add_atom binding does not match the C header |
+| CON 3.1 Fortran to Python | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran writes through builder%add_atom |
+| CON 3.1 Fortran to C | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran writes through builder%add_atom |
+| CON 3.1 Fortran to C++ | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran writes through builder%add_atom |
+| CON 3.1 Fortran to Fortran | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran writes through builder%add_atom |
+| CON 3.1 Fortran to Julia | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | Fortran writes through builder%add_atom |
 | CON 3.1 Julia to Python | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | cross-binding |
 | CON 3.1 Julia to C | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | cross-binding |
 | CON 3.1 Julia to C++ | 60 | True | 0.644561366 | -2.31e-14 | 3.55e-15 | 0.0e+00 | 56 |  | cross-binding |
@@ -775,6 +775,6 @@ Cross-binding resumes (25 pairs) all converged in 60 steps at 0.644561366 eV, `d
 
 Bands are `05/bands/*.npz`. A slug that stripped trailing underscores made `to C++` overwrite `to C`. Those ten bands were rerun and stored as `*_to_C.npz` and `*_to_Cpp.npz`. The CSV rows were not changed by that rerun; the rerun barriers were again 0.644561366 eV. The restart figure is `05/figures/restart_formats.pdf`, drawn with Atkinson Hyperlegible. Regenerated LaTeX tables are `05/tables/survey_table.tex` and `05/tables/restartfmt_table.tex`. The restart table script replaces any error row with the canned sentence `no file: the writer has no per-axis constraint`; the CSV above is the measured error text.
 
-## Harness
+## Cloud-run drivers
 
-`harness/` contains `run_04.py`, `run_05.py`, `cpp_io.cpp`, `fortran_io.f90`, `julia_io.jl`, and the driver logs `run04.log` and `run05.log`.
+`cloud-run/` contains `run_04.py`, `run_05.py`, `cpp_io.cpp`, `fortran_io.f90`, `julia_io.jl`, and the driver logs `run04.log` and `run05.log`.

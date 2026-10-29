@@ -1,0 +1,11 @@
+{
+  "family": "6",
+  "model": "173",
+  "mhz": 2700.0,
+  "nproc": 8,
+  "mem_kb": 49342768,
+  "os": "Ubuntu 24.04",
+  "kernel": "6.12.94+",
+  "readcon": "0.17.2",
+  "sha": "5c849d1b1d3dede45e20665c5730abe3d5f18f84"
+}

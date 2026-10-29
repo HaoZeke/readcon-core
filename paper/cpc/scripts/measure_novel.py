@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ctypes
 import json
+import os
 import tempfile
 import time
 import tomllib
@@ -18,15 +19,36 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO = ROOT.parents[1]
 EVIDENCE = ROOT / "evidence"
 E1 = EVIDENCE / "work" / "e1"
 E2 = EVIDENCE / "results" / "e2_layered.json"
 NOVEL = ROOT / "data" / "novel"
-CORPUS = Path("/workspace/resources/conformance")
-READCON_SO = Path(
-    "/home/ubuntu/.local/lib/python3.12/site-packages/readcon/"
-    "readcon.cpython-312-x86_64-linux-gnu.so"
-)
+
+
+def _from_env(name: str, default: Path) -> Path:
+    raw = os.environ.get(name)
+    if not raw:
+        return default
+    path = Path(raw)
+    return path if path.is_absolute() else (REPO / path).resolve()
+
+
+def _readcon_so() -> Path:
+    override = os.environ.get("READCON_SO")
+    if override:
+        path = Path(override)
+        return path if path.is_absolute() else (REPO / path).resolve()
+    import readcon
+
+    base = Path(readcon.__file__).resolve().parent
+    found = sorted(base.glob("readcon.cpython-*.so"))
+    if not found:
+        raise SystemExit(f"no readcon extension under {base}; set READCON_SO")
+    return found[0]
+
+
+CORPUS = _from_env("READCON_CORPUS", REPO / "resources/conformance")
 
 
 def _write(name: str, payload: dict) -> None:
@@ -498,7 +520,7 @@ def velocity() -> None:
 
 
 def _c_null(path: Path) -> bool:
-    lib = ctypes.CDLL(str(READCON_SO))
+    lib = ctypes.CDLL(str(_readcon_so()))
     lib.read_con_file_iterator.argtypes = [ctypes.c_char_p]
     lib.read_con_file_iterator.restype = ctypes.c_void_p
     lib.con_frame_iterator_next.argtypes = [ctypes.c_void_p]

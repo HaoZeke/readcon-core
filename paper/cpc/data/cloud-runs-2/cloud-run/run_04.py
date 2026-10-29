@@ -2,7 +2,7 @@
 """MPI strong and weak scaling for readcon-core and readcon-db.
 
 Cold repeats drop the page cache first. Warm repeats follow one untimed
-warmup and do not drop the cache. Times are the harness timings
+warmup and do not drop the cache. Times are the recorded timings
 (distributed read, collective write, MPI ingest), not the serial reference
 that the same process runs afterwards.
 """
@@ -11,23 +11,39 @@ from __future__ import annotations
 import json, os, re, shutil, statistics, subprocess, sys, time
 from pathlib import Path
 
-ROOT = Path("/tmp/campaign")
-DATA = Path("/var/tmp/mpi-campaign")
-OUT = Path("/workspace/paper/cpc/data/cloud-runs-2/04")
-CORE = Path("/tmp/readcon-core-main/target/release/examples")
-DB = Path("/tmp/readcon-db/target/release/examples")
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[4]
+
+
+def _from_env(name: str, default: Path) -> Path:
+    raw = os.environ.get(name)
+    if not raw:
+        return default
+    path = Path(raw)
+    return path if path.is_absolute() else (REPO / path).resolve()
+
+
+ROOT = _from_env("RUN04_ROOT", REPO / "target/run04")
+DATA = _from_env("RUN04_DATA", ROOT / "data")
+OUT = _from_env("RUN04_OUT", REPO / "paper/cpc/data/cloud-runs-2/04")
+CORE_ROOT = _from_env("READCON_CORE_ROOT", REPO)
+DB_ROOT = _from_env("READCON_DB_ROOT", REPO.parent / "readcon-db")
+CORE = CORE_ROOT / "target/release/examples"
+DB = DB_ROOT / "target/release/examples"
 READ = CORE / "mpi_read_check"
 WRITE = CORE / "mpi_write_check"
 INGEST = DB / "mpi_ingest_check"
-GEN = Path("/tmp/readcon-db/bench/gen_con.py")
-TINY = Path("/workspace/resources/test/tiny_multi_cuh2.con")
+GEN = DB_ROOT / "bench/gen_con.py"
+TINY = _from_env("RUN04_TINY", REPO / "resources/test/tiny_multi_cuh2.con")
+PY = os.environ.get("RUN04_PYTHON", sys.executable)
+MPICH = _from_env("MPICH_PREFIX", Path("/opt/mpich-4.2.3"))
 RANKS = [1, 2, 4, 8]
 REPS = 5
 COPIES = 4
 
 ENV = os.environ.copy()
-ENV["PATH"] = "/opt/mpich-4.2.3/bin:" + ENV.get("PATH", "")
-ENV["LD_LIBRARY_PATH"] = "/opt/mpich-4.2.3/lib:" + ENV.get("LD_LIBRARY_PATH", "")
+ENV["PATH"] = str(MPICH / "bin") + os.pathsep + ENV.get("PATH", "")
+ENV["LD_LIBRARY_PATH"] = str(MPICH / "lib") + os.pathsep + ENV.get("LD_LIBRARY_PATH", "")
 ENV["UCX_TLS"] = "tcp"
 ENV["FI_PROVIDER"] = "tcp"
 ENV["RAYON_NUM_THREADS"] = "1"
@@ -112,12 +128,12 @@ def main():
         host.append("$ " + " ".join(cmd))
         c, o, e = run(cmd, env=os.environ.copy())
         host.append(o or e)
-    c, o, e = run(["/opt/mpich-4.2.3/bin/mpicc", "-v"], env=ENV)
+    c, o, e = run([str(MPICH / "bin/mpicc"), "-v"], env=ENV)
     host.append("$ mpicc -v\n" + (e or o))
-    c, o, e = run(["/opt/mpich-4.2.3/bin/mpiexec", "-n", "1", "true"], env=ENV)
+    c, o, e = run([str(MPICH / "bin/mpiexec"), "-n", "1", "true"], env=ENV)
     host.append("mpiexec smoke exit " + str(c) + "\n" + e)
-    core_sha = subprocess.check_output(["git", "-C", "/tmp/readcon-core-main", "rev-parse", "HEAD"], text=True).strip()
-    db_sha = subprocess.check_output(["git", "-C", "/tmp/readcon-db", "rev-parse", "HEAD"], text=True).strip()
+    core_sha = subprocess.check_output(["git", "-C", str(CORE_ROOT), "rev-parse", "HEAD"], text=True).strip()
+    db_sha = subprocess.check_output(["git", "-C", str(DB_ROOT), "rev-parse", "HEAD"], text=True).strip()
     host.append(f"readcon-core origin/main {core_sha}\nreadcon-db main {db_sha}\n")
     host.append("FI_PROVIDER=tcp UCX_TLS=tcp RAYON_NUM_THREADS=1 mpiexec -bind-to core\n")
     host.append("Host has 8 cores and 47 GB RAM, virtio ext4, not the 16-core 64 GB NVMe box in the spec. Ranks stop at 8.\n")
@@ -143,14 +159,14 @@ def main():
     db_strong = DATA / "db-strong.con"
     if not db_strong.exists():
         print("writing db strong file", flush=True)
-        subprocess.check_call(["/tmp/benchenv/bin/python", str(GEN), str(db_strong), "30965", "1000"], env=ENV)
+        subprocess.check_call([PY, str(GEN), str(db_strong), "30965", "1000"], env=ENV)
     db_weak = {}
     for p in RANKS:
         path = DATA / f"db-weak-r{p}.con"
         frames = 7700 * p
         if not path.exists():
             print(f"writing db weak r={p} frames={frames}", flush=True)
-            subprocess.check_call(["/tmp/benchenv/bin/python", str(GEN), str(path), str(frames), "1000"], env=ENV)
+            subprocess.check_call([PY, str(GEN), str(path), str(frames), "1000"], env=ENV)
         db_weak[p] = path
     print("db strong bytes", db_strong.stat().st_size, flush=True)
 

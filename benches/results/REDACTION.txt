@@ -1,0 +1,7 @@
+Redaction note for v31_parse_ratio.csv.
+
+SHA-256 before this edit:
+6490abe572316f0a8b480698be5fe15344b7fe484bda686cc62a04e064227c68
+
+The host column named the VM host label on 120 data rows.
+It now says <host>.

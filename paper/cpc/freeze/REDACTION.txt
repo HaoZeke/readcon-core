@@ -1,0 +1,7 @@
+Redaction note for ase_fair_campaign_1.json.
+
+SHA-256 before this edit:
+d46fee07c0e49b4c026897396dd25d34a900ba7b8bcab08c170921ada3ae5cde
+
+The fixture path was an absolute path under a temporary fair-campaign tree.
+It now names resources/test/tiny_cuh2.con relative to the repository root.
