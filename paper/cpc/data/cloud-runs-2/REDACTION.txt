@@ -1,0 +1,13 @@
+Redaction note for the cloud-run logs.
+
+The originals are the blobs in commit e45cfb6ad7efff26bd337feb78c614bf328fd2e2.
+
+SHA-256 of 04/host.txt before this edit:
+14a4d3364b87697381865d0622d06efb23106124bbaaac8795d30aaf1a7899c5
+
+SHA-256 of SUMMARY.md before this edit:
+16f6d5aecac8645e31cf3c8949ea554ebbbe103ccf514af4d4cbee9ff478624b
+
+The uname line now says <host> where it named the machine.
+SUMMARY.md now uses target/release/libreadcon_core.so.
+The two build directories that were absolute now start with <tmp>.

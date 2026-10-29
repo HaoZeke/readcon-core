@@ -489,7 +489,7 @@ Given the coordinate block, it accepts all seven, including the illegal mask and
 
 Extended XYZ has a published layout and parsers in several languages, so it is the text format to compare on R5.
 Table \ref{tab:drift} gives five readers seven three-atom files.
-The readers are ASE 3.29.0, libAtoms 0.4.6 through its C path and its Python path, chemfiles 0.10.4, and MDAnalysis 2.10.0.
+The readers are ASE 3.29.0, libAtoms through its C path and its Python path, chemfiles 0.10.4, and MDAnalysis 2.10.0.
 On the reference frame the five readers return four outcomes: ASE and the libAtoms C path accept it, the libAtoms Python path changes the mask booleans, chemfiles moves one coordinate by one unit in the last place and returns no mask, and MDAnalysis returns single precision with no mask and no identifiers.
 The correctly rounded binary64 value of the coordinate \(2.7718585822512662\) has bit pattern \texttt{40062cc4313f3fb9}; chemfiles returns \texttt{40062cc4313f3fb8} (Section \ref{sec:supp-failure}).
 A Fortran exponent \texttt{6.0d0} is read by the libAtoms C path, returned as NaN by the libAtoms Python path, and rejected by the other three.

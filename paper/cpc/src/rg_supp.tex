@@ -227,7 +227,7 @@ Lattice="5.5437171645025325 0.0 0.0 0.0 5.5437171645025325 0.0 0.0 0.0 20.0" Pro
 \end{lstlisting}
 and rows \texttt{Pt 0.0 0.0 6.0 T T T 17}, \texttt{Pt 2.7718585822512662 0.0 6.0 T T T 3} and \texttt{Pt 1.3859292911256331 1.3859292911256331 7.8 F F T 41}.
 The variants drop the \texttt{pbc} key, replace the header by a plain comment and the rows by their first four fields, write the \(z\) value 6.0 as \texttt{6.0d0}, spell the booleans \texttt{True} and \texttt{False}, add \texttt{note="E=1.5 eV"}, and add \texttt{units="angstrom,eV,fs"}.
-The readers are ASE 3.29.0, the libAtoms extended XYZ parser 0.4.6 through its C path and its Python path, chemfiles 0.10.4, and MDAnalysis 2.10.0.
+The readers are ASE 3.29.0, the libAtoms extended XYZ parser through its C path and its Python path, chemfiles 0.10.4, and MDAnalysis 2.10.0.
 The correctly rounded binary64 value of 2.7718585822512662 has the bit pattern \texttt{40062cc4313f3fb9}; chemfiles returns \texttt{40062cc4313f3fb8}.
 
 The resume study uses an EMT Pt(100) \(3\times3\times3\) slab with 6\hspace*{.2em}\AA{} of vacuum, the bottom layer held, and one adatom 1.75\hspace*{.2em}\AA{} above a hollow and held in \(z\), hopping to the neighbouring hollow.

@@ -17,15 +17,15 @@ Recorded on the host before the MPI series (`04/host.txt`).
 ## Software
 
 - Paper checkout: branch `paper/cpc-v4a` at `d9aed13b7a284f1adeabb2bac9d1518bb43c7721`
-- readcon-core: `origin/main` `af8aabb60f0c5db970085712dd3f6d476957919f`, package 0.17.0, rust-version 1.88. MPI examples built `--release --features mpi` in `/tmp/readcon-core-main`.
+- readcon-core: `origin/main` `af8aabb60f0c5db970085712dd3f6d476957919f`, package 0.17.0, rust-version 1.88. MPI examples built `--release --features mpi` in `<tmp>/readcon-core-main`.
 - readcon-db: `main` `55214d138b9c1345e4fba41582a48a936f96312c`, package 0.1.8, rust-version 1.88. `mpi_ingest_check` built `--release --features mpi`.
 - rustc: 1.99.0 (b940084d7 2026-09-28)
 - MPICH 4.2.3, device ch4:ofi, prefix `/opt/mpich-4.2.3`, configure `--prefix=/opt/mpich-4.2.3 --with-device=ch4:ofi --enable-fortran --enable-romio`, ABI 16:3:4, release date Wed Oct 2 2024. Hydra launch: `mpiexec -bind-to core`.
 - Environment on every MPI process: `UCX_TLS=tcp`, `FI_PROVIDER=tcp`, `RAYON_NUM_THREADS=1`, `OMP_NUM_THREADS=1`. One thread per rank.
 - GCC / gfortran: Ubuntu 13.3.0-6ubuntu2~24.04.1
 - Julia: 1.11.6 at `/opt/julia/bin/julia`
-- Python bench environment `/tmp/benchenv`: ase 3.29.0, chemfiles 0.10.4, MDAnalysis 2.10.0, h5py 3.16.0, numpy 2.5.4, matplotlib 3.11.2, readcon 0.17.0 (`CON_SPEC_VERSION` 3)
-- Non-Python `libreadcon_core.so` used by C, C++, Fortran, and Julia: `/workspace/target/release/libreadcon_core.so` from `cargo build --release` on the paper checkout (no `python` feature).
+- Python bench environment `<tmp>/benchenv`: ase 3.29.0, chemfiles 0.10.4, MDAnalysis 2.10.0, h5py 3.16.0, numpy 2.5.4, matplotlib 3.11.2, readcon 0.17.0 (`CON_SPEC_VERSION` 3)
+- Non-Python `libreadcon_core.so` used by C, C++, Fortran, and Julia: `target/release/libreadcon_core.so` from `cargo build --release` on the paper checkout (no `python` feature).
 
 ## Campaign 04: MPI strong and weak scaling
 

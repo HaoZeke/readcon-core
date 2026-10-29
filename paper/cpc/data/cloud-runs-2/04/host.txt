@@ -44,7 +44,7 @@ $ nproc8
 $ free -g               total        used        free      shared  buff/cache   available
 Mem:              47          27          19           0           1          19
 Swap:              0           0           0
-$ uname -aLinux cursor 6.12.94+ #1 SMP PREEMPT_DYNAMIC Mon Oct 12 16:05:39 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+$ uname -aLinux <host> 6.12.94+ #1 SMP PREEMPT_DYNAMIC Mon Oct 12 16:05:39 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
 $ findmnt -T / -o TARGET,SOURCE,FSTYPE,OPTIONSTARGET SOURCE   FSTYPE OPTIONS
 /      /dev/vdc ext4   rw,relatime
 $ lsblk -o NAME,SIZE,TYPE,FSTYPE,TRAN,ROTA,MODELNAME  SIZE TYPE FSTYPE TRAN   ROTA MODEL
