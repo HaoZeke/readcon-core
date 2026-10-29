@@ -954,16 +954,18 @@ def db_rates(theme, png_dir: Path | None, summary) -> None:
 
 def db_queries(theme, png_dir: Path | None, summary) -> None:
     systems = ["readcon-db", "ase.db", "con-directory"]
-    caches = ["cold", "warm"]
+    # The stored rows are named cold. The page cache was not dropped, so the
+    # figure uses the same word as the prose: fresh-process.
+    caches = [("cold", "fresh-process"), ("warm", "warm")]
     queries = ["composition", "energy", "fmax"]
     frames = [1000, 10000]
-    rows = [f"{system}, {cache}" for system in systems for cache in caches]
+    rows = [f"{system}, {label}" for system in systems for _key, label in caches]
     # Two panels, one per corpus size, sharing the colour scale.
     blocks = []
     for index, _n in enumerate(frames):
         block = []
         for system in systems:
-            for cache in caches:
+            for cache, _label in caches:
                 block.append(
                     [
                         _median(summary, "query_s", frames[index], system, query, cache)

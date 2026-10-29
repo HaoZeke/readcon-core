@@ -2,4 +2,4 @@ A restart file needs a mask, an id, a time unit, binary64 coordinates and a vers
 One masked slab loses part of that state in every common format tested
 An ASE POSCAR resume drops a height constraint and ends 70.2 meV lower
 Five extended XYZ readers return four answers for one file
-Twenty-five CON language pairs resume the uninterrupted barrier
+A harness of twenty-five writer-reader pairs resumes the barrier

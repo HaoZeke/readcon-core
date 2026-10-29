@@ -260,11 +260,11 @@ Table \ref{tab:compare} places the same checkpoint next to trajectory containers
 \section{The CON 3.1 specification}
 \label{sec:format}
 A CON file is a sequence of text frames.
-Listing \ref{lst:frame} is one complete nine-atom frame.
-The survey frame of Table \ref{tab:survey} uses the same columns and different identifiers, listed in Section \ref{sec:supp-failure}.
+Listing \ref{lst:frame} is the survey frame of Table \ref{tab:survey}.
+Section \ref{sec:supp-failure} states how that frame was built.
 
-\begin{lstlisting}[caption={A complete nine-atom Pt frame in CON 3.1. Line 2 declares the version, the units and the periodicity. Every atom has a coordinate row and a velocity row.},label={lst:frame}]
-Pt(100) 2x2x2 with one Pt adatom
+\begin{lstlisting}[caption={The survey frame. Line 1 is an empty user line. Line 2 declares the version, the units and the periodicity. Identifiers are 17, 3, 11, 5, 23, 2, 13, 7 and 41.},label={lst:frame}]
+
 {"con_spec_minor":1,"con_spec_version":3,"pbc":[true,true,false],"sections":["velocities"],"units":{"energy":"eV","length":"angstrom","mass":"amu","time":"(amu*angstrom^2/eV)^0.5"}}
 5.5437171645025325e0 5.5437171645025325e0 1.396e1
 9e1 9e1 9e1
@@ -275,27 +275,27 @@ Pt(100) 2x2x2 with one Pt adatom
 1.95084e2
 Pt
 Coordinates of Component 1
-1.3859292911256331e0 1.3859292911256331e0 6e0 7 0
-4.1577878733769e0 1.3859292911256331e0 6e0 7 1
-1.3859292911256331e0 4.1577878733769e0 6e0 7 2
-4.1577878733769e0 4.1577878733769e0 6e0 7 3
-0e0 0e0 7.96e0 0 4
-2.7718585822512662e0 0e0 7.96e0 0 5
-0e0 2.7718585822512662e0 7.96e0 0 6
-2.7718585822512662e0 2.7718585822512662e0 7.96e0 0 7
-1.3859292911256331e0 1.3859292911256331e0 9.76e0 4 8
+1.386493891622963e0 1.3858827980505872e0 5.999231933623632e0 7 17
+4.158528117245317e0 1.3861213257350742e0 5.999813419553613e0 7 3
+1.3860627284818523e0 4.158248487145931e0 6.000055839372117e0 7 11
+4.1574916113945894e0 4.157781657328241e0 6.000983049344183e0 7 5
+-2.684564058587828e-4 6.114378220263555e-4 7.959946638798572e0 0 23
+2.7723693731828494e0 2.842894752666141e-4 7.959407544708384e0 0 2
+7.71950084012911e-4 2.772315330818269e0 7.960901835964954e0 0 13
+2.772542023981585e0 2.7723297461317795e0 7.959545089014511e0 0 7
+1.3867197337624881e0 1.3861370701026228e0 9.760314828133515e0 4 41
 
 Pt
 Velocities of Component 1
-1.4685859972256804e-3 6.275175116609037e-4 -1.8115929554652053e-3 7 0
-2.1e-3 1.2e-3 -0.4e-3 7 1
-0.8e-3 -1.5e-3 0.3e-3 7 2
--1.1e-3 0.6e-3 1.4e-3 7 3
-1.0e-3 -0.7e-3 0.2e-3 0 4
--0.5e-3 1.3e-3 -0.9e-3 0 5
-0.4e-3 0.9e-3 1.1e-3 0 6
--1.6e-3 -0.2e-3 0.5e-3 0 7
-3.748769356553213e-3 2.43327727576049e-3 -1.3238979663774354e-3 4 8
+0e0 0e0 0e0 7 17
+0e0 0e0 0e0 7 3
+0e0 0e0 0e0 7 11
+0e0 0e0 0e0 7 5
+-4.419216359135741e-3 -3.1227306022671786e-3 5.3252274765567134e-3 0 23
+-1.9411746848912532e-3 -4.423003635856234e-3 4.825314186834311e-3 0 2
+-5.72219106757806e-3 -3.294382313545619e-3 -3.7362717028046195e-4 0 13
+-1.8722607532418165e-3 8.120539032663098e-4 2.918400292950336e-3 0 7
+-1.6020339068388144e-3 4.319885827377455e-3 0e0 4 41
 \end{lstlisting}
 
 Line 1 is free text.
@@ -763,7 +763,7 @@ The CON reader returns the mask, the identifier, the cell and the periodic flags
 The \(67.1\) ratio is that full frame against the numeric array, which is what Table \ref{tab:peers} records in its fields column.
 Campaign B, rustc 1.99.0 and Python 3.12.15, adds ASE extended XYZ and the ASE trajectory.
 The ASE eon ratio on the same \(10{,}000\)-frame file is \(0.348\), against \(0.337\) in campaign A.
-Absolute readcon-core times differ between the campaigns, near \(2.0\,\mathrm{s}\) in B and \(1.27\,\mathrm{s}\) in A, so only the reproduced ratio is compared.
+Absolute readcon-core times differ between the campaigns, \(2.021\,\mathrm{s}\) in B and \(1.269\,\mathrm{s}\) in A, so only the reproduced ratio is compared.
 On that long file the ASE trajectory is level with readcon-core (ratio \(1.02\)).
 On one slab frame the ASE trajectory is faster (ratio \(3.19\)).
 Section \ref{sec:appendix-peers} extends the table to the 1-frame and 100-frame files.
