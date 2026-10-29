@@ -1,26 +1,28 @@
-% Fairness campaign: full_fields vs coords_accum. Generated for v7.7 from ratios_v76_fairness.csv.
+% Fairness campaign: full_fields vs coords_accum. Wall times are medians from repeats_v76_fairness.csv.
 \begin{table}[ht]
 \centering
 \small
 \caption{Paired ratios of the one-worker Python readcon-core time to each peer on \(10{,}000\) frames, so a value below 1 means readcon-core finished sooner.
 Each cell is 30 interleaved pairs; the interval is the median of those paired ratios with its bias-corrected and accelerated 95 percent BCa interval.
-Mode \texttt{full\_fields} keeps the parsed frames (mask, identifier, cell and periodic flags available).
+Wall columns are the median wall-clock seconds of the same pairs (from \texttt{ratios\_v76\_fairness.csv}).
+The evaluation count for every row is \(10{,}000\) frames.
+Mode \texttt{full\_fields} keeps the parsed frames.
 Mode \texttt{coords\_accum} runs the same parse and then accumulates only the first atom's \(x+y+z\).
-Peers return chemfiles XYZ coordinates, one h5py numeric array, or MDAnalysis H5MD coordinates.
 The driver is \texttt{paper/cpc/bench/run\_fairness.py} (\texttt{pixi run cpc-fairness}).}
 \label{tab:peers}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lllrl}
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrrrl}
 \toprule
-Mode & Peer & Fields & Ratio & Interval \\
+Mode & Peer & Fields & readcon (s) & peer (s) & Ratio & Interval \\
 \midrule
-full\_fields & chemfiles XYZ & coordinates & 1.73 & [1.72, 1.77] \\
-full\_fields & h5py & one binary array & 51.9 & [51.0, 53.9] \\
-full\_fields & MDAnalysis H5MD & coordinates & 0.154 & [0.151, 0.164] \\
-coords\_accum & chemfiles XYZ & coordinates & 1.63 & [1.61, 1.65] \\
-coords\_accum & h5py & one binary array & 36.4 & [32.8, 37.2] \\
-coords\_accum & MDAnalysis H5MD & coordinates & 0.160 & [0.157, 0.164] \\
+full\_fields & chemfiles XYZ & coordinates & 0.962 & 0.550 & 1.73 & [1.72, 1.77] \\
+full\_fields & h5py & one binary array & 0.953 & 0.0182 & 51.9 & [51.0, 53.9] \\
+full\_fields & MDAnalysis H5MD & coordinates & 0.927 & 6.000 & 0.154 & [0.151, 0.164] \\
+coords\_accum & chemfiles XYZ & coordinates & 0.908 & 0.553 & 1.63 & [1.61, 1.65] \\
+coords\_accum & h5py & one binary array & 0.984 & 0.0278 & 36.4 & [32.8, 37.2] \\
+coords\_accum & MDAnalysis H5MD & coordinates & 0.947 & 5.945 & 0.160 & [0.157, 0.164] \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}

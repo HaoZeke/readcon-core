@@ -831,6 +831,7 @@ A band resumed through it matches the uninterrupted band to the floor set by res
 :CUSTOM_ID: sec:data
 :UNNUMBERED: t
 :END:
+# Version DOI for 0.17.2 pending the deposit; concept DOI only below.
 The release measured here is readcon-core 0.17.2 at commit 5c849d1b1d3dede45e20665c5730abe3d5f18f84 \cite{goswamiReadconcoreConconvelReaderwriter2026}, and the concept record is \url{https://doi.org/10.5281/zenodo.18753567} \cite{goswamiReadconcoreConConvel2026}.
 A citation to the software is owed to that archived record \cite{smithSoftwareCitationPrinciples2016,wilkinsonFairGuidingPrinciples2016,barkerIntroducingFairPrinciples2022,lamprechtTowardsFairPrinciples2020}.
 Publishing a finished saddle remains the job of a repository interface, a materials archive or a reaction database, downstream of this checkpoint \cite{andersenOptimadeApiExchanging2021,draxlNomadLaboratoryData2019,wintherCatalysishuborgOpenElectronic2019,schreinerTransition1xDatasetBuilding2022,chanussotOpenCatalyst20202021}.

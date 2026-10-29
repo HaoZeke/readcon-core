@@ -89,6 +89,7 @@ cycler = "*"
 cpc-figure-05 = { cmd = "python paper/cpc/data/cloud-runs-2/cloud-run/plot_05.py", description = "Draw the section 05 restart figure from the committed bands" }
 cpc-fairness = { cmd = "python paper/cpc/bench/run_fairness.py", description = "Full-field vs coords-accumulation peer ratios for the abstract" }
 cpc-e2-speedup-bca = { cmd = "python paper/cpc/evidence/compute_e2_speedup_bca.py", description = "BCa intervals for five-repeat e2 thread-scaling speedups" }
+cpc-structures = { cmd = "python paper/cpc/scripts/plot_structures.py", description = "xyzrender panels of the survey, timing and Pt-slab geometries" }
 
 [environments]
 default = { solve-group = "default" }

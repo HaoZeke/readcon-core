@@ -47,11 +47,10 @@ Elsevier%
 \externaldocument{rg_supp}
 \input{affilfix}
 % Release pin. Package version and the commit that produced Section 6.
-% TODO(DOI): mint the Zenodo version DOI for readcon-core 0.17.2; concept DOI kept below.
+% The Zenodo version DOI for readcon-core 0.17.2 is pending the deposit; cite the concept DOI only until then.
 \newcommand{\readconversion}{0.17.2}
 \newcommand{\readconcommit}{5c849d1b1d3dede45e20665c5730abe3d5f18f84}
 \newcommand{\readconcommitshort}{5c849d1}
-\newcommand{\readcondoi}{TODO(DOI)}
 \lstset{
 basicstyle=\ttfamily\footnotesize,
 breaklines=true,
@@ -223,11 +222,23 @@ Those timings name the build that was clocked.
 
 \section{Requirements and the failure each one closes}
 \label{sec:requirements}
+Figure~\ref{fig:structures} shows the three geometries that feed the survey, the timing file and the climbing-image case.
 Table \ref{tab:requirements} states five requirements.
 Each is a field a later step reads.
 The frame stores the geometry and its labels.
 It does not store the short history of a quasi-Newton update \cite{nocedalUpdatingQuasinewtonMatrices1980,sheppardOptimizationMethodsFinding2008} or of a FIRE step \cite{bitzekStructuralRelaxationMade2006}.
 Section \ref{sec:cases} measures that difference on one band.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figures/generated/structures.pdf}
+\caption{Benchmark structures used in this paper.
+(a)~Four-atom CuH\(_2\) survey frame (\texttt{resources/test/tiny\_cuh2.con}).
+(b)~218-atom CuH\(_2\) frame that is repeated for the \(10{,}000\)-frame timings (\texttt{resources/test/cuh2.con}).
+(c)~Middle image of the EMT Pt(100) adatom hop from the uninterrupted climbing-image band.
+Drawn with xyzrender under the Ruhi palette (\texttt{pixi run cpc-structures}).}
+\label{fig:structures}
+\end{figure}
 
 \begin{table}[ht]
 \centering
@@ -968,7 +979,7 @@ The release measured here is readcon-core~\readconversion{} at commit
 \begin{center}
 \url{\readconcommit}.
 \end{center}
-The version DOI waits on the 0.17.2 deposit; the source placeholder is \texttt{\readcondoi}.
+% Version DOI for 0.17.2 pending the deposit; concept DOI only in the rendered text.
 The concept record is
 \url{https://doi.org/10.5281/zenodo.18753567}
 \cite{goswamiReadconcoreConConvel2026}.
