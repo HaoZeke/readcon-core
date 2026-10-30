@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.17.3 - 2026-10-30
+
+### Fixed
+
+- The source archive, the sdists and the crate no longer carry the stray local workflow directory that 0.17.2 carried, and `.gitignore` now lists it.
+- `cxx_tarball.yml` runs when the Release workflow finishes on a tag push, so each GitHub Release gets `readcon-core-cxx-$VERSION.tar.gz` and the `-vendor` tarball again. The Release workflow publishes with `GITHUB_TOKEN`, which starts no `release: published` workflows, so 0.17.1 and 0.17.2 went out without them.
+
 ## v0.17.2 - 2026-10-29
 
 ### Fixed
