@@ -3,9 +3,15 @@ name: cxx source tarball
 # Attaches slim + vendor cxx tarballs after cargo-dist publishes the
 # GitHub Release. Slim URL is the FetchContent / wrapdb default.
 # cbindgen is not installed and not invoked.
+#
+# The Release workflow creates the GitHub Release with GITHUB_TOKEN, and
+# events raised by GITHUB_TOKEN start no workflows, so `release: published`
+# never fired for v0.15.0 through v0.17.2. Run when the Release workflow
+# finishes on a tag push instead; head_branch is then the tag name.
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
@@ -18,11 +24,18 @@ permissions:
 
 jobs:
   cxx-tarball:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     runs-on: ubuntu-22.04
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.workflow_run.head_branch }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          ref: refs/tags/${{ env.TAG }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -37,7 +50,7 @@ jobs:
       - name: Upload tarballs to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          tag_name: ${{ env.TAG }}
           files: |
             dist-cxx/readcon-core-cxx-*.tar.gz
             dist-cxx/readcon-core-cxx-*.tar.gz.sha256
