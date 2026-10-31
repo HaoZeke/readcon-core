@@ -1,0 +1,36 @@
+// Files the tutorial reads (left), the readcon calls, and the files it writes.
+// Render from the repository root:
+//   dot -Tsvg docs/orgmode/img/tutorial_steps.dot -o docs/orgmode/img/tutorial_steps.svg
+digraph tutorial_steps {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Atkinson Hyperlegible, sans-serif", fontsize=11, color="#6366F1",
+        fontcolor="#1E1B4B", style=filled, fillcolor="#EEF2FF", shape=box];
+  edge [fontname="Atkinson Hyperlegible, sans-serif", fontsize=10, color="#64748B",
+        fontcolor="#1E1B4B"];
+
+  multi  [label="tiny_multi_cuh2.con\n2 frames", shape=note];
+  slab   [label="cuh2.con\n218 atoms", shape=note];
+  forces [label="tiny_cuh2_forces.con", shape=note];
+  band   [label="neb_band.con\n4 images", shape=note];
+
+  atoms  [label="your Atom list", shape=note];
+
+  frames [label="frames in memory\ncell, atoms, fixed, atom_id"];
+  check  [label="has_forces, energy"];
+  built  [label="new ConFrame\nset_energy"];
+  table  [label="bead, energy, fmax\nper image"];
+
+  rt  [label="tutorial_roundtrip.con", shape=note, fillcolor="#E0E7FF"];
+  out [label="tutorial_built.con", shape=note, fillcolor="#E0E7FF"];
+
+  { rank=same; multi -> slab -> forces -> atoms -> band [style=invis]; }
+
+  multi  -> frames [label="steps 2-3\niter_con, read_first_frame"];
+  slab   -> frames [label="step 3"];
+  frames -> rt     [label="step 4\nwrite_con"];
+  forces -> check  [label="step 5\nread_first_frame"];
+  atoms  -> built  [label="step 5\nConFrame"];
+  built  -> out    [label="write_con"];
+  band   -> table  [label="step 6\niter_con"];
+}

@@ -5,26 +5,25 @@ Tutorial — your first .con checkpoint
 
 .. note::
 
-   Diátaxis *tutorial* (learning-oriented). **Source of truth is this Org file.**
-
-   CI (``.github/workflows/ci_python.yml``, lean + chemfiles matrices) runs
-   ``scripts/run-tutorial-core.sh``: Emacs ``org-babel-tangle`` into
-   ``docs/notebooks/tutorial_core.py``, **fails if the committed tangle drifts**,
-   then runs that file with ``python3`` against ``resources/test`` fixtures.
-   Do not hand-edit the tangled ``.py``; re-tangle with
-   ``READCON_TANGLE_UPDATE=1 scripts/run-tutorial-core.sh`` and commit.
-
+   Diátaxis *tutorial* (learning-oriented).
    Multi-language recipes: :doc:`howto`. Format conversion: :doc:`chemfiles-tutorial`.
    API tables: :doc:`bindings`. Format rules: :doc:`spec`.
 
-In this tutorial we open a real CON trajectory from the repository fixtures,
-inspect cell and ``atom_id`` data, write a round-trip file, then build a small
-checkpoint with total energy.
+In this tutorial we open a real ``.con`` trajectory from the repository fixtures, inspect cell and ``atom_id`` data, write a round-trip file, build a small checkpoint with total energy, and read energies along a band.
 
-We use **Python** and the package ``readcon`` only (no chemfiles, no ASE).
-Paths are relative to the repository root. Locally you may ``C-c C-c`` blocks in
-Emacs; ****CI does not use session execute as a second path**** — it only runs the
-tangled ``.py`` after a drift check so session vs tangle cannot disagree silently.
+Before you start
+----------------
+
+You need Python 3.10 or newer, a checkout of this repository for the fixture files under ``resources/``, and the ``readcon`` package:
+
+.. code:: shell
+
+    git clone https://github.com/lode-org/readcon-core.git
+    cd readcon-core
+    pip install readcon
+
+We use Python and the package ``readcon`` only (no chemfiles, no ASE).
+Run the blocks in order from the repository root, in one Python session, since later blocks use names that earlier ones define.
 
 What we will do
 ---------------
@@ -40,6 +39,12 @@ What we will do
 5. Build a two-atom frame with total energy and write it.
 
 6. Read the image number and energy of every frame in ``resources/examples/neb_band.con``.
+
+.. figure:: img/tutorial_steps.svg
+    :alt: Diagram linking four fixture files and an atom list, through iter_con, read_first_frame and write_con, to the two files the tutorial writes
+
+
+    The files each step reads, the readcon calls it makes, and the files it writes. Source: ``docs/orgmode/img/tutorial_steps.dot``.
 
 Step 1 — import readcon and locate fixtures
 -------------------------------------------
@@ -340,9 +345,10 @@ Run from the shell
    # after: maturin develop --features python  (or pip install readcon)
    scripts/run-tutorial-core.sh
 
-Emacs: open this file and ``C-c C-c`` each Python block for interactive use.
-CI and ``scripts/run-tutorial-core.sh`` re-tangle, refuse drift, and run
-``docs/notebooks/tutorial_core.py`` only — do not hand-edit the tangled ``.py``.
+The script extracts the Python blocks of this page into ``docs/notebooks/tutorial_core.py`` and runs that file.
+Continuous integration (CI) runs the same script and fails if the committed file differs from what this page produces.
+After editing this page, regenerate the file with ``READCON_TANGLE_UPDATE=1 scripts/run-tutorial-core.sh`` rather than editing it by hand.
+In Emacs you can instead run each block with ``C-c C-c``.
 
 Next steps
 ----------
