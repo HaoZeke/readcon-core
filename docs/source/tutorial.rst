@@ -1,6 +1,6 @@
-====================================
-Tutorial — your first CON checkpoint
-====================================
+=====================================
+Tutorial — your first .con checkpoint
+=====================================
 
 
 .. note::
@@ -76,8 +76,18 @@ Setup
     assert MULTI.is_file(), f"missing fixture {MULTI}"
     assert FORCES.is_file(), f"missing fixture {FORCES}"
 
-Step 1 — open a multi-frame CON
--------------------------------
+With release 0.17.2 this prints:
+
+::
+
+    readcon 0.17.2
+    CON_SPEC_VERSION 3
+
+A newer release prints a newer version.
+``CON_SPEC_VERSION`` is the highest format version the library writes.
+
+Step 1 — open a multi-frame .con
+--------------------------------
 
 The fixture ``resources/test/tiny_multi_cuh2.con`` holds two small Cu/H frames.
 
@@ -92,8 +102,13 @@ The fixture ``resources/test/tiny_multi_cuh2.con`` holds two small Cu/H frames.
     print("frames:", n)
     assert n == 2, n
 
-You should see two frames with four atoms each and cell roughly
-``[15.3456, 21.702, 100.0]``.
+Each line is the frame number, the cell lengths in ångström, and the atom count:
+
+::
+
+    1 [15.3456, 21.702, 100.0] 4
+    2 [15.3456, 21.702, 100.0] 4
+    frames: 2
 
 Step 2 — inspect identity columns
 ---------------------------------
@@ -122,8 +137,18 @@ Step 2 — inspect identity columns
     assert list(frame.atoms)[0].atom_id == 0
     assert list(frame.atoms)[0].is_fixed is True
 
-Look at ``atom_id``: column 5 of the coordinate block, the pre-grouping index
-used by NEB and dimer tools. Fixed flags come from column 4.
+::
+
+    spec_version: 2
+    energy: None
+    Cu 0.6394 0.9045 6.9753 fixed= True atom_id= 0
+    Cu 3.1969 0.9045 6.9753 fixed= True atom_id= 1
+
+This file was written with format version 2 and stores no energy.
+Look at ``atom_id``: column 5 of the coordinate block.
+It is the index the atom had before the file grouped atoms by element.
+Nudged elastic band (NEB) and dimer tools use that index to match atoms across files.
+Fixed flags come from column 4.
 
 Step 3 — write a round-trip
 ---------------------------
@@ -138,8 +163,11 @@ Step 3 — write a round-trip
     assert len(again) == len(frames) == 2
     assert len(again[0]) == 4
 
-Open the written file under ``docs/notebooks/out/tutorial_core/`` if you like:
-line 2 is JSON metadata.
+::
+
+    wrote 2 frames; reread 2
+
+The written file is under ``docs/notebooks/out/tutorial_core/``.
 
 Step 4 — build a checkpoint with energy
 ---------------------------------------
@@ -162,6 +190,7 @@ Read a forces-bearing fixture, then build a tiny frame of your own:
         cell=[10.0, 10.0, 10.0],
         angles=[90.0, 90.0, 90.0],
         atoms=atoms,
+        prebox_header=["tutorial checkpoint", ""],
     )
     frame.set_energy(-1.25)
     frame.write_con(str(built_path))
@@ -170,6 +199,37 @@ Read a forces-bearing fixture, then build a tiny frame of your own:
     print("built atoms:", len(check), "energy:", check.energy)
     assert len(check) == 2
     assert check.energy == -1.25
+
+::
+
+    has_forces: True energy: -42.5
+    built atoms: 2 energy: -1.25
+
+This is the whole of ``tutorial_built.con``:
+
+::
+
+    tutorial checkpoint
+    {"con_spec_minor":1,"con_spec_version":3,"energy":-1.25,"units":{"energy":"eV","length":"angstrom","mass":"amu"}}
+    10.0 10.0 10.0
+    90.0 90.0 90.0
+
+
+    2
+    1 1
+    63.546 1.008
+    Cu
+    Coordinates of Component 1
+    0.0 0.0 0.0 0 0
+    H
+    Coordinates of Component 2
+    1.5 0.0 0.0 0 1
+
+Line 1 is the comment you passed as ``prebox_header``.
+Line 2 holds the energy you set as JSON (JavaScript Object Notation), along with the format version and units.
+Lines 3 and 4 are the cell lengths and angles.
+Lines 7 to 9 give the number of element types, the atoms of each type, and their masses.
+Each coordinate row is ``x y z fixed atom_id``.
 
 Checkpoint
 ----------
@@ -224,11 +284,11 @@ Next steps
     +------------------------------------------------+-------------------------------------------------------------------------------------------------+
     | Need                                           | Page                                                                                            |
     +================================================+=================================================================================================+
-    | Same tasks in Rust / C / C++ / Julia / Fortran | :doc:`howto`                                                                            |
+    | Same tasks in Rust / C / C++ / Julia / Fortran | :doc:`howto`                                                                                    |
     +------------------------------------------------+-------------------------------------------------------------------------------------------------+
-    | XYZ / PDB / GRO → CON (Babel + CI)             | :doc:`chemfiles-tutorial` / :doc:`chemfiles-notebook` |
+    | XYZ / PDB / GRO → CON (Babel + CI)             | :doc:`chemfiles-tutorial` / :doc:`chemfiles-notebook`                                           |
     +------------------------------------------------+-------------------------------------------------------------------------------------------------+
-    | Declared sections (``forces``, ``charges``, …) | :doc:`faq`, :doc:`spec`                                                            |
+    | Declared sections (``forces``, ``charges``, …) | :doc:`faq`, :doc:`spec`                                                                         |
     +------------------------------------------------+-------------------------------------------------------------------------------------------------+
-    | Full API tables                                | :doc:`bindings`                                                                      |
+    | Full API tables                                | :doc:`bindings`                                                                                 |
     +------------------------------------------------+-------------------------------------------------------------------------------------------------+

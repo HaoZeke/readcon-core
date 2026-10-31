@@ -72,6 +72,7 @@ frame = readcon.ConFrame(
     cell=[10.0, 10.0, 10.0],
     angles=[90.0, 90.0, 90.0],
     atoms=atoms,
+    prebox_header=["tutorial checkpoint", ""],
 )
 frame.set_energy(-1.25)
 frame.write_con(str(built_path))
