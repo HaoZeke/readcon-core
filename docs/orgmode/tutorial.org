@@ -144,6 +144,32 @@ It is the index the atom had before the file grouped atoms by element.
 Nudged elastic band (NEB) and dimer tools use that index to match atoms across files.
 Fixed flags come from column 4.
 
+** The copper slab
+
+To see what the fixed flags are for, read a larger fixture, a copper slab with two hydrogen atoms above it:
+
+#+NAME: step2_slab
+#+begin_src python :tangle ../notebooks/tutorial_core.py
+slab = readcon.read_first_frame(str(FIXTURES / "cuh2.con"))
+fixed = [a for a in slab.atoms if all(a.fixed)]
+free = [a for a in slab.atoms if not any(a.fixed)]
+print("atoms:", len(slab), "fixed:", len(fixed), "free:", len(free))
+print("free symbols:", sorted({a.symbol for a in free}))
+assert (len(slab), len(fixed), len(free)) == (218, 216, 2)
+#+end_src
+
+#+begin_example
+atoms: 218 fixed: 216 free: 2
+free symbols: ['H']
+#+end_example
+
+All 216 copper atoms are fixed in x, y and z, so a code that honours the flags moves only the two hydrogen atoms.
+The script =docs/orgmode/img/tutorial_slab.py= draws this file:
+
+#+CAPTION: =resources/test/cuh2.con= as read by readcon. Grey: copper, fixed in all three directions. Blue: hydrogen, free.
+#+ATTR_RST: :alt Side and top views of a six-layer copper slab with two hydrogen atoms above its surface
+[[file:img/tutorial_slab.png]]
+
 * Step 3 — write a round-trip
 
 #+NAME: step3_roundtrip

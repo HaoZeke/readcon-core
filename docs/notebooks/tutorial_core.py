@@ -52,6 +52,13 @@ assert list(frame.atoms)[0].symbol == "Cu"
 assert list(frame.atoms)[0].atom_id == 0
 assert list(frame.atoms)[0].is_fixed is True
 
+slab = readcon.read_first_frame(str(FIXTURES / "cuh2.con"))
+fixed = [a for a in slab.atoms if all(a.fixed)]
+free = [a for a in slab.atoms if not any(a.fixed)]
+print("atoms:", len(slab), "fixed:", len(fixed), "free:", len(free))
+print("free symbols:", sorted({a.symbol for a in free}))
+assert (len(slab), len(fixed), len(free)) == (218, 216, 2)
+
 frames = readcon.read_con(str(MULTI))
 readcon.write_con(str(roundtrip_path), frames)
 again = list(readcon.iter_con(str(roundtrip_path)))
