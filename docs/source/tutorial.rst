@@ -29,7 +29,7 @@ tangled ``.py`` after a drift check so session vs tangle cannot disagree silentl
 What we will do
 ---------------
 
-1. Import ``readcon`` and locate fixtures under ``resources/test/``.
+1. Import ``readcon`` and locate fixtures under ``resources/test/`` and ``resources/examples/``.
 
 2. Iterate every frame of ``tiny_multi_cuh2.con``.
 
@@ -39,8 +39,15 @@ What we will do
 
 5. Build a two-atom frame with total energy and write it.
 
-Parameters
-----------
+6. Read the image number and energy of every frame in ``resources/examples/neb_band.con``.
+
+Step 1 — import readcon and locate fixtures
+-------------------------------------------
+
+These blocks locate the fixture files and import the package.
+
+Paths
+~~~~~
 
 .. code:: python
     :name: params
@@ -63,8 +70,8 @@ Parameters
     print("REPO =", REPO)
     print("work_dir =", work_dir.resolve())
 
-Setup
------
+Import
+~~~~~~
 
 .. code:: python
     :name: setup
@@ -86,7 +93,7 @@ With release 0.17.2 this prints:
 A newer release prints a newer version.
 ``CON_SPEC_VERSION`` is the highest format version the library writes.
 
-Step 1 — open a multi-frame .con
+Step 2 — open a multi-frame .con
 --------------------------------
 
 The fixture ``resources/test/tiny_multi_cuh2.con`` holds two small Cu/H frames.
@@ -110,7 +117,7 @@ Each line is the frame number, the cell lengths in ångström, and the atom coun
     2 [15.3456, 21.702, 100.0] 4
     frames: 2
 
-Step 2 — inspect identity columns
+Step 3 — inspect identity columns
 ---------------------------------
 
 .. code:: python
@@ -179,7 +186,7 @@ The script ``docs/orgmode/img/tutorial_slab.py`` draws this file:
 
     ``resources/test/cuh2.con`` as read by readcon. Grey: copper, fixed in all three directions. Blue: hydrogen, free.
 
-Step 3 — write a round-trip
+Step 4 — write a round-trip
 ---------------------------
 
 .. code:: python
@@ -198,7 +205,7 @@ Step 3 — write a round-trip
 
 The written file is under ``docs/notebooks/out/tutorial_core/``.
 
-Step 4 — build a checkpoint with energy
+Step 5 — build a checkpoint with energy
 ---------------------------------------
 
 Read a forces-bearing fixture, then build a tiny frame of your own:
@@ -260,6 +267,36 @@ Lines 3 and 4 are the cell lengths and angles.
 Lines 7 to 9 give the number of element types, the atoms of each type, and their masses.
 Each coordinate row is ``x y z fixed atom_id``.
 
+Step 6 — read energies along a band
+-----------------------------------
+
+A nudged elastic band run stores one frame per image along a reaction path, one after another in a single file.
+Each frame keeps its image number (``neb_bead``), energy and largest force (``fmax``) in the line 2 JSON:
+
+.. code:: python
+    :name: step5_band
+
+    BAND = REPO / "resources" / "examples" / "neb_band.con"
+    band = list(readcon.iter_con(str(BAND)))
+    print("units:", band[0].metadata["units"])
+    for image in band:
+        print(image.neb_bead, image.energy, image.metadata["fmax"])
+    assert [image.neb_bead for image in band] == [0, 1, 2, 3]
+    assert all(image.has_forces for image in band)
+
+::
+
+    units: {'energy': 'eV', 'length': 'angstrom'}
+    0 -1.2 0.31
+    1 -0.4 0.08
+    2 -0.65 0.12
+    3 -1.1 0.27
+
+The values in this example file are fixture labels, not the result of a calculation (see ``scripts/make_cuh2_band.py``, which reuses them).
+A band from a real NEB run reads the same way.
+:cite:t:`goswamiNEBOrchestration2026` gives a reproducible way to run such a band and check it.
+eOn :cite:p:`chillEONSoftwareLong2014` is one of the codes that writes bands in this format.
+
 Checkpoint
 ----------
 
@@ -292,6 +329,8 @@ You now:
 - write round-trips
 
 - construct a frame with metadata energy
+
+- read per-image metadata from a band
 
 Run from the shell
 ------------------

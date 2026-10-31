@@ -89,6 +89,14 @@ print("built atoms:", len(check), "energy:", check.energy)
 assert len(check) == 2
 assert check.energy == -1.25
 
+BAND = REPO / "resources" / "examples" / "neb_band.con"
+band = list(readcon.iter_con(str(BAND)))
+print("units:", band[0].metadata["units"])
+for image in band:
+    print(image.neb_bead, image.energy, image.metadata["fmax"])
+assert [image.neb_bead for image in band] == [0, 1, 2, 3]
+assert all(image.has_forces for image in band)
+
 import json
 
 summary = {
