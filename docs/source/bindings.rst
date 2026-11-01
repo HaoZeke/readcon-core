@@ -438,9 +438,9 @@ Types
 Typed metadata accessors
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Mirrors the Rust and Python typed-setter helpers. Reserved keys are
-addressable by named getters and setters; arbitrary keys go through
-``metadata_json``.
+Reserved keys have named getters; arbitrary keys go through ``metadata_json``.
+Julia has no typed setters.
+``ConFrame`` is immutable and ``write_con`` takes metadata from ``metadata_json``, so copy the frame with a new JSON object.
 
 .. code:: julia
 
@@ -454,16 +454,17 @@ addressable by named getters and setters; arbitrary keys go through
     println(frame.frame_index)   # Union{Nothing, UInt64}
     println(frame.time)          # Union{Nothing, Float64}
 
-    # Write: typed setters
-    ReadCon.set_energy!(frame, -42.5)
-    ReadCon.set_frame_index!(frame, 7)
-    ReadCon.set_neb_bead!(frame, 3)
-
-    # Bulk: replace from a JSON string (validated against the schema)
-    ReadCon.set_metadata_json!(
-        frame,
-        "{\"con_spec_version\": 2, \"sections\": [\"velocities\"], \"energy\": -1.0}",
+    # Write: copy the frame with new metadata JSON
+    edited = ConFrame(
+        frame.cell, frame.angles, frame.atoms, frame.has_velocities,
+        frame.prebox_header, frame.postbox_header, frame.has_forces,
+        frame.has_energies, frame.spec_version,
+        "{\"energy\": -1.0, \"frame_index\": 7, \"neb_bead\": 3}",
+        frame.energy, frame.frame_index, frame.time, frame.timestep,
+        frame.neb_bead, frame.neb_band,
     )
+    write_con("edited.con", [edited])
+    println(first(read_con("edited.con")).energy)  # -1.0
 
 C/C++ (FFI)
 -----------
@@ -636,12 +637,12 @@ Builder metadata helpers:
     builder.set_scalar_metadata("convergence", 1.0e-3);
     builder.set_string_metadata("generator", "eon");
     builder.set_metadata_json(R"({"custom_key":"custom_value"})");
-    builder.add_atom_with_velocity_and_forces(
+    builder.add_atom(
         "Cu", 0.0, 0.0, 0.0,
         {true, false, true},
         0, 63.546,
-        0.1, 0.2, 0.3,
-        -0.1, -0.2, -0.3);
+        {{0.1, 0.2, 0.3}},      // velocity
+        {{-0.1, -0.2, -0.3}});  // force
 
 Build system integration
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -863,6 +864,7 @@ Wrappers in ``fortran/ReadCon/src/readcon.f90`` over ``include/readcon-core.h``
 
     use readcon
     use, intrinsic :: iso_c_binding
+    use, intrinsic :: iso_fortran_env, only: int64
     type(frame_t) :: fr
     type(builder_t) :: bd
     type(c_ptr) :: tensor, block

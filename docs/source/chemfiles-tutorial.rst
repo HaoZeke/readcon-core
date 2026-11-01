@@ -145,7 +145,7 @@ Convert XYZ → CON (Rust)
     }
 
 Build with ``--features chemfiles-from-sources`` on Linux.
-Line 2 of the CON file is JSON (``con_spec_version`` 2).
+Line 2 of the CON file is JSON (``con_spec_version`` 3).
 Topology, if present in the source format, becomes ``metadata["bonds"]`` (indices in ``atom_data`` order; see :doc:\`chemfiles-explain\`).
 
 Convert XYZ → CON (Python)
@@ -200,13 +200,13 @@ Or attach bonds after ingress (indices = atom\_data order)
 
     let imported = con_frame_from_trajectory_path("water.xyz")?;
     let mut b = ConFrameBuilder::new(imported.header.boxl, imported.header.angles);
-    for a in &imported.atom_data {
+    for (i, a) in imported.atom_data.iter().enumerate() {
         b.add_atom(
             a.symbol.as_ref(),
             a.x, a.y, a.z,
-            [a.fixed_x, a.fixed_y, a.fixed_z],
+            a.fixed,
             a.atom_id,
-            a.mass,
+            imported.masses.get_f64(i),
         );
     }
     b.set_bonds(&[Bond::new(0, 1), Bond::new(0, 2)]);

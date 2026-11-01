@@ -34,7 +34,7 @@ Rust
     use readcon_core::{CON_SPEC_VERSION, VERSION};
 
     // Library version
-    assert_eq!(CON_SPEC_VERSION, 2);
+    assert!(CON_SPEC_VERSION >= 2); // atom_id semantics available
     println!("readcon-core {} (spec v{})", VERSION, CON_SPEC_VERSION);
 
     // Per-frame version (from parsed file)
@@ -78,7 +78,7 @@ Python
 
     # Library version
     print(readcon.__version__)       # e.g. "0.6.0"
-    print(readcon.CON_SPEC_VERSION)  # 2
+    print(readcon.CON_SPEC_VERSION)  # 3
 
     # Per-frame version (from parsed file)
     frames = readcon.read_con("input.con")
@@ -110,11 +110,12 @@ Rust: attaching custom metadata
     meta.insert("temperature_K".to_string(),
                 serde_json::json!(300.0));
 
-    let builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0])
-        .metadata(meta);
+    let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+    builder.metadata(meta);
     // ... add atoms, build, write ...
     // Line 2 of the output:
-    // {"con_spec_version":2,"generator":"my-tool 1.0","temperature_K":300.0}
+    // {"con_spec_minor":1,"con_spec_version":3,"generator":"my-tool 1.0",
+    //  "temperature_K":300.0,"units":{"energy":"eV","length":"angstrom","mass":"amu"}}
 
 Python: reading and attaching metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -209,9 +210,8 @@ Velocity data is detected automatically by the parser.
 
         for atom in &frame.atom_data {
             print!("{} ({:.4}, {:.4}, {:.4})", atom.symbol, atom.x, atom.y, atom.z);
-            if atom.has_velocity() {
-                print!(" vel=({:.6}, {:.6}, {:.6})",
-                       atom.vx.unwrap(), atom.vy.unwrap(), atom.vz.unwrap());
+            if let Some([vx, vy, vz]) = atom.velocity() {
+                print!(" vel=({:.6}, {:.6}, {:.6})", vx, vy, vz);
             }
             println!();
         }
@@ -253,9 +253,9 @@ reconstructed.
 
     let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
     // atom_id 0 and 1 for Cu, 2 for H -- these survive type-based reordering
-    builder.add_atom("Cu", 0.0, 0.0, 0.0, false, 0, 63.546);
-    builder.add_atom("H",  1.0, 2.0, 3.0, false, 2, 1.008);
-    builder.add_atom("Cu", 2.55, 2.55, 0.0, false, 1, 63.546);
+    builder.add_atom("Cu", 0.0, 0.0, 0.0, [false; 3], 0, 63.546);
+    builder.add_atom("H",  1.0, 2.0, 3.0, [false; 3], 2, 1.008);
+    builder.add_atom("Cu", 2.55, 2.55, 0.0, [false; 3], 1, 63.546);
     let frame = builder.build()?;
     // Atoms are now grouped: Cu(id=0), Cu(id=1), H(id=2)
 
@@ -324,7 +324,7 @@ pin the worker count: ``1`` is sequential, ``n >`` 2= is a Rayon pool,
 
 .. code:: rust
 
-    #[cfg(feature = "parallel")]
+    // Cargo.toml: readcon-core = { version = "0.17.2", features = ["parallel"] }
     use readcon_core::iterators::{frames_from_text, parse_frames_parallel};
 
     let contents = std::fs::read_to_string("large_trajectory.con").unwrap();
@@ -744,12 +744,12 @@ Building frames from data
     readcon::ConFrameBuilder builder(
         {10.0, 10.0, 10.0}, {90.0, 90.0, 90.0});
     builder.add_atom("Cu", 0.0, 0.0, 0.0, false, 1, 63.546);
-    builder.add_atom_with_velocity_and_forces(
+    builder.add_atom(
         "Cu", 2.55, 2.55, 0.0,
         {true, false, true},
         2, 63.546,
-        0.1, 0.2, 0.3,
-        -0.1, -0.2, -0.3);
+        {{0.1, 0.2, 0.3}},      // velocity
+        {{-0.1, -0.2, -0.3}});  // force
     auto frame = builder.build();
 
 Reading a single frame
@@ -826,6 +826,7 @@ Reading frames
 .. code:: julia
 
     using ReadCon
+    using Printf
 
     frames = read_con("trajectory.con")
 
@@ -866,6 +867,7 @@ Working with convel velocity data
 .. code:: julia
 
     using ReadCon
+    using Printf
 
     frames = read_con("trajectory.convel")
     frame = frames[1]
