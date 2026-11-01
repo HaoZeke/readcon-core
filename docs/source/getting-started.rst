@@ -24,7 +24,7 @@ Pick **one** language. Version pins match this tree (``0.17.2``).
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
     | Rust CON I/O       | ``cargo add readcon-core@0.17.2``                                                   | `docs.rs <https://docs.rs/readcon-core>`_                                                                                                   |
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
-    | Rust + chemfiles   | ``cargo add readcon-core@0.17.2 --features chemfiles``                              | same crate                                                                                                                                  |
+    | Rust + chemfiles   | ``cargo add readcon-core@0.17.2 --features chemfiles-from-sources`` (Linux)         | same crate                                                                                                                                  |
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
     | readcon-db         | ``cargo add readcon-db`` / ``pip install readcon-db``                               | `docs <https://lode-org.github.io/readcon-db/docs/>`_ · `PyPI <https://pypi.org/project/readcon-db/>`_                                      |
     +--------------------+-------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------+
@@ -58,9 +58,15 @@ Rust: CON I/O
 Rust: with conversion
 ~~~~~~~~~~~~~~~~~~~~~
 
+On Linux, build chemfiles from source.
+The prebuilt ``libchemfiles`` behind ``--features chemfiles`` crashes there with a floating point exception on the first conversion.
+The source build needs CMake and a C++ compiler.
+
 .. code:: shell
 
-    cargo add readcon-core@0.17.2 --features chemfiles
+    cargo add readcon-core@0.17.2 --features chemfiles-from-sources
+
+The macOS and Windows wheels use the prebuilt library, ``--features chemfiles``.
 
 readcon-db
 ~~~~~~~~~~

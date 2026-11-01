@@ -120,9 +120,9 @@ hand-rolling XYZ and a private atoms object.
 -   **Plotting:** [chemparseplot](https://chemparseplot.rgoswami.me) (+ [rgpycrumbs](https://rgpycrumbs.rgoswami.me)) on the same files
 -   **Measurements:** Cachegrind I-refs; PR ASV + spyglass; peer scripts in `benches/`. [benchmarks.org](docs/orgmode/benchmarks.org)
 
-    # foreign → CON (needs --features chemfiles)
-    cargo run --release --features chemfiles -- convert structure.xyz structure.con
-    # Python (readcon-chemfiles or maturin --features python,chemfiles)
+    # foreign → CON (needs chemfiles; on Linux build it from source)
+    cargo run --release --features chemfiles-from-sources -- convert structure.xyz structure.con
+    # Python (readcon-chemfiles, or maturin --features python,chemfiles-from-sources on Linux)
     # python -c "import readcon; readcon.convert_to_con('structure.xyz','structure.con')"
 
 How-to: [docs/orgmode/migrate.org](docs/orgmode/migrate.org). Chemfiles path (CI-run):

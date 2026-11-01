@@ -40,8 +40,9 @@ Convert other formats into CON
      SEL -->|atom_data indices| RC
 
 
-This tutorial is **learning-oriented**: one successful path from a **non-CON** file
-into CON. Prefer ``pip install readcon-chemfiles`` (or Rust ``--features chemfiles``).
+This tutorial is **learning-oriented**: it follows one path that converts a **non-CON** file into CON.
+For the conversion, prefer ``pip install readcon-chemfiles``.
+In Rust on Linux, the conversion needs ``--features chemfiles-from-sources``.
 For native CON files without conversion, start with :doc:`tutorial` instead.
 
 What you will build
@@ -81,17 +82,22 @@ Path A — Python full wheel (recommended)
 Path B — Rust with chemfiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+On Linux build chemfiles from source; the prebuilt library behind ``--features chemfiles`` crashes there on the first conversion.
+The macOS and Windows wheels use the prebuilt library, ``--features chemfiles``.
+
 .. code:: shell
 
-    cargo build --features chemfiles
-    cargo test --features chemfiles --lib chemfiles
+    cargo build --features chemfiles-from-sources
+    cargo test --features chemfiles-from-sources --lib chemfiles
 
 Path C — Editable Python from this repo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+On Linux use the source build here too, as the Linux wheels do.
+
 .. code:: shell
 
-    maturin develop --features python,chemfiles
+    maturin develop --features python,chemfiles-from-sources
     python -c "import readcon; assert readcon.has_chemfiles_support()"
 
 A small XYZ to convert
@@ -120,7 +126,7 @@ Convert XYZ → CON (Rust)
     use readcon_core::writer::ConFrameWriter;
 
     fn main() -> Result<(), Box<dyn std::error::Error>> {
-        assert!(chemfiles_enabled(), "rebuild with --features chemfiles");
+        assert!(chemfiles_enabled(), "rebuild with --features chemfiles-from-sources");
 
         let frame = con_frame_from_trajectory_path("water.xyz")?;
         println!(
@@ -138,9 +144,9 @@ Convert XYZ → CON (Rust)
         Ok(())
     }
 
-Build with ``--features chemfiles``. Line 2 of the CON file is JSON
-(``con_spec_version`` 2). Topology, if present in the source format, becomes
-``metadata["bonds"]`` (indices in ``atom_data`` order; see :doc:\`chemfiles-explain\`).
+Build with ``--features chemfiles-from-sources`` on Linux.
+Line 2 of the CON file is JSON (``con_spec_version`` 2).
+Topology, if present in the source format, becomes ``metadata["bonds"]`` (indices in ``atom_data`` order; see :doc:\`chemfiles-explain\`).
 
 Convert XYZ → CON (Python)
 --------------------------

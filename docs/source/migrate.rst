@@ -130,11 +130,12 @@ private dump. Ecosystem context: conf.py **Ecosystem** nav ·
 One-command convert (CLI)
 -------------------------
 
-Build with chemfiles when the input is not already CON:
+Build with chemfiles when the input is not already CON.
+On Linux build chemfiles from source, as below; the prebuilt library behind ``--features chemfiles`` crashes there (see :doc:`getting-started`).
 
 .. code:: shell
 
-    cargo build --release --features chemfiles
+    cargo build --release --features chemfiles-from-sources
     ./target/release/readcon-core convert structure.xyz structure.con
     ./target/release/readcon-core convert structure.pdb structure.con
     # native CON inspect / rewrite (no chemfiles required):
@@ -158,7 +159,7 @@ Chemfiles-linked install for foreign formats:
 
 .. code:: shell
 
-    pip install 'readcon-chemfiles==0.17.2'   # or: maturin develop --features python,chemfiles
+    pip install 'readcon-chemfiles==0.17.2'   # or: maturin develop --features python,chemfiles-from-sources (Linux)
 
 .. code:: python
 

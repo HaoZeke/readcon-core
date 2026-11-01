@@ -61,9 +61,9 @@ hand-rolling XYZ and a private atoms object.
 - *Measurements:* Cachegrind I-refs; PR ASV + spyglass; peer scripts in =benches/=. [[file:docs/orgmode/benchmarks.org][benchmarks.org]]
 
 #+begin_src shell
-# foreign → CON (needs --features chemfiles)
-cargo run --release --features chemfiles -- convert structure.xyz structure.con
-# Python (readcon-chemfiles or maturin --features python,chemfiles)
+# foreign → CON (needs chemfiles; on Linux build it from source)
+cargo run --release --features chemfiles-from-sources -- convert structure.xyz structure.con
+# Python (readcon-chemfiles, or maturin --features python,chemfiles-from-sources on Linux)
 # python -c "import readcon; readcon.convert_to_con('structure.xyz','structure.con')"
 #+end_src
 

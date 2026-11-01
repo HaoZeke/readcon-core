@@ -186,8 +186,10 @@ How to install full chemfiles support
 
     pip install 'readcon-chemfiles==0.17.2'   # preferred PyPI
     # or: pip install 'readcon[chemfiles]'   # depends on readcon-chemfiles==X.Y.Z
-    cargo build --features chemfiles
-    maturin develop --features python,chemfiles
+    cargo build --features chemfiles-from-sources   # Linux
+    maturin develop --features python,chemfiles-from-sources   # Linux
+
+The macOS and Windows wheels use the prebuilt library, ``--features chemfiles``.
 
 Do not install ``readcon`` and ``readcon-chemfiles`` together (module clash).
 
