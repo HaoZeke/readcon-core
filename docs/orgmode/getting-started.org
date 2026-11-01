@@ -21,8 +21,7 @@ Pick *one* language. Version pins match this tree (=0.17.2=).
 | Rust + chemfiles | =cargo add readcon-core@0.17.2 --features chemfiles=  | same crate |
 | readcon-db | =cargo add readcon-db= / =pip install readcon-db= | [[https://lode-org.github.io/readcon-db/docs/][docs]] · [[https://pypi.org/project/readcon-db/][PyPI]] |
 | Julia | from this repo: =julia --project=julia/ReadCon -e 'using Pkg; Pkg.instantiate()'= | [[file:bindings.org][bindings]] |
-| C / C++ / Fortran | CMake FetchContent, Meson wrap, or =pkg-config readcon-core= | [[file:bindings.org][bindings]] |
-| Prebuilt C ABI | =readcon-core-clib-$VER-$target.tar.gz= on the GitHub Release | [[file:bindings.org][bindings]] (Julia / Fortran / =pkg-config=) |
+| C / C++ / Fortran | CMake FetchContent or install from the =v0.17.2= tag | [[file:bindings.org][bindings]] |
 
 ** Python: CON I/O
 
@@ -72,39 +71,41 @@ Language API notes: [[file:bindings.org][bindings]].
 ** Fortran / C / C++
 
 Headers in =include/= are shipped. cbindgen is *not* required.
-CMake FetchContent / =find_package(readcon-core)=, Meson
-=dependency('readcon-core')=, or =pkg-config --libs readcon-core=
-after a prefix install. The cxx tarball on the GitHub Release is
-=readcon-core-cxx-$VERSION.tar.gz=.
+CMake compiles the library with cargo, so Rust 1.88 or newer must be on the =PATH=.
+
+CMake cannot fetch a prebuilt library from the =v0.17.2= GitHub Release.
+That release does not carry the =readcon-core-cxx= tarball, its vendor tarball, or the prebuilt =readcon-core-clib= tarballs.
+Fetch the tagged source instead:
 
 #+begin_src cmake
 include(FetchContent)
 FetchContent_Declare(
   readcon-core
-  URL https://github.com/lode-org/readcon-core/releases/download/v0.17.2/readcon-core-cxx-0.17.2.tar.gz
-  URL_HASH SHA256=4bf6b1809da292a7ea5cc59376e57220f31afa052c7365aecdc3b039c70b52f3
+  GIT_REPOSITORY https://github.com/lode-org/readcon-core.git
+  GIT_TAG v0.17.2
+  GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(readcon-core)
 target_link_libraries(app PRIVATE readcon-core::shared)
 #+end_src
 
-The slim cxx tarball on the =v0.17.2= GitHub Release is the FetchContent
-URL. A vendor tarball (=readcon-core-cxx-0.17.2-vendor.tar.gz=) ships
-crates for offline builds. The Meson wrap file is
-=packaging/wrapdb/readcon-core.wrap= on that same release.
-
-#+begin_src meson
-readcon_dep = dependency('readcon-core')
-#+end_src
-
-From a git checkout:
+Or install from a checkout of the same tag.
+=find_package(readcon-core)=, =pkg-config= and Meson =dependency('readcon-core')= then find the prefix:
 
 #+begin_src shell
+git clone --branch v0.17.2 --depth 1 https://github.com/lode-org/readcon-core.git
+cd readcon-core
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$PWD/prefix
 cmake --build build && cmake --install build
 export PKG_CONFIG_PATH=$PWD/prefix/lib/pkgconfig
 pkg-config --cflags --libs readcon-core
 #+end_src
+
+#+begin_src meson
+readcon_dep = dependency('readcon-core')
+#+end_src
+
+The Meson wrap file =packaging/wrapdb/readcon-core.wrap= downloads the cxx tarball, so it fails until that asset is attached to the release.
 
 Fortran smoke from a checkout (after a release build of the cdylib):
 
@@ -113,11 +114,9 @@ cd fortran/ReadCon && fpm test --flag "-L../../target/release" \
   --link-flag "-L../../target/release -lreadcon_core -ldl -lpthread -lm"
 #+end_src
 
-Prebuilt C ABI (no local cargo): unpack
-=readcon-core-clib-$VERSION-$target.tar.gz= from the GitHub Release, then
-=export READCON_CORE_LIB= / =PKG_CONFIG_PATH=. Attach assets to an
-already-published tag with Actions → *C ABI library tarball* →
-=tag=vX.Y.Z=. Windows + chemfiles is not a clib asset.
+Prebuilt C ABI tarballs (=readcon-core-clib-$VERSION-$target.tar.gz=, no local cargo) were last attached to =v0.17.0=.
+Where a release carries them, unpack one and =export READCON_CORE_LIB= / =PKG_CONFIG_PATH=.
+Windows + chemfiles is not a clib asset.
 
 * Smoke test
 

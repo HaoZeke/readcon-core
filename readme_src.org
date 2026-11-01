@@ -81,11 +81,14 @@ How-to: [[file:docs/orgmode/migrate.org][docs/orgmode/migrate.org]]. Chemfiles p
 | Python + chemfiles | =pip install readcon-chemfiles= | [[https://pypi.org/project/readcon-chemfiles/][PyPI]] |
 | readcon-db | =cargo add readcon-db= / =pip install readcon-db= | [[https://lode-org.github.io/readcon-db/docs/][docs]] |
 | Julia | =julia --project=julia/ReadCon -e 'using Pkg; Pkg.instantiate()'= | [[file:docs/orgmode/bindings.org][bindings]] |
-| C / C++ CMake | =FetchContent= / =find_package(readcon-core)= (cxx tarball) | headers + =libreadcon_core= + =readcon-core.pc= |
-| C / C++ Meson | =dependency('readcon-core')= (in-tree wrap-file) | same |
+| C / C++ CMake | =FetchContent= (=GIT_TAG v0.17.2=) / =find_package(readcon-core)= | headers + =libreadcon_core= + =readcon-core.pc= |
+| C / C++ Meson | =dependency('readcon-core')= after a CMake install | same |
 | C / C++ cargo-c | =cargo cinstall --release --prefix /usr/local= | same |
 
-The C/C++ headers are *shipped* (=include/readcon-core.h=). cbindgen is a maintainer tool, not a consumer dependency. C99 (=readcon-core.h=) or C++17 (=readcon-core.hpp=) compiler. FetchContent URL: =readcon-core-cxx-$VERSION.tar.gz= on the GitHub Release.
+The C/C++ headers are included in the repository (=include/readcon-core.h=).
+Only maintainers need cbindgen, which drafts that header; users install the library without it.
+C99 (=readcon-core.h=) or C++17 (=readcon-core.hpp=) compiler.
+The =v0.17.2= release does not carry the cxx tarball, so FetchContent takes the git tag.
 Full matrix: [[file:docs/orgmode/getting-started.org][getting-started]].
 
 ** Tutorial

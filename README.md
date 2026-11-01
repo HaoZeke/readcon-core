@@ -185,13 +185,13 @@ How-to: [docs/orgmode/migrate.org](docs/orgmode/migrate.org). Chemfiles path (CI
 
 <tr>
 <td class="org-left">C / C++ CMake</td>
-<td class="org-left"><code>FetchContent</code> / <code>find_package(readcon-core)</code> (cxx tarball)</td>
+<td class="org-left"><code>FetchContent</code> (<code>GIT_TAG v0.17.2</code>) / <code>find_package(readcon-core)</code></td>
 <td class="org-left">headers + <code>libreadcon_core</code> + <code>readcon-core.pc</code></td>
 </tr>
 
 <tr>
 <td class="org-left">C / C++ Meson</td>
-<td class="org-left"><code>dependency('readcon-core')</code> (in-tree wrap-file)</td>
+<td class="org-left"><code>dependency('readcon-core')</code> after a CMake install</td>
 <td class="org-left">same</td>
 </tr>
 
@@ -203,7 +203,10 @@ How-to: [docs/orgmode/migrate.org](docs/orgmode/migrate.org). Chemfiles path (CI
 </tbody>
 </table>
 
-The C/C++ headers are **shipped** (`include/readcon-core.h`). cbindgen is a maintainer tool, not a consumer dependency. C99 (`readcon-core.h`) or C++17 (`readcon-core.hpp`) compiler. FetchContent URL: `readcon-core-cxx-$VERSION.tar.gz` on the GitHub Release.
+The C/C++ headers are included in the repository (`include/readcon-core.h`).
+Only maintainers need cbindgen, which drafts that header; users install the library without it.
+C99 (`readcon-core.h`) or C++17 (`readcon-core.hpp`) compiler.
+The `v0.17.2` release does not carry the cxx tarball, so FetchContent takes the git tag.
 Full matrix: [getting-started](docs/orgmode/getting-started.org).
 
 
