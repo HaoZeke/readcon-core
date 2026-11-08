@@ -90,6 +90,7 @@ FORMAT = [
     ["scripts/file_sizes.py", "--table"],
     ["scripts/worked_example.py", "--tables"],
     ["scripts/test_run.py", "--tables"],
+    ["scripts/claimcheck_tables.py"],
     ["scripts/sinum.py"],
     ["scripts/gen_figures.py"],
     ["scripts/plot_perf.py"],
