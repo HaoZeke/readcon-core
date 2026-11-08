@@ -39,7 +39,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import cc_common as cc
+import cc_common as cc  # noqa: E402
 
 TAO_COMMIT = "55d79b184b7d8fac2e143e89dc19b766ec4e54b8"
 TAO_URL = f"https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/{TAO_COMMIT}/data/"

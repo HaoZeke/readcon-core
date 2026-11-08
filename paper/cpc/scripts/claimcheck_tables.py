@@ -111,9 +111,7 @@ def runs(numbers: list[int]) -> str:
             spans[-1][1] = n
         else:
             spans.append([n, n])
-    return ", ".join(
-        str(a) if a == b else f"{a}\\textendash{{}}{b}" for a, b in spans
-    )
+    return ", ".join(str(a) if a == b else f"{a}\\textendash{{}}{b}" for a, b in spans)
 
 
 def enot(x: float, digits: int = 2) -> str:

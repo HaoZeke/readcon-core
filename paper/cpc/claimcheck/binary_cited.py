@@ -35,7 +35,7 @@ HERE = Path(__file__).resolve().parent
 WORKDIR = cc.WORK / "binary_cited"
 os.environ["BENCH_WORK"] = str(WORKDIR / "bench")
 os.environ["BENCH_RESULTS"] = str(WORKDIR / "results")
-import binary_formats as bf
+import binary_formats as bf  # noqa: E402
 
 TNG_COMMIT = bf.SOURCES["tng"]["commit"]
 # Trajectory next generation 1.8.4, the version GROMACS 2026.4 names.
@@ -302,9 +302,7 @@ def main() -> int:
     with tarfile.open(readable) as tar:
         tar.extractall(unpacked, filter="data")
     tng_builds = {
-        "campaign": build_tng(
-            unpacked / f"tng-{TNG_184['commit']}", TNG_184["commit"]
-        ),
+        "campaign": build_tng(unpacked / f"tng-{TNG_184['commit']}", TNG_184["commit"]),
         TNG_TAG["tag"]: build_tng(
             unpacked / f"tng-{TNG_TAG['commit']}", TNG_TAG["commit"]
         ),

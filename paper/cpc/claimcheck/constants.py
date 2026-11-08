@@ -28,7 +28,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import cc_common as cc
+import cc_common as cc  # noqa: E402
 
 TABLES = {
     "codata_2018": "https://physics.nist.gov/cuu/Constants/ArchiveASCII/allascii_2018.txt",
@@ -72,7 +72,9 @@ def unit_fs(m_u: float, ev: float) -> float:
 
 def macro(name: str) -> str:
     text = (cc.CPC / MACROS[name]).read_text()
-    found = re.search(r"\\newcommand\{\\" + name + r"\}\{(.*)\}\s*$", text, re.MULTILINE)
+    found = re.search(
+        r"\\newcommand\{\\" + name + r"\}\{(.*)\}\s*$", text, re.MULTILINE
+    )
     if not found:
         raise SystemExit(f"{MACROS[name]} has no macro {name}")
     return found.group(1)

@@ -26,8 +26,8 @@ import tomllib
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "scripts"))
 sys.path.insert(0, str(HERE))
-import portable
-import provenance
+import portable  # noqa: E402
+import provenance  # noqa: E402
 
 WORK = Path(os.environ.get("BENCH_WORK", HERE / "work" / "r0174"))
 

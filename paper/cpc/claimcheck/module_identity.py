@@ -29,8 +29,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import cc_common as cc
-import provenance
+import cc_common as cc  # noqa: E402
+import provenance  # noqa: E402
 
 TAGS = {
     10: "DT_STRSZ",

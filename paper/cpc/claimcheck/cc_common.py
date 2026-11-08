@@ -25,9 +25,9 @@ HERE = Path(__file__).resolve().parent
 CPC = HERE.parent
 sys.path.insert(0, str(CPC / "scripts"))
 sys.path.insert(0, str(CPC / "bench"))
-import interleave
-import portable
-import provenance
+import interleave  # noqa: E402
+import portable  # noqa: E402
+import provenance  # noqa: E402
 
 WORK = Path(os.environ.get("CC_WORK", HERE / "work")).resolve()
 RECORDS = CPC / "data" / "claimcheck"

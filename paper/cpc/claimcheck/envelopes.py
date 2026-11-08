@@ -36,10 +36,10 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import cc_common as cc
+import cc_common as cc  # noqa: E402
 
 os.environ.setdefault("BENCH_WORK", str(cc.WORK / "rust"))
-import rust_crate
+import rust_crate  # noqa: E402
 
 INPUT = "resources/test/tiny_multi_cuh2.con"
 SKIPPABLE = 0x184D2A50

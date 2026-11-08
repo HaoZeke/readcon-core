@@ -27,10 +27,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import cc_common as cc
+import cc_common as cc  # noqa: E402
 
 os.environ.setdefault("BENCH_WORK", str(cc.WORK / "rust"))
-import rust_crate
+import rust_crate  # noqa: E402
 
 POLY = 0x82F63B78
 TABLE = []
