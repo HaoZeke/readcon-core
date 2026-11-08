@@ -134,7 +134,7 @@ fn write_con(reference: &Path, boxes: &Path, out: &Path, format: &str) -> Result
         }
         writer.write_frame(&builder.build()?)?;
     }
-    writer.finish()?;
+    drop(writer);
     Ok(())
 }
 

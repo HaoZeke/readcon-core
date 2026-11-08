@@ -118,7 +118,8 @@ def main() -> int:
     payload = raw[payload_off:]
     stored = struct.unpack_from("<I", raw, 32)[0]
     flipped = bytearray(raw)
-    flipped[payload_off] ^= 0x01
+    # The high byte of the first little-endian binary64, so the change is visible in the sum.
+    flipped[payload_off + 7] ^= 0x01
     bad = work / "tiny-flipped.conbin"
     bad.write_bytes(flipped)
     reread = json.loads(

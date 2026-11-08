@@ -38,6 +38,15 @@ os.environ["BENCH_RESULTS"] = str(WORKDIR / "results")
 import binary_formats as bf
 
 TNG_COMMIT = bf.SOURCES["tng"]["commit"]
+# Trajectory next generation 1.8.4, the version GROMACS 2026.4 names.
+# The commit bench/binary_formats.py pins is 1.8.2 and does not read these examples.
+TNG_184 = {
+    "commit": "f8d552736bbe0d0df68ccbcf899b0d93ab8efa89",
+    "bytes": 11793631,
+    "url": "https://gitlab.com/gromacs/tng/-/archive/f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/"
+    "tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89.tar.gz",
+    "sha256": "b7c0cf265b644b615635bab73bd09f335476a84fb6f34002473d94d8ac94cdb9",
+}
 TNG_TAG = {
     "tag": "v1.8.2",
     "commit": "3cd824df250a72f2660f5ac8a6d17f1c327947b8",
@@ -283,20 +292,34 @@ def main() -> int:
     unpacked.mkdir(parents=True)
     with tarfile.open(archive) as tar:
         tar.extractall(unpacked, filter="data")
+    readable, got = cc.fetch(
+        TNG_184["url"],
+        f"tng-{TNG_184['commit']}.tar.gz",
+        TNG_184["sha256"],
+        TNG_184["bytes"],
+    )
+    sources.append(got)
+    with tarfile.open(readable) as tar:
+        tar.extractall(unpacked, filter="data")
     tng_builds = {
-        "campaign": build_tng(bf.WORK / "src" / bf.SOURCES["tng"]["dir"], TNG_COMMIT),
+        "campaign": build_tng(
+            unpacked / f"tng-{TNG_184['commit']}", TNG_184["commit"]
+        ),
         TNG_TAG["tag"]: build_tng(
             unpacked / f"tng-{TNG_TAG['commit']}", TNG_TAG["commit"]
         ),
     }
+    paper_pin = build_tng(bf.WORK / "src" / bf.SOURCES["tng"]["dir"], TNG_COMMIT)
+    example_commit = TNG_184["commit"]
     tng = {}
     for name, (size, sha) in TNG_FILES.items():
         tng[name], got = cc.fetch(
-            f"https://gitlab.com/gromacs/tng/-/raw/{TNG_COMMIT}/example_files/{name}",
-            f"tng-{TNG_COMMIT[:8]}-{name}",
+            f"https://gitlab.com/gromacs/tng/-/raw/{example_commit}/example_files/{name}",
+            f"tng-{example_commit[:8]}-{name}",
             sha,
             size,
         )
+        got["commit"] = example_commit
         sources.append(got)
     files = WORKDIR / "files"
     shutil.rmtree(files, ignore_errors=True)
@@ -347,11 +370,18 @@ def main() -> int:
             for build, built in tng_builds.items():
                 for mode in ("all", "frames"):
                     reads[f"{build}-{mode}"] = dumped(built["driver"], path, tmp, mode)
+            paper_read = dumped(paper_pin["driver"], path, tmp, "all")
             pos, box = reads["campaign-all"][1], reads["campaign-all"][2]
             if pos is None:
                 raise SystemExit(
-                    f"TNG {TNG_COMMIT[:8]} does not read {name}: {reads['campaign-all'][0]}"
+                    f"TNG {TNG_184['commit'][:8]} does not read {name}: {reads['campaign-all'][0]}"
                 )
+            entry["paper_pin"] = {
+                "commit": TNG_COMMIT,
+                "version": paper_pin["version"],
+                "printed": paper_read[0],
+                "vs_campaign_all": against(paper_read[1], pos, 0.0),
+            }
             entry["tng_read"] = {
                 key: {"printed": printed, "vs_campaign_all": against(got, pos, 0.0)}
                 for key, (printed, got, _) in reads.items()

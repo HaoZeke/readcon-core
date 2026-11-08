@@ -59,11 +59,22 @@ def fetch(
         path.parent.mkdir(parents=True, exist_ok=True)
         part = path.with_name(path.name + ".part")
         request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-        with (
-            urllib.request.urlopen(request, timeout=120) as response,
-            part.open("wb") as out,
-        ):
-            shutil.copyfileobj(response, out)
+        for attempt in range(5):
+            try:
+                with (
+                    urllib.request.urlopen(request, timeout=120) as response,
+                    part.open("wb") as out,
+                ):
+                    shutil.copyfileobj(response, out)
+                break
+            except urllib.error.HTTPError as error:
+                if error.code < 500 or attempt == 4:
+                    raise
+                time.sleep(2 * (attempt + 1))
+            except urllib.error.URLError:
+                if attempt == 4:
+                    raise
+                time.sleep(2 * (attempt + 1))
         part.rename(path)
     got = {
         "url": url,

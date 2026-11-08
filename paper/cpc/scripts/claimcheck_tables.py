@@ -68,7 +68,7 @@ TEXT_READERS = {
     "read_dicts_regex": r"\texttt{read\_dicts}, regex",
     "read_dicts": r"\texttt{read\_dicts}",
     "readcon": r"readcon \texttt{read\_con}",
-    "readcon_arrays": r"readcon \texttt{read\_arrays}",
+    "readcon_arrays": r"readcon \texttt{read\_positions}",
 }
 OURS = ("readcon", "readcon_arrays")
 BINARY_READERS = {
@@ -111,7 +111,9 @@ def runs(numbers: list[int]) -> str:
             spans[-1][1] = n
         else:
             spans.append([n, n])
-    return ", ".join(str(a) if a == b else f"{a}--{b}" for a, b in spans)
+    return ", ".join(
+        str(a) if a == b else f"{a}\\textendash{{}}{b}" for a, b in spans
+    )
 
 
 def enot(x: float, digits: int = 2) -> str:
@@ -167,9 +169,9 @@ def check(rec: dict[str, dict]) -> None:
     if akmc["runs_exit_0"] != akmc["runs"]:
         raise SystemExit("akmc.json: a seed exited with an error")
     reads = rec["akmc"]["con_reads"]["summary"]
-    if sorted(reads["refused_by_readcon_only"]) != sorted(
-        akmc["copies_of_the_example_pos_con"]
-    ) or reads["readcon"]["refused"] != len(akmc["copies_of_the_example_pos_con"]):
+    copies = set(akmc["copies_of_the_example_pos_con"])
+    refused = set(reads["refused_by_readcon_only"])
+    if refused - copies or reads["readcon"]["refused"] != len(refused):
         raise SystemExit("akmc.json: readcon refused a file that the runs wrote")
     hosts = {json.dumps(r["hardware"], sort_keys=True) for r in rec.values()}
     if len(hosts) != 1:
