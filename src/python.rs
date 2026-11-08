@@ -2049,15 +2049,18 @@ fn con_frame_list(
         _ => frames.into_iter().map(Some).collect(),
     });
     let t_return = std::time::Instant::now();
-    let obj = Py::new(py, ConFrameList {
-        frames: std::sync::Mutex::new(stored),
-        cache: std::sync::Mutex::new(cache),
-        slab,
-        n_atoms,
-        workers,
-        phases: std::sync::Mutex::new(record),
-        pool: std::sync::Mutex::new(pool),
-    })?;
+    let obj = Py::new(
+        py,
+        ConFrameList {
+            frames: std::sync::Mutex::new(stored),
+            cache: std::sync::Mutex::new(cache),
+            slab,
+            n_atoms,
+            workers,
+            phases: std::sync::Mutex::new(record),
+            pool: std::sync::Mutex::new(pool),
+        },
+    )?;
     let return_s = t_return.elapsed().as_secs_f64();
     let list_s = t_list.elapsed().as_secs_f64();
     let accounted = slab_s + release_s + python_build_s + return_s;
@@ -3154,30 +3157,34 @@ fn pyconframe_from_ase(py: Python<'_>, ase_atoms: &Bound<'_, PyAny>) -> PyResult
             .call_method0("tolist")?
             .extract()?;
         if cellpar.len() == 6 && cellpar.iter().all(|value| value.is_finite()) {
-            ([cellpar[0], cellpar[1], cellpar[2]], [
-                cellpar[3], cellpar[4], cellpar[5],
-            ])
+            (
+                [cellpar[0], cellpar[1], cellpar[2]],
+                [cellpar[3], cellpar[4], cellpar[5]],
+            )
         } else {
             (lengths, raw_angles)
         }
     } else {
-        (lengths, [
-            if raw_angles[0].is_finite() {
-                raw_angles[0]
-            } else {
-                90.0
-            },
-            if raw_angles[1].is_finite() {
-                raw_angles[1]
-            } else {
-                90.0
-            },
-            if raw_angles[2].is_finite() {
-                raw_angles[2]
-            } else {
-                90.0
-            },
-        ])
+        (
+            lengths,
+            [
+                if raw_angles[0].is_finite() {
+                    raw_angles[0]
+                } else {
+                    90.0
+                },
+                if raw_angles[1].is_finite() {
+                    raw_angles[1]
+                } else {
+                    90.0
+                },
+                if raw_angles[2].is_finite() {
+                    raw_angles[2]
+                } else {
+                    90.0
+                },
+            ],
+        )
     };
 
     // Extract fixed atom info from constraints

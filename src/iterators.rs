@@ -2988,13 +2988,10 @@ mod parallel_header_scan_tests {
             }
         }
         let tailed = format!("{text}\n   \n\t\n");
-        assert_cuts_match(&tailed, &[
-            0,
-            3,
-            tailed.len() / 2,
-            tailed.len() - 1,
-            tailed.len(),
-        ]);
+        assert_cuts_match(
+            &tailed,
+            &[0, 3, tailed.len() / 2, tailed.len() - 1, tailed.len()],
+        );
         let crlf = text.replace('\n', "\r\n");
         assert_cuts_match(&crlf, &equal_cuts(crlf.len(), 5));
         assert_crlf_gap_cut(&crlf);
