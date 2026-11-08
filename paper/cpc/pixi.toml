@@ -84,6 +84,18 @@ cpc-bench-settle = { cmd = "python bench/settle_period.py", description = "Measu
 cpc-bench-provenance = { cmd = "python bench/r0174.py", description = "Write bench/results/r0174/provenance.json" }
 cpc-env = { cmd = "python scripts/export_env.py", description = "Write environment/conda-linux-64.txt and environment/requirements.txt from the package records of this environment" }
 cpc-digest = { cmd = "python scripts/provenance.py --digest", description = "Print the library digest of the checkout, which release.tex and every record name" }
+cpc-cc-module-identity = { cmd = "python claimcheck/module_identity.py", description = "Compare the readcon module of the claim-check runs with the module the claim-check records name, into data/claimcheck/module_identity.json" }
+cpc-cc-constants = { cmd = "python claimcheck/constants.py", description = "The natural time unit from the CODATA tables and the ordering tests recomputed with SciPy and statsmodels, into data/claimcheck/constants.json" }
+cpc-cc-crc32c = { cmd = "python claimcheck/crc32c.py", description = "The checksum of the binary image against RFC 3720, and the CON-bin header of this source, into data/claimcheck/crc32c.json" }
+cpc-cc-envelopes = { cmd = "python claimcheck/envelopes.py", description = "Read gzip, multi-member gzip, zstd and pzstd envelopes through every reader and build, into data/claimcheck/envelopes.json" }
+cpc-cc-decimals = { cmd = "python claimcheck/decimals.py", description = "Read every decimal of the parse-number test data and print every value back, into data/claimcheck/decimals.json" }
+cpc-cc-eon-files = { cmd = "python claimcheck/eon_files.py", description = "Read every CON file of the eOn 3.6.0 release and of the published workflow archive with readcon and ASE, into data/claimcheck/eon_files.json" }
+cpc-cc-akmc = { cmd = "python claimcheck/akmc.py", description = "Run the AKMC example of eOn 3.6.0 for six seeds and read every CON file it writes, into data/claimcheck/akmc.json" }
+cpc-cc-xtb-neb = { cmd = "python claimcheck/xtb_neb.py", description = "Run the published HCN band of eOn with xtb in interleaved rounds of fresh processes, into data/claimcheck/xtb_neb.json" }
+cpc-cc-sella-con = { cmd = "python claimcheck/sella_con.py", description = "Run the Sella slab example from memory, from a readcon CON file and from an ASE CON file, into data/claimcheck/sella_con.json" }
+cpc-cc-sources = { cmd = "python claimcheck/sources.py", description = "Check the statements that rest on the source of another code in that source, into data/claimcheck/sources.json" }
+cpc-cc-binary-cited = { cmd = "python claimcheck/binary_cited.py", description = "libxtc and TNG on the files their authors ship, against xdrfile, MDAnalysis and readcon, into data/claimcheck/binary_cited.json" }
+cpc-cc-cited-text = { cmd = "python claimcheck/cited_text.py", description = "chemfiles and extxyz on the systems of their own benchmarks, readcon on the same atoms as CON, into data/claimcheck/cited_text.json" }
 
 [feature.eon.dependencies]
 eon = "==3.6.0"
