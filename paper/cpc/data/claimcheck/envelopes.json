@@ -1,0 +1,763 @@
+{
+ "check": "envelopes",
+ "script": "paper/cpc/claimcheck/envelopes.py",
+ "downloads": [],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "A gzip or zstd envelope wraps the CON text and a reader recognises it by content; every gzip member is read in order; a build without zstd refuses zstd input.",
+ "input": "resources/test/tiny_multi_cuh2.con",
+ "frames": 2,
+ "zstd_program": "1.5.7",
+ "gzip_program": "gzip 1.12",
+ "pzstd": {
+  "release": "zstd 1.5.7",
+  "downloads": [
+   {
+    "url": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz.sha256",
+    "file": "zstd-1.5.7.tar.gz.sha256",
+    "bytes": 84,
+    "sha256": "954fa350e59ac782eaba5e04db608a0252b465eb3fc9dd02c426050956520161"
+   },
+   {
+    "url": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz",
+    "file": "zstd-1.5.7.tar.gz",
+    "bytes": 2434947,
+    "sha256": "eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3"
+   }
+  ],
+  "build": {
+   "command": [
+    "make",
+    "-C",
+    "$REPO/paper/cpc/claimcheck/work/pzstd/zstd-1.5.7/contrib/pzstd",
+    "-j8",
+    "pzstd"
+   ],
+   "exit": 0,
+   "seconds": 9.329,
+   "stdout_tail": "1b67b5/static/fse_compress.o\nmv -f util.Td util.d\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/hist.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/huf_compress.o\nmv -f Options.Td Options.d\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_compress.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_compress_literals.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_compress_sequences.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_compress_superblock.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_double_fast.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_fast.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_lazy.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_ldm.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_opt.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_preSplit.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstdmt_compress.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/huf_decompress.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_ddict.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_decompress.o\nmv -f Pzstd.Td Pzstd.d\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zstd_decompress_block.o\nAS obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/huf_decompress_amd64.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/cover.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/divsufsort.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/fastcover.o\nCC obj/conf_6364f28e5a5d98e669902d741d1b67b5/static/zdict.o\ncompiling single-threaded static library 1.5.7\nmake[1]: Leaving directory '$REPO/paper/cpc/claimcheck/work/pzstd/zstd-1.5.7/lib'\ng++ main.o ../../programs/util.o Options.o Pzstd.o SkippableFrame.o ../../lib/libzstd.a           -O3 -Wall -Wextra -pedantic    -pthread -o pzstd\nmake: Leaving directory '$REPO/paper/cpc/claimcheck/work/pzstd/zstd-1.5.7/contrib/pzstd'\n",
+   "stderr_tail": ""
+  },
+  "pzstd_sha256": "d090bc171cdab264a0feb2068647de2fca5c076c38e3a932a52d191105baf951",
+  "pzstd_version": "PZSTD version: 1.5.7."
+ },
+ "builds": {
+  "default": {
+   "program": "envelope_read_default",
+   "source": "$REPO/paper/cpc/claimcheck/rust/envelope_read.rs",
+   "source_sha256": "38f62949944c48633bf439fcdd0720b60447e7aac9712e4868f780dc50cbc422",
+   "manifest": "[package]\nname = \"envelope_read_default\"\nversion = \"0.0.0\"\nedition = \"2024\"\npublish = false\n\n[[bin]]\nname = \"envelope_read_default\"\npath = \"$REPO/paper/cpc/claimcheck/rust/envelope_read.rs\"\n\n[dependencies]\nreadcon-core = { path = \"$REPO\", features = [] }\n\n[profile.release]\nlto = \"thin\"\ncodegen-units = 1\n\n[workspace]\n",
+   "command": [
+    "cargo",
+    "build",
+    "--release"
+   ],
+   "features": [],
+   "locked_packages": 34,
+   "locked_as_library": true,
+   "packages_beyond_library": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "readcon_version": "0.18.1",
+   "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+   "sha256": "98bba62882fe57dd37d847f67d86d6f33bb94353ffb8892f3710d00c2ff515fb"
+  },
+  "zstd": {
+   "program": "envelope_read_zstd",
+   "source": "$REPO/paper/cpc/claimcheck/rust/envelope_read.rs",
+   "source_sha256": "38f62949944c48633bf439fcdd0720b60447e7aac9712e4868f780dc50cbc422",
+   "manifest": "[package]\nname = \"envelope_read_zstd\"\nversion = \"0.0.0\"\nedition = \"2024\"\npublish = false\n\n[[bin]]\nname = \"envelope_read_zstd\"\npath = \"$REPO/paper/cpc/claimcheck/rust/envelope_read.rs\"\n\n[dependencies]\nreadcon-core = { path = \"$REPO\", features = [\"zstd\"] }\n\n[profile.release]\nlto = \"thin\"\ncodegen-units = 1\n\n[workspace]\n",
+   "command": [
+    "cargo",
+    "build",
+    "--release"
+   ],
+   "features": [
+    "zstd"
+   ],
+   "locked_packages": 46,
+   "locked_as_library": true,
+   "packages_beyond_library": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "readcon_version": "0.18.1",
+   "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+   "sha256": "21286616560aa5f618fbf2abc6bc3e5de1e9bdabfb183b97c8ede667c08ea518"
+  }
+ },
+ "envelopes": {
+  "plain.con": {
+   "bytes": 688,
+   "first_bytes": "52616e64",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "plain-named.con.gz": {
+   "bytes": 688,
+   "first_bytes": "52616e64",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "gzip-program.con.gz": {
+   "bytes": 280,
+   "first_bytes": "1f8b0808",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "gzip-program-n.con.gz": {
+   "bytes": 270,
+   "first_bytes": "1f8b0800",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "gzip-members.con.gz": {
+   "bytes": 509,
+   "first_bytes": "1f8b0808",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "gzip-fields.con.gz": {
+   "bytes": 521,
+   "first_bytes": "1f8b081f",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "gzip-empty-member.con.gz": {
+   "bytes": 507,
+   "first_bytes": "1f8b0800",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "gzip-content.con": {
+   "bytes": 270,
+   "first_bytes": "1f8b0800",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "zstd-program.con.zst": {
+   "bytes": 266,
+   "first_bytes": "28b52ffd",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    },
+    "open_decoded": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "zstd-stdin.con.zst": {
+   "bytes": 264,
+   "first_bytes": "28b52ffd",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    },
+    "open_decoded": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "zstd-frames.con.zst": {
+   "bytes": 481,
+   "first_bytes": "28b52ffd",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    },
+    "open_decoded": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "zstd-skippable-between.con.zst": {
+   "bytes": 494,
+   "first_bytes": "28b52ffd",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    },
+    "open_decoded": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "zstd-skippable-first.con.zst": {
+   "bytes": 494,
+   "first_bytes": "502a4d18",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    },
+    "open_decoded": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "zstd-content.con": {
+   "bytes": 266,
+   "first_bytes": "28b52ffd",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    },
+    "open_decoded": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  },
+  "pzstd.con.zst": {
+   "bytes": 276,
+   "first_bytes": "502a4d18",
+   "python": {
+    "read_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "read_positions": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "count_frames": {
+     "frames": 2
+    },
+    "iter_con": {
+     "frames": 2,
+     "same_as_plain": true
+    },
+    "iter_con_stream": {
+     "frames": 2,
+     "same_as_plain": true
+    }
+   },
+   "library_default": {
+    "read_all_frames": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    },
+    "open_decoded": {
+     "error": "zstd-compressed input detected; rebuild readcon-core with --features zstd"
+    }
+   },
+   "library_zstd": {
+    "read_all_frames": {
+     "frames": 2,
+     "coordinate_sum": 158.02429999999998
+    },
+    "open_decoded": {
+     "bytes": 688
+    }
+   }
+  }
+ }
+}

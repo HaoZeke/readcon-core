@@ -1,0 +1,128 @@
+{
+ "check": "constants",
+ "script": "paper/cpc/claimcheck/constants.py",
+ "downloads": [
+  {
+   "url": "https://physics.nist.gov/cuu/Constants/ArchiveASCII/allascii_2018.txt",
+   "file": "allascii_2018.txt",
+   "bytes": 40689,
+   "sha256": "8c47c05db62c4d314a5244db51a47b4831616e55a8d357ced373a8620ff43be1"
+  },
+  {
+   "url": "https://physics.nist.gov/cuu/Constants/Table/allascii.txt",
+   "file": "allascii.txt",
+   "bytes": 40801,
+   "sha256": "77fb90e66c40db3e6eb16630bc9c88e4c7c8beddbe5e71be406f2f26e3f67e67"
+  }
+ ],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "The natural time unit is 10.18 fs for the CODATA 2018 constants, a misread scales the kinetic energy by its square, and the ordering tests of the paper are the exact Mann-Whitney test and Holm's procedure.",
+ "codata": {
+  "codata_2018": {
+   "m_u": {
+    "line": "atomic mass constant                                        1.660 539 066 60 e-27    0.000 000 000 50 e-27    kg",
+    "value": 1.6605390666e-27
+   },
+   "eV": {
+    "line": "electron volt                                               1.602 176 634 e-19       (exact)                  J",
+    "value": 1.602176634e-19
+   },
+   "unit_fs": 10.180505710759414
+  },
+  "codata_current": {
+   "m_u": {
+    "line": "atomic mass constant                                        1.660 539 068 92 e-27    0.000 000 000 52 e-27    kg",
+    "value": 1.66053906892e-27
+   },
+   "eV": {
+    "line": "electron volt                                               1.602 176 634 e-19       (exact)                  J",
+    "value": 1.602176634e-19
+   },
+   "unit_fs": 10.180505717871192
+  }
+ },
+ "natural_time_unit": {
+  "codata_2018_fs": 10.180505710759414,
+  "codata_current_fs": 10.180505717871192,
+  "factor_squared_codata_2018": 103.64269652680504,
+  "library_constants": {
+   "m_u": 1.6605390666e-27,
+   "eV": 1.602176634e-19
+  },
+  "library_constants_equal_codata_2018": true,
+  "ase_codata_version": "2014",
+  "ase_fs": 10.180505671156725,
+  "ase_relative_difference": -3.890051265941062e-09,
+  "ase_2018_fs": 10.180505710759414,
+  "paper_macros": {
+   "wkTimeFs": "10.18",
+   "velNaturalFs": "10.180505711",
+   "velNaturalFsBinary": "10.180505710759414",
+   "velFactorSq": "103.64",
+   "velEonFs": "10.1805055"
+  },
+  "velNaturalFs_matches": true,
+  "wkTimeFs_matches": true,
+  "velFactorSq_matches": true,
+  "parsed_relative_difference": 0.0,
+  "eon_relative_difference": -2.0702253843273332e-08
+ },
+ "ordering": {
+  "scipy": "1.18.1",
+  "statsmodels": "0.15.0",
+  "claims": 75,
+  "runs_per_cell": 11,
+  "max_relative_p_difference": 2.1390248829890412e-16,
+  "rejected_ordering_tests": 72,
+  "rejected_statsmodels": 72,
+  "same_decisions": true,
+  "p_min_exact": 2.835142154027603e-06,
+  "p_min_scipy_separated_samples": 2.835142154027603e-06,
+  "paper_macros": {
+   "ordRuns": "11",
+   "ordClaims": "75",
+   "ordRejected": "72",
+   "ordAlpha": "0.05",
+   "ordPMin": "\\num{2.8e-6}"
+  },
+  "macros_match": true
+ }
+}

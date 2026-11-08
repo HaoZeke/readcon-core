@@ -1,0 +1,21 @@
+% Written by paper/cpc/scripts/claimcheck_tables.py from data/claimcheck/sources.json.
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.34\linewidth}>{\raggedright\arraybackslash}p{0.48\linewidth}>{\raggedright\arraybackslash}p{0.1\linewidth}@{}}
+\toprule
+Statement & Pinned file & Lines\\
+\midrule
+the communicators that eOn 3.6.0 ships & \path{raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/eon/communicator.py} & 77, 88, 96, 100, 357, 485, 636\\
+the communicators of eOn before the 2018 removal of BOINC & \path{raw.githubusercontent.com/TheochemUI/eOn/66629141fb31b72ed836b2f53ad51e5dbb049aed/eon/communicator.py} & 257, 558, 643, 757, 875\\
+the commit that removed BOINC from the eOn client & \path{github.com/TheochemUI/eOn/commit/66629141fb31b72ed836b2f53ad51e5dbb049aed.patch} & 3\textendash{}4\\
+the commit that removed the BOINC communicator from the server & \path{github.com/TheochemUI/eOn/commit/b1e1c5b8ab807652dfa0ec8bf5934cbba8b6da72.patch} & 3\textendash{}4, 356, 680\\
+the readcon-core that eOn 3.6.0 builds & \path{raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/subprojects/readcon-core.wrap} & 3\textendash{}4\\
+H5MD stores its version as a major and minor pair & \path{www.nongnu.org/h5md/releases/h5md-1.1.0.html} & page text\\
+vesin computes the neighbour lists of the ASE interface of metatomic & \path{raw.githubusercontent.com/metatensor/metatomic/b98ab002e81559ddea31dc095357c86c279ac4bd/python/metatomic_ase/src/metatomic_ase/_neighbors.py} & 6, 47, 57\\
+vesin computes the neighbour lists of the PLUMED interface & \path{raw.githubusercontent.com/plumed/plumed2/e5e90a26cd7ba479d70b1240cd5bfd8cd027968e/src/metatomic/metatomic.cpp} & 170, 214\\
+vesin computes the neighbour lists of the eOn interface & \path{raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/client/potentials/Metatomic/MetatomicPotential.cpp} & 15, 591\\
+CHARMM defines its binary files only in its source code & \path{academiccharmm.org/documentation/version/c50b1/io} & page text\\
+the eon reader of ASE 3.29.0 builds Atoms without pbc & \path{gitlab.com/ase/ase/-/raw/f27c0005ae6a67ea419f996e728668865bfc1f86/ase/io/eon.py} & 92, 141\textendash{}146\\
+the frame decoder of libxtc at its tag v1.0.0 returns false & \path{gitlab.com/impulse_md/libxtc/-/raw/v1.0.0/libxtc/xtc_unpack.cpp} & 42\textendash{}43\\
+the decoder of libxtc replaced its stub on 16 April 2021 & \path{gitlab.com/impulse_md/libxtc/-/commit/215f4d40d7a3c3d8daac82d5a9b9d647a2a06495.patch} & 1, 3\textendash{}4\\
+GROMACS 2026.4 bundles TNG 1.8.4 & \path{gitlab.com/gromacs/gromacs/-/raw/6c69f720aa7378fddfee67f99d51aff21ccfb0a2/src/external/tng_io/BuildTNG.cmake} & 8\textendash{}10\\
+\bottomrule
+\end{tabular}

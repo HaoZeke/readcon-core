@@ -1,0 +1,3015 @@
+{
+ "check": "cited_text",
+ "script": "paper/cpc/claimcheck/cited_text.py",
+ "downloads": [
+  {
+   "url": "https://raw.githubusercontent.com/chemfiles/benchmarks/0d6c7f4e6c6b3ff54ad54acdc5e5c92ff5aeae2b/files/water.xyz",
+   "file": "chemfiles-benchmarks-0d6c7f4e-water.xyz",
+   "bytes": 1606000,
+   "sha256": "75a64a809cde8404c73dcb6f815483d571dddc8daa6fa5e1a78ed54cd1041268"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/chemfiles/benchmarks/0d6c7f4e6c6b3ff54ad54acdc5e5c92ff5aeae2b/files/water.xyz.gz",
+   "file": "chemfiles-benchmarks-0d6c7f4e-water.xyz.gz",
+   "bytes": 458269,
+   "sha256": "5a129e57c5663a3c6051b1343b86b222b31830c06a44d0e35992072e14ada719"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/chemfiles/benchmarks/0d6c7f4e6c6b3ff54ad54acdc5e5c92ff5aeae2b/files/water.nc",
+   "file": "chemfiles-benchmarks-0d6c7f4e-water.nc",
+   "bytes": 366588,
+   "sha256": "771f732764bd69eb323d86f62589ec2f8418bfe5d0a6375adb431c2bac580e0d"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/chemfiles/benchmarks/0d6c7f4e6c6b3ff54ad54acdc5e5c92ff5aeae2b/README.md",
+   "file": "chemfiles-benchmarks-0d6c7f4e-README.md",
+   "bytes": 6070,
+   "sha256": "6271a4d93f3f88cfdb26b34f455b82b82e2c30d0a466923c93081cc0a5b6bd56"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/chemfiles/benchmarks/0d6c7f4e6c6b3ff54ad54acdc5e5c92ff5aeae2b/bench.py",
+   "file": "chemfiles-benchmarks-0d6c7f4e-bench.py",
+   "bytes": 6217,
+   "sha256": "002cd6a9f54a4cdfb99d023f26c264694f5789b9e0546c6a589c1830170fcffe"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/libAtoms/extxyz/ebfe7b39db1e098aba418d4b8ac57795d12a4dac/benchmarks/bench_read.py",
+   "file": "extxyz-v0.4.6-benchmarks-bench_read.py",
+   "bytes": 6123,
+   "sha256": "246bb56fdbd838824d18d0c9816727ddb3738d754ea1aaba5d69f354bcd202ff"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/libAtoms/extxyz/ebfe7b39db1e098aba418d4b8ac57795d12a4dac/README.md",
+   "file": "extxyz-v0.4.6-README.md",
+   "bytes": 26526,
+   "sha256": "820cbd408177c16f328b6ab39255100da216f85186d58774e4b8e29722729bc0"
+  },
+  {
+   "url": "https://files.pythonhosted.org/packages/4c/c3/b20fea103b9a0e0bdf108dd2babd5fe3a39549a18ac15c4af906fb4c51a9/ase_extxyz-0.1.2-py3-none-any.whl",
+   "file": "ase_extxyz-0.1.2-py3-none-any.whl",
+   "bytes": 8744,
+   "sha256": "00c7569d24eff4183659877a20334504eeae4483be8bf1ac478426684fe7cea5"
+  }
+ ],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "chemfiles and extxyz on the systems of their own benchmarks, readcon on the same atoms as CON",
+ "versions": {
+  "chemfiles": "0.10.4",
+  "ase": "3.29.0",
+  "MDAnalysis": "2.10.0",
+  "extxyz": "0.4.6",
+  "ase-extxyz": "0.1.2",
+  "readcon": "0.18.1",
+  "numpy": "2.5.4",
+  "openbabel": "3.2.1"
+ },
+ "plugin_install": {
+  "command": [
+   "$ENV/bin/python",
+   "-m",
+   "pip",
+   "install",
+   "--no-deps",
+   "--no-index",
+   "--target",
+   "$REPO/paper/cpc/claimcheck/work/cited_text/site",
+   "$REPO/paper/cpc/claimcheck/work/downloads/ase_extxyz-0.1.2-py3-none-any.whl"
+  ],
+  "exit": 0,
+  "seconds": 0.259,
+  "stdout_tail": "Processing ./claimcheck/work/downloads/ase_extxyz-0.1.2-py3-none-any.whl\nInstalling collected packages: ase-extxyz\nSuccessfully installed ase-extxyz-0.1.2\n",
+  "stderr_tail": ""
+ },
+ "published": {
+  "chemfiles_linux": [
+   "### Ubuntu Linux 20.04, SSD ext4, Intel Xeon 4214R CPU",
+   "| file               | chemfiles (v0.10.3) | ase (v3.22.1)      | MDAnalysis (v2.2.0)| mdtraj (v1.9.7)     | openbabel (v3.1.0) | parmed (v3.4.3)      | pytraj (v2.0.6)     |",
+   "|--------------------|---------------------|--------------------|--------------------|---------------------|--------------------|----------------------|---------------------|",
+   "| water.xyz          | 17.72               | 97.73 - **5.5x**   | 121.17 - **6.8x**  |                     | 143.75 - **8.1x**  |                      |                     |",
+   "| water.xyz.gz       | 26.41               | 948.20 - **35.9x** | 88.07 - **3.3x**   |                     | 865.02 - **32.8x** |                      |                     |",
+   "| 1vln-triclinic.pdb | 26.09               | 123.60 - **4.7x**  | 315.89 - **12.1x** | 620.56 - **23.8x**  | 529.36 - **20.3x** | 1860.58 - **71.3x**  | 65.92 - **2.5x**    |",
+   "| lmsd.sdf           | 15.92               | 20.88 - **1.3x**   |                    |                     | 79.10 - **5.0x**   | 1952.52 - **122.7x** | 49.05 - **3.1x**    |",
+   "| vesicles.gro       | 38.72               | 371.38 - **9.6x**  | 568.72 - **14.7x** | 393.73 - **10.2x**  | 485.10 - **12.5x** | 5229.44 - **135.1x** |                     |",
+   "| molecules.mol2     | 14.66               |                    | 40.90 - **2.8x**   |                     | 62.50 - **4.3x**   | 602.32 - **41.1x**   | 38.32 - **2.6x**    |",
+   "| ubiquitin.xtc      | 169.95              |                    | 181.97 - **1.0x**  | 895.10 - **5.3x**   |                    |                      | 195.14 - **1.2x**   |",
+   "| ubiquitin.trr      | 3.04                |                    | 123.98 - **40.8x** | 793.42 - **261.0x** |                    |                      | 81.19 - **26.7x**   |",
+   "| water.nc           | 2.76                | 173.51 - **62.8x** | 32.44 - **11.8x**  | 30.65 - **11.1x**   |                    |                      | 22.63 - **8.2x**    |",
+   "| adk.dcd            | 15.87               |                    | 149.44 - **9.4x**  | 149.02 - **9.4x**   |                    |                      | 62.90 - **4.0x**    |"
+  ],
+  "chemfiles_macos": [
+   "### macOS 12.4, SSD APFS, M1 Max CPU",
+   "| file               | chemfiles (v0.10.3) | ase (v3.22.1)      | MDAnalysis (v2.2.0) | mdtraj (v1.9.7)     | openbabel (v3.1.0) | parmed (v3.4.3)      | pytraj (v2.0.6)    |",
+   "|--------------------|---------------------|--------------------|---------------------|---------------------|--------------------|----------------------|--------------------|",
+   "| water.xyz          | 4.87                | 46.00 - **9.5x**   | 18.52 - **3.8x**    |                     | 44.57 - **9.2x**   |                      |                    |",
+   "| water.xyz.gz       | 12.75               | 505.79 - **39.7x** | 25.41 - **2.0x**    |                     | 411.59 - **32.3x** |                      |                    |",
+   "| 1vln-triclinic.pdb | 11.47               | 66.54 - **5.8x**   | 102.12 - **8.9x**   | 334.51 - **29.2x**  | 302.76 - **26.4x** | 984.93 - **85.9x**   | 20.38 - **1.8x**   |",
+   "| lmsd.sdf           | 5.19                | 8.62 - **1.7x**    |                     |                     | 41.62 - **8.0x**   | 984.03 - **189.4x**  | 7.04 - **1.4x**    |",
+   "| vesicles.gro       | 12.91               | 181.34 - **14.0x** | 311.04 - **24.1x**  | 215.69 - **16.7x**  | 146.50 - **11.4x** | 2707.65 - **209.7x** |                    |",
+   "| molecules.mol2     | 5.18                |                    | 15.72 - **3.0x**    |                     | 29.02 - **5.6x**   | 325.65 - **62.8x**   | 11.08 - **2.1x**   |",
+   "| ubiquitin.xtc      | 79.41               |                    | 58.10 - 0.73x       | 473.29 - **6.0x**   |                    |                      | 69.61 - 0.88x      |",
+   "| ubiquitin.trr      | 1.19                |                    | 24.43 - **20.5x**   | 432.94 - **363x**   |                    |                      | 18.85 - **15.8x**  |",
+   "| water.nc           | 0.92                | 36.44 - **39.4x**  | 2.02 - **2.2x**     | 4.21 - **4.55x**    |                    |                      | 7.16 - **7.8x**    |",
+   "| adk.dcd            | 7.18                |                    | 5.39 - 0.75x        | 85.56 - **11.9x**   |                    |                      | 12.74 - **1.8x**   |"
+  ],
+  "extxyz_read": [
+   "Benchmark on a single-frame file with `N` Cu atoms (positions,",
+   "| atoms / frame | file size | ASE built-in `extxyz` | `cextxyz` plugin | `extxyz.read_dicts` (no Atoms) | speedup, plugin / built-in | speedup, parser / built-in |",
+   "|--:|--:|--:|--:|--:|--:|--:|",
+   "|     10 |   0.00 MB | 0.130 ms | 0.073 ms | 0.111 ms | 1.77\u00d7 | 1.18\u00d7 |",
+   "|    100 |   0.01 MB | 0.220 ms | 0.086 ms | 0.138 ms | 2.56\u00d7 | 1.60\u00d7 |",
+   "|  1 000 |   0.11 MB | 1.177 ms | 0.240 ms | 0.350 ms | 4.89\u00d7 | 3.36\u00d7 |",
+   "|  4 000 |   0.44 MB | 4.429 ms | 0.705 ms | 0.943 ms | 6.28\u00d7 | 4.70\u00d7 |",
+   "| 16 000 |   1.74 MB | 17.8 ms  | 2.59 ms  | 3.40 ms  | 6.87\u00d7 | 5.24\u00d7 |",
+   "| 64 000 |   6.98 MB | 72.6 ms  | 11.5 ms  | 14.7 ms  | 6.30\u00d7 | 4.96\u00d7 |",
+   "|200 000 |  21.80 MB |224.8 ms  | 35.9 ms  | 44.2 ms  | 6.26\u00d7 | 5.09\u00d7 |"
+  ],
+  "extxyz_tokenizer": [
+   "`use_regex=False` in `read_dicts`/`iread_dicts` (C backend only) skips it: the",
+   "| atoms / frame | `read_dicts` (regex) | `read_dicts` (`use_regex=False`) | tokenizer / regex | tokenizer / built-in |",
+   "|--:|--:|--:|--:|--:|",
+   "|   1 000 | 0.350 ms | 0.161 ms | 2.17\u00d7 | 7.30\u00d7 |",
+   "|  16 000 | 3.40 ms  | 1.95 ms  | 1.74\u00d7 | 9.11\u00d7 |",
+   "|  64 000 | 14.7 ms  | 8.21 ms  | 1.79\u00d7 | 8.85\u00d7 |",
+   "| 200 000 | 44.2 ms  | 24.8 ms  | 1.78\u00d7 | 9.05\u00d7 |"
+  ]
+ },
+ "water": {
+  "gzip_holds_the_xyz_bytes": true,
+  "conversion": {
+   "frames": 100,
+   "atoms": 297,
+   "box_from": "water.nc",
+   "xyz_vs_nc_largest_difference_A": 5.267639160422277e-06,
+   "cells": [
+    [
+     15.0,
+     15.0,
+     15.0,
+     90.0,
+     90.0,
+     90.0
+    ]
+   ],
+   "con_bytes": 1036306,
+   "con_gz_bytes": 444763,
+   "con_vs_xyz_largest_difference_A": 0.0
+  }
+ },
+ "no_cell_round_trip": {
+  "ase_cell": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ],
+   [
+    0.0,
+    0.0,
+    0.0
+   ],
+   [
+    0.0,
+    0.0,
+    0.0
+   ]
+  ],
+  "ase_pbc": [
+   false,
+   false,
+   false
+  ],
+  "written_lines_3_4": [
+   "0.000000 0.000000 0.000000",
+   "90.000000 90.000000 90.000000"
+  ],
+  "read_back": "read"
+ },
+ "cu": {
+  "10": {
+   "xyz": "cu_10.xyz",
+   "xyz_bytes": 1285,
+   "con": "cu_10.con",
+   "con_bytes": 1164,
+   "con_positions_largest_difference_A": 0.0,
+   "con_forces_largest_difference": 0.0,
+   "con_has_forces": true
+  },
+  "100": {
+   "xyz": "cu_100.xyz",
+   "xyz_bytes": 11096,
+   "con": "cu_100.con",
+   "con_bytes": 8189,
+   "con_positions_largest_difference_A": 0.0,
+   "con_forces_largest_difference": 0.0,
+   "con_has_forces": true
+  },
+  "1000": {
+   "xyz": "cu_1000.xyz",
+   "xyz_bytes": 109203,
+   "con": "cu_1000.con",
+   "con_bytes": 82084,
+   "con_positions_largest_difference_A": 0.0,
+   "con_forces_largest_difference": 0.0,
+   "con_has_forces": true
+  },
+  "4000": {
+   "xyz": "cu_4000.xyz",
+   "xyz_bytes": 436203,
+   "con": "cu_4000.con",
+   "con_bytes": 335142,
+   "con_positions_largest_difference_A": 0.0,
+   "con_forces_largest_difference": 0.0,
+   "con_has_forces": true
+  },
+  "16000": {
+   "xyz": "cu_16000.xyz",
+   "xyz_bytes": 1744204,
+   "con": "cu_16000.con",
+   "con_bytes": 1360674,
+   "con_positions_largest_difference_A": 0.0,
+   "con_forces_largest_difference": 0.0,
+   "con_has_forces": true
+  },
+  "64000": {
+   "xyz": "cu_64000.xyz",
+   "xyz_bytes": 6976204,
+   "con": "cu_64000.con",
+   "con_bytes": 5544778,
+   "con_positions_largest_difference_A": 0.0,
+   "con_forces_largest_difference": 0.0,
+   "con_has_forces": true
+  },
+  "200000": {
+   "xyz": "cu_200000.xyz",
+   "xyz_bytes": 21800211,
+   "con": "cu_200000.con",
+   "con_bytes": 17794161,
+   "con_positions_largest_difference_A": 0.0,
+   "con_forces_largest_difference": 0.0,
+   "con_has_forces": true
+  }
+ },
+ "first_runs": {
+  "chemfiles-water.xyz": {
+   "reader": "chemfiles",
+   "file": "water.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.006407484999726876,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "ase-water.xyz": {
+   "reader": "ase",
+   "file": "water.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.044131250999726035,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "mdanalysis-water.xyz": {
+   "reader": "mdanalysis",
+   "file": "water.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.01759150199995929,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.4955595884
+   }
+  },
+  "openbabel-water.xyz": {
+   "reader": "openbabel",
+   "file": "water.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.11620180799991431,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "readcon-water.xyz": {
+   "reader": "readcon",
+   "file": "water.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0036614900000131456,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "readcon_arrays-water.xyz": {
+   "reader": "readcon_arrays",
+   "file": "water.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0037168600001677987,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "chemfiles-water.xyz.gz": {
+   "reader": "chemfiles",
+   "file": "water.xyz.gz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.01601505400003589,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "ase-water.xyz.gz": {
+   "reader": "ase",
+   "file": "water.xyz.gz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.6393745240002318,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "mdanalysis-water.xyz.gz": {
+   "reader": "mdanalysis",
+   "file": "water.xyz.gz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.026153234000048542,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.4955595884
+   }
+  },
+  "openbabel-water.xyz.gz": {
+   "reader": "openbabel",
+   "file": "water.xyz.gz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.42229071499968995,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "readcon-water.xyz.gz": {
+   "reader": "readcon",
+   "file": "water.con.gz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.006631450999975641,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "readcon_arrays-water.xyz.gz": {
+   "reader": "readcon_arrays",
+   "file": "water.con.gz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.007179103999988001,
+    "frames": 100,
+    "atoms": 297,
+    "positions_sum": 670350.495555
+   }
+  },
+  "ase_extxyz-cu10": {
+   "reader": "ase_extxyz",
+   "file": "cu_10.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0004082890000063344,
+    "frames": 1,
+    "atoms": 10,
+    "positions_sum": 61.37
+   }
+  },
+  "cextxyz-cu10": {
+   "reader": "cextxyz",
+   "file": "cu_10.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.00034330300013607484,
+    "frames": 1,
+    "atoms": 10,
+    "positions_sum": 61.37
+   }
+  },
+  "read_dicts_regex-cu10": {
+   "reader": "read_dicts_regex",
+   "file": "cu_10.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.00027332199988450157,
+    "frames": 1,
+    "atoms": 10,
+    "positions_sum": 61.37
+   }
+  },
+  "read_dicts-cu10": {
+   "reader": "read_dicts",
+   "file": "cu_10.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.00013165199970899266,
+    "frames": 1,
+    "atoms": 10,
+    "positions_sum": 61.37
+   }
+  },
+  "readcon-cu10": {
+   "reader": "readcon",
+   "file": "cu_10.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0001082570001926797,
+    "frames": 1,
+    "atoms": 10,
+    "positions_sum": 61.37
+   }
+  },
+  "readcon_arrays-cu10": {
+   "reader": "readcon_arrays",
+   "file": "cu_10.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 9.895199991660775e-05,
+    "frames": 1,
+    "atoms": 10,
+    "positions_sum": 61.37
+   }
+  },
+  "ase_extxyz-cu100": {
+   "reader": "ase_extxyz",
+   "file": "cu_100.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0005498440000337723,
+    "frames": 1,
+    "atoms": 100,
+    "positions_sum": 1985.5
+   }
+  },
+  "cextxyz-cu100": {
+   "reader": "cextxyz",
+   "file": "cu_100.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0003274050000072748,
+    "frames": 1,
+    "atoms": 100,
+    "positions_sum": 1985.5
+   }
+  },
+  "read_dicts_regex-cu100": {
+   "reader": "read_dicts_regex",
+   "file": "cu_100.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0002856640003301436,
+    "frames": 1,
+    "atoms": 100,
+    "positions_sum": 1985.5
+   }
+  },
+  "read_dicts-cu100": {
+   "reader": "read_dicts",
+   "file": "cu_100.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.00014641899997513974,
+    "frames": 1,
+    "atoms": 100,
+    "positions_sum": 1985.5
+   }
+  },
+  "readcon-cu100": {
+   "reader": "readcon",
+   "file": "cu_100.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0001233749999300926,
+    "frames": 1,
+    "atoms": 100,
+    "positions_sum": 1985.5
+   }
+  },
+  "readcon_arrays-cu100": {
+   "reader": "readcon_arrays",
+   "file": "cu_100.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.00014779000002818066,
+    "frames": 1,
+    "atoms": 100,
+    "positions_sum": 1985.5
+   }
+  },
+  "ase_extxyz-cu1000": {
+   "reader": "ase_extxyz",
+   "file": "cu_1000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0019346159997439827,
+    "frames": 1,
+    "atoms": 1000,
+    "positions_sum": 48735.0
+   }
+  },
+  "cextxyz-cu1000": {
+   "reader": "cextxyz",
+   "file": "cu_1000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.000524565999967308,
+    "frames": 1,
+    "atoms": 1000,
+    "positions_sum": 48735.0
+   }
+  },
+  "read_dicts_regex-cu1000": {
+   "reader": "read_dicts_regex",
+   "file": "cu_1000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0005350080000425805,
+    "frames": 1,
+    "atoms": 1000,
+    "positions_sum": 48735.0
+   }
+  },
+  "read_dicts-cu1000": {
+   "reader": "read_dicts",
+   "file": "cu_1000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0002853559999493882,
+    "frames": 1,
+    "atoms": 1000,
+    "positions_sum": 48735.0
+   }
+  },
+  "readcon-cu1000": {
+   "reader": "readcon",
+   "file": "cu_1000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.00033250500018766616,
+    "frames": 1,
+    "atoms": 1000,
+    "positions_sum": 48735.0
+   }
+  },
+  "readcon_arrays-cu1000": {
+   "reader": "readcon_arrays",
+   "file": "cu_1000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0005452280001918552,
+    "frames": 1,
+    "atoms": 1000,
+    "positions_sum": 48735.0
+   }
+  },
+  "ase_extxyz-cu4000": {
+   "reader": "ase_extxyz",
+   "file": "cu_4000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.006479123999724834,
+    "frames": 1,
+    "atoms": 4000,
+    "positions_sum": 320568.0
+   }
+  },
+  "cextxyz-cu4000": {
+   "reader": "cextxyz",
+   "file": "cu_4000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0010956989999613143,
+    "frames": 1,
+    "atoms": 4000,
+    "positions_sum": 320568.0
+   }
+  },
+  "read_dicts_regex-cu4000": {
+   "reader": "read_dicts_regex",
+   "file": "cu_4000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0015174520003711223,
+    "frames": 1,
+    "atoms": 4000,
+    "positions_sum": 320568.0
+   }
+  },
+  "read_dicts-cu4000": {
+   "reader": "read_dicts",
+   "file": "cu_4000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0009446160001971293,
+    "frames": 1,
+    "atoms": 4000,
+    "positions_sum": 320568.0
+   }
+  },
+  "readcon-cu4000": {
+   "reader": "readcon",
+   "file": "cu_4000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0011501769999995304,
+    "frames": 1,
+    "atoms": 4000,
+    "positions_sum": 320568.0
+   }
+  },
+  "readcon_arrays-cu4000": {
+   "reader": "readcon_arrays",
+   "file": "cu_4000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0021026250001341396,
+    "frames": 1,
+    "atoms": 4000,
+    "positions_sum": 320568.0
+   }
+  },
+  "ase_extxyz-cu16000": {
+   "reader": "ase_extxyz",
+   "file": "cu_16000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.026076636999732727,
+    "frames": 1,
+    "atoms": 16000,
+    "positions_sum": 2090190.0
+   }
+  },
+  "cextxyz-cu16000": {
+   "reader": "cextxyz",
+   "file": "cu_16000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.004275107000012213,
+    "frames": 1,
+    "atoms": 16000,
+    "positions_sum": 2090190.0
+   }
+  },
+  "read_dicts_regex-cu16000": {
+   "reader": "read_dicts_regex",
+   "file": "cu_16000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.005099391999920044,
+    "frames": 1,
+    "atoms": 16000,
+    "positions_sum": 2090190.0
+   }
+  },
+  "read_dicts-cu16000": {
+   "reader": "read_dicts",
+   "file": "cu_16000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0031016290004117764,
+    "frames": 1,
+    "atoms": 16000,
+    "positions_sum": 2090190.0
+   }
+  },
+  "readcon-cu16000": {
+   "reader": "readcon",
+   "file": "cu_16000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.003927968999960285,
+    "frames": 1,
+    "atoms": 16000,
+    "positions_sum": 2090190.0
+   }
+  },
+  "readcon_arrays-cu16000": {
+   "reader": "readcon_arrays",
+   "file": "cu_16000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.00896843300006367,
+    "frames": 1,
+    "atoms": 16000,
+    "positions_sum": 2090190.0
+   }
+  },
+  "ase_extxyz-cu64000": {
+   "reader": "ase_extxyz",
+   "file": "cu_64000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.10385697199990318,
+    "frames": 1,
+    "atoms": 64000,
+    "positions_sum": 13515840.0
+   }
+  },
+  "cextxyz-cu64000": {
+   "reader": "cextxyz",
+   "file": "cu_64000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.016286469999613473,
+    "frames": 1,
+    "atoms": 64000,
+    "positions_sum": 13515840.0
+   }
+  },
+  "read_dicts_regex-cu64000": {
+   "reader": "read_dicts_regex",
+   "file": "cu_64000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.01988491200017961,
+    "frames": 1,
+    "atoms": 64000,
+    "positions_sum": 13515840.0
+   }
+  },
+  "read_dicts-cu64000": {
+   "reader": "read_dicts",
+   "file": "cu_64000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.012276631999611709,
+    "frames": 1,
+    "atoms": 64000,
+    "positions_sum": 13515840.0
+   }
+  },
+  "readcon-cu64000": {
+   "reader": "readcon",
+   "file": "cu_64000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.015455642999768315,
+    "frames": 1,
+    "atoms": 64000,
+    "positions_sum": 13515840.0
+   }
+  },
+  "readcon_arrays-cu64000": {
+   "reader": "readcon_arrays",
+   "file": "cu_64000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.0372180849999495,
+    "frames": 1,
+    "atoms": 64000,
+    "positions_sum": 13515840.0
+   }
+  },
+  "ase_extxyz-cu200000": {
+   "reader": "ase_extxyz",
+   "file": "cu_200000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.32724865000000136,
+    "frames": 1,
+    "atoms": 200000,
+    "positions_sum": 62168589.76
+   }
+  },
+  "cextxyz-cu200000": {
+   "reader": "cextxyz",
+   "file": "cu_200000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.05109892200016475,
+    "frames": 1,
+    "atoms": 200000,
+    "positions_sum": 62168589.76
+   }
+  },
+  "read_dicts_regex-cu200000": {
+   "reader": "read_dicts_regex",
+   "file": "cu_200000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.06032891499990001,
+    "frames": 1,
+    "atoms": 200000,
+    "positions_sum": 62168589.76
+   }
+  },
+  "read_dicts-cu200000": {
+   "reader": "read_dicts",
+   "file": "cu_200000.xyz",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.03957222799999727,
+    "frames": 1,
+    "atoms": 200000,
+    "positions_sum": 62168589.76
+   }
+  },
+  "readcon-cu200000": {
+   "reader": "readcon",
+   "file": "cu_200000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.05460949200005416,
+    "frames": 1,
+    "atoms": 200000,
+    "positions_sum": 62168589.76
+   }
+  },
+  "readcon_arrays-cu200000": {
+   "reader": "readcon_arrays",
+   "file": "cu_200000.con",
+   "exit": 0,
+   "printed": {
+    "seconds": 0.14362141399988104,
+    "frames": 1,
+    "atoms": 200000,
+    "positions_sum": 62168589.76
+   }
+  }
+ },
+ "timing": {
+  "protocol": {
+   "schedule": "paper/cpc/bench/interleave.py",
+   "seed": 20261104,
+   "rounds": 11,
+   "warmup_rounds": 1,
+   "metric": "seconds",
+   "quartiles": "statistics.quantiles(n=4, method='inclusive')",
+   "process": "a fresh process for every run of every cell",
+   "order": [
+    [
+     "read_dicts-cu100",
+     "readcon_arrays-cu16000",
+     "read_dicts-cu200000",
+     "ase_extxyz-cu100",
+     "read_dicts_regex-cu1000",
+     "cextxyz-cu4000",
+     "openbabel-water.xyz",
+     "readcon-cu10",
+     "readcon_arrays-water.xyz",
+     "cextxyz-cu1000",
+     "chemfiles-water.xyz.gz",
+     "ase_extxyz-cu1000",
+     "mdanalysis-water.xyz.gz",
+     "ase-water.xyz.gz",
+     "cextxyz-cu16000",
+     "readcon_arrays-water.xyz.gz",
+     "readcon_arrays-cu10",
+     "ase_extxyz-cu200000",
+     "readcon-cu64000",
+     "read_dicts_regex-cu64000",
+     "readcon-cu16000",
+     "ase_extxyz-cu16000",
+     "readcon-water.xyz.gz",
+     "readcon_arrays-cu4000",
+     "read_dicts-cu1000",
+     "chemfiles-water.xyz",
+     "read_dicts_regex-cu10",
+     "read_dicts-cu10",
+     "readcon-water.xyz",
+     "ase_extxyz-cu64000",
+     "ase_extxyz-cu10",
+     "read_dicts_regex-cu4000",
+     "cextxyz-cu200000",
+     "readcon-cu1000",
+     "readcon_arrays-cu64000",
+     "readcon-cu100",
+     "read_dicts_regex-cu200000",
+     "readcon_arrays-cu100",
+     "openbabel-water.xyz.gz",
+     "read_dicts-cu64000",
+     "read_dicts_regex-cu16000",
+     "ase-water.xyz",
+     "readcon-cu200000",
+     "readcon_arrays-cu1000",
+     "readcon-cu4000",
+     "mdanalysis-water.xyz",
+     "ase_extxyz-cu4000",
+     "read_dicts-cu4000",
+     "cextxyz-cu10",
+     "cextxyz-cu64000",
+     "read_dicts-cu16000",
+     "read_dicts_regex-cu100",
+     "readcon_arrays-cu200000",
+     "cextxyz-cu100"
+    ],
+    [
+     "ase_extxyz-cu1000",
+     "cextxyz-cu200000",
+     "mdanalysis-water.xyz",
+     "ase_extxyz-cu10",
+     "cextxyz-cu100",
+     "readcon-cu64000",
+     "readcon_arrays-cu16000",
+     "read_dicts-cu10",
+     "ase_extxyz-cu16000",
+     "chemfiles-water.xyz.gz",
+     "readcon-cu10",
+     "read_dicts-cu1000",
+     "ase_extxyz-cu4000",
+     "cextxyz-cu16000",
+     "ase_extxyz-cu200000",
+     "readcon_arrays-water.xyz",
+     "read_dicts_regex-cu1000",
+     "chemfiles-water.xyz",
+     "readcon_arrays-cu4000",
+     "cextxyz-cu64000",
+     "readcon-cu4000",
+     "readcon_arrays-cu1000",
+     "ase_extxyz-cu100",
+     "read_dicts-cu4000",
+     "cextxyz-cu10",
+     "readcon-water.xyz",
+     "cextxyz-cu1000",
+     "read_dicts-cu16000",
+     "read_dicts-cu100",
+     "read_dicts_regex-cu4000",
+     "readcon-water.xyz.gz",
+     "cextxyz-cu4000",
+     "read_dicts-cu200000",
+     "readcon-cu1000",
+     "ase_extxyz-cu64000",
+     "readcon-cu16000",
+     "ase-water.xyz.gz",
+     "readcon_arrays-cu64000",
+     "ase-water.xyz",
+     "readcon_arrays-water.xyz.gz",
+     "readcon-cu200000",
+     "read_dicts_regex-cu64000",
+     "openbabel-water.xyz.gz",
+     "mdanalysis-water.xyz.gz",
+     "read_dicts_regex-cu10",
+     "readcon_arrays-cu200000",
+     "readcon_arrays-cu10",
+     "readcon_arrays-cu100",
+     "read_dicts-cu64000",
+     "readcon-cu100",
+     "read_dicts_regex-cu16000",
+     "read_dicts_regex-cu200000",
+     "openbabel-water.xyz",
+     "read_dicts_regex-cu100"
+    ],
+    [
+     "chemfiles-water.xyz.gz",
+     "readcon_arrays-cu200000",
+     "readcon_arrays-water.xyz.gz",
+     "readcon-cu200000",
+     "readcon_arrays-cu1000",
+     "chemfiles-water.xyz",
+     "cextxyz-cu16000",
+     "readcon-cu100",
+     "read_dicts_regex-cu64000",
+     "read_dicts-cu4000",
+     "readcon_arrays-cu10",
+     "cextxyz-cu10",
+     "cextxyz-cu4000",
+     "read_dicts-cu10",
+     "ase-water.xyz",
+     "read_dicts_regex-cu100",
+     "readcon-cu64000",
+     "readcon_arrays-water.xyz",
+     "mdanalysis-water.xyz",
+     "readcon-water.xyz.gz",
+     "cextxyz-cu64000",
+     "read_dicts_regex-cu16000",
+     "readcon_arrays-cu64000",
+     "ase_extxyz-cu16000",
+     "readcon-cu10",
+     "read_dicts-cu16000",
+     "ase_extxyz-cu10",
+     "read_dicts-cu100",
+     "readcon_arrays-cu16000",
+     "ase_extxyz-cu64000",
+     "readcon-water.xyz",
+     "read_dicts-cu200000",
+     "readcon-cu1000",
+     "readcon-cu4000",
+     "readcon-cu16000",
+     "ase_extxyz-cu1000",
+     "ase_extxyz-cu200000",
+     "ase-water.xyz.gz",
+     "openbabel-water.xyz.gz",
+     "readcon_arrays-cu100",
+     "read_dicts_regex-cu4000",
+     "read_dicts_regex-cu1000",
+     "read_dicts_regex-cu10",
+     "ase_extxyz-cu100",
+     "ase_extxyz-cu4000",
+     "read_dicts_regex-cu200000",
+     "cextxyz-cu200000",
+     "mdanalysis-water.xyz.gz",
+     "cextxyz-cu100",
+     "cextxyz-cu1000",
+     "read_dicts-cu64000",
+     "readcon_arrays-cu4000",
+     "openbabel-water.xyz",
+     "read_dicts-cu1000"
+    ],
+    [
+     "ase_extxyz-cu10",
+     "readcon-water.xyz.gz",
+     "read_dicts-cu100",
+     "readcon_arrays-water.xyz.gz",
+     "cextxyz-cu100",
+     "read_dicts-cu10",
+     "cextxyz-cu16000",
+     "ase_extxyz-cu100",
+     "readcon_arrays-cu1000",
+     "readcon_arrays-cu16000",
+     "read_dicts-cu64000",
+     "cextxyz-cu1000",
+     "readcon_arrays-water.xyz",
+     "openbabel-water.xyz.gz",
+     "readcon_arrays-cu4000",
+     "cextxyz-cu4000",
+     "readcon_arrays-cu10",
+     "read_dicts-cu1000",
+     "ase_extxyz-cu64000",
+     "readcon_arrays-cu100",
+     "readcon-cu100",
+     "chemfiles-water.xyz",
+     "ase_extxyz-cu16000",
+     "readcon-cu16000",
+     "read_dicts_regex-cu16000",
+     "ase-water.xyz",
+     "read_dicts_regex-cu64000",
+     "read_dicts_regex-cu1000",
+     "readcon-cu4000",
+     "readcon-water.xyz",
+     "read_dicts-cu16000",
+     "cextxyz-cu200000",
+     "ase_extxyz-cu1000",
+     "ase_extxyz-cu200000",
+     "readcon-cu1000",
+     "read_dicts_regex-cu200000",
+     "openbabel-water.xyz",
+     "readcon_arrays-cu64000",
+     "mdanalysis-water.xyz.gz",
+     "readcon-cu10",
+     "mdanalysis-water.xyz",
+     "read_dicts_regex-cu4000",
+     "cextxyz-cu64000",
+     "readcon-cu64000",
+     "cextxyz-cu10",
+     "readcon_arrays-cu200000",
+     "read_dicts-cu4000",
+     "chemfiles-water.xyz.gz",
+     "read_dicts-cu200000",
+     "readcon-cu200000",
+     "read_dicts_regex-cu10",
+     "read_dicts_regex-cu100",
+     "ase_extxyz-cu4000",
+     "ase-water.xyz.gz"
+    ],
+    [
+     "read_dicts-cu4000",
+     "read_dicts_regex-cu200000",
+     "read_dicts-cu10",
+     "openbabel-water.xyz",
+     "readcon-water.xyz",
+     "readcon-cu1000",
+     "chemfiles-water.xyz.gz",
+     "read_dicts_regex-cu16000",
+     "cextxyz-cu10",
+     "readcon-cu10",
+     "read_dicts-cu1000",
+     "readcon_arrays-cu16000",
+     "read_dicts_regex-cu10",
+     "readcon_arrays-cu100",
+     "readcon_arrays-cu200000",
+     "ase_extxyz-cu64000",
+     "ase_extxyz-cu200000",
+     "ase_extxyz-cu16000",
+     "readcon_arrays-cu4000",
+     "cextxyz-cu1000",
+     "readcon_arrays-cu64000",
+     "readcon-water.xyz.gz",
+     "cextxyz-cu100",
+     "ase_extxyz-cu1000",
+     "chemfiles-water.xyz",
+     "ase_extxyz-cu4000",
+     "readcon-cu100",
+     "readcon_arrays-cu1000",
+     "readcon-cu200000",
+     "cextxyz-cu200000",
+     "cextxyz-cu64000",
+     "read_dicts_regex-cu100",
+     "ase-water.xyz.gz",
+     "read_dicts_regex-cu1000",
+     "read_dicts_regex-cu64000",
+     "ase_extxyz-cu100",
+     "read_dicts-cu64000",
+     "cextxyz-cu16000",
+     "read_dicts_regex-cu4000",
+     "readcon_arrays-water.xyz",
+     "readcon_arrays-water.xyz.gz",
+     "mdanalysis-water.xyz",
+     "ase_extxyz-cu10",
+     "cextxyz-cu4000",
+     "openbabel-water.xyz.gz",
+     "readcon_arrays-cu10",
+     "read_dicts-cu100",
+     "read_dicts-cu16000",
+     "read_dicts-cu200000",
+     "ase-water.xyz",
+     "readcon-cu4000",
+     "readcon-cu64000",
+     "readcon-cu16000",
+     "mdanalysis-water.xyz.gz"
+    ],
+    [
+     "readcon-water.xyz.gz",
+     "openbabel-water.xyz.gz",
+     "readcon-cu10",
+     "openbabel-water.xyz",
+     "readcon-water.xyz",
+     "readcon_arrays-cu16000",
+     "ase_extxyz-cu64000",
+     "readcon-cu16000",
+     "read_dicts_regex-cu10",
+     "readcon-cu4000",
+     "read_dicts_regex-cu1000",
+     "read_dicts-cu10",
+     "cextxyz-cu16000",
+     "readcon_arrays-cu100",
+     "ase_extxyz-cu200000",
+     "readcon_arrays-cu200000",
+     "read_dicts-cu4000",
+     "cextxyz-cu1000",
+     "chemfiles-water.xyz.gz",
+     "read_dicts-cu64000",
+     "cextxyz-cu100",
+     "readcon-cu1000",
+     "ase_extxyz-cu100",
+     "cextxyz-cu64000",
+     "readcon_arrays-cu64000",
+     "readcon_arrays-cu1000",
+     "mdanalysis-water.xyz",
+     "read_dicts_regex-cu100",
+     "readcon-cu200000",
+     "cextxyz-cu200000",
+     "readcon-cu100",
+     "read_dicts-cu16000",
+     "read_dicts_regex-cu4000",
+     "read_dicts_regex-cu16000",
+     "chemfiles-water.xyz",
+     "read_dicts_regex-cu200000",
+     "readcon_arrays-cu10",
+     "ase_extxyz-cu10",
+     "ase_extxyz-cu16000",
+     "mdanalysis-water.xyz.gz",
+     "cextxyz-cu4000",
+     "ase-water.xyz",
+     "readcon-cu64000",
+     "cextxyz-cu10",
+     "ase-water.xyz.gz",
+     "read_dicts-cu1000",
+     "readcon_arrays-water.xyz.gz",
+     "ase_extxyz-cu4000",
+     "readcon_arrays-cu4000",
+     "readcon_arrays-water.xyz",
+     "ase_extxyz-cu1000",
+     "read_dicts_regex-cu64000",
+     "read_dicts-cu200000",
+     "read_dicts-cu100"
+    ],
+    [
+     "read_dicts-cu16000",
+     "openbabel-water.xyz.gz",
+     "readcon-cu100",
+     "readcon_arrays-water.xyz",
+     "cextxyz-cu4000",
+     "read_dicts_regex-cu16000",
+     "ase_extxyz-cu200000",
+     "read_dicts_regex-cu1000",
+     "ase-water.xyz.gz",
+     "readcon-cu1000",
+     "read_dicts-cu64000",
+     "readcon_arrays-cu4000",
+     "readcon_arrays-cu16000",
+     "readcon_arrays-cu200000",
+     "read_dicts-cu200000",
+     "mdanalysis-water.xyz.gz",
+     "ase-water.xyz",
+     "readcon_arrays-cu1000",
+     "read_dicts-cu4000",
+     "readcon-water.xyz",
+     "openbabel-water.xyz",
+     "read_dicts_regex-cu100",
+     "read_dicts-cu10",
+     "chemfiles-water.xyz",
+     "read_dicts-cu1000",
+     "mdanalysis-water.xyz",
+     "read_dicts_regex-cu200000",
+     "readcon_arrays-cu64000",
+     "read_dicts_regex-cu4000",
+     "readcon-cu16000",
+     "cextxyz-cu200000",
+     "ase_extxyz-cu1000",
+     "readcon-cu10",
+     "ase_extxyz-cu16000",
+     "chemfiles-water.xyz.gz",
+     "read_dicts_regex-cu10",
+     "read_dicts-cu100",
+     "cextxyz-cu1000",
+     "readcon_arrays-cu100",
+     "readcon-cu64000",
+     "cextxyz-cu64000",
+     "ase_extxyz-cu10",
+     "readcon_arrays-cu10",
+     "cextxyz-cu100",
+     "cextxyz-cu10",
+     "ase_extxyz-cu100",
+     "readcon_arrays-water.xyz.gz",
+     "read_dicts_regex-cu64000",
+     "cextxyz-cu16000",
+     "readcon-cu4000",
+     "readcon-cu200000",
+     "ase_extxyz-cu4000",
+     "readcon-water.xyz.gz",
+     "ase_extxyz-cu64000"
+    ],
+    [
+     "readcon_arrays-cu100",
+     "readcon-water.xyz",
+     "ase_extxyz-cu10",
+     "read_dicts-cu100",
+     "ase-water.xyz.gz",
+     "read_dicts_regex-cu10",
+     "readcon-cu16000",
+     "readcon_arrays-water.xyz.gz",
+     "read_dicts-cu1000",
+     "ase_extxyz-cu4000",
+     "readcon-cu200000",
+     "readcon_arrays-cu1000",
+     "readcon_arrays-cu4000",
+     "ase-water.xyz",
+     "cextxyz-cu16000",
+     "mdanalysis-water.xyz",
+     "ase_extxyz-cu1000",
+     "read_dicts-cu64000",
+     "read_dicts-cu10",
+     "readcon-cu100",
+     "read_dicts_regex-cu100",
+     "readcon-cu64000",
+     "read_dicts_regex-cu64000",
+     "readcon-water.xyz.gz",
+     "ase_extxyz-cu200000",
+     "readcon_arrays-cu10",
+     "readcon-cu4000",
+     "read_dicts_regex-cu4000",
+     "cextxyz-cu100",
+     "chemfiles-water.xyz.gz",
+     "cextxyz-cu64000",
+     "readcon-cu10",
+     "read_dicts_regex-cu200000",
+     "readcon_arrays-cu200000",
+     "ase_extxyz-cu16000",
+     "mdanalysis-water.xyz.gz",
+     "chemfiles-water.xyz",
+     "readcon_arrays-cu64000",
+     "cextxyz-cu10",
+     "read_dicts-cu200000",
+     "ase_extxyz-cu64000",
+     "readcon-cu1000",
+     "cextxyz-cu200000",
+     "ase_extxyz-cu100",
+     "readcon_arrays-water.xyz",
+     "openbabel-water.xyz",
+     "openbabel-water.xyz.gz",
+     "read_dicts-cu4000",
+     "read_dicts-cu16000",
+     "cextxyz-cu4000",
+     "read_dicts_regex-cu16000",
+     "read_dicts_regex-cu1000",
+     "cextxyz-cu1000",
+     "readcon_arrays-cu16000"
+    ],
+    [
+     "ase_extxyz-cu4000",
+     "cextxyz-cu10",
+     "cextxyz-cu1000",
+     "readcon-cu1000",
+     "cextxyz-cu100",
+     "ase_extxyz-cu64000",
+     "read_dicts-cu4000",
+     "read_dicts-cu200000",
+     "ase-water.xyz.gz",
+     "readcon-cu100",
+     "readcon_arrays-water.xyz",
+     "openbabel-water.xyz.gz",
+     "readcon-cu200000",
+     "read_dicts_regex-cu64000",
+     "ase_extxyz-cu10",
+     "openbabel-water.xyz",
+     "read_dicts-cu64000",
+     "read_dicts-cu100",
+     "readcon-cu4000",
+     "readcon_arrays-cu1000",
+     "read_dicts-cu16000",
+     "read_dicts_regex-cu100",
+     "readcon-water.xyz.gz",
+     "readcon-cu64000",
+     "readcon_arrays-cu16000",
+     "chemfiles-water.xyz.gz",
+     "read_dicts-cu10",
+     "cextxyz-cu64000",
+     "ase_extxyz-cu16000",
+     "read_dicts-cu1000",
+     "read_dicts_regex-cu1000",
+     "readcon_arrays-cu10",
+     "ase_extxyz-cu1000",
+     "readcon-cu16000",
+     "readcon-water.xyz",
+     "readcon-cu10",
+     "mdanalysis-water.xyz.gz",
+     "ase_extxyz-cu200000",
+     "ase-water.xyz",
+     "readcon_arrays-cu100",
+     "read_dicts_regex-cu200000",
+     "readcon_arrays-cu4000",
+     "readcon_arrays-water.xyz.gz",
+     "readcon_arrays-cu64000",
+     "cextxyz-cu4000",
+     "read_dicts_regex-cu16000",
+     "mdanalysis-water.xyz",
+     "cextxyz-cu200000",
+     "read_dicts_regex-cu10",
+     "readcon_arrays-cu200000",
+     "chemfiles-water.xyz",
+     "ase_extxyz-cu100",
+     "read_dicts_regex-cu4000",
+     "cextxyz-cu16000"
+    ],
+    [
+     "read_dicts_regex-cu4000",
+     "cextxyz-cu200000",
+     "readcon-water.xyz",
+     "cextxyz-cu4000",
+     "read_dicts_regex-cu16000",
+     "readcon-cu200000",
+     "cextxyz-cu64000",
+     "chemfiles-water.xyz",
+     "read_dicts_regex-cu10",
+     "readcon_arrays-cu10",
+     "readcon_arrays-cu64000",
+     "ase_extxyz-cu200000",
+     "readcon_arrays-cu4000",
+     "readcon-cu4000",
+     "readcon_arrays-cu16000",
+     "mdanalysis-water.xyz.gz",
+     "cextxyz-cu1000",
+     "readcon-cu1000",
+     "read_dicts_regex-cu1000",
+     "readcon-cu16000",
+     "read_dicts-cu16000",
+     "ase_extxyz-cu100",
+     "ase-water.xyz",
+     "ase_extxyz-cu10",
+     "ase_extxyz-cu4000",
+     "read_dicts-cu1000",
+     "readcon_arrays-water.xyz.gz",
+     "cextxyz-cu16000",
+     "cextxyz-cu10",
+     "read_dicts_regex-cu200000",
+     "read_dicts-cu4000",
+     "read_dicts-cu200000",
+     "cextxyz-cu100",
+     "readcon_arrays-cu100",
+     "read_dicts_regex-cu64000",
+     "read_dicts_regex-cu100",
+     "read_dicts-cu64000",
+     "ase-water.xyz.gz",
+     "readcon-water.xyz.gz",
+     "readcon_arrays-cu200000",
+     "read_dicts-cu100",
+     "readcon-cu100",
+     "readcon_arrays-water.xyz",
+     "ase_extxyz-cu16000",
+     "ase_extxyz-cu64000",
+     "ase_extxyz-cu1000",
+     "readcon-cu64000",
+     "mdanalysis-water.xyz",
+     "chemfiles-water.xyz.gz",
+     "readcon_arrays-cu1000",
+     "readcon-cu10",
+     "openbabel-water.xyz.gz",
+     "read_dicts-cu10",
+     "openbabel-water.xyz"
+    ],
+    [
+     "ase_extxyz-cu16000",
+     "readcon_arrays-cu100",
+     "read_dicts-cu64000",
+     "cextxyz-cu10",
+     "read_dicts_regex-cu200000",
+     "readcon-water.xyz",
+     "readcon_arrays-water.xyz",
+     "ase_extxyz-cu100",
+     "openbabel-water.xyz",
+     "readcon-cu1000",
+     "ase-water.xyz",
+     "read_dicts-cu1000",
+     "readcon-cu64000",
+     "ase_extxyz-cu1000",
+     "read_dicts-cu4000",
+     "openbabel-water.xyz.gz",
+     "readcon-cu16000",
+     "cextxyz-cu200000",
+     "read_dicts_regex-cu4000",
+     "readcon_arrays-cu16000",
+     "readcon-cu10",
+     "read_dicts_regex-cu16000",
+     "ase_extxyz-cu10",
+     "read_dicts_regex-cu1000",
+     "read_dicts-cu100",
+     "mdanalysis-water.xyz.gz",
+     "cextxyz-cu100",
+     "read_dicts_regex-cu100",
+     "chemfiles-water.xyz.gz",
+     "readcon-cu4000",
+     "read_dicts-cu10",
+     "ase_extxyz-cu4000",
+     "readcon_arrays-water.xyz.gz",
+     "readcon_arrays-cu1000",
+     "ase-water.xyz.gz",
+     "read_dicts-cu16000",
+     "cextxyz-cu64000",
+     "read_dicts-cu200000",
+     "mdanalysis-water.xyz",
+     "readcon_arrays-cu200000",
+     "readcon-cu200000",
+     "ase_extxyz-cu200000",
+     "read_dicts_regex-cu64000",
+     "readcon_arrays-cu4000",
+     "cextxyz-cu1000",
+     "readcon_arrays-cu10",
+     "cextxyz-cu16000",
+     "cextxyz-cu4000",
+     "read_dicts_regex-cu10",
+     "readcon-water.xyz.gz",
+     "chemfiles-water.xyz",
+     "readcon_arrays-cu64000",
+     "ase_extxyz-cu64000",
+     "readcon-cu100"
+    ]
+   ],
+   "warmup_order": [
+    [
+     "readcon_arrays-cu200000",
+     "cextxyz-cu1000",
+     "readcon_arrays-cu64000",
+     "cextxyz-cu16000",
+     "readcon-water.xyz",
+     "read_dicts_regex-cu64000",
+     "readcon-cu1000",
+     "mdanalysis-water.xyz.gz",
+     "readcon_arrays-cu4000",
+     "readcon_arrays-cu10",
+     "ase_extxyz-cu10",
+     "ase_extxyz-cu16000",
+     "ase_extxyz-cu4000",
+     "ase_extxyz-cu64000",
+     "openbabel-water.xyz.gz",
+     "mdanalysis-water.xyz",
+     "readcon_arrays-cu16000",
+     "chemfiles-water.xyz",
+     "chemfiles-water.xyz.gz",
+     "read_dicts_regex-cu200000",
+     "readcon-cu64000",
+     "ase_extxyz-cu200000",
+     "read_dicts-cu16000",
+     "read_dicts-cu10",
+     "cextxyz-cu10",
+     "readcon-cu10",
+     "ase_extxyz-cu100",
+     "read_dicts-cu4000",
+     "readcon_arrays-water.xyz",
+     "read_dicts_regex-cu16000",
+     "read_dicts-cu200000",
+     "cextxyz-cu64000",
+     "read_dicts_regex-cu100",
+     "cextxyz-cu100",
+     "read_dicts-cu64000",
+     "readcon_arrays-cu100",
+     "readcon-water.xyz.gz",
+     "read_dicts_regex-cu10",
+     "ase_extxyz-cu1000",
+     "readcon-cu16000",
+     "readcon_arrays-water.xyz.gz",
+     "read_dicts_regex-cu4000",
+     "readcon-cu4000",
+     "ase-water.xyz",
+     "read_dicts-cu1000",
+     "cextxyz-cu4000",
+     "ase-water.xyz.gz",
+     "readcon-cu100",
+     "read_dicts_regex-cu1000",
+     "read_dicts-cu100",
+     "openbabel-water.xyz",
+     "cextxyz-cu200000",
+     "readcon-cu200000",
+     "readcon_arrays-cu1000"
+    ]
+   ],
+   "load_average_before": [
+    2.40185546875,
+    0.75830078125,
+    0.61328125
+   ],
+   "load_average_after": [
+    4.9638671875,
+    2.4873046875,
+    1.2919921875
+   ],
+   "campaign_s": 179.2
+  },
+  "hardware": {
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "cpu_model": "Intel Xeon Processor"
+  },
+  "cells": {
+   "ase-water.xyz": {
+    "n": 11,
+    "median_s": 0.045252573000198026,
+    "q1_s": 0.0443288074998236,
+    "q3_s": 0.04648615949986379,
+    "iqr_s": 0.0021573520000401913,
+    "samples_s": [
+     0.045252573000198026,
+     0.04723119099980977,
+     0.04567531399970903,
+     0.049419216999922355,
+     0.04996067000001858,
+     0.04414986099982343,
+     0.04574112799991781,
+     0.044466270999691915,
+     0.04402578999997786,
+     0.04419134399995528,
+     0.04478309700016325
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "ase-water.xyz.gz": {
+    "n": 11,
+    "median_s": 0.6050742649999847,
+    "q1_s": 0.6005531014998269,
+    "q3_s": 0.6257769584999551,
+    "iqr_s": 0.02522385700012819,
+    "samples_s": [
+     0.6011293439996734,
+     0.6365534249998746,
+     0.667034051000428,
+     0.6150004920000356,
+     0.5999768589999803,
+     0.5955989569997655,
+     0.7085294280000198,
+     0.6091953340001055,
+     0.5979437099999814,
+     0.6017816870003116,
+     0.6050742649999847
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "ase_extxyz-cu10": {
+    "n": 11,
+    "median_s": 0.00042597299989211024,
+    "q1_s": 0.00041146550006487814,
+    "q3_s": 0.00046628599989162467,
+    "iqr_s": 5.482049982674653e-05,
+    "samples_s": [
+     0.0004777690000992152,
+     0.0004937369999424845,
+     0.0004130730003453209,
+     0.0003938559998459823,
+     0.00045480299968403415,
+     0.0004190800000287709,
+     0.00048399000024801353,
+     0.0004098579997844354,
+     0.00039077400015230523,
+     0.00042774799976541544,
+     0.00042597299989211024
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 10,
+     "positions_sum": 61.37
+    }
+   },
+   "ase_extxyz-cu100": {
+    "n": 11,
+    "median_s": 0.0005515210000339721,
+    "q1_s": 0.0005418359999111999,
+    "q3_s": 0.0005620580000140762,
+    "iqr_s": 2.0222000102876336e-05,
+    "samples_s": [
+     0.0005406269997365598,
+     0.0005806989997836354,
+     0.0005562219998864748,
+     0.0005443719996947038,
+     0.0005637700000988843,
+     0.0005515210000339721,
+     0.0005603459999292681,
+     0.0005368000001908513,
+     0.00054304500008584,
+     0.0005663709998771083,
+     0.000519779000114795
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 100,
+     "positions_sum": 1985.5
+    }
+   },
+   "ase_extxyz-cu1000": {
+    "n": 11,
+    "median_s": 0.0019229449999329518,
+    "q1_s": 0.0018896839999342774,
+    "q3_s": 0.0020094724998216407,
+    "iqr_s": 0.00011978849988736329,
+    "samples_s": [
+     0.00189198199996099,
+     0.001886781999928644,
+     0.0019481709996398422,
+     0.002231879999726516,
+     0.0018450249999659718,
+     0.0020727830001305847,
+     0.0019227099996896868,
+     0.0019229449999329518,
+     0.002070774000003439,
+     0.001937002999966353,
+     0.0018873859999075648
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 1000,
+     "positions_sum": 48735.0
+    }
+   },
+   "ase_extxyz-cu16000": {
+    "n": 11,
+    "median_s": 0.026568833000055747,
+    "q1_s": 0.026370503499947517,
+    "q3_s": 0.026778413999863915,
+    "iqr_s": 0.0004079104999163974,
+    "samples_s": [
+     0.026414018999730615,
+     0.025933123999948293,
+     0.026568833000055747,
+     0.027730267999686475,
+     0.02633032199992158,
+     0.026678771999741002,
+     0.030473703000097885,
+     0.026299574999939068,
+     0.026596200999847497,
+     0.026878055999986827,
+     0.026410684999973455
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 16000,
+     "positions_sum": 2090190.0
+    }
+   },
+   "ase_extxyz-cu200000": {
+    "n": 11,
+    "median_s": 0.3380222720002166,
+    "q1_s": 0.33621235200007504,
+    "q3_s": 0.34155767700008255,
+    "iqr_s": 0.005345325000007506,
+    "samples_s": [
+     0.3349239320000379,
+     0.3380222720002166,
+     0.3411520469999232,
+     0.3424498389999826,
+     0.3362679249999019,
+     0.33780048800008444,
+     0.3419633070002419,
+     0.3361567790002482,
+     0.3330452630002583,
+     0.3381764060000023,
+     0.38597971500030326
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 200000,
+     "positions_sum": 62168589.76
+    }
+   },
+   "ase_extxyz-cu4000": {
+    "n": 11,
+    "median_s": 0.006421091999982309,
+    "q1_s": 0.006342211999935898,
+    "q3_s": 0.006495257000096899,
+    "iqr_s": 0.00015304500016100064,
+    "samples_s": [
+     0.006378175999998348,
+     0.006421091999982309,
+     0.006518169000173657,
+     0.006525751000026503,
+     0.006534281999847735,
+     0.006245697000395012,
+     0.006472345000020141,
+     0.006306247999873449,
+     0.006295820000104868,
+     0.006424923999929888,
+     0.006385324999882869
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 4000,
+     "positions_sum": 320568.0
+    }
+   },
+   "ase_extxyz-cu64000": {
+    "n": 11,
+    "median_s": 0.10605621600006998,
+    "q1_s": 0.10536115200011409,
+    "q3_s": 0.10805201150014909,
+    "iqr_s": 0.0026908595000350033,
+    "samples_s": [
+     0.11109984299991993,
+     0.11447069299993018,
+     0.10589045200003966,
+     0.10836249500016493,
+     0.10765319400024964,
+     0.10774152800013326,
+     0.10568997000018499,
+     0.10371184699988589,
+     0.10503233400004319,
+     0.10434342200005631,
+     0.10605621600006998
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 64000,
+     "positions_sum": 13515840.0
+    }
+   },
+   "cextxyz-cu10": {
+    "n": 11,
+    "median_s": 0.00032539299991185544,
+    "q1_s": 0.0003176110001277266,
+    "q3_s": 0.00033539949981786776,
+    "iqr_s": 1.778849969014118e-05,
+    "samples_s": [
+     0.0003195280000909406,
+     0.000339889000315452,
+     0.00033084400001826,
+     0.0003334799998810922,
+     0.00034396399996694527,
+     0.0003373189997546433,
+     0.00031439599979421473,
+     0.00032539299991185544,
+     0.0003209289998267195,
+     0.0003086579999944661,
+     0.00031569400016451254
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 10,
+     "positions_sum": 61.37
+    }
+   },
+   "cextxyz-cu100": {
+    "n": 11,
+    "median_s": 0.0003411839998079813,
+    "q1_s": 0.000337398000056055,
+    "q3_s": 0.0003463745001681673,
+    "iqr_s": 8.976500112112262e-06,
+    "samples_s": [
+     0.0003374200000507699,
+     0.00036487700026555103,
+     0.0003280000000813743,
+     0.0003402770003049227,
+     0.00033737600006134016,
+     0.0003418350001993531,
+     0.00034800799994627596,
+     0.0003447410003900586,
+     0.0003560279997145699,
+     0.0003361820004101901,
+     0.0003411839998079813
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 100,
+     "positions_sum": 1985.5
+    }
+   },
+   "cextxyz-cu1000": {
+    "n": 11,
+    "median_s": 0.0005202439997447073,
+    "q1_s": 0.0005104510000819573,
+    "q3_s": 0.0005428145000223594,
+    "iqr_s": 3.236349994040211e-05,
+    "samples_s": [
+     0.0005412790001173562,
+     0.0005831470002704009,
+     0.0005774800001745461,
+     0.00050480299978517,
+     0.0005132119999871065,
+     0.0005108720001771871,
+     0.0005019539999011613,
+     0.0005202439997447073,
+     0.0005100299999867275,
+     0.0005258199998934288,
+     0.0005443499999273627
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 1000,
+     "positions_sum": 48735.0
+    }
+   },
+   "cextxyz-cu16000": {
+    "n": 11,
+    "median_s": 0.0043775849999292404,
+    "q1_s": 0.00432922699997107,
+    "q3_s": 0.004446005500085448,
+    "iqr_s": 0.0001167785001143784,
+    "samples_s": [
+     0.004851928999869415,
+     0.004338207000273542,
+     0.004454619000171078,
+     0.004280399999970541,
+     0.004320246999668598,
+     0.0043775849999292404,
+     0.004268641999715328,
+     0.004437391999999818,
+     0.004392334999920422,
+     0.0043699240000023565,
+     0.004499980000218784
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 16000,
+     "positions_sum": 2090190.0
+    }
+   },
+   "cextxyz-cu200000": {
+    "n": 11,
+    "median_s": 0.05254285399996661,
+    "q1_s": 0.05165212349993453,
+    "q3_s": 0.05337854249978591,
+    "iqr_s": 0.0017264189998513757,
+    "samples_s": [
+     0.05334677599967108,
+     0.05174761399985073,
+     0.05350020500009123,
+     0.05254285399996661,
+     0.05346744500002387,
+     0.053410308999900735,
+     0.05188527400014209,
+     0.05155663300001834,
+     0.050733025999761594,
+     0.05154164900022806,
+     0.053286618999663915
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 200000,
+     "positions_sum": 62168589.76
+    }
+   },
+   "cextxyz-cu4000": {
+    "n": 11,
+    "median_s": 0.0011227009999856818,
+    "q1_s": 0.0011069344998304587,
+    "q3_s": 0.00117231150011321,
+    "iqr_s": 6.53770002827514e-05,
+    "samples_s": [
+     0.0010995460002050095,
+     0.001198092999857181,
+     0.001105380999888439,
+     0.0011084879997724784,
+     0.0011607980000007956,
+     0.0011227009999856818,
+     0.0012322459997449187,
+     0.0010854249999283638,
+     0.0011182420003024163,
+     0.00117179800008671,
+     0.00117282500013971
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 4000,
+     "positions_sum": 320568.0
+    }
+   },
+   "cextxyz-cu64000": {
+    "n": 11,
+    "median_s": 0.016731443000026047,
+    "q1_s": 0.01656434899996384,
+    "q3_s": 0.017144248000022344,
+    "iqr_s": 0.0005798990000585036,
+    "samples_s": [
+     0.016556999999920663,
+     0.01731687099982082,
+     0.016571698000007018,
+     0.016731443000026047,
+     0.016896405000352388,
+     0.02222298300011971,
+     0.016390012999636383,
+     0.01643207100005384,
+     0.01668056800008344,
+     0.016971625000223867,
+     0.017741417000252113
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 64000,
+     "positions_sum": 13515840.0
+    }
+   },
+   "chemfiles-water.xyz": {
+    "n": 11,
+    "median_s": 0.006518404999951599,
+    "q1_s": 0.006298282499983543,
+    "q3_s": 0.00673735200007286,
+    "iqr_s": 0.00043906950008931744,
+    "samples_s": [
+     0.006432786999994278,
+     0.007139036999888049,
+     0.006765693000033934,
+     0.006603812999856018,
+     0.0067404090000309225,
+     0.006734295000114798,
+     0.006518404999951599,
+     0.006271073999869259,
+     0.0062111899997034925,
+     0.006193202000304154,
+     0.006325491000097827
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "chemfiles-water.xyz.gz": {
+    "n": 11,
+    "median_s": 0.01614672799996697,
+    "q1_s": 0.015978443499989226,
+    "q3_s": 0.016320569999834333,
+    "iqr_s": 0.0003421264998451079,
+    "samples_s": [
+     0.016260291999969922,
+     0.016380847999698744,
+     0.01703644400004123,
+     0.017520292999961384,
+     0.015923843000109628,
+     0.01614672799996697,
+     0.01571126799990452,
+     0.01587179099988134,
+     0.016232617999776267,
+     0.016065708000041923,
+     0.016033043999868823
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "mdanalysis-water.xyz": {
+    "n": 11,
+    "median_s": 0.018091728999934276,
+    "q1_s": 0.01780822850014374,
+    "q3_s": 0.018290809999825797,
+    "iqr_s": 0.00048258149968205544,
+    "samples_s": [
+     0.01797464499986745,
+     0.017658274000041274,
+     0.018330854999931034,
+     0.018115734000275552,
+     0.018091728999934276,
+     0.018699227000070096,
+     0.01825076499972056,
+     0.017720895999900677,
+     0.017891744000280596,
+     0.017724713000006886,
+     0.02561589000015374
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.4955595884
+    }
+   },
+   "mdanalysis-water.xyz.gz": {
+    "n": 11,
+    "median_s": 0.025574796000000788,
+    "q1_s": 0.025454399000182093,
+    "q3_s": 0.0256337179998809,
+    "iqr_s": 0.0001793189996988076,
+    "samples_s": [
+     0.025464357999680942,
+     0.025699320000057924,
+     0.025604323000152363,
+     0.025574796000000788,
+     0.02544663800017588,
+     0.02566311299960944,
+     0.025759201999790093,
+     0.02559718700013036,
+     0.025462160000188305,
+     0.025373193999712385,
+     0.02544586200019694
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.4955595884
+    }
+   },
+   "openbabel-water.xyz": {
+    "n": 11,
+    "median_s": 0.11571680500037473,
+    "q1_s": 0.1148473800001284,
+    "q3_s": 0.11685872749990267,
+    "iqr_s": 0.002011347499774274,
+    "samples_s": [
+     0.11322746399991956,
+     0.1207253950001359,
+     0.11563452599966695,
+     0.1174463869997453,
+     0.11627106800006004,
+     0.11792245200012985,
+     0.11574867899980745,
+     0.11443541900007403,
+     0.1149316330001966,
+     0.1147631270000602,
+     0.11571680500037473
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "openbabel-water.xyz.gz": {
+    "n": 11,
+    "median_s": 0.4313715849998516,
+    "q1_s": 0.42625430899988714,
+    "q3_s": 0.4360508959998697,
+    "iqr_s": 0.009796586999982537,
+    "samples_s": [
+     0.4313715849998516,
+     0.4344622260000506,
+     0.43835833599996477,
+     0.44177533099991706,
+     0.42903338299993266,
+     0.42611067699999694,
+     0.4323610930000541,
+     0.4229110279998167,
+     0.4237979169997743,
+     0.42639794099977735,
+     0.4376395659996888
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "read_dicts-cu10": {
+    "n": 11,
+    "median_s": 0.00013835299978381954,
+    "q1_s": 0.0001354895000531542,
+    "q3_s": 0.00014512200004901388,
+    "iqr_s": 9.632499995859689e-06,
+    "samples_s": [
+     0.00013264300014270702,
+     0.00014507200012303656,
+     0.00013833599996360135,
+     0.00015277400007107644,
+     0.00013835299978381954,
+     0.00019990900000266265,
+     0.00014069300004848628,
+     0.0001383450003231701,
+     0.00012704600021606893,
+     0.0001302929999837943,
+     0.0001451719999749912
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 10,
+     "positions_sum": 61.37
+    }
+   },
+   "read_dicts-cu100": {
+    "n": 11,
+    "median_s": 0.00014754199992239592,
+    "q1_s": 0.00014329949999591918,
+    "q3_s": 0.00014967249990149867,
+    "iqr_s": 6.372999905579491e-06,
+    "samples_s": [
+     0.00014599299993278692,
+     0.00016234099985013017,
+     0.00014791200010222383,
+     0.00014060600005905144,
+     0.0001465559998905519,
+     0.00014754199992239592,
+     0.00014873300006001955,
+     0.0001678990001892089,
+     0.0001506119997429778,
+     0.0001397330001964292,
+     0.00013949799995316425
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 100,
+     "positions_sum": 1985.5
+    }
+   },
+   "read_dicts-cu1000": {
+    "n": 11,
+    "median_s": 0.0002970090004055237,
+    "q1_s": 0.000290274999997564,
+    "q3_s": 0.0003138399999897956,
+    "iqr_s": 2.3564999992231606e-05,
+    "samples_s": [
+     0.00031066700012161164,
+     0.0003162080001857248,
+     0.00028500999997049803,
+     0.0002943989998129837,
+     0.00032481300013387226,
+     0.0003546249999999418,
+     0.0003114719997938664,
+     0.00029277800013005617,
+     0.00028777199986507185,
+     0.0002970090004055237,
+     0.00028530099962154054
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 1000,
+     "positions_sum": 48735.0
+    }
+   },
+   "read_dicts-cu16000": {
+    "n": 11,
+    "median_s": 0.0032676509999873815,
+    "q1_s": 0.003202557499662362,
+    "q3_s": 0.0035131140000430605,
+    "iqr_s": 0.0003105565003806987,
+    "samples_s": [
+     0.003329871000005369,
+     0.0036069939997105394,
+     0.003228716999728931,
+     0.0034773910001604236,
+     0.0032676509999873815,
+     0.004470613999728812,
+     0.0031953019997672527,
+     0.0031678360001023975,
+     0.003173535000314587,
+     0.003209812999557471,
+     0.0035488369999256975
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 16000,
+     "positions_sum": 2090190.0
+    }
+   },
+   "read_dicts-cu200000": {
+    "n": 11,
+    "median_s": 0.03947620100007043,
+    "q1_s": 0.03905073250007263,
+    "q3_s": 0.040886275999810096,
+    "iqr_s": 0.0018355434997374687,
+    "samples_s": [
+     0.037922927999716194,
+     0.040494072000001324,
+     0.03931934199999887,
+     0.046070709000105126,
+     0.03918679600019459,
+     0.03947620100007043,
+     0.03975758000024143,
+     0.03774773799977993,
+     0.04127847999961887,
+     0.03891466899995066,
+     0.04142129100000602
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 200000,
+     "positions_sum": 62168589.76
+    }
+   },
+   "read_dicts-cu4000": {
+    "n": 11,
+    "median_s": 0.0009219789999406203,
+    "q1_s": 0.0009067009998489084,
+    "q3_s": 0.000939988500022082,
+    "iqr_s": 3.328750017317361e-05,
+    "samples_s": [
+     0.0009189799998239323,
+     0.0009324729999207193,
+     0.0008807929998511099,
+     0.0009475040001234447,
+     0.0009040619997904287,
+     0.0009219789999406203,
+     0.0009322450000581739,
+     0.0009565630002725811,
+     0.0009909690002132265,
+     0.0009093399999073881,
+     0.0008945910003603785
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 4000,
+     "positions_sum": 320568.0
+    }
+   },
+   "read_dicts-cu64000": {
+    "n": 11,
+    "median_s": 0.013048686000274756,
+    "q1_s": 0.012693202999798814,
+    "q3_s": 0.013455683499842053,
+    "iqr_s": 0.0007624805000432389,
+    "samples_s": [
+     0.013226370000211318,
+     0.013034310999955778,
+     0.013048686000274756,
+     0.012724894999792014,
+     0.013470102999690425,
+     0.016659720000006928,
+     0.01344126399999368,
+     0.012651408000238007,
+     0.01920398499987641,
+     0.012660948000302596,
+     0.012661510999805614
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 64000,
+     "positions_sum": 13515840.0
+    }
+   },
+   "read_dicts_regex-cu10": {
+    "n": 11,
+    "median_s": 0.00027709999994840473,
+    "q1_s": 0.00027442650025477633,
+    "q3_s": 0.00028788399981749535,
+    "iqr_s": 1.3457499562719022e-05,
+    "samples_s": [
+     0.0002803000002131739,
+     0.0002738810003393155,
+     0.0002891979997912131,
+     0.00027497200017023715,
+     0.00032228899999608984,
+     0.0002692390003176115,
+     0.0002865699998437776,
+     0.0002657359996192099,
+     0.00029523500006689574,
+     0.00027709999994840473,
+     0.0002762730000540614
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 10,
+     "positions_sum": 61.37
+    }
+   },
+   "read_dicts_regex-cu100": {
+    "n": 11,
+    "median_s": 0.00030219400014175335,
+    "q1_s": 0.0003010650000305759,
+    "q3_s": 0.00031675800005359633,
+    "iqr_s": 1.569300002302043e-05,
+    "samples_s": [
+     0.0003017799999724957,
+     0.0003109540002697031,
+     0.00032260200032396824,
+     0.0003515200000947516,
+     0.00028933499970662524,
+     0.0003194340001755336,
+     0.0002967280001939798,
+     0.0003140819999316591,
+     0.00030163900009938516,
+     0.00030049099996176665,
+     0.00030219400014175335
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 100,
+     "positions_sum": 1985.5
+    }
+   },
+   "read_dicts_regex-cu1000": {
+    "n": 11,
+    "median_s": 0.000585196999963955,
+    "q1_s": 0.0005703030001313891,
+    "q3_s": 0.0006073440001728159,
+    "iqr_s": 3.704100004142674e-05,
+    "samples_s": [
+     0.0005336819999683939,
+     0.0008125660001496726,
+     0.0005843190001542098,
+     0.0005873130003237748,
+     0.0005862899997737259,
+     0.0005570620000980853,
+     0.000657808000141813,
+     0.0005438540001705405,
+     0.000585196999963955,
+     0.000627375000021857,
+     0.000583544000164693
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 1000,
+     "positions_sum": 48735.0
+    }
+   },
+   "read_dicts_regex-cu16000": {
+    "n": 11,
+    "median_s": 0.005299732999901607,
+    "q1_s": 0.005237773499857212,
+    "q3_s": 0.005519180499959475,
+    "iqr_s": 0.00028140700010226283,
+    "samples_s": [
+     0.005318624999745225,
+     0.005721397999877809,
+     0.005171802999939246,
+     0.005615649999981542,
+     0.005045967000114615,
+     0.005422710999937408,
+     0.00528451500031224,
+     0.005662862999997742,
+     0.005299732999901607,
+     0.005213725999965391,
+     0.005261820999749034
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 16000,
+     "positions_sum": 2090190.0
+    }
+   },
+   "read_dicts_regex-cu200000": {
+    "n": 11,
+    "median_s": 0.06193230600001698,
+    "q1_s": 0.06150796899987654,
+    "q3_s": 0.06284239100023115,
+    "iqr_s": 0.001334422000354607,
+    "samples_s": [
+     0.06286281100028646,
+     0.06193230600001698,
+     0.06245247800006837,
+     0.06164560799970786,
+     0.06311926499984111,
+     0.10494497999980013,
+     0.061798210000233667,
+     0.06060779800009186,
+     0.061370330000045215,
+     0.06282197100017584,
+     0.06127417700008664
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 200000,
+     "positions_sum": 62168589.76
+    }
+   },
+   "read_dicts_regex-cu4000": {
+    "n": 11,
+    "median_s": 0.0015393630001199199,
+    "q1_s": 0.0015154525001435104,
+    "q3_s": 0.0016473489999953017,
+    "iqr_s": 0.0001318964998517913,
+    "samples_s": [
+     0.0016250329999820678,
+     0.0017043880002347578,
+     0.0016696650000085356,
+     0.0015383859999928973,
+     0.001725058999909379,
+     0.0014841419997537741,
+     0.0014704320001328597,
+     0.0015227750000121887,
+     0.0015081300002748321,
+     0.0015513530001953768,
+     0.0015393630001199199
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 4000,
+     "positions_sum": 320568.0
+    }
+   },
+   "read_dicts_regex-cu64000": {
+    "n": 11,
+    "median_s": 0.02048598100009258,
+    "q1_s": 0.020358599500013952,
+    "q3_s": 0.02195784199989248,
+    "iqr_s": 0.0015992424998785282,
+    "samples_s": [
+     0.02063926300024832,
+     0.02048598100009258,
+     0.02121882799974628,
+     0.0243183659999886,
+     0.02269685600003868,
+     0.020358434000172565,
+     0.02005497700019987,
+     0.020449527999971906,
+     0.02025639500016041,
+     0.02035876499985534,
+     0.024163894000139408
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 64000,
+     "positions_sum": 13515840.0
+    }
+   },
+   "readcon-cu10": {
+    "n": 11,
+    "median_s": 0.00010880699983317754,
+    "q1_s": 0.00010471049995430803,
+    "q3_s": 0.00011202950008737389,
+    "iqr_s": 7.319000133065856e-06,
+    "samples_s": [
+     0.00012168000012025004,
+     0.00010447100021337974,
+     0.00010497800030861981,
+     0.00011145899998155073,
+     0.00011260000019319705,
+     0.00010880699983317754,
+     0.00011261600002399064,
+     0.00011036399973818334,
+     0.0001035940003930591,
+     0.00010008000026573427,
+     0.00010494999969523633
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 10,
+     "positions_sum": 61.37
+    }
+   },
+   "readcon-cu100": {
+    "n": 11,
+    "median_s": 0.00014004100012243725,
+    "q1_s": 0.00013599900012195576,
+    "q3_s": 0.0001422335001279862,
+    "iqr_s": 6.23450000603043e-06,
+    "samples_s": [
+     0.0001445530001547013,
+     0.00013536400001612492,
+     0.0001375519996145158,
+     0.00014153200027067214,
+     0.0001433910001651384,
+     0.00014293499998530024,
+     0.00014004100012243725,
+     0.00012743999968733988,
+     0.00011888399967574514,
+     0.0001366340002277866,
+     0.00014086100009080837
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 100,
+     "positions_sum": 1985.5
+    }
+   },
+   "readcon-cu1000": {
+    "n": 11,
+    "median_s": 0.0003513470001053065,
+    "q1_s": 0.000332941000124265,
+    "q3_s": 0.0003562715000953176,
+    "iqr_s": 2.3330499971052632e-05,
+    "samples_s": [
+     0.0003410159997656592,
+     0.0003547750002326211,
+     0.0003513470001053065,
+     0.0003533340000103635,
+     0.00031780100016476354,
+     0.0003830109999398701,
+     0.0003577679999580141,
+     0.00032047299964688136,
+     0.00033300700033578323,
+     0.0003328749999127467,
+     0.0003820209999503277
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 1000,
+     "positions_sum": 48735.0
+    }
+   },
+   "readcon-cu16000": {
+    "n": 11,
+    "median_s": 0.003929279000203678,
+    "q1_s": 0.003797580500076947,
+    "q3_s": 0.003988353500062658,
+    "iqr_s": 0.00019077299998571107,
+    "samples_s": [
+     0.003828873000202293,
+     0.004086604000349325,
+     0.003957621000154177,
+     0.004293773999961559,
+     0.003752111999801855,
+     0.003981130999818561,
+     0.0037413659997582727,
+     0.003995576000306755,
+     0.003929279000203678,
+     0.003879431999848748,
+     0.003766287999951601
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 16000,
+     "positions_sum": 2090190.0
+    }
+   },
+   "readcon-cu200000": {
+    "n": 11,
+    "median_s": 0.05179682600009983,
+    "q1_s": 0.05066517249974822,
+    "q3_s": 0.05228510699976141,
+    "iqr_s": 0.001619934500013187,
+    "samples_s": [
+     0.05179682600009983,
+     0.05200738699977592,
+     0.05370264999965002,
+     0.05371691099981035,
+     0.05073439199986751,
+     0.052055919999929756,
+     0.050595952999628935,
+     0.050806666999960726,
+     0.050278046000130416,
+     0.04922225999962393,
+     0.052514293999593065
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 200000,
+     "positions_sum": 62168589.76
+    }
+   },
+   "readcon-cu4000": {
+    "n": 11,
+    "median_s": 0.0012457679999897664,
+    "q1_s": 0.0012036549999265844,
+    "q3_s": 0.0013149209999028244,
+    "iqr_s": 0.00011126599997623998,
+    "samples_s": [
+     0.0013598270002148638,
+     0.0012809049999304989,
+     0.0012457679999897664,
+     0.0013194929997553118,
+     0.0012077390001650201,
+     0.0012343739999778336,
+     0.001310349000050337,
+     0.0011995709996881487,
+     0.0011835350001092593,
+     0.0013217149999036337,
+     0.0011961640002482454
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 4000,
+     "positions_sum": 320568.0
+    }
+   },
+   "readcon-cu64000": {
+    "n": 11,
+    "median_s": 0.01596778200018889,
+    "q1_s": 0.015820159499980946,
+    "q3_s": 0.016290386500031673,
+    "iqr_s": 0.00047022700005072693,
+    "samples_s": [
+     0.015895689999979368,
+     0.01603646600005959,
+     0.016544307000003755,
+     0.01598562800018044,
+     0.015909448999991582,
+     0.02185729299981176,
+     0.01553303099990444,
+     0.015680606000387343,
+     0.015744628999982524,
+     0.01596778200018889,
+     0.017450531000122282
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 64000,
+     "positions_sum": 13515840.0
+    }
+   },
+   "readcon-water.xyz": {
+    "n": 11,
+    "median_s": 0.0037920419999863952,
+    "q1_s": 0.0035139594999691326,
+    "q3_s": 0.0038640835000478546,
+    "iqr_s": 0.000350124000078722,
+    "samples_s": [
+     0.005373120000058407,
+     0.0037920419999863952,
+     0.00581917199997406,
+     0.003925052999875334,
+     0.0037945950002722384,
+     0.003597098000227561,
+     0.0035339799997018417,
+     0.0038031140002203756,
+     0.0034870589997808565,
+     0.0034939390002364235,
+     0.0034359240003141167
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "readcon-water.xyz.gz": {
+    "n": 11,
+    "median_s": 0.006714128999647073,
+    "q1_s": 0.00664223600006153,
+    "q3_s": 0.006953608999992866,
+    "iqr_s": 0.0003113729999313364,
+    "samples_s": [
+     0.006689177999760432,
+     0.007344685999669309,
+     0.007131632999971771,
+     0.006491321999874344,
+     0.006775585000013962,
+     0.006714128999647073,
+     0.006610683999952016,
+     0.006753904000106559,
+     0.006618670000079874,
+     0.007723399000042264,
+     0.006665802000043186
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "readcon_arrays-cu10": {
+    "n": 11,
+    "median_s": 0.00010828499989656848,
+    "q1_s": 0.00010309900017091422,
+    "q3_s": 0.00011430300014581007,
+    "iqr_s": 1.120399997489585e-05,
+    "samples_s": [
+     0.00011605999998209882,
+     0.00013537199993152171,
+     0.00010828499989656848,
+     0.0001407539998581342,
+     0.00011254600030952133,
+     0.00010277399996994063,
+     0.00010493499985386734,
+     0.00010301600013917778,
+     0.00010318200020265067,
+     0.00010958999973809114,
+     9.636300001147902e-05
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 10,
+     "positions_sum": 61.37
+    }
+   },
+   "readcon_arrays-cu100": {
+    "n": 11,
+    "median_s": 0.00015625800006091595,
+    "q1_s": 0.00015218549992823682,
+    "q3_s": 0.00016352599982383254,
+    "iqr_s": 1.1340499895595713e-05,
+    "samples_s": [
+     0.00014861699992252397,
+     0.0001546180001241737,
+     0.0001658119999774499,
+     0.00016157499976543477,
+     0.000157667000166839,
+     0.00015421299985973747,
+     0.00017738099995767698,
+     0.00014744800000698888,
+     0.00015625800006091595,
+     0.0001654769998822303,
+     0.00015015799999673618
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 100,
+     "positions_sum": 1985.5
+    }
+   },
+   "readcon_arrays-cu1000": {
+    "n": 11,
+    "median_s": 0.000592739000239817,
+    "q1_s": 0.0005562355001984542,
+    "q3_s": 0.0006235380003545288,
+    "iqr_s": 6.730250015607453e-05,
+    "samples_s": [
+     0.0005497499996636179,
+     0.000631638000413659,
+     0.0006735060001119564,
+     0.0005544010000448907,
+     0.0005613509997601795,
+     0.0006150359999992361,
+     0.000592739000239817,
+     0.0005580700003520178,
+     0.0005412789996626088,
+     0.0006154380002953985,
+     0.0006457839999711723
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 1000,
+     "positions_sum": 48735.0
+    }
+   },
+   "readcon_arrays-cu16000": {
+    "n": 11,
+    "median_s": 0.009103964000132692,
+    "q1_s": 0.009043273000088448,
+    "q3_s": 0.009328568999990239,
+    "iqr_s": 0.0002852959999017912,
+    "samples_s": [
+     0.009103964000132692,
+     0.009005664000142133,
+     0.009152397999969253,
+     0.009016166000037629,
+     0.009274562999962654,
+     0.009070380000139266,
+     0.009517135999885795,
+     0.008954730999903404,
+     0.013602261999949405,
+     0.009382575000017823,
+     0.009103252999921096
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 16000,
+     "positions_sum": 2090190.0
+    }
+   },
+   "readcon_arrays-cu200000": {
+    "n": 11,
+    "median_s": 0.1371654760000638,
+    "q1_s": 0.13176267250014462,
+    "q3_s": 0.13970260000019152,
+    "iqr_s": 0.007939927500046906,
+    "samples_s": [
+     0.12983806900001582,
+     0.13846503200011284,
+     0.1371654760000638,
+     0.14127210700007709,
+     0.1409401680002702,
+     0.13762345800023468,
+     0.13232503800009,
+     0.1286572110002453,
+     0.1320884310002839,
+     0.13143691400000534,
+     0.14323581500002547
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 200000,
+     "positions_sum": 62168589.76
+    }
+   },
+   "readcon_arrays-cu4000": {
+    "n": 11,
+    "median_s": 0.002236569000160671,
+    "q1_s": 0.0021423899997898843,
+    "q3_s": 0.00233348249980736,
+    "iqr_s": 0.00019109250001747569,
+    "samples_s": [
+     0.002236569000160671,
+     0.0022877399997014436,
+     0.002996760999849357,
+     0.0035396220000620815,
+     0.002161677999993117,
+     0.0021510629999283992,
+     0.0021140370004104625,
+     0.0021337169996513694,
+     0.0021217309999883582,
+     0.0023746339998069743,
+     0.0022923309998077457
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 4000,
+     "positions_sum": 320568.0
+    }
+   },
+   "readcon_arrays-cu64000": {
+    "n": 11,
+    "median_s": 0.03853858599995874,
+    "q1_s": 0.038150570499738023,
+    "q3_s": 0.03962518299999829,
+    "iqr_s": 0.001474612500260264,
+    "samples_s": [
+     0.040084028000364924,
+     0.039823986000101286,
+     0.03942637999989529,
+     0.038562375999845244,
+     0.03853858599995874,
+     0.042154241999924125,
+     0.0384885979997307,
+     0.03807038199965973,
+     0.03791913699978977,
+     0.03697753100004775,
+     0.03823075899981632
+    ],
+    "printed": {
+     "frames": 1,
+     "atoms": 64000,
+     "positions_sum": 13515840.0
+    }
+   },
+   "readcon_arrays-water.xyz": {
+    "n": 11,
+    "median_s": 0.0037994999997863488,
+    "q1_s": 0.0036804199999096454,
+    "q3_s": 0.00408051150020583,
+    "iqr_s": 0.0004000915002961847,
+    "samples_s": [
+     0.005525584999759303,
+     0.004028809000374167,
+     0.004132214000037493,
+     0.0037994999997863488,
+     0.003708261000156199,
+     0.0038539759998457157,
+     0.004291967999961344,
+     0.0036803309999413614,
+     0.003670657999919058,
+     0.0036805089998779295,
+     0.00367445099982433
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   },
+   "readcon_arrays-water.xyz.gz": {
+    "n": 11,
+    "median_s": 0.007339245999901323,
+    "q1_s": 0.007117583999843191,
+    "q3_s": 0.007410879499957446,
+    "iqr_s": 0.00029329550011425454,
+    "samples_s": [
+     0.007104167999841593,
+     0.007416904999899998,
+     0.007627142000274034,
+     0.007111779999831924,
+     0.007339245999901323,
+     0.007968614000219532,
+     0.007114997999906336,
+     0.007379881999895588,
+     0.007120169999780046,
+     0.007202801999937947,
+     0.007404854000014893
+    ],
+    "printed": {
+     "frames": 100,
+     "atoms": 297,
+     "positions_sum": 670350.495555
+    }
+   }
+  }
+ },
+ "ratios": {
+  "readcon_over_chemfiles-water.xyz": 0.5817438468482017,
+  "readcon_over_ase-water.xyz": 0.08379726827842035,
+  "readcon_over_mdanalysis-water.xyz": 0.20960086236092587,
+  "readcon_over_openbabel-water.xyz": 0.03277001987718305,
+  "readcon_over_chemfiles-water.xyz.gz": 0.4158197871210073,
+  "readcon_over_ase-water.xyz.gz": 0.011096371781151927,
+  "readcon_over_mdanalysis-water.xyz.gz": 0.26252913218337565,
+  "readcon_over_openbabel-water.xyz.gz": 0.015564606555272718,
+  "readcon_over_ase_extxyz-cu10": 0.2554316819627911,
+  "readcon_over_cextxyz-cu10": 0.33438641846214234,
+  "readcon_over_read_dicts_regex-cu10": 0.39266329791929666,
+  "readcon_over_read_dicts-cu10": 0.7864448187114955,
+  "readcon_over_ase_extxyz-cu100": 0.25391780206703124,
+  "readcon_over_cextxyz-cu100": 0.410455942251842,
+  "readcon_over_read_dicts_regex-cu100": 0.46341423078137467,
+  "readcon_over_read_dicts-cu100": 0.9491602404474384,
+  "readcon_over_ase_extxyz-cu1000": 0.18271297417115784,
+  "readcon_over_cextxyz-cu1000": 0.6753504130325743,
+  "readcon_over_read_dicts_regex-cu1000": 0.600390979664878,
+  "readcon_over_read_dicts-cu1000": 1.1829506837354826,
+  "readcon_over_ase_extxyz-cu4000": 0.19401185966393233,
+  "readcon_over_cextxyz-cu4000": 1.1096168971129927,
+  "readcon_over_read_dicts_regex-cu4000": 0.8092750052409459,
+  "readcon_over_read_dicts-cu4000": 1.3511891269432381,
+  "readcon_over_ase_extxyz-cu16000": 0.14789053776639094,
+  "readcon_over_cextxyz-cu16000": 0.8975905665491798,
+  "readcon_over_read_dicts_regex-cu16000": 0.7414107465935789,
+  "readcon_over_read_dicts-cu16000": 1.2024781716954631,
+  "readcon_over_ase_extxyz-cu64000": 0.15055960510771338,
+  "readcon_over_cextxyz-cu64000": 0.9543577323345053,
+  "readcon_over_read_dicts_regex-cu64000": 0.7794492243313479,
+  "readcon_over_read_dicts-cu64000": 1.2237080423157296,
+  "readcon_over_ase_extxyz-cu200000": 0.1532349501516475,
+  "readcon_over_cextxyz-cu200000": 0.9858015325953314,
+  "readcon_over_read_dicts_regex-cu200000": 0.8363458321749819,
+  "readcon_over_read_dicts-cu200000": 1.3121026007545005,
+  "readcon_arrays_over_chemfiles-water.xyz": 0.5828879917425446,
+  "readcon_arrays_over_ase-water.xyz": 0.08396207658224698,
+  "readcon_arrays_over_mdanalysis-water.xyz": 0.21001309492310832,
+  "readcon_arrays_over_openbabel-water.xyz": 0.03283447032411623,
+  "readcon_arrays_over_chemfiles-water.xyz.gz": 0.45453456575947376,
+  "readcon_arrays_over_ase-water.xyz.gz": 0.012129496203084273,
+  "readcon_arrays_over_mdanalysis-water.xyz.gz": 0.28697182960525264,
+  "readcon_arrays_over_openbabel-water.xyz.gz": 0.017013744657993286,
+  "readcon_arrays_over_ase_extxyz-cu10": 0.2542062523305344,
+  "readcon_arrays_over_cextxyz-cu10": 0.332782204675274,
+  "readcon_arrays_over_read_dicts_regex-cu10": 0.3907795016843409,
+  "readcon_arrays_over_read_dicts-cu10": 0.7826718615842579,
+  "readcon_arrays_over_ase_extxyz-cu100": 0.28332194069000255,
+  "readcon_arrays_over_cextxyz-cu100": 0.45798747933331607,
+  "readcon_arrays_over_read_dicts_regex-cu100": 0.5170784330185852,
+  "readcon_arrays_over_read_dicts-cu100": 1.0590747051219618,
+  "readcon_arrays_over_ase_extxyz-cu1000": 0.30824542577165975,
+  "readcon_arrays_over_cextxyz-cu1000": 1.1393480761540435,
+  "readcon_arrays_over_read_dicts_regex-cu1000": 1.0128879681138598,
+  "readcon_arrays_over_read_dicts-cu1000": 1.9956937312691396,
+  "readcon_arrays_over_ase_extxyz-cu4000": 0.34831598740009223,
+  "readcon_arrays_over_cextxyz-cu4000": 1.9921323666668103,
+  "readcon_arrays_over_read_dicts_regex-cu4000": 1.4529185123888497,
+  "readcon_arrays_over_read_dicts-cu4000": 2.4258350790036607,
+  "readcon_arrays_over_ase_extxyz-cu16000": 0.3426557726533789,
+  "readcon_arrays_over_cextxyz-cu16000": 2.079677265039936,
+  "readcon_arrays_over_read_dicts_regex-cu16000": 1.7178155956727843,
+  "readcon_arrays_over_read_dicts-cu16000": 2.786088232852238,
+  "readcon_arrays_over_ase_extxyz-cu64000": 0.3633788518339492,
+  "readcon_arrays_over_cextxyz-cu64000": 2.3033629555979567,
+  "readcon_arrays_over_read_dicts_regex-cu64000": 1.8812175018508794,
+  "readcon_arrays_over_read_dicts-cu64000": 2.95344573385759,
+  "readcon_arrays_over_ase_extxyz-cu200000": 0.405788278945051,
+  "readcon_arrays_over_cextxyz-cu200000": 2.6105448326075122,
+  "readcon_arrays_over_read_dicts_regex-cu200000": 2.214764552768731,
+  "readcon_arrays_over_read_dicts-cu200000": 3.47463718709455
+ }
+}

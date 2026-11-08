@@ -1,0 +1,358 @@
+{
+ "check": "sella_con",
+ "script": "paper/cpc/claimcheck/sella_con.py",
+ "downloads": [
+  {
+   "url": "https://files.pythonhosted.org/packages/source/s/sella/sella-2.6.0.tar.gz",
+   "file": "sella-2.6.0.tar.gz",
+   "bytes": 182652,
+   "sha256": "7effc2a10f6d43c0bbdff11acb1fe36e16424cd9f01746660e87985662713384"
+  }
+ ],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "Sella runs from a CON file that readcon wrote and reaches the README saddle bit for bit",
+ "sella": {
+  "version": "2.6.0",
+  "install": {
+   "command": [
+    "$ENV/bin/python",
+    "-m",
+    "pip",
+    "install",
+    "--no-deps",
+    "--target",
+    "$REPO/paper/cpc/claimcheck/work/sella/site",
+    "$REPO/paper/cpc/claimcheck/work/downloads/sella-2.6.0.tar.gz"
+   ],
+   "exit": 0,
+   "seconds": 1.73,
+   "stdout_tail": "Processing ./claimcheck/work/downloads/sella-2.6.0.tar.gz\n  Installing build dependencies: started\n  Installing build dependencies: finished with status 'done'\n  Getting requirements to build wheel: started\n  Getting requirements to build wheel: finished with status 'done'\n  Preparing metadata (pyproject.toml): started\n  Preparing metadata (pyproject.toml): finished with status 'done'\nBuilding wheels for collected packages: sella\n  Building wheel for sella (pyproject.toml): started\n  Building wheel for sella (pyproject.toml): finished with status 'done'\n  Created wheel for sella: filename=sella-2.6.0-py3-none-any.whl size=127109 sha256=53a7035a6c17f6ea6eb3d55e892cd5bb6906344211140f049bbcd77c4a96f9bb\n  Stored in directory: /home/ubuntu/.cache/pip/wheels/26/30/2b/27f87145c2d63af2344857910afc6132b1f48967651613d092\nSuccessfully built sella\nInstalling collected packages: sella\nSuccessfully installed sella-2.6.0\n",
+   "stderr_tail": ""
+  }
+ },
+ "example": "README of Sella 2.6.0: Cu(111) 5 x 5 x 6 with a bridge adatom, EMT, Sella(...).run(1e-3, 1000)",
+ "atoms": 151,
+ "fixed": 75,
+ "inputs": {
+  "readcon": {
+   "file": "slab_readcon.con",
+   "bytes": 9007,
+   "sha256": "20859f65d46df2c2ce674a8c47c273ded3ad4e60dd451307cc247dbeabf2d4f1",
+   "positions_equal": true,
+   "largest_position_difference": 0.0,
+   "cell_equal": true,
+   "largest_cell_difference": 0.0,
+   "pbc_written": [
+    true,
+    true,
+    false
+   ],
+   "pbc_read": [
+    true,
+    true,
+    false
+   ]
+  },
+  "ase": {
+   "file": "slab_ase.con",
+   "bytes": 11655,
+   "sha256": "c49c7427723f6c73eea36b20fc1ec00a3f2f7906254d6b66c3d1425baf622192",
+   "positions_equal": false,
+   "largest_position_difference": 2.2618064456502466e-19,
+   "cell_equal": false,
+   "largest_cell_difference": 4.0041718385452896e-07,
+   "pbc_written": [
+    true,
+    true,
+    false
+   ],
+   "pbc_read": [
+    false,
+    false,
+    false
+   ]
+  }
+ },
+ "timing": {
+  "protocol": {
+   "schedule": "paper/cpc/bench/interleave.py",
+   "seed": 20261104,
+   "rounds": 11,
+   "warmup_rounds": 1,
+   "metric": "seconds",
+   "quartiles": "statistics.quantiles(n=4, method='inclusive')",
+   "process": "a fresh process for every run of every cell",
+   "order": [
+    [
+     "memory",
+     "readcon",
+     "ase"
+    ],
+    [
+     "ase",
+     "memory",
+     "readcon"
+    ],
+    [
+     "readcon",
+     "memory",
+     "ase"
+    ],
+    [
+     "memory",
+     "ase",
+     "readcon"
+    ],
+    [
+     "memory",
+     "readcon",
+     "ase"
+    ],
+    [
+     "ase",
+     "readcon",
+     "memory"
+    ],
+    [
+     "readcon",
+     "ase",
+     "memory"
+    ],
+    [
+     "readcon",
+     "ase",
+     "memory"
+    ],
+    [
+     "ase",
+     "readcon",
+     "memory"
+    ],
+    [
+     "memory",
+     "readcon",
+     "ase"
+    ],
+    [
+     "memory",
+     "readcon",
+     "ase"
+    ]
+   ],
+   "warmup_order": [
+    [
+     "memory",
+     "ase",
+     "readcon"
+    ]
+   ],
+   "load_average_before": [
+    4.64599609375,
+    2.46240234375,
+    1.2900390625
+   ],
+   "load_average_after": [
+    7.857421875,
+    5.8701171875,
+    3.12841796875
+   ],
+   "campaign_s": 308.8
+  },
+  "hardware": {
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "cpu_model": "Intel Xeon Processor"
+  },
+  "cells": {
+   "ase": {
+    "n": 11,
+    "median_s": 22.024708569999802,
+    "q1_s": 21.55683832249997,
+    "q3_s": 22.60597494600006,
+    "iqr_s": 1.0491366235000896,
+    "samples_s": [
+     20.961012479000146,
+     21.592705745999865,
+     22.024708569999802,
+     21.469902940999873,
+     21.897551340000064,
+     21.520970899000076,
+     22.26821762999998,
+     22.314829156000087,
+     24.747861719999946,
+     22.897120736000034,
+     23.60565552099979
+    ],
+    "printed": {
+     "converged": true,
+     "steps": 211,
+     "energy": "62.16672972845834",
+     "fmax_free": "0.026366717598517986",
+     "fixed": 75,
+     "pbc": [
+      false,
+      false,
+      false
+     ],
+     "start_sha256": "633ed3556e24331bb5b68c8ede52b8808b811b71d3b19b14d02ec830d3bd1e5a",
+     "saddle_sha256": "af4fb71d6dce10b903094241bacb44b2b0e06db980aef94cedfec4639978e86b"
+    }
+   },
+   "memory": {
+    "n": 11,
+    "median_s": 0.5863056549997054,
+    "q1_s": 0.5714669985,
+    "q3_s": 0.6051976004998778,
+    "iqr_s": 0.03373060199987776,
+    "samples_s": [
+     0.5742055069999878,
+     0.5701912370000173,
+     0.5943628769996394,
+     0.5727427599999828,
+     0.5635363450001023,
+     0.5617838160001156,
+     0.5863056549997054,
+     0.6240578909996657,
+     0.6160323240001162,
+     0.6972848270002032,
+     0.5881776999999602
+    ],
+    "printed": {
+     "converged": true,
+     "steps": 7,
+     "energy": "18.097233902707664",
+     "fmax_free": "0.0009626507146403331",
+     "fixed": 75,
+     "pbc": [
+      true,
+      true,
+      false
+     ],
+     "start_sha256": "e1c7444e5c100f253be10e397c5e06a47b356a8ca1551b0bd153b46ada12082f",
+     "saddle_sha256": "283be348230a150c3482f8ad3fe01c357180fe29ddbe8dd7a30adb078e73accd"
+    }
+   },
+   "readcon": {
+    "n": 11,
+    "median_s": 0.5679192759998841,
+    "q1_s": 0.5634497534999809,
+    "q3_s": 0.5851030215001174,
+    "iqr_s": 0.02165326800013645,
+    "samples_s": [
+     0.5767328089996226,
+     0.5679192759998841,
+     0.5623857370001133,
+     0.5589611770001284,
+     0.5582375229996615,
+     0.5645137699998486,
+     0.5661902899996676,
+     0.5770815850000872,
+     0.6783076159999837,
+     0.6387054629999511,
+     0.5931244580001476
+    ],
+    "printed": {
+     "converged": true,
+     "steps": 7,
+     "energy": "18.097233902707664",
+     "fmax_free": "0.0009626507146403331",
+     "fixed": 75,
+     "pbc": [
+      true,
+      true,
+      false
+     ],
+     "start_sha256": "e1c7444e5c100f253be10e397c5e06a47b356a8ca1551b0bd153b46ada12082f",
+     "saddle_sha256": "283be348230a150c3482f8ad3fe01c357180fe29ddbe8dd7a30adb078e73accd",
+     "saddle_file_round_trip_exact": true,
+     "saddle_file_mask_kept": true
+    }
+   }
+  }
+ },
+ "summary": {
+  "memory": {
+   "converged": true,
+   "steps": 7,
+   "energy": "18.097233902707664",
+   "fmax_free": "0.0009626507146403331",
+   "pbc": [
+    true,
+    true,
+    false
+   ],
+   "same_start_as_memory": true,
+   "same_saddle_as_memory": true,
+   "median_s": 0.5863056549997054,
+   "iqr_s": 0.03373060199987776
+  },
+  "readcon": {
+   "converged": true,
+   "steps": 7,
+   "energy": "18.097233902707664",
+   "fmax_free": "0.0009626507146403331",
+   "pbc": [
+    true,
+    true,
+    false
+   ],
+   "same_start_as_memory": true,
+   "same_saddle_as_memory": true,
+   "median_s": 0.5679192759998841,
+   "iqr_s": 0.02165326800013645
+  },
+  "ase": {
+   "converged": true,
+   "steps": 211,
+   "energy": "62.16672972845834",
+   "fmax_free": "0.026366717598517986",
+   "pbc": [
+    false,
+    false,
+    false
+   ],
+   "same_start_as_memory": false,
+   "same_saddle_as_memory": false,
+   "median_s": 22.024708569999802,
+   "iqr_s": 1.0491366235000896
+  }
+ }
+}

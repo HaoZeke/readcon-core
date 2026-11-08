@@ -1,0 +1,106 @@
+{
+ "check": "crc32c",
+ "script": "paper/cpc/claimcheck/crc32c.py",
+ "downloads": [],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "The CON-bin header stores a payload offset, not a CRC-32C of the payload.",
+ "independent_crc32c_matches_rfc3720": {
+  "rfc3720_zeros": true,
+  "rfc3720_ones": true,
+  "rfc3720_incrementing": true,
+  "rfc3720_decrementing": true,
+  "rfc3720_read10_pdu": true,
+  "check_123456789": true
+ },
+ "source_functions": {
+  "fn crc32c_update": [],
+  "fn crc32c_sse": [],
+  "unsafe fn crc32c_sse": [],
+  "fn crc32c_table": []
+ },
+ "header": {
+  "file": "src/conbin.rs",
+  "magic": "CONBIN01",
+  "payload_offset_at_bytes_32": true,
+  "names_crc32c": false
+ },
+ "build": {
+  "program": "conbin_crc",
+  "source": "$REPO/paper/cpc/claimcheck/rust/conbin_crc.rs",
+  "source_sha256": "d1eb0b7804666a459ee699f43ff2475af608fc12b2d64795b132420577a7531f",
+  "manifest": "[package]\nname = \"conbin_crc\"\nversion = \"0.0.0\"\nedition = \"2024\"\npublish = false\n\n[[bin]]\nname = \"conbin_crc\"\npath = \"$REPO/paper/cpc/claimcheck/rust/conbin_crc.rs\"\n\n[dependencies]\nreadcon-core = { path = \"$REPO\", features = [] }\n\n[profile.release]\nlto = \"thin\"\ncodegen-units = 1\n\n[workspace]\n",
+  "command": [
+   "cargo",
+   "build",
+   "--release"
+  ],
+  "features": [],
+  "locked_packages": 34,
+  "locked_as_library": true,
+  "packages_beyond_library": [],
+  "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+  "readcon_version": "0.18.1",
+  "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+  "sha256": "6276dc2e365c5291f7bd634082e6deb8b3c004b4366a03190bc2fc85a5f26d0e"
+ },
+ "image": {
+  "input": "resources/test/tiny_cuh2.con",
+  "bytes": 4288,
+  "write": {
+   "ok": true,
+   "n_frames": 1,
+   "n_atoms": 4,
+   "payload_off": 4096,
+   "position_sum": 79.58039999999997
+  },
+  "payload_offset": 4096,
+  "payload_offset_matches_write": true,
+  "bytes_32_are_crc32c_of_payload": false,
+  "bytes_32_are_unconditioned_crc": false,
+  "flipped_payload_still_reads": true,
+  "flipped_position_sum_changed": true
+ },
+ "qemu": {
+  "present": true,
+  "ran": false,
+  "reason": "the library sources have no crc32c_sse function to emulate"
+ }
+}

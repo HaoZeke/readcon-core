@@ -1,0 +1,649 @@
+{
+ "check": "sources",
+ "script": "paper/cpc/claimcheck/sources.py",
+ "downloads": [
+  {
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/eon/communicator.py",
+   "file": "source-eon_communicators_v3.6.0",
+   "bytes": 29200,
+   "sha256": "6bfcb24d3bc3c27ef0bb228dee8676bb894800c1af0e15ebc6a2d6621c664604"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/66629141fb31b72ed836b2f53ad51e5dbb049aed/eon/communicator.py",
+   "file": "source-eon_communicators_2018",
+   "bytes": 49613,
+   "sha256": "cf8a135c90c4c1c1f3285142e56c2ed9d7cc736c52c6dd475da14b89ee65bd53"
+  },
+  {
+   "url": "https://github.com/TheochemUI/eOn/commit/66629141fb31b72ed836b2f53ad51e5dbb049aed.patch",
+   "file": "source-eon_boinc_client_removal",
+   "bytes": 17311,
+   "sha256": "2c2d92e59bf75f16e7ab9eb59ebc929c1a77bd4c379548f4c50d135cc7f8041f"
+  },
+  {
+   "url": "https://github.com/TheochemUI/eOn/commit/b1e1c5b8ab807652dfa0ec8bf5934cbba8b6da72.patch",
+   "file": "source-eon_boinc_server_removal",
+   "bytes": 46406,
+   "sha256": "e8ffe454b4134f27c8c068a7f942d7d5286bf10503e70cdf794777e8ad3883ab"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/subprojects/readcon-core.wrap",
+   "file": "source-eon_readcon_wrap_v3.6.0",
+   "bytes": 185,
+   "sha256": "390ac78c3fcc4ef53076a3e355b522185ff1a11204922c629ce4f742a859ae3a"
+  },
+  {
+   "url": "https://www.nongnu.org/h5md/releases/h5md-1.1.0.html",
+   "file": "source-h5md_version_pair.html",
+   "bytes": 73048,
+   "sha256": "722eb7890872ff60fb28f066d62a1faa053e59c9265f30c9f0881074be2d453f"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/metatensor/metatomic/b98ab002e81559ddea31dc095357c86c279ac4bd/python/metatomic_ase/src/metatomic_ase/_neighbors.py",
+   "file": "source-vesin_metatomic_ase",
+   "bytes": 5706,
+   "sha256": "d2c0082cffa8ec17e3faa2e82d716218adefb18a210ba1e2f83dbe70ba5e83d0"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/plumed/plumed2/e5e90a26cd7ba479d70b1240cd5bfd8cd027968e/src/metatomic/metatomic.cpp",
+   "file": "source-vesin_plumed_metatomic",
+   "bytes": 40105,
+   "sha256": "d414c25cb1e2aea3cc5a8e7596d6b81deb8ebb065e2602712721267a898cda37"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/client/potentials/Metatomic/MetatomicPotential.cpp",
+   "file": "source-vesin_eon_metatomic",
+   "bytes": 33499,
+   "sha256": "33fbf98b6c1c46f1f48772cd1ecf37f3c15689dcd792b57a88dd185db1583c70"
+  },
+  {
+   "url": "https://academiccharmm.org/documentation/version/c50b1/io",
+   "file": "source-charmm_formats_in_source.html",
+   "bytes": 81129,
+   "sha256": "3bfd216b0e30bca2aaba5262a49036ca2e0622e88107a8359b6b61069b8ba1bf"
+  },
+  {
+   "url": "https://gitlab.com/ase/ase/-/raw/f27c0005ae6a67ea419f996e728668865bfc1f86/ase/io/eon.py",
+   "file": "source-ase_eon_reader_periodicity",
+   "bytes": 10532,
+   "sha256": "9a66e913b8cd6d0e3793cd74d7f1961db0da2e29b3673e3d7ee3760fae928b4f"
+  },
+  {
+   "url": "https://gitlab.com/impulse_md/libxtc/-/raw/v1.0.0/libxtc/xtc_unpack.cpp",
+   "file": "source-libxtc_v1.0.0_stub",
+   "bytes": 1721,
+   "sha256": "583d5c2ab201e7da497b5ecad06cccad43d8bbb62d4aa96d6b47b6e1e5faf72f"
+  },
+  {
+   "url": "https://gitlab.com/impulse_md/libxtc/-/commit/215f4d40d7a3c3d8daac82d5a9b9d647a2a06495.patch",
+   "file": "source-libxtc_decoder_commit",
+   "bytes": 20392,
+   "sha256": "177a9e41d20f3554fb446581546662a2a4cdcc55c0f366b1f671687a8b3a63ad"
+  },
+  {
+   "url": "https://gitlab.com/gromacs/gromacs/-/raw/6c69f720aa7378fddfee67f99d51aff21ccfb0a2/src/external/tng_io/BuildTNG.cmake",
+   "file": "source-gromacs_2026.4_tng",
+   "bytes": 4760,
+   "sha256": "84258b5b0c44e8b85cfe771c90c7ec275d6a9502c036416cd5a92bd71f38b6c5"
+  },
+  {
+   "url": "https://gitlab.com/gromacs/gromacs/-/raw/6c69f720aa7378fddfee67f99d51aff21ccfb0a2/CMakeLists.txt",
+   "file": "source-gromacs_2026.4_version",
+   "bytes": 43551,
+   "sha256": "971117d68471918e95dbcc1c43d366981461648c50a56d0c0b0f94a999b5bd9a"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/v3.6.0/examples/akmc-pt/config.ini",
+   "file": "source-eon_akmc_pt_config",
+   "bytes": 397,
+   "sha256": "909bd006da8da44c4291666feab78f1b4bafd1e0e246f938b5b55930bb5f9c85"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/chemfiles/benchmarks/0d6c7f4e6c6b3ff54ad54acdc5e5c92ff5aeae2b/bench.py",
+   "file": "source-chemfiles_bench_protocol",
+   "bytes": 6217,
+   "sha256": "002cd6a9f54a4cdfb99d023f26c264694f5789b9e0546c6a589c1830170fcffe"
+  },
+  {
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8017739/fullTextXML",
+   "file": "source-libxtc_paper_protocol.xml",
+   "bytes": 39221,
+   "sha256": "36f0bab828f02b6259c6a947124cdb74aff853bab8bf8f29fc0e656ef6860a3e"
+  },
+  {
+   "url": "https://static-content.springer.com/esm/art%3A10.1186%2Fs13104-021-05536-5/MediaObjects/13104_2021_5536_MOESM1_ESM.pdf",
+   "file": "source-libxtc_paper_tables.pdf",
+   "bytes": 154847,
+   "sha256": "a0d4fec2485a3445f5d32611279d25a092d269c2e8a99c413962c0343c4347c9"
+  }
+ ],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "statements of the paper that rest on the source of another code or on a cited paper",
+ "checks": [
+  {
+   "id": "eon_communicators_v3.6.0",
+   "statement": "the communicators that eOn 3.6.0 ships",
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/eon/communicator.py",
+   "sha256": "6bfcb24d3bc3c27ef0bb228dee8676bb894800c1af0e15ebc6a2d6621c664604",
+   "pattern": "^class \\w+\\(Communicator\\)|config\\.comm_type (==|in) ",
+   "matches": [
+    {
+     "line": 77,
+     "text": "    if config.comm_type == 'mpi':"
+    },
+    {
+     "line": 88,
+     "text": "    if config.comm_type == 'cluster':"
+    },
+    {
+     "line": 96,
+     "text": "    elif config.comm_type in ('local_lib', 'inprocess', 'local_inprocess'):"
+    },
+    {
+     "line": 100,
+     "text": "    elif config.comm_type == 'local':"
+    },
+    {
+     "line": 357,
+     "text": "class MPI(Communicator):"
+    },
+    {
+     "line": 485,
+     "text": "class Local(Communicator):"
+    },
+    {
+     "line": 636,
+     "text": "class Script(Communicator):"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "eon_communicators_2018",
+   "statement": "the communicators of eOn before the 2018 removal of BOINC",
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/66629141fb31b72ed836b2f53ad51e5dbb049aed/eon/communicator.py",
+   "sha256": "cf8a135c90c4c1c1f3285142e56c2ed9d7cc736c52c6dd475da14b89ee65bd53",
+   "pattern": "^class \\w+\\(Communicator\\)",
+   "matches": [
+    {
+     "line": 257,
+     "text": "class BOINC(Communicator):"
+    },
+    {
+     "line": 558,
+     "text": "class MPI(Communicator):"
+    },
+    {
+     "line": 643,
+     "text": "class Local(Communicator):"
+    },
+    {
+     "line": 757,
+     "text": "class Script(Communicator):"
+    },
+    {
+     "line": 875,
+     "text": "class ARC(Communicator):"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "eon_boinc_client_removal",
+   "statement": "the commit that removed BOINC from the eOn client",
+   "url": "https://github.com/TheochemUI/eOn/commit/66629141fb31b72ed836b2f53ad51e5dbb049aed.patch",
+   "sha256": "2c2d92e59bf75f16e7ab9eb59ebc929c1a77bd4c379548f4c50d135cc7f8041f",
+   "pattern": "^(Date|Subject): ",
+   "matches": [
+    {
+     "line": 3,
+     "text": "Date: Fri, 8 Jun 2018 22:01:35 +0000"
+    },
+    {
+     "line": 4,
+     "text": "Subject: [PATCH] removal of boinc from client code"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "eon_boinc_server_removal",
+   "statement": "the commit that removed the BOINC communicator from the server",
+   "url": "https://github.com/TheochemUI/eOn/commit/b1e1c5b8ab807652dfa0ec8bf5934cbba8b6da72.patch",
+   "sha256": "e8ffe454b4134f27c8c068a7f942d7d5286bf10503e70cdf794777e8ad3883ab",
+   "pattern": "^(Date|Subject): |^-class \\w+\\(Communicator\\)",
+   "matches": [
+    {
+     "line": 3,
+     "text": "Date: Fri, 8 Jun 2018 22:14:10 +0000"
+    },
+    {
+     "line": 4,
+     "text": "Subject: [PATCH] removed boinc and arc communicators from server"
+    },
+    {
+     "line": 356,
+     "text": "-class BOINC(Communicator):"
+    },
+    {
+     "line": 680,
+     "text": "-class ARC(Communicator):"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "eon_readcon_wrap_v3.6.0",
+   "statement": "the readcon-core that eOn 3.6.0 builds",
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/subprojects/readcon-core.wrap",
+   "sha256": "390ac78c3fcc4ef53076a3e355b522185ff1a11204922c629ce4f742a859ae3a",
+   "pattern": "^(url|revision) = ",
+   "matches": [
+    {
+     "line": 3,
+     "text": "url = https://github.com/lode-org/readcon-core.git"
+    },
+    {
+     "line": 4,
+     "text": "revision = v0.16.0"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "h5md_version_pair",
+   "statement": "H5MD stores its version as a major and minor pair",
+   "url": "https://www.nongnu.org/h5md/releases/h5md-1.1.0.html",
+   "sha256": "722eb7890872ff60fb28f066d62a1faa053e59c9265f30c9f0881074be2d453f",
+   "pattern": "version An attribute, of Integer datatype and of simple dataspace of rank 1 and size 2[^.]*\\.|the version attribute contains only x and y",
+   "matches": [
+    {
+     "text": "version An attribute, of Integer datatype and of simple dataspace of rank 1 and size 2, that contains the major version number and the minor version number of the H5MD specification the H5MD structure conforms to."
+    },
+    {
+     "text": "the version attribute contains only x and y"
+    },
+    {
+     "text": "version An attribute, of Integer datatype and of simple dataspace of rank 1 and size 2, that contains the major version number and the minor version number of the module."
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "vesin_metatomic_ase",
+   "statement": "vesin computes the neighbour lists of the ASE interface of metatomic",
+   "url": "https://raw.githubusercontent.com/metatensor/metatomic/b98ab002e81559ddea31dc095357c86c279ac4bd/python/metatomic_ase/src/metatomic_ase/_neighbors.py",
+   "sha256": "d2c0082cffa8ec17e3faa2e82d716218adefb18a210ba1e2f83dbe70ba5e83d0",
+   "pattern": "^import vesin|vesin\\.metatomic\\.NeighborList\\(",
+   "matches": [
+    {
+     "line": 6,
+     "text": "import vesin.metatomic"
+    },
+    {
+     "line": 47,
+     "text": "            vesin.metatomic.NeighborList("
+    },
+    {
+     "line": 57,
+     "text": "            vesin.metatomic.NeighborList("
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "vesin_plumed_metatomic",
+   "statement": "vesin computes the neighbour lists of the PLUMED interface",
+   "url": "https://raw.githubusercontent.com/plumed/plumed2/e5e90a26cd7ba479d70b1240cd5bfd8cd027968e/src/metatomic/metatomic.cpp",
+   "sha256": "d414c25cb1e2aea3cc5a8e7596d6b81deb8ebb065e2602712721267a898cda37",
+   "pattern": "#include \"vesin\\.h\"|vesin::VesinNeighborList neighbors_",
+   "matches": [
+    {
+     "line": 170,
+     "text": "#include \"vesin.h\""
+    },
+    {
+     "line": 214,
+     "text": "    vesin::VesinNeighborList neighbors_;"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "vesin_eon_metatomic",
+   "statement": "vesin computes the neighbour lists of the eOn interface",
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/2d2adada2f64c4c5a063065abc0d9a8a56d74b2c/client/potentials/Metatomic/MetatomicPotential.cpp",
+   "sha256": "33fbf98b6c1c46f1f48772cd1ecf37f3c15689dcd792b57a88dd185db1583c70",
+   "pattern": "#include \"vesin\\.h\"|vesin_neighbors\\(",
+   "matches": [
+    {
+     "line": 15,
+     "text": "#include \"vesin.h\""
+    },
+    {
+     "line": 591,
+     "text": "  int status = vesin_neighbors(reinterpret_cast<const double (*)[3]>(positions),"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "charmm_formats_in_source",
+   "statement": "CHARMM defines its binary files only in its source code",
+   "url": "https://academiccharmm.org/documentation/version/c50b1/io",
+   "sha256": "3bfd216b0e30bca2aaba5262a49036ca2e0622e88107a8359b6b61069b8ba1bf",
+   "pattern": "The precise format of all these files is described only in the source code[^.]*\\.",
+   "matches": [
+    {
+     "text": "The precise format of all these files is described only in the source code as that serves as the only definitive, accurate, and up to date description of these formats."
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "ase_eon_reader_periodicity",
+   "statement": "the eon reader of ASE 3.29.0 builds Atoms without pbc",
+   "url": "https://gitlab.com/ase/ase/-/raw/f27c0005ae6a67ea419f996e728668865bfc1f86/ase/io/eon.py",
+   "sha256": "9a66e913b8cd6d0e3793cd74d7f1961db0da2e29b3673e3d7ee3760fae928b4f",
+   "pattern": "^    return Atoms\\(|^        (symbols|positions|masses|cell|constraint)=",
+   "matches": [
+    {
+     "line": 92,
+     "text": "        masses=masses,"
+    },
+    {
+     "line": 141,
+     "text": "    return Atoms("
+    },
+    {
+     "line": 142,
+     "text": "        symbols=symbols,"
+    },
+    {
+     "line": 143,
+     "text": "        positions=coords,"
+    },
+    {
+     "line": 144,
+     "text": "        masses=masses,"
+    },
+    {
+     "line": 145,
+     "text": "        cell=cellpar_to_cell(cellpar),"
+    },
+    {
+     "line": 146,
+     "text": "        constraint=FixAtoms(mask=fixed),"
+    }
+   ],
+   "absent": "pbc",
+   "lines_matching_absent": 0,
+   "found": true
+  },
+  {
+   "id": "libxtc_v1.0.0_stub",
+   "statement": "the frame decoder of libxtc at its tag v1.0.0 returns false",
+   "url": "https://gitlab.com/impulse_md/libxtc/-/raw/v1.0.0/libxtc/xtc_unpack.cpp",
+   "sha256": "583d5c2ab201e7da497b5ecad06cccad43d8bbb62d4aa96d6b47b6e1e5faf72f",
+   "pattern": "^bool unpack_frame\\(|^    return false;",
+   "matches": [
+    {
+     "line": 42,
+     "text": "bool unpack_frame(const frame_data&fd, const uint32_t*packed_data, treal *crds) {"
+    },
+    {
+     "line": 43,
+     "text": "    return false;"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "libxtc_decoder_commit",
+   "statement": "the decoder of libxtc replaced its stub on 16 April 2021",
+   "url": "https://gitlab.com/impulse_md/libxtc/-/commit/215f4d40d7a3c3d8daac82d5a9b9d647a2a06495.patch",
+   "sha256": "177a9e41d20f3554fb446581546662a2a4cdcc55c0f366b1f671687a8b3a63ad",
+   "pattern": "^(From [0-9a-f]{40} |Date: |Subject: )",
+   "matches": [
+    {
+     "line": 1,
+     "text": "From 215f4d40d7a3c3d8daac82d5a9b9d647a2a06495 Mon Sep 17 00:00:00 2001"
+    },
+    {
+     "line": 3,
+     "text": "Date: Fri, 16 Apr 2021 13:17:53 +0300"
+    },
+    {
+     "line": 4,
+     "text": "Subject: [PATCH] Replace stub implementation with the real one."
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "gromacs_2026.4_tng",
+   "statement": "GROMACS 2026.4 bundles TNG 1.8.4",
+   "url": "https://gitlab.com/gromacs/gromacs/-/raw/6c69f720aa7378fddfee67f99d51aff21ccfb0a2/src/external/tng_io/BuildTNG.cmake",
+   "sha256": "84258b5b0c44e8b85cfe771c90c7ec275d6a9502c036416cd5a92bd71f38b6c5",
+   "pattern": "^set\\(TNG_(MAJOR_VERSION|MINOR_VERSION|VERSION_PATCH_LEVEL) \"",
+   "matches": [
+    {
+     "line": 8,
+     "text": "set(TNG_MAJOR_VERSION \"1\")"
+    },
+    {
+     "line": 9,
+     "text": "set(TNG_MINOR_VERSION \"8\")"
+    },
+    {
+     "line": 10,
+     "text": "set(TNG_VERSION_PATCH_LEVEL \"4\")"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "gromacs_2026.4_version",
+   "statement": "the GROMACS commit of the TNG check is GROMACS 2026.4",
+   "url": "https://gitlab.com/gromacs/gromacs/-/raw/6c69f720aa7378fddfee67f99d51aff21ccfb0a2/CMakeLists.txt",
+   "sha256": "971117d68471918e95dbcc1c43d366981461648c50a56d0c0b0f94a999b5bd9a",
+   "pattern": "^project\\(Gromacs VERSION ",
+   "matches": [
+    {
+     "line": 67,
+     "text": "project(Gromacs VERSION 2026.4)"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "eon_akmc_pt_config",
+   "statement": "the AKMC example of eOn 3.6.0 runs the Morse potential of Pt at 300 K with a confidence of 0.95",
+   "url": "https://raw.githubusercontent.com/TheochemUI/eOn/v3.6.0/examples/akmc-pt/config.ini",
+   "sha256": "909bd006da8da44c4291666feab78f1b4bafd1e0e246f938b5b55930bb5f9c85",
+   "pattern": "^(temperature|potential|confidence) = ",
+   "matches": [
+    {
+     "line": 3,
+     "text": "temperature = 300"
+    },
+    {
+     "line": 6,
+     "text": "potential = morse_pt"
+    },
+    {
+     "line": 13,
+     "text": "confidence = 0.95"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "chemfiles_bench_protocol",
+   "statement": "the benchmark of chemfiles publishes the mean of up to 50 reads after up to three warm-up reads",
+   "url": "https://raw.githubusercontent.com/chemfiles/benchmarks/0d6c7f4e6c6b3ff54ad54acdc5e5c92ff5aeae2b/bench.py",
+   "sha256": "002cd6a9f54a4cdfb99d023f26c264694f5789b9e0546c6a589c1830170fcffe",
+   "pattern": "^MAX_(REPETITIONS|TIME_SECONDS) = |^    for _ in range\\(\\d+\\):$|^    runtime /= repetitions$",
+   "matches": [
+    {
+     "line": 27,
+     "text": "MAX_REPETITIONS = 50"
+    },
+    {
+     "line": 28,
+     "text": "MAX_TIME_SECONDS = 10"
+    },
+    {
+     "line": 35,
+     "text": "    for _ in range(3):"
+    },
+    {
+     "line": 60,
+     "text": "    runtime /= repetitions"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "libxtc_paper_protocol",
+   "statement": "the libxtc paper reads 1000 frames 20 times, appeared on 1 April 2021 and gives its data on request",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8017739/fullTextXML",
+   "sha256": "36f0bab828f02b6259c6a947124cdb74aff853bab8bf8f29fc0e656ef6860a3e",
+   "pattern": "\\d+ frames were read \\d+ times for each format|<pub-date pub-type=\"epub\"><day>\\d+</day><month>\\d+</month><year>\\d+</year>|available from the corresponding author on reasonable request",
+   "matches": [
+    {
+     "line": 4,
+     "text": "<pub-date pub-type=\"epub\"><day>1</day><month>4</month><year>2021</year>"
+    },
+    {
+     "line": 4,
+     "text": "1000 frames were read 20 times for each format"
+    },
+    {
+     "line": 7,
+     "text": "available from the corresponding author on reasonable request"
+    }
+   ],
+   "found": true
+  },
+  {
+   "id": "libxtc_paper_tables",
+   "statement": "the systems, machines and read rates of the supplementary tables of the libxtc paper",
+   "url": "https://static-content.springer.com/esm/art%3A10.1186%2Fs13104-021-05536-5/MediaObjects/13104_2021_5536_MOESM1_ESM.pdf",
+   "sha256": "a0d4fec2485a3445f5d32611279d25a092d269c2e8a99c413962c0343c4347c9",
+   "pattern": "^\\s*Table S\\d:|^System type |^(Small|Medium|Big) +\\d|^CPU ",
+   "matches": [
+    {
+     "line": 42,
+     "text": "\f                             Table S1: Size and composition of molecular systems used for testing."
+    },
+    {
+     "line": 44,
+     "text": "System type   Size        Components                                            Description"
+    },
+    {
+     "line": 45,
+     "text": "Small         20138       1 protein and 6649 water molecules                    19-residue peptide in a water box"
+    },
+    {
+     "line": 46,
+     "text": "Medium        118812      288 dioleoylphosphatidylcholine (DOPC)                Hydrated lipid bilayer"
+    },
+    {
+     "line": 49,
+     "text": "Big           210566      4 protein chains (4859 atoms each), 257               Tetrameric integral membrane protein (receptor"
+    },
+    {
+     "line": 59,
+     "text": "                                  Table S2: Hardware and software components used for testing."
+    },
+    {
+     "line": 61,
+     "text": "CPU                   Intel Xeon CPU E5-2667 v2                     AMD Ryzen 7 3700X"
+    },
+    {
+     "line": 72,
+     "text": "\fTable S3: Performance of data processing and storage requirements for various molecular dynamics (MD) trajectory file formats"
+    },
+    {
+     "line": 76,
+     "text": "System type              libxtc c             xdrfile               tng                  xtc                    tng"
+    },
+    {
+     "line": 77,
+     "text": "Small                    1711\u00b18               1110\u00b120               2460\u00b1130             71.2 (3.62)            71.9 (3.65)"
+    },
+    {
+     "line": 78,
+     "text": "Medium                   327\u00b10.5              185\u00b13                 450\u00b113               431 (3.72)             575 (4.96)"
+    },
+    {
+     "line": 79,
+     "text": "Big                      187\u00b11               105\u00b12                260\u00b17                  762 (3.71)             1015 (4.94)"
+    },
+    {
+     "line": 88,
+     "text": "Table S4: Performance of data processing on the second hardware configuration"
+    },
+    {
+     "line": 92,
+     "text": "System type              libxtc               xdrfile              tng"
+    },
+    {
+     "line": 93,
+     "text": "Small                    4040\u00b16               1540\u00b110              6300\u00b1100"
+    },
+    {
+     "line": 94,
+     "text": "Medium                   697\u00b11                256\u00b12                4540\u00b170"
+    },
+    {
+     "line": 95,
+     "text": "Big                      402\u00b10.5              143\u00b13                930\u00b110"
+    }
+   ],
+   "text_by": "pdftotext version 26.10.0",
+   "found": true
+  }
+ ],
+ "found": 19,
+ "checked": 19
+}

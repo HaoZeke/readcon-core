@@ -1,0 +1,18 @@
+% Written by paper/cpc/scripts/claimcheck_tables.py from data/claimcheck/binary_cited.json.
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+File & Reader & Atoms & Frames & \begin{tabular}[b]{@{}r@{}}Median\\(ms)\end{tabular} & \begin{tabular}[b]{@{}r@{}}IQR\\(ms)\end{tabular} & \begin{tabular}[b]{@{}r@{}}CON\\ratio\end{tabular} & \begin{tabular}[b]{@{}r@{}}Image\\ratio\end{tabular}\\
+\midrule
+md.xtc & xdrfile & 20{,}138 & 201 & 96.8 & 1.4 & 4.3 & 0.086\\
+md.xtc & libxtc & 20{,}138 & 201 & 50.7 & 0.71 & 8.3 & 0.16\\
+md.xtc & libxtc, plain flags & 20{,}138 & 201 & 52.3 & 0.77 & 8.0 & 0.16\\
+md.xtc & readcon CON, two decimals & 20{,}138 & 201 & 421 & 19 & &\\
+md.xtc & readcon image & 20{,}138 & 201 & 8.33 & 0.38 & &\\
+argon & TNG 1.8.4 & 1{,}000 & 101 & 6.23 & 0.19 & 1.8 & 0.038\\
+argon & readcon CON, two decimals & 1{,}000 & 101 & 11.2 & 0.37 & &\\
+argon & readcon image & 1{,}000 & 101 & 0.238 & 0.0068 & &\\
+water & TNG 1.8.4 & 2{,}700 & 101 & 15.9 & 0.61 & 1.8 & 0.043\\
+water & readcon CON, two decimals & 2{,}700 & 101 & 28.5 & 0.48 & &\\
+water & readcon image & 2{,}700 & 101 & 0.691 & 0.085 & &\\
+\bottomrule
+\end{tabular}

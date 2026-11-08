@@ -1,0 +1,17 @@
+% Written by paper/cpc/scripts/claimcheck_tables.py from data/claimcheck/binary_cited.json.
+\begin{tabular}{@{}lllrrr@{}}
+\toprule
+File & Reader & Read & Frames & \begin{tabular}[b]{@{}r@{}}Largest\\difference (\AA)\end{tabular} & \begin{tabular}[b]{@{}r@{}}Atom-frames\\beyond\end{tabular}\\
+\midrule
+argon & \texttt{read\_tng} & all & \multicolumn{3}{l}{\texttt{tng\_util\_pos\_read or tng\_util\_box\_shape\_read failed}}\\
+argon & TNG 1.8.4, \texttt{f8d5527} & all & 101 & \num{0} & 0 of 101{,}000\\
+argon & TNG 1.8.4, \texttt{f8d5527} & frames & 101 & \num{0} & 0 of 101{,}000\\
+argon & TNG 1.8.2, \texttt{3cd824d} & all & \multicolumn{3}{l}{\texttt{tng\_util\_box\_shape\_read failed}}\\
+argon & TNG 1.8.2, \texttt{3cd824d} & frames & 101 & \num{3.5e1} & 1{,}000 of 101{,}000\\
+water & \texttt{read\_tng} & all & \multicolumn{3}{l}{\texttt{tng\_util\_pos\_read or tng\_util\_box\_shape\_read failed}}\\
+water & TNG 1.8.4, \texttt{f8d5527} & all & 101 & \num{0} & 0 of 272{,}700\\
+water & TNG 1.8.4, \texttt{f8d5527} & frames & 101 & \num{0} & 0 of 272{,}700\\
+water & TNG 1.8.2, \texttt{3cd824d} & all & 101 & \num{0} & 0 of 272{,}700\\
+water & TNG 1.8.2, \texttt{3cd824d} & frames & 101 & \num{3.0e1} & 2{,}700 of 272{,}700\\
+\bottomrule
+\end{tabular}

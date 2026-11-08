@@ -1,0 +1,640 @@
+{
+ "check": "decimals",
+ "script": "paper/cpc/claimcheck/decimals.py",
+ "downloads": [
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/exhaustive-float16.txt",
+   "file": "tao-exhaustive-float16.txt",
+   "bytes": 1409262,
+   "sha256": "6ac73ebcc2425ec1d82ac28483891919f7a3595261b0d89facea6b9c03c0f6c7",
+   "lines": 31745
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/freetype-2-7.txt",
+   "file": "tao-freetype-2-7.txt",
+   "bytes": 128556,
+   "sha256": "107ac506a0fb6af384b731019f83e184c27bd384364528ff18cd3720681eee66",
+   "lines": 3566
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/google-double-conversion.txt",
+   "file": "tao-google-double-conversion.txt",
+   "bytes": 31477043,
+   "sha256": "734ac4ea2034818681b76e50623da8fd6a5d66799378cf696b5f110cade5d087",
+   "lines": 564745
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/google-wuffs.txt",
+   "file": "tao-google-wuffs.txt",
+   "bytes": 421511,
+   "sha256": "7d648e3fadd7d75707743c1f091f5e005596aaae44d79b3fd9a960fa79d64605",
+   "lines": 10744
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/ibm-fpgen.txt",
+   "file": "tao-ibm-fpgen.txt",
+   "bytes": 5312826,
+   "sha256": "a2bb29cfb648f9ebfe153fe03e3113ed682f7efed5950c56e167fc90fed1e835",
+   "lines": 102792
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/lemire-fast-double-parser.txt",
+   "file": "tao-lemire-fast-double-parser.txt",
+   "bytes": 4662544,
+   "sha256": "2f3c6e0afa2bb6d641595dcbb095cfb10466ab871cca261f495524ac90f095a6",
+   "lines": 94313
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/lemire-fast-float.txt",
+   "file": "tao-lemire-fast-float.txt",
+   "bytes": 127450,
+   "sha256": "f68aab81b870cffa4606d481f7b841e5dce567a44297fe55d9c79ea77e0fbe4b",
+   "lines": 3299
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/more-test-cases.txt",
+   "file": "tao-more-test-cases.txt",
+   "bytes": 2751,
+   "sha256": "ea87ec4945712ecad563ba8f728c015d4ae68bed92ab128a8b440b0abf168148",
+   "lines": 60
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/remyoudompheng-fptest-0.txt",
+   "file": "tao-remyoudompheng-fptest-0.txt",
+   "bytes": 51629834,
+   "sha256": "9eb7c06fd33084c8edee4c22b191752ecf9b51f3dcfe0bffa16a244aca9f2533",
+   "lines": 1000000
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/remyoudompheng-fptest-1.txt",
+   "file": "tao-remyoudompheng-fptest-1.txt",
+   "bytes": 51133002,
+   "sha256": "cd4e15a09424575287a5f6cd5479ec098109ace7402611c126b0cb9addcdae36",
+   "lines": 1000000
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/remyoudompheng-fptest-2.txt",
+   "file": "tao-remyoudompheng-fptest-2.txt",
+   "bytes": 50060842,
+   "sha256": "01cdab4298e0441de4ee6e52fa24dac765eaebaf74d8bb1ae4b8615f0c223a44",
+   "lines": 1000000
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/remyoudompheng-fptest-3.txt",
+   "file": "tao-remyoudompheng-fptest-3.txt",
+   "bytes": 44845192,
+   "sha256": "a1c3bd437ad173b426c725f6bd982b07f722cb2f7a525685c3b8a2fed439614c",
+   "lines": 885708
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/tencent-rapidjson.txt",
+   "file": "tao-tencent-rapidjson.txt",
+   "bytes": 148425,
+   "sha256": "227476db6faf338c0e62efbed51f79c1ddacc63e297fef1b284ea0e9648d3b7b",
+   "lines": 3563
+  },
+  {
+   "url": "https://raw.githubusercontent.com/nigeltao/parse-number-fxx-test-data/55d79b184b7d8fac2e143e89dc19b766ec4e54b8/data/ulfjack-ryu.txt",
+   "file": "tao-ulfjack-ryu.txt",
+   "bytes": 34351964,
+   "sha256": "5c54633e8301c6ba3e9b9b5c5f6f7e0884cd2311418f2da6f2f9864d274be86c",
+   "lines": 599458
+  },
+  {
+   "url": "https://raw.githubusercontent.com/lemire/simple_fastfloat_benchmark/0e2b5d163d4074cc0bde2acdaae78546d6e5c5f1/data/canada.txt",
+   "file": "lemire-canada.txt",
+   "bytes": 2138804,
+   "sha256": "157834558e841b454a507d76f1744136afb192db4006a532205bb5defcbe93a0",
+   "lines": 111126
+  },
+  {
+   "url": "https://raw.githubusercontent.com/lemire/simple_fastfloat_benchmark/0e2b5d163d4074cc0bde2acdaae78546d6e5c5f1/data/mesh.txt",
+   "file": "lemire-mesh.txt",
+   "bytes": 635065,
+   "sha256": "8d2adfc655583b7259c18de73f9b0833cdec9fa60b369208e4e0fd034797d341",
+   "lines": 73019
+  }
+ ],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "The reader rounds each decimal to the nearest binary64 value and rejects a decimal past binary64; the default writer prints the shortest decimal that reads back as the same value.",
+ "decimal_grammar": "[+-]?(?:[0-9]+\\.?[0-9]*|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?",
+ "total": {
+  "strings": 5484138,
+  "finite_decimals": 5453438,
+  "read_arrays_bit_mismatches": 0,
+  "read_con_string_bit_mismatches": 0,
+  "infinite_expected": 30700,
+  "non_finite_spellings": 0,
+  "not_a_con_decimal": 0,
+  "writer_distinct_values": 5006816,
+  "writer_round_trip_failures": 0,
+  "writer_longer_than_shortest": 0,
+  "writer_same_length_other_digits": 0,
+  "infinite_verdicts": {
+   "non-finite value": 30700
+  },
+  "non_finite_spelling_verdicts": {},
+  "not_a_decimal_verdicts": {}
+ },
+ "files": {
+  "exhaustive-float16.txt": {
+   "strings": 31745,
+   "finite_decimals": 31745,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 31745,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 0,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [],
+   "seconds": 0.2
+  },
+  "freetype-2-7.txt": {
+   "strings": 3566,
+   "finite_decimals": 3561,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 3328,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 5,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 5,
+     "examples": [
+      "1e681",
+      "4e0811",
+      "61e2562",
+      "7E312",
+      "85E47664"
+     ]
+    }
+   ],
+   "seconds": 0.0
+  },
+  "google-double-conversion.txt": {
+   "strings": 564745,
+   "finite_decimals": 564695,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 554036,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 50,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 50,
+     "examples": [
+      "10E7551",
+      "11E28874",
+      "1e309",
+      "2058062221E15121334928880827",
+      "209E1048",
+      "21e440",
+      "2478E6577",
+      "2738E7150",
+      "276E7843",
+      "303E22622"
+     ]
+    }
+   ],
+   "seconds": 3.7
+  },
+  "google-wuffs.txt": {
+   "strings": 10744,
+   "finite_decimals": 10659,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 10176,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 85,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 85,
+     "examples": [
+      "1.798e+308",
+      "1.80e+308",
+      "1.8e+308",
+      "1.8e308",
+      "10000000000000000000000000000000000000000000e+308",
+      "12345670123456701234567012345670123456701234567012345670123456701234567012345670",
+      "12E1342",
+      "12E3919678",
+      "1E1459",
+      "1E414218"
+     ]
+    }
+   ],
+   "seconds": 0.0
+  },
+  "ibm-fpgen.txt": {
+   "strings": 102792,
+   "finite_decimals": 72726,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 43320,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 30066,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 30066,
+     "examples": [
+      "0.01E400",
+      "0.01E582",
+      "0.01E657",
+      "0.01E764",
+      "0.01E800",
+      "0.01E818",
+      "0.01E819",
+      "0.01E931",
+      "0.01E981",
+      "0.02E800"
+     ]
+    }
+   ],
+   "seconds": 0.3
+  },
+  "lemire-fast-double-parser.txt": {
+   "strings": 94313,
+   "finite_decimals": 94225,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 94161,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 88,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 88,
+     "examples": [
+      "10000000000000000000000000000000000000000000e+308",
+      "12e13424",
+      "148e3032",
+      "18e88640",
+      "1e1853",
+      "1e414218",
+      "21e44003",
+      "246723473e3813",
+      "24e4421730",
+      "2529e2734"
+     ]
+    }
+   ],
+   "seconds": 0.5
+  },
+  "lemire-fast-float.txt": {
+   "strings": 3299,
+   "finite_decimals": 3176,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 3080,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 123,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 123,
+     "examples": [
+      "0.1e310",
+      "1.832312213213213232132132143451234453123412321321312e308",
+      "1.8e308",
+      "1.9e308",
+      "1234456789012345678901234567890e9999999999999999999999999999",
+      "12e1342",
+      "12e13424",
+      "148e3032",
+      "18e88640",
+      "1e1000"
+     ]
+    }
+   ],
+   "seconds": 0.0
+  },
+  "more-test-cases.txt": {
+   "strings": 60,
+   "finite_decimals": 33,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 11,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 27,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 27,
+     "examples": [
+      "1e18446744073709551615",
+      "1e18446744073709551616",
+      "1e2147483647",
+      "1e2147483648",
+      "1e4294967295",
+      "1e4294967296",
+      "1e9223372036854775807",
+      "1e9223372036854775808",
+      "1e999",
+      "1e9999"
+     ]
+    }
+   ],
+   "seconds": 0.0
+  },
+  "remyoudompheng-fptest-0.txt": {
+   "strings": 1000000,
+   "finite_decimals": 1000000,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 915887,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 0,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [],
+   "seconds": 6.9
+  },
+  "remyoudompheng-fptest-1.txt": {
+   "strings": 1000000,
+   "finite_decimals": 1000000,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 916408,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 0,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [],
+   "seconds": 6.3
+  },
+  "remyoudompheng-fptest-2.txt": {
+   "strings": 1000000,
+   "finite_decimals": 1000000,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 917646,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 0,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [],
+   "seconds": 6.2
+  },
+  "remyoudompheng-fptest-3.txt": {
+   "strings": 885708,
+   "finite_decimals": 885708,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 811915,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 0,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [],
+   "seconds": 6.0
+  },
+  "tencent-rapidjson.txt": {
+   "strings": 3563,
+   "finite_decimals": 3534,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 3350,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 29,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 29,
+     "examples": [
+      "1.00e310",
+      "1.0e310",
+      "1.8e308",
+      "1e+10000",
+      "1e+2147483647",
+      "1e+50000",
+      "1e+9223372036854775807",
+      "1e309",
+      "1e319",
+      "21e440"
+     ]
+    }
+   ],
+   "seconds": 0.0
+  },
+  "ulfjack-ryu.txt": {
+   "strings": 599458,
+   "finite_decimals": 599231,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 585326,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 227,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [
+    {
+     "expected": "infinite",
+     "reader": "non-finite value",
+     "count": 227,
+     "examples": [
+      "1.7976931348623159e308",
+      "1012913302936013527818404707654908851814405278709728676750356293615616e+248",
+      "102196336984779405191945284891319207064962654856171425270750844538014662656e+253",
+      "104303837230721690128649027584e+299",
+      "1099164719063099983937577502742978451517889868589043980171636988524363776e+251",
+      "10E7551",
+      "11E28874",
+      "1202996261023196905472e+290",
+      "1279903462387165411735576127964682682475050190476626348021385449701376e+248",
+      "1353471037187691525439488e+293"
+     ]
+    }
+   ],
+   "seconds": 3.8
+  },
+  "canada.txt": {
+   "strings": 111126,
+   "finite_decimals": 111126,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 91932,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 0,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [],
+   "seconds": 0.6
+  },
+  "mesh.txt": {
+   "strings": 73019,
+   "finite_decimals": 73019,
+   "read_arrays_bit_mismatches": 0,
+   "read_con_string_bit_mismatches": 0,
+   "mismatch_examples": [],
+   "writer": {
+    "distinct_values": 24495,
+    "round_trip_failures": 0,
+    "longer_than_shortest": 0,
+    "same_length_other_digits": 0,
+    "examples": []
+   },
+   "infinite_expected": 0,
+   "non_finite_spellings": 0,
+   "not_a_con_decimal": 0,
+   "alone": [],
+   "seconds": 0.2
+  }
+ }
+}

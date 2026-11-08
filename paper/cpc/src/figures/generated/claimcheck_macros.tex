@@ -1,0 +1,114 @@
+% Written by paper/cpc/scripts/claimcheck_tables.py from data/claimcheck/akmc.json, data/claimcheck/eon_files.json, data/claimcheck/sella_con.json, data/claimcheck/xtb_neb.json, data/claimcheck/sources.json, data/claimcheck/decimals.json, data/claimcheck/constants.json, data/claimcheck/binary_cited.json and data/claimcheck/cited_text.json.
+% snapper:off
+% from data/claimcheck/akmc.json
+\newcommand{\ccHost}{x86\_64, 8 CPUs, Intel Xeon Processor}
+\newcommand{\ccAkmcMissing}{5}
+\newcommand{\ccAkmcDeps}{7}
+\newcommand{\ccAkmcPackageError}{ModuleNotFoundError: No module named 'vesin'}
+\newcommand{\ccAkmcConCopies}{12}
+\newcommand{\ccAkmcRuns}{6}
+\newcommand{\ccAkmcSteps}{3}
+\newcommand{\ccAkmcSearches}{7{,}126}
+\newcommand{\ccAkmcStateMin}{322}
+\newcommand{\ccAkmcStateMax}{671}
+\newcommand{\ccAkmcRunMin}{791}
+\newcommand{\ccAkmcRunMax}{1{,}538}
+\newcommand{\ccAkmcSimMin}{3.8e-4}
+\newcommand{\ccAkmcSimMax}{1.8e-3}
+\newcommand{\ccAkmcConFiles}{446}
+\newcommand{\ccAkmcConRead}{446}
+% from data/claimcheck/eon_files.json
+\newcommand{\ccAkmcAtoms}{343}
+\newcommand{\ccEonFiles}{216}
+\newcommand{\ccEonAseRead}{212}
+\newcommand{\ccWorkflowFiles}{311}
+\newcommand{\ccWorkflowRead}{311}
+\newcommand{\ccWorkflowAseRead}{311}
+% from data/claimcheck/sella_con.json
+\newcommand{\ccSellaSteps}{7}
+\newcommand{\ccSellaEnergy}{18.097}
+\newcommand{\ccSellaMedian}{0.57}
+\newcommand{\ccSellaAseSteps}{211}
+\newcommand{\ccSellaAseEnergy}{62.167}
+\newcommand{\ccSellaAseMedian}{22.0}
+\newcommand{\ccSellaAseRatio}{39}
+% from data/claimcheck/xtb_neb.json
+\newcommand{\ccXtbForceCalls}{598}
+\newcommand{\ccXtbImages}{20}
+\newcommand{\ccXtbBarrier}{3.159}
+\newcommand{\ccXtbMedian}{0.35}
+\newcommand{\ccXtbIqr}{0.017}
+\newcommand{\ccXtbRuns}{11}
+\newcommand{\ccXtbBandRuns}{12}
+\newcommand{\ccXtbDistinct}{8}
+\newcommand{\ccXtbOneThreadRuns}{2}
+\newcommand{\ccXtbResultsDiff}{4.8e-7}
+\newcommand{\ccXtbConFiles}{41}
+\newcommand{\ccXtbSpread}{1.2e-11}
+\newcommand{\ccXtbEnergySpread}{2.5e-11}
+% from data/claimcheck/sources.json
+\newcommand{\ccBoincYear}{2018}
+\newcommand{\ccEonWrap}{v0.16.0}
+% from data/claimcheck/decimals.json
+\newcommand{\ccDecimals}{5{,}453{,}438}
+\newcommand{\ccDecimalStrings}{5{,}484{,}138}
+\newcommand{\ccDecimalMismatches}{0}
+\newcommand{\ccWriterValues}{5{,}006{,}816}
+\newcommand{\ccWriterFailures}{0}
+% from data/claimcheck/constants.json
+\newcommand{\ccNaturalFs}{10.180505711}
+\newcommand{\ccScipy}{1.18.1}
+\newcommand{\ccStatsmodels}{0.15.0}
+\newcommand{\ccAseCodata}{2014}
+\newcommand{\ccAseUnitDiff}{3.9e-9}
+% from data/claimcheck/binary_cited.json
+\newcommand{\ccLibxtcMdPercent}{64}
+\newcommand{\ccLibxtcPlainMdPercent}{64}
+\newcommand{\ccLibxtcPepPercent}{70}
+\newcommand{\ccLibxtcMdAtoms}{20{,}138}
+\newcommand{\ccLibxtcMdFrames}{201}
+\newcommand{\ccLibxtcMdMax}{117.6}
+\newcommand{\ccLibxtcPepOff}{424}
+\newcommand{\ccLibxtcPepPositions}{609}
+\newcommand{\ccRatioLibxtcXdrfile}{0.52}
+\newcommand{\ccRatioMdXdrfile}{4.3}
+\newcommand{\ccRatioMdLibxtc}{8.3}
+\newcommand{\ccRatioMdImageXdrfile}{0.086}
+\newcommand{\ccRatioArgonTng}{1.8}
+\newcommand{\ccRatioWaterTng}{1.8}
+\newcommand{\ccRatioArgonImageTng}{0.038}
+\newcommand{\ccRatioWaterImageTng}{0.043}
+\newcommand{\ccTngVersion}{1.8.4}
+\newcommand{\ccTngCommit}{f8d5527}
+\newcommand{\ccTngTag}{v1.8.2}
+\newcommand{\ccTngTagCommit}{3cd824d}
+\newcommand{\ccTngTagFramesOff}{1}
+\newcommand{\ccTngTagMax}{35.4}
+\newcommand{\ccTngTagError}{tng\_util\_box\_shape\_read failed}
+\newcommand{\ccTngFiles}{2}
+\newcommand{\ccTngArgonAtoms}{1{,}000}
+\newcommand{\ccTngWaterAtoms}{2{,}700}
+\newcommand{\ccTngFrames}{101}
+% from data/claimcheck/cited_text.json
+\newcommand{\ccRatioWaterChemfiles}{0.58}
+\newcommand{\ccRatioWaterAse}{0.084}
+\newcommand{\ccRatioWaterMda}{0.21}
+\newcommand{\ccRatioWaterGzChemfiles}{0.42}
+\newcommand{\ccRatioWaterGzAse}{0.011}
+\newcommand{\ccRatioCuDicts}{1.3}
+\newcommand{\ccRatioCuAse}{0.15}
+\newcommand{\ccRatioCuPlugin}{0.99}
+\newcommand{\ccRatioWaterArraysChemfiles}{0.58}
+\newcommand{\ccRatioWaterGzArraysChemfiles}{0.45}
+\newcommand{\ccRatioWaterArraysAse}{0.084}
+\newcommand{\ccRatioWaterArraysMda}{0.21}
+\newcommand{\ccRatioWaterArraysOpenbabel}{0.033}
+\newcommand{\ccRatioCuArraysDicts}{3.5}
+\newcommand{\ccRatioCuArraysAse}{0.41}
+\newcommand{\ccRatioCuArraysPlugin}{2.6}
+\newcommand{\ccVerChemfiles}{0.10.4}
+\newcommand{\ccVerAse}{3.29.0}
+\newcommand{\ccVerMda}{2.10.0}
+\newcommand{\ccVerOpenbabel}{3.2.1}
+\newcommand{\ccVerExtxyz}{0.4.6}
+\newcommand{\ccVerAseExtxyz}{0.1.2}

@@ -1,0 +1,63 @@
+{
+ "check": "module_identity",
+ "script": "paper/cpc/claimcheck/module_identity.py",
+ "downloads": [],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "The claim-check runs import the readcon module built in this checkout.",
+ "current_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+ "claimcheck_records": [
+  "akmc.json",
+  "binary_cited.json",
+  "cited_text.json",
+  "constants.json",
+  "crc32c.json",
+  "decimals.json",
+  "envelopes.json",
+  "eon_files.json",
+  "sella_con.json",
+  "sources.json",
+  "xtb_neb.json"
+ ],
+ "claimcheck_records_name_this_module": true,
+ "module_shas_in_claimcheck_records": [
+  "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6"
+ ]
+}

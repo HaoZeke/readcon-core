@@ -1,0 +1,1724 @@
+{
+ "check": "binary_cited",
+ "script": "paper/cpc/claimcheck/binary_cited.py",
+ "downloads": [
+  {
+   "url": "https://gitlab.com/gromacs/tng/-/archive/3cd824df250a72f2660f5ac8a6d17f1c327947b8/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8.tar.gz",
+   "file": "tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8.tar.gz",
+   "bytes": 335789,
+   "sha256": "12da3945c485c39558e9e08c52ceb3268bb5720cdef38f62fc981a65ee914373"
+  },
+  {
+   "url": "https://gitlab.com/gromacs/tng/-/archive/f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89.tar.gz",
+   "file": "tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89.tar.gz",
+   "bytes": 11793631,
+   "sha256": "b7c0cf265b644b615635bab73bd09f335476a84fb6f34002473d94d8ac94cdb9"
+  },
+  {
+   "url": "https://gitlab.com/gromacs/tng/-/raw/f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/example_files/argon_npt_compressed.tng",
+   "file": "tng-f8d55273-argon_npt_compressed.tng",
+   "bytes": 403693,
+   "sha256": "507a0838da979333d7eeac1403c12cb8fb1ebe4c4cbc3bcdae0bca5f69321773",
+   "commit": "f8d552736bbe0d0df68ccbcf899b0d93ab8efa89"
+  },
+  {
+   "url": "https://gitlab.com/gromacs/tng/-/raw/f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/example_files/water_npt_compressed_trjconv.tng",
+   "file": "tng-f8d55273-water_npt_compressed_trjconv.tng",
+   "bytes": 879275,
+   "sha256": "3b99de8af7436c3995b3e554a0c7cbab4ea2aa60186dfe742e3efdc8f87c96c6",
+   "commit": "f8d552736bbe0d0df68ccbcf899b0d93ab8efa89"
+  }
+ ],
+ "provenance": {
+  "build": {
+   "readcon_version": "0.18.1",
+   "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+   "readcon_module_sha256": "95face539b7505d48085572705ae21c67332a434d5bdfe176999cd1784e4fcd6",
+   "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+   "newer_sources": [],
+   "library_digest": "6c0ca7c93c08d48e691a19989f79000cf95719e4cdbff85c110bb8f889607e9a",
+   "source_files": 48,
+   "source_tag": null,
+   "source_commit": "a0f95c2a4a9100c325606331f89ca90acd3d2494"
+  },
+  "host": {
+   "kernel": "6.12.113+",
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "family": "6",
+   "model": "207",
+   "cpu_model": "Intel Xeon Processor",
+   "mhz": 2400.0,
+   "mem_kb": 49342816
+  },
+  "peers": {
+   "ase": "3.29.0",
+   "chemfiles": "0.10.4",
+   "MDAnalysis": "2.10.0",
+   "h5py": "3.16.0",
+   "numpy": "2.5.4",
+   "scipy": "1.18.1",
+   "ovito": "3.16.1",
+   "openbabel": "3.2.1",
+   "python": "3.12.16"
+  }
+ },
+ "hardware": {
+  "uname_m": "x86_64",
+  "nproc": 8,
+  "cpu_model": "Intel Xeon Processor"
+ },
+ "claim": "libxtc and TNG read the files their authors ship; readcon reads the same positions as CON",
+ "sources": {
+  "xdrfile": {
+   "release": "1.1.4",
+   "url": "https://ftp.gromacs.org/pub/contrib/xdrfile-1.1.4.tar.gz",
+   "sha256": "e3c587c5ff24441a092fe2f3bc1dc03667bf126558f437161e779bfbcce48022",
+   "dir": "xdrfile-1.1.4"
+  },
+  "libxtc": {
+   "commit": "58f40e1e9d392ec607e775772658eb1b748be549",
+   "url": "https://gitlab.com/impulse_md/libxtc/-/archive/58f40e1e9d392ec607e775772658eb1b748be549/libxtc-58f40e1e9d392ec607e775772658eb1b748be549.tar.gz",
+   "sha256": "6352f6f63ca337376e1b18b6610c3c29ccc1661fe50fc56064fe361bc555f421",
+   "dir": "libxtc-58f40e1e9d392ec607e775772658eb1b748be549"
+  },
+  "tng": {
+   "commit": "14dd68ff46df1ef1cf2d9bcc1f4f5bddb974ce1c",
+   "url": "https://codeload.github.com/gromacs/tng/tar.gz/14dd68ff46df1ef1cf2d9bcc1f4f5bddb974ce1c",
+   "sha256": "f29e74753ab005133eca0e0a8676549579e6f28d09fe54b2593b2fa285ef5d5b",
+   "dir": "tng-14dd68ff46df1ef1cf2d9bcc1f4f5bddb974ce1c"
+  },
+  "molfile": {
+   "commit": "ae9ff4b738606ba1e7c18a8a9b99a8a87eb69f74",
+   "url": "https://raw.githubusercontent.com/MDAnalysis/mdanalysis/ae9ff4b738606ba1e7c18a8a9b99a8a87eb69f74/package/MDAnalysis/lib/formats/include/",
+   "files": {
+    "readdcd.h": "d3c6ecf3bc46e11cfe4d9328e5dba3b72b23ef2e916a6a6c2f0aadfbf877b6c3",
+    "fastio.h": "9dcd75ddabebd5387de04bbd1befbbd61e199658c3a58f7aa6aea25afb763ac0",
+    "endianswap.h": "c06034ca21ed28017eb50f6455d646a41d79d9adb78b44deb9e2bca25f35b44f"
+   }
+  }
+ },
+ "libxtc_flags": [
+  "-O3",
+  "-fopenmp",
+  "-DHAS_INT128",
+  "-fno-exceptions",
+  "-fno-rtti",
+  "-ffast-math",
+  "-std=c++11",
+  "-fvisibility=hidden",
+  "-fvisibility-inlines-hidden",
+  "-march=native"
+ ],
+ "libxtc_plain_build": [
+  [
+   "g++",
+   "-O3",
+   "-fopenmp",
+   "-DHAS_INT128",
+   "-fno-exceptions",
+   "-fno-rtti",
+   "-std=c++11",
+   "-fvisibility=hidden",
+   "-fvisibility-inlines-hidden",
+   "-c",
+   "$BENCH_WORK/binary_formats/src/libxtc-58f40e1e9d392ec607e775772658eb1b748be549/libxtc/xtc_unpack.cpp",
+   "-o",
+   "$BENCH_WORK/binary_formats/build/obj/xtc_unpack_plain.o"
+  ],
+  [
+   "g++",
+   "-O3",
+   "-DNDEBUG",
+   "-std=c++11",
+   "-fopenmp",
+   "-I",
+   "$REPO/paper/cpc/bench/binary_formats",
+   "-I",
+   "$BENCH_WORK/binary_formats/src/libxtc-58f40e1e9d392ec607e775772658eb1b748be549/libxtc",
+   "$REPO/paper/cpc/bench/binary_formats/read_libxtc.cpp",
+   "$BENCH_WORK/binary_formats/build/obj/xtc_unpack_plain.o",
+   "-o",
+   "$BENCH_WORK/binary_formats/build/bin/read_libxtc_plain"
+  ]
+ ],
+ "tng_builds": {
+  "campaign": {
+   "commit": "f8d552736bbe0d0df68ccbcf899b0d93ab8efa89",
+   "version": "1.8.4",
+   "driver": "tng_read_f8d55273",
+   "commands": [
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/bwlzh.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_bwlzh.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/bwt.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_bwt.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/coder.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_coder.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/dict.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_dict.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/fixpoint.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_fixpoint.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/huffman.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_huffman.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/huffmem.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_huffmem.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/lz77.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_lz77.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/merge_sort.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_merge_sort.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/mtf.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_mtf.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/rle.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_rle.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/tng_compress.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_tng_compress.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/vals16.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_vals16.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/warnmalloc.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_warnmalloc.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/widemuldiv.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_widemuldiv.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/xtc2.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_xtc2.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/compression/xtc3.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_xtc3.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/lib/tng_io.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_tng_io.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/src/lib/md5.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_md5.o"
+    ],
+    [
+     "ar",
+     "rcs",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/libtng_io.a",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_bwlzh.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_bwt.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_coder.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_dict.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_fixpoint.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_huffman.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_huffmem.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_lz77.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_merge_sort.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_mtf.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_rle.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_tng_compress.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_vals16.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_warnmalloc.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_widemuldiv.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_xtc2.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_xtc3.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_tng_io.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/obj/tng_md5.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/bench/binary_formats",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-f8d552736bbe0d0df68ccbcf899b0d93ab8efa89/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/include",
+     "$REPO/paper/cpc/claimcheck/tng_read.c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-f8d55273/libtng_io.a",
+     "-lz",
+     "-lm",
+     "-o",
+     "$BENCH_WORK/binary_formats/build/bin/tng_read_f8d55273"
+    ]
+   ]
+  },
+  "v1.8.2": {
+   "commit": "3cd824df250a72f2660f5ac8a6d17f1c327947b8",
+   "version": "1.8.2",
+   "driver": "tng_read_3cd824df",
+   "commands": [
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/bwlzh.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_bwlzh.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/bwt.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_bwt.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/coder.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_coder.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/dict.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_dict.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/fixpoint.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_fixpoint.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/huffman.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_huffman.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/huffmem.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_huffmem.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/lz77.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_lz77.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/merge_sort.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_merge_sort.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/mtf.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_mtf.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/rle.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_rle.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/tng_compress.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_tng_compress.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/vals16.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_vals16.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/warnmalloc.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_warnmalloc.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/widemuldiv.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_widemuldiv.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/xtc2.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_xtc2.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/compression/xtc3.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_xtc3.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/lib/tng_io.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_tng_io.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "-c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/src/lib/md5.c",
+     "-o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_md5.o"
+    ],
+    [
+     "ar",
+     "rcs",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/libtng_io.a",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_bwlzh.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_bwt.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_coder.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_dict.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_fixpoint.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_huffman.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_huffmem.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_lz77.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_merge_sort.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_mtf.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_rle.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_tng_compress.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_vals16.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_warnmalloc.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_widemuldiv.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_xtc2.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_xtc3.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_tng_io.o",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/obj/tng_md5.o"
+    ],
+    [
+     "gcc",
+     "-O3",
+     "-DNDEBUG",
+     "-DUSE_STD_INTTYPES_H",
+     "-I",
+     "$REPO/paper/cpc/bench/binary_formats",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/src/tng-3cd824df250a72f2660f5ac8a6d17f1c327947b8/include",
+     "-I",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/include",
+     "$REPO/paper/cpc/claimcheck/tng_read.c",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/tng-3cd824df/libtng_io.a",
+     "-lz",
+     "-lm",
+     "-o",
+     "$BENCH_WORK/binary_formats/build/bin/tng_read_3cd824df"
+    ]
+   ]
+  }
+ },
+ "checks": {
+  "md.xtc": {
+   "bytes": 14655596,
+   "sha256": "023c9bb91b384e12111b987616b9cd64e638af2c30dfc97c8a1c5a25bbe5d1c7",
+   "read_xdrfile": {
+    "frames": 201,
+    "atoms": 20138,
+    "checksum": "2493.4350426155142"
+   },
+   "mdanalysis_vs_xdrfile": {
+    "compared": true,
+    "largest_difference_A": 0.0,
+    "tolerance_A": 0.0052,
+    "atom_frames": 4047738,
+    "atom_frames_beyond": 0,
+    "percent_beyond": 0.0
+   },
+   "read_libxtc": {
+    "printed": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "2493.3150416617282"
+    },
+    "vs_xdrfile": {
+     "compared": true,
+     "largest_difference_A": 117.60000705718994,
+     "tolerance_A": 0.0052,
+     "atom_frames": 4047738,
+     "atom_frames_beyond": 2609606,
+     "percent_beyond": 64.471
+    },
+    "vs_mdanalysis": {
+     "compared": true,
+     "largest_difference_A": 117.60000705718994,
+     "tolerance_A": 0.0052,
+     "atom_frames": 4047738,
+     "atom_frames_beyond": 2609606,
+     "percent_beyond": 64.471
+    }
+   },
+   "read_libxtc_plain": {
+    "printed": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "2493.3150416617282"
+    },
+    "vs_xdrfile": {
+     "compared": true,
+     "largest_difference_A": 117.60000705718994,
+     "tolerance_A": 0.0052,
+     "atom_frames": 4047738,
+     "atom_frames_beyond": 2609606,
+     "percent_beyond": 64.471
+    },
+    "vs_mdanalysis": {
+     "compared": true,
+     "largest_difference_A": 117.60000705718994,
+     "tolerance_A": 0.0052,
+     "atom_frames": 4047738,
+     "atom_frames_beyond": 2609606,
+     "percent_beyond": 64.471
+    }
+   },
+   "con": {
+    "file": "md_two.con",
+    "bytes": 101013996,
+    "write": {
+     "command": [
+      "$BENCH_WORK/binary_formats/build/bin/readcon_read",
+      "write-con",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/tmp6sjoxk_l/md_two.f64",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/tmp6sjoxk_l/md_two_box.f64",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/files/md_two.con",
+      "2"
+     ],
+     "exit": 0,
+     "seconds": 1.956,
+     "stdout_tail": "",
+     "stderr_tail": ""
+    },
+    "read_back": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "12956.15"
+    },
+    "positions": {
+     "compared": true,
+     "largest_difference_A": 5.1498413071726645e-06,
+     "tolerance_A": 0.005000000000909495,
+     "atom_frames": 4047738,
+     "atom_frames_beyond": 0,
+     "percent_beyond": 0.0
+    },
+    "box": {
+     "compared": true,
+     "largest_difference_A": 0.0049461746215797575,
+     "tolerance_A": 0.005000000000909495,
+     "atom_frames": 201,
+     "atom_frames_beyond": 0,
+     "percent_beyond": 0.0
+    }
+   }
+  },
+  "pep.xtc": {
+   "bytes": 4172,
+   "sha256": "192580bad96343db3cec17944836ec256656396ea60f89b013b2b89eea8eeb31",
+   "read_xdrfile": {
+    "frames": 21,
+    "atoms": 29,
+    "checksum": "116.89963400363922"
+   },
+   "mdanalysis_vs_xdrfile": {
+    "compared": true,
+    "largest_difference_A": 0.0,
+    "tolerance_A": 0.0052,
+    "atom_frames": 609,
+    "atom_frames_beyond": 0,
+    "percent_beyond": 0.0
+   },
+   "read_libxtc": {
+    "printed": {
+     "frames": 21,
+     "atoms": 29,
+     "checksum": "110.24363368749619"
+    },
+    "vs_xdrfile": {
+     "compared": true,
+     "largest_difference_A": 33.400001525878906,
+     "tolerance_A": 0.0052,
+     "atom_frames": 609,
+     "atom_frames_beyond": 424,
+     "percent_beyond": 69.622
+    },
+    "vs_mdanalysis": {
+     "compared": true,
+     "largest_difference_A": 33.400001525878906,
+     "tolerance_A": 0.0052,
+     "atom_frames": 609,
+     "atom_frames_beyond": 424,
+     "percent_beyond": 69.622
+    }
+   },
+   "read_libxtc_plain": {
+    "printed": {
+     "frames": 21,
+     "atoms": 29,
+     "checksum": "110.24363368749619"
+    },
+    "vs_xdrfile": {
+     "compared": true,
+     "largest_difference_A": 33.400001525878906,
+     "tolerance_A": 0.0052,
+     "atom_frames": 609,
+     "atom_frames_beyond": 424,
+     "percent_beyond": 69.622
+    },
+    "vs_mdanalysis": {
+     "compared": true,
+     "largest_difference_A": 33.400001525878906,
+     "tolerance_A": 0.0052,
+     "atom_frames": 609,
+     "atom_frames_beyond": 424,
+     "percent_beyond": 69.622
+    }
+   },
+   "pep_npy_vs_xdrfile": {
+    "compared": true,
+    "largest_difference_A": 33.400001525878906,
+    "tolerance_A": 0.0052,
+    "atom_frames": 609,
+    "atom_frames_beyond": 424,
+    "percent_beyond": 69.622
+   },
+   "pep_npy_vs_read_libxtc": {
+    "compared": true,
+    "largest_difference_A": 0.0,
+    "tolerance_A": 0.0052,
+    "atom_frames": 609,
+    "atom_frames_beyond": 0,
+    "percent_beyond": 0.0
+   }
+  },
+  "argon_npt_compressed.tng": {
+   "bytes": 403693,
+   "sha256": "507a0838da979333d7eeac1403c12cb8fb1ebe4c4cbc3bcdae0bca5f69321773",
+   "read_tng_of_the_campaign": {
+    "error": "exit 1: tng_util_pos_read or tng_util_box_shape_read failed\n"
+   },
+   "paper_pin": {
+    "commit": "14dd68ff46df1ef1cf2d9bcc1f4f5bddb974ce1c",
+    "version": "1.8.2",
+    "printed": {
+     "error": "exit 1: tng_util_box_shape_read failed\n"
+    },
+    "vs_campaign_all": {
+     "compared": false
+    }
+   },
+   "tng_read": {
+    "campaign-all": {
+     "printed": {
+      "frames": 101,
+      "atoms": 1000,
+      "checksum": "681.21891388809308"
+     },
+     "vs_campaign_all": {
+      "compared": true,
+      "largest_difference_A": 0.0,
+      "tolerance_A": 0.0,
+      "atom_frames": 101000,
+      "atom_frames_beyond": 0,
+      "percent_beyond": 0.0
+     }
+    },
+    "campaign-frames": {
+     "printed": {
+      "frames": 101,
+      "atoms": 1000,
+      "checksum": "681.21891388809308"
+     },
+     "vs_campaign_all": {
+      "compared": true,
+      "largest_difference_A": 0.0,
+      "tolerance_A": 0.0,
+      "atom_frames": 101000,
+      "atom_frames_beyond": 0,
+      "percent_beyond": 0.0
+     }
+    },
+    "v1.8.2-all": {
+     "printed": {
+      "error": "exit 1: tng_util_box_shape_read failed\n"
+     },
+     "vs_campaign_all": {
+      "compared": false
+     }
+    },
+    "v1.8.2-frames": {
+     "printed": {
+      "frames": 101,
+      "atoms": 1000,
+      "checksum": "685.09391361987218"
+     },
+     "vs_campaign_all": {
+      "compared": true,
+      "largest_difference_A": 35.40999816963449,
+      "tolerance_A": 0.0,
+      "atom_frames": 101000,
+      "atom_frames_beyond": 1000,
+      "percent_beyond": 0.99
+     }
+    }
+   },
+   "con": {
+    "file": "argon_two.con",
+    "bytes": 2350314,
+    "write": {
+     "command": [
+      "$BENCH_WORK/binary_formats/build/bin/readcon_read",
+      "write-con",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/tmp6sjoxk_l/argon_two.f64",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/tmp6sjoxk_l/argon_two_box.f64",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/files/argon_two.con",
+      "2"
+     ],
+     "exit": 0,
+     "seconds": 0.047,
+     "stdout_tail": "",
+     "stderr_tail": ""
+    },
+    "read_back": {
+     "frames": 101,
+     "atoms": 1000,
+     "checksum": "3196.4700000000007"
+    },
+    "positions": {
+     "compared": true,
+     "largest_difference_A": 3.662109378410605e-06,
+     "tolerance_A": 0.005000000000909495,
+     "atom_frames": 101000,
+     "atom_frames_beyond": 0,
+     "percent_beyond": 0.0
+    },
+    "box": {
+     "compared": true,
+     "largest_difference_A": 0.004988803863525959,
+     "tolerance_A": 0.005000000000909495,
+     "atom_frames": 101,
+     "atom_frames_beyond": 0,
+     "percent_beyond": 0.0
+    }
+   }
+  },
+  "water_npt_compressed_trjconv.tng": {
+   "bytes": 879275,
+   "sha256": "3b99de8af7436c3995b3e554a0c7cbab4ea2aa60186dfe742e3efdc8f87c96c6",
+   "read_tng_of_the_campaign": {
+    "error": "exit 1: tng_util_pos_read or tng_util_box_shape_read failed\n"
+   },
+   "paper_pin": {
+    "commit": "14dd68ff46df1ef1cf2d9bcc1f4f5bddb974ce1c",
+    "version": "1.8.2",
+    "printed": {
+     "frames": 101,
+     "atoms": 2700,
+     "checksum": "394.81244653463364"
+    },
+    "vs_campaign_all": {
+     "compared": true,
+     "largest_difference_A": 0.0,
+     "tolerance_A": 0.0,
+     "atom_frames": 272700,
+     "atom_frames_beyond": 0,
+     "percent_beyond": 0.0
+    }
+   },
+   "tng_read": {
+    "campaign-all": {
+     "printed": {
+      "frames": 101,
+      "atoms": 2700,
+      "checksum": "394.81244653463364"
+     },
+     "vs_campaign_all": {
+      "compared": true,
+      "largest_difference_A": 0.0,
+      "tolerance_A": 0.0,
+      "atom_frames": 272700,
+      "atom_frames_beyond": 0,
+      "percent_beyond": 0.0
+     }
+    },
+    "campaign-frames": {
+     "printed": {
+      "frames": 101,
+      "atoms": 2700,
+      "checksum": "394.81244653463364"
+     },
+     "vs_campaign_all": {
+      "compared": true,
+      "largest_difference_A": 0.0,
+      "tolerance_A": 0.0,
+      "atom_frames": 272700,
+      "atom_frames_beyond": 0,
+      "percent_beyond": 0.0
+     }
+    },
+    "v1.8.2-all": {
+     "printed": {
+      "frames": 101,
+      "atoms": 2700,
+      "checksum": "394.81244653463364"
+     },
+     "vs_campaign_all": {
+      "compared": true,
+      "largest_difference_A": 0.0,
+      "tolerance_A": 0.0,
+      "atom_frames": 272700,
+      "atom_frames_beyond": 0,
+      "percent_beyond": 0.0
+     }
+    },
+    "v1.8.2-frames": {
+     "printed": {
+      "frames": 101,
+      "atoms": 2700,
+      "checksum": "395.28244651854038"
+     },
+     "vs_campaign_all": {
+      "compared": true,
+      "largest_difference_A": 29.979997617192566,
+      "tolerance_A": 0.0,
+      "atom_frames": 272700,
+      "atom_frames_beyond": 2700,
+      "percent_beyond": 0.99
+     }
+    }
+   },
+   "con": {
+    "file": "water_two.con",
+    "bytes": 6444504,
+    "write": {
+     "command": [
+      "$BENCH_WORK/binary_formats/build/bin/readcon_read",
+      "write-con",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/tmp6sjoxk_l/water_two.f64",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/tmp6sjoxk_l/water_two_box.f64",
+      "$REPO/paper/cpc/claimcheck/work/binary_cited/files/water_two.con",
+      "2"
+     ],
+     "exit": 0,
+     "seconds": 0.131,
+     "stdout_tail": "",
+     "stderr_tail": ""
+    },
+    "read_back": {
+     "frames": 101,
+     "atoms": 2700,
+     "checksum": "1028.58"
+    },
+    "positions": {
+     "compared": true,
+     "largest_difference_A": 3.223419188458365e-06,
+     "tolerance_A": 0.005000000000909495,
+     "atom_frames": 272700,
+     "atom_frames_beyond": 0,
+     "percent_beyond": 0.0
+    },
+    "box": {
+     "compared": true,
+     "largest_difference_A": 0.004981708526610618,
+     "tolerance_A": 0.005000000000909495,
+     "atom_frames": 101,
+     "atom_frames_beyond": 0,
+     "percent_beyond": 0.0
+    }
+   }
+  }
+ },
+ "images": {
+  "md": {
+   "file": "md_two.conbin",
+   "write": {
+    "command": [
+     "$BENCH_WORK/binary_formats/build/bin/readcon_read",
+     "write-conbin",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/files/md_two.con",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/files/md_two.conbin"
+    ],
+    "exit": 0,
+    "seconds": 0.513,
+    "stdout_tail": "",
+    "stderr_tail": ""
+   },
+   "bytes": 194295520,
+   "checksum_of_the_con_read": true
+  },
+  "argon": {
+   "file": "argon_two.conbin",
+   "write": {
+    "command": [
+     "$BENCH_WORK/binary_formats/build/bin/readcon_read",
+     "write-conbin",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/files/argon_two.con",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/files/argon_two.conbin"
+    ],
+    "exit": 0,
+    "seconds": 0.013,
+    "stdout_tail": "",
+    "stderr_tail": ""
+   },
+   "bytes": 4852096,
+   "checksum_of_the_con_read": true
+  },
+  "water": {
+   "file": "water_two.conbin",
+   "write": {
+    "command": [
+     "$BENCH_WORK/binary_formats/build/bin/readcon_read",
+     "write-conbin",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/files/water_two.con",
+     "$REPO/paper/cpc/claimcheck/work/binary_cited/files/water_two.conbin"
+    ],
+    "exit": 0,
+    "seconds": 0.032,
+    "stdout_tail": "",
+    "stderr_tail": ""
+   },
+   "bytes": 13093696,
+   "checksum_of_the_con_read": true
+  }
+ },
+ "timing": {
+  "protocol": {
+   "schedule": "paper/cpc/bench/interleave.py",
+   "seed": 20261104,
+   "rounds": 11,
+   "warmup_rounds": 1,
+   "metric": "seconds",
+   "quartiles": "statistics.quantiles(n=4, method='inclusive')",
+   "process": "a fresh process for every run of every cell",
+   "order": [
+    [
+     "readcon-md-image",
+     "libxtc-md",
+     "readcon-water-image",
+     "readcon-argon-two",
+     "tng-water",
+     "readcon-argon-image",
+     "libxtc-plain-md",
+     "tng-argon",
+     "readcon-water-two",
+     "readcon-md-two",
+     "xdrfile-md"
+    ],
+    [
+     "readcon-argon-image",
+     "libxtc-plain-md",
+     "tng-argon",
+     "xdrfile-md",
+     "readcon-water-image",
+     "readcon-md-image",
+     "readcon-md-two",
+     "readcon-water-two",
+     "tng-water",
+     "libxtc-md",
+     "readcon-argon-two"
+    ],
+    [
+     "readcon-water-image",
+     "tng-argon",
+     "readcon-argon-image",
+     "readcon-argon-two",
+     "xdrfile-md",
+     "libxtc-md",
+     "libxtc-plain-md",
+     "readcon-md-image",
+     "readcon-water-two",
+     "tng-water",
+     "readcon-md-two"
+    ],
+    [
+     "libxtc-plain-md",
+     "tng-argon",
+     "readcon-argon-image",
+     "tng-water",
+     "xdrfile-md",
+     "readcon-argon-two",
+     "readcon-md-image",
+     "libxtc-md",
+     "readcon-water-two",
+     "readcon-water-image",
+     "readcon-md-two"
+    ],
+    [
+     "readcon-md-two",
+     "readcon-water-two",
+     "readcon-argon-image",
+     "libxtc-plain-md",
+     "xdrfile-md",
+     "readcon-argon-two",
+     "tng-argon",
+     "tng-water",
+     "readcon-water-image",
+     "readcon-md-image",
+     "libxtc-md"
+    ],
+    [
+     "readcon-water-two",
+     "readcon-argon-image",
+     "tng-water",
+     "readcon-md-two",
+     "readcon-md-image",
+     "readcon-argon-two",
+     "tng-argon",
+     "xdrfile-md",
+     "libxtc-md",
+     "libxtc-plain-md",
+     "readcon-water-image"
+    ],
+    [
+     "readcon-argon-image",
+     "readcon-md-two",
+     "xdrfile-md",
+     "readcon-water-image",
+     "readcon-md-image",
+     "libxtc-md",
+     "libxtc-plain-md",
+     "readcon-water-two",
+     "tng-water",
+     "tng-argon",
+     "readcon-argon-two"
+    ],
+    [
+     "xdrfile-md",
+     "tng-argon",
+     "readcon-argon-image",
+     "tng-water",
+     "readcon-water-two",
+     "readcon-water-image",
+     "readcon-argon-two",
+     "libxtc-plain-md",
+     "readcon-md-image",
+     "libxtc-md",
+     "readcon-md-two"
+    ],
+    [
+     "libxtc-md",
+     "libxtc-plain-md",
+     "readcon-argon-image",
+     "xdrfile-md",
+     "readcon-md-image",
+     "readcon-water-two",
+     "readcon-water-image",
+     "tng-argon",
+     "readcon-argon-two",
+     "tng-water",
+     "readcon-md-two"
+    ],
+    [
+     "readcon-water-two",
+     "tng-argon",
+     "readcon-argon-image",
+     "readcon-md-two",
+     "xdrfile-md",
+     "libxtc-md",
+     "readcon-water-image",
+     "readcon-md-image",
+     "readcon-argon-two",
+     "tng-water",
+     "libxtc-plain-md"
+    ],
+    [
+     "tng-argon",
+     "readcon-argon-two",
+     "readcon-water-image",
+     "readcon-water-two",
+     "readcon-md-image",
+     "readcon-argon-image",
+     "libxtc-md",
+     "libxtc-plain-md",
+     "xdrfile-md",
+     "readcon-md-two",
+     "tng-water"
+    ]
+   ],
+   "warmup_order": [
+    [
+     "readcon-argon-image",
+     "readcon-water-two",
+     "readcon-water-image",
+     "libxtc-plain-md",
+     "libxtc-md",
+     "readcon-md-image",
+     "tng-water",
+     "tng-argon",
+     "readcon-md-two",
+     "readcon-argon-two",
+     "xdrfile-md"
+    ]
+   ],
+   "load_average_before": [
+    0.48876953125,
+    0.3154296875,
+    0.47265625
+   ],
+   "load_average_after": [
+    0.56787109375,
+    0.33837890625,
+    0.478515625
+   ],
+   "campaign_s": 8.6
+  },
+  "hardware": {
+   "uname_m": "x86_64",
+   "nproc": 8,
+   "cpu_model": "Intel Xeon Processor"
+  },
+  "cells": {
+   "libxtc-md": {
+    "n": 11,
+    "median_s": 0.050740383,
+    "q1_s": 0.050207236,
+    "q3_s": 0.05091395,
+    "iqr_s": 0.0007067139999999972,
+    "samples_s": [
+     0.050209573,
+     0.049259965,
+     0.051059609,
+     0.050339319,
+     0.050204899,
+     0.050761577,
+     0.050768291,
+     0.04993781,
+     0.051140783,
+     0.051318293,
+     0.050740383
+    ],
+    "printed": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "2493.3150416617282"
+    }
+   },
+   "libxtc-plain-md": {
+    "n": 11,
+    "median_s": 0.052328653,
+    "q1_s": 0.051836162500000005,
+    "q3_s": 0.0526039235,
+    "iqr_s": 0.0007677609999999918,
+    "samples_s": [
+     0.052561174,
+     0.065754363,
+     0.050778258,
+     0.05162918,
+     0.052661181,
+     0.052252936,
+     0.052032542,
+     0.051639783,
+     0.052328653,
+     0.052335835,
+     0.052646673
+    ],
+    "printed": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "2493.3150416617282"
+    }
+   },
+   "readcon-argon-image": {
+    "n": 11,
+    "median_s": 0.000237903,
+    "q1_s": 0.00023676399999999998,
+    "q3_s": 0.000243601,
+    "iqr_s": 6.837000000000016e-06,
+    "samples_s": [
+     0.000371587,
+     0.000243311,
+     0.000231377,
+     0.000237373,
+     0.000236447,
+     0.000225979,
+     0.000237903,
+     0.000245586,
+     0.000237081,
+     0.000241706,
+     0.000243891
+    ],
+    "printed": {
+     "frames": 101,
+     "atoms": 1000,
+     "checksum": "3196.4700000000007"
+    }
+   },
+   "readcon-argon-two": {
+    "n": 11,
+    "median_s": 0.011154544,
+    "q1_s": 0.0109684775,
+    "q3_s": 0.0113371275,
+    "iqr_s": 0.0003686499999999999,
+    "samples_s": [
+     0.010806065,
+     0.010926405,
+     0.01132698,
+     0.011347275,
+     0.011152028,
+     0.011358065,
+     0.01117014,
+     0.013176265,
+     0.01101055,
+     0.011154544,
+     0.010600212
+    ],
+    "printed": {
+     "frames": 101,
+     "atoms": 1000,
+     "checksum": "3196.4700000000007"
+    }
+   },
+   "readcon-md-image": {
+    "n": 11,
+    "median_s": 0.008333762,
+    "q1_s": 0.0080308265,
+    "q3_s": 0.008411195,
+    "iqr_s": 0.00038036850000000046,
+    "samples_s": [
+     0.012779973,
+     0.008414973,
+     0.008333762,
+     0.008611568,
+     0.007943455,
+     0.007893914,
+     0.008386055,
+     0.008407417,
+     0.008094045,
+     0.008102264,
+     0.007967608
+    ],
+    "printed": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "12956.15"
+    }
+   },
+   "readcon-md-two": {
+    "n": 11,
+    "median_s": 0.420547147,
+    "q1_s": 0.41553975649999997,
+    "q3_s": 0.434494739,
+    "iqr_s": 0.01895498250000005,
+    "samples_s": [
+     0.438727972,
+     0.432340445,
+     0.436649033,
+     0.414154014,
+     0.411615602,
+     0.415668911,
+     0.504309596,
+     0.423476567,
+     0.420547147,
+     0.415410602,
+     0.420394373
+    ],
+    "printed": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "12956.15"
+    }
+   },
+   "readcon-water-image": {
+    "n": 11,
+    "median_s": 0.000690555,
+    "q1_s": 0.000637157,
+    "q3_s": 0.00072238,
+    "iqr_s": 8.522300000000005e-05,
+    "samples_s": [
+     0.000967444,
+     0.000690976,
+     0.000655333,
+     0.000747041,
+     0.000690555,
+     0.000757188,
+     0.000697719,
+     0.000612623,
+     0.000616286,
+     0.000683745,
+     0.000618981
+    ],
+    "printed": {
+     "frames": 101,
+     "atoms": 2700,
+     "checksum": "1028.58"
+    }
+   },
+   "readcon-water-two": {
+    "n": 11,
+    "median_s": 0.028486781,
+    "q1_s": 0.0283281235,
+    "q3_s": 0.028812228000000002,
+    "iqr_s": 0.0004841045000000023,
+    "samples_s": [
+     0.028376909,
+     0.028279338,
+     0.028486781,
+     0.028925143,
+     0.029266022,
+     0.028699313,
+     0.029146981,
+     0.028248207,
+     0.027780324,
+     0.028462019,
+     0.028511527
+    ],
+    "printed": {
+     "frames": 101,
+     "atoms": 2700,
+     "checksum": "1028.58"
+    }
+   },
+   "tng-argon": {
+    "n": 11,
+    "median_s": 0.006227756,
+    "q1_s": 0.006206962,
+    "q3_s": 0.0063957085,
+    "iqr_s": 0.0001887464999999998,
+    "samples_s": [
+     0.006214545,
+     0.006217241,
+     0.006285135,
+     0.00656205,
+     0.006362029,
+     0.006429388,
+     0.006163489,
+     0.006199379,
+     0.006227756,
+     0.006754492,
+     0.006111682
+    ],
+    "printed": {
+     "frames": 101,
+     "atoms": 1000,
+     "checksum": "681.21891388809308"
+    }
+   },
+   "tng-water": {
+    "n": 11,
+    "median_s": 0.0158967,
+    "q1_s": 0.015610638,
+    "q3_s": 0.0162166935,
+    "iqr_s": 0.0006060555000000009,
+    "samples_s": [
+     0.015778633,
+     0.016306106,
+     0.015248583,
+     0.016387052,
+     0.016445255,
+     0.015610962,
+     0.016127281,
+     0.015610314,
+     0.0158967,
+     0.014432149,
+     0.015897195
+    ],
+    "printed": {
+     "frames": 101,
+     "atoms": 2700,
+     "checksum": "394.81244653463364"
+    }
+   },
+   "xdrfile-md": {
+    "n": 11,
+    "median_s": 0.096803818,
+    "q1_s": 0.0960563185,
+    "q3_s": 0.0974881095,
+    "iqr_s": 0.0014317910000000017,
+    "samples_s": [
+     0.09727292,
+     0.098408129,
+     0.095943384,
+     0.098302228,
+     0.097405024,
+     0.096239296,
+     0.096803818,
+     0.095859064,
+     0.095677774,
+     0.097571195,
+     0.096169253
+    ],
+    "printed": {
+     "frames": 201,
+     "atoms": 20138,
+     "checksum": "2493.4350426155142"
+    }
+   }
+  }
+ },
+ "ratios": {
+  "readcon_two_over_xdrfile_md": 4.344323970775616,
+  "readcon_two_over_libxtc_md": 8.288213886757616,
+  "readcon_image_over_xdrfile_md": 0.08608918710210375,
+  "readcon_image_over_libxtc_md": 0.1642431827918997,
+  "libxtc_over_xdrfile_md": 0.5241568364586612,
+  "readcon_two_over_tng_argon": 1.7911016423893293,
+  "readcon_image_over_tng_argon": 0.03820043688288366,
+  "readcon_two_over_tng_water": 1.791993369693081,
+  "readcon_image_over_tng_water": 0.04344014795523599
+ }
+}

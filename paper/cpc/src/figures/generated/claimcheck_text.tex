@@ -1,0 +1,19 @@
+% Written by paper/cpc/scripts/claimcheck_tables.py from data/claimcheck/cited_text.json.
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+System & Reader & \begin{tabular}[b]{@{}r@{}}Median\\(ms)\end{tabular} & \begin{tabular}[b]{@{}r@{}}IQR\\(ms)\end{tabular} & \begin{tabular}[b]{@{}r@{}}\texttt{read\_con}\\ratio\end{tabular} & \begin{tabular}[b]{@{}r@{}}\texttt{read\_arrays}\\ratio\end{tabular} & \begin{tabular}[b]{@{}r@{}}Published\\(ms)\end{tabular}\\
+\midrule
+water & chemfiles & 6.52 & 0.44 & 0.58 & 0.58 & 17.72\\
+water & ASE & 45.3 & 2.2 & 0.084 & 0.084 & 97.73\\
+water & MDAnalysis & 18.1 & 0.48 & 0.21 & 0.21 & 121.17\\
+water & Open Babel & 116 & 2.0 & 0.033 & 0.033 & 143.75\\
+water & readcon \texttt{read\_con} & 3.79 & 0.35 &  &  & \\
+water & readcon \texttt{read\_positions} & 3.80 & 0.40 &  &  & \\
+water, gzip & chemfiles & 16.1 & 0.34 & 0.42 & 0.45 & 26.41\\
+water, gzip & ASE & 605 & 25 & 0.011 & 0.012 & 948.20\\
+water, gzip & MDAnalysis & 25.6 & 0.18 & 0.26 & 0.29 & 88.07\\
+water, gzip & Open Babel & 431 & 9.8 & 0.016 & 0.017 & 865.02\\
+water, gzip & readcon \texttt{read\_con} & 6.71 & 0.31 &  &  & \\
+water, gzip & readcon \texttt{read\_positions} & 7.34 & 0.29 &  &  & \\
+\bottomrule
+\end{tabular}

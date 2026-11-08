@@ -1,0 +1,14 @@
+% Written by paper/cpc/scripts/claimcheck_tables.py from data/claimcheck/binary_cited.json.
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+File & Reader & Largest difference (\AA) & Atom-frames beyond & Percent\\
+\midrule
+\texttt{md.xtc} & MDAnalysis & \num{0} & 0 of 4{,}047{,}738 & 0\\
+\texttt{md.xtc} & libxtc, setup.py flags & \num{1.2e2} & 2{,}609{,}606 of 4{,}047{,}738 & 64\\
+\texttt{md.xtc} & libxtc, plain flags & \num{1.2e2} & 2{,}609{,}606 of 4{,}047{,}738 & 64\\
+\texttt{pep.xtc} & MDAnalysis & \num{0} & 0 of 609 & 0\\
+\texttt{pep.xtc} & libxtc, setup.py flags & \num{3.3e1} & 424 of 609 & 70\\
+\texttt{pep.xtc} & libxtc, plain flags & \num{3.3e1} & 424 of 609 & 70\\
+\texttt{pep.xtc} & \texttt{pep.npy} of the libxtc tests & \num{3.3e1} & 424 of 609 & 70\\
+\bottomrule
+\end{tabular}
