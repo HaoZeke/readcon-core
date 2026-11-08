@@ -23,6 +23,7 @@
 *.tectonic.txt
 auto/
 bench/work/
+claimcheck/work/
 bench/results/
 evidence/results/
 src/figures/generated/**
