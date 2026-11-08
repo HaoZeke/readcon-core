@@ -28,6 +28,21 @@ use readcon_core::writer::ConFrameWriter;
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
+unsafe extern "C" {
+    fn snprintf(buf: *mut i8, n: usize, fmt: *const i8, ...) -> i32;
+}
+
+/// Seventeen significant digits, the same text `printf("%.17g")` writes.
+fn g17(value: f64) -> String {
+    let mut buf = [0u8; 64];
+    let n = unsafe { snprintf(buf.as_mut_ptr().cast(), buf.len(), c"%.17g".as_ptr(), value) };
+    if n <= 0 {
+        return format!("{value:.16e}");
+    }
+    let n = (n as usize).min(buf.len());
+    String::from_utf8_lossy(&buf[..n]).into_owned()
+}
+
 #[derive(Default)]
 struct Fold {
     frames: usize,
@@ -173,8 +188,11 @@ fn main() -> Result<()> {
                 bx.flush()?;
             }
             println!(
-                "seconds {seconds:.9}\nframes {}\natoms {}\nchecksum {:?}",
-                fold.frames, fold.atoms, fold.checksum
+                "seconds {}\nframes {}\natoms {}\nchecksum {:?}",
+                g17(seconds),
+                fold.frames,
+                fold.atoms,
+                fold.checksum
             );
             Ok(())
         }

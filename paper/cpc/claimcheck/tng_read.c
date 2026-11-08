@@ -59,6 +59,12 @@ int main(int argc, char **argv) {
     free(positions);
     free(shape);
     if (tng_util_trajectory_close(&traj) != TNG_SUCCESS) bf_die("tng_util_trajectory_close failed");
-    bf_report(&run, bf_now() - t0);
+    /* The shared reporter prints nine digits. This check keeps seventeen. */
+    if (run.dump) {
+        bf_report(&run, bf_now() - t0);
+    } else {
+        printf("seconds %.17g\nframes %d\natoms %lld\nchecksum %.17g\n", bf_now() - t0, run.frames,
+               (long long)run.atoms, run.checksum);
+    }
     return 0;
 }
