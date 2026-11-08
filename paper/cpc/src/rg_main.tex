@@ -73,6 +73,7 @@ Elsevier%
 \input{figures/generated/dlpack_macros}
 \input{figures/generated/host_macros}
 \input{figures/generated/db_macros}
+\input{figures/generated/claimcheck_macros}
 % A value from a macro printed to a fixed number of significant figures.
 \newcommand{\sigfig}[2]{\num[round-mode=figures,round-precision=#1]{#2}}
 \newcommand{\DOIPENDING}{The version DOI for the public commit is not minted.}
@@ -154,7 +155,8 @@ A borrowed DLPack view of \dlpackAtoms{} positions costs \dlpackRatio{} times an
 % proseguard on structure.subject-verb-distance.
 % proseguard on rgoswami.Acronyms.
 \textit{Nature of problem:} Rare-event campaigns stop and resume saddle searches from a stored geometry.
-A resumed surface search reads which Cartesian components of each atom are fixed, because a held component removes a mode from the harmonic prefactor and can move the saddle.
+A resumed surface search reads which Cartesian components of each atom are fixed, because each held component removes a mode from the harmonic prefactor.
+Freeing the adatom height moves the barrier from \(\eFiveBarrierHeld\,\mathrm{eV}\) to \(\eFiveBarrierFree\,\mathrm{eV}\) and multiplies the prefactor by \eFivePrefactorRatioFree.
 It reads an identifier on each row, because events and band images are matched by atom identity, and the time unit of the velocities, because a misread unit scales the kinetic energy by the square of the conversion factor.
 A restart that repeats the interrupted run to roundoff also reads back the binary64 coordinates as written.
 Of the formats in common use, H5MD defines no mask element, the POSCAR structure file defines no atom identifier, and extended XYZ keeps both in column names that one library chose and names no time unit.
@@ -185,19 +187,20 @@ In Python, \texttt{readcon.read\_con(path)} returns the frames of a file (Listin
 \section{Introduction}\label{sec:introduction} Rare-event methods turn a potential energy surface into rates.
 Transition state theory \cite{eyringActivatedComplexChemical1935,vineyardFrequencyFactorsIsotope1957,hanggiReactionrateTheoryFifty1990} reduces the kinetics of an activated process to its saddle points and the vibrations there.
 The saddles are located by the nudged elastic band \cite{jonssonNudgedElasticBand1998,henkelmanClimbingImageNudged2000,henkelmanImprovedTangentEstimate2000,asgeirssonNudgedElasticBand2021}, by minimum-mode followers \cite{henkelmanDimerMethodFinding1999,kastnerSuperlinearlyConvergingDimer2008,olsenComparisonMethodsFinding2004} and by string methods \cite{eStringMethodStudy2002,petersGrowingStringMethod2004}.
-Adaptive kinetic Monte Carlo (AKMC) and accelerated dynamics chain them into trajectories of seconds and longer \cite{henkelmanLongTimeScale2001,xuAdaptiveKineticMonte2008,voterExtendingTimeScale2002,perezLongtimeDynamicsThrough2016}.
-A long-timescale run in eOn \cite{chillEonSoftwareLong2014,rohitgoswamiTheochemuieonV3602026} spawns thousands of saddle searches, often on volunteer or distributed resources \cite{andersonBoincSystemPublicresource2004,pedersenDistributedImplementationAdaptive2010}.
-It passes their geometries between Python drivers \cite{larsenAtomicSimulationEnvironmenta2017,hermesSellaOpensourceAutomationfriendly2022}, C++ engines and Fortran electronic structure codes \cite{kresseEfficiencyAbinitioTotal1996}.
+Adaptive kinetic Monte Carlo (AKMC) and temperature-accelerated dynamics chain them into trajectories of milliseconds and longer \cite{henkelmanLongTimeScale2001,xuAdaptiveKineticMonte2008,voterExtendingTimeScale2002}, and parallel trajectory splicing reaches hundreds of microseconds with molecular dynamics alone \cite{perezLongtimeDynamicsThrough2016}.
+A long-timescale run in eOn \cite{chillEonSoftwareLong2014,rohitgoswamiTheochemuieonV3602026} spawns hundreds of saddle searches for every state it leaves: in \ccAkmcSteps{} AKMC steps of its platinum heptamer example, each state took \ccAkmcStateMin{} to \ccAkmcStateMax{} searches and the clock reached \num{\ccAkmcSimMin} to \num{\ccAkmcSimMax}\,s (Section~\ref*{sec:supp-cc-akmc} of the supplementary material).
+eOn sends those searches to local processes, Message Passing Interface (MPI) ranks or a cluster queue, and until \ccBoincYear{} it also sent them to volunteer computers through the Berkeley Open Infrastructure for Network Computing (BOINC) \cite{chillEonSoftwareLong2014,andersonBoincSystemPublicresource2004,pedersenDistributedImplementationAdaptive2010}.
+A rare-event campaign passes their geometries between Python drivers \cite{larsenAtomicSimulationEnvironmenta2017,hermesSellaOpensourceAutomationfriendly2022}, C++ engines and Fortran electronic structure codes \cite{kresseEfficiencyAbinitioTotal1996}.
 A search that stops on one machine resumes on another from a geometry file, the checkpoint of the search.
 
 The checkpoint has to return four fields that a trajectory reader can ignore.
 A surface search fixes the slab and can hold an adatom at a set height while it crosses the surface, so mobility belongs to each Cartesian component, and a lost hold changes the saddle that the search converges to (Section~\ref{sec:prefactor}).
 Mode following and AKMC bookkeeping match atoms across frames and events by an identifier on each row.
-A reader has to return that identifier as written rather than as the row order.
+A reader has to return that identifier as written on its row.
 Dynamical steps read velocities, and the natural time unit of eOn is \((\mathrm{amu}\,\text{\AA}^2/\mathrm{eV})^{1/2}=\wkTimeFs\,\mathrm{fs}\), so a reader that takes the same numbers as \(\text{\AA}/\mathrm{fs}\) scales the kinetic energy by \(\velFactorSq\).
 A restart that repeats the interrupted run to roundoff reads back binary64 coordinates \cite{ieeecomputersocietyIeeeStandardFloatingpoint2019}.
 For that, the writer prints the shortest decimal that reads back as the same double \cite{steeleHowPrintFloatingpoint1990,adamsRyFastFloattostring2018}, and the reader rounds each decimal to the nearest double \cite{clingerHowReadFloating1990}.
-Two readers given the same bytes must then return the same fields, and that takes a versioned grammar rather than the convention of one reader.
+Two readers given the same bytes must then return the same fields, and that takes a versioned grammar that both readers implement.
 
 Existing formats keep some of these fields.
 Extended XYZ adds key-value metadata to the comment line of the plain Cartesian coordinate format (XYZ) and publishes a grammar \cite{kermodeLibatomsExtxyzV0462026}.
@@ -209,7 +212,8 @@ POSCAR, the structure file of the Vienna Ab initio Simulation Package \cite{vasp
 Many of these formats are read and written by chemfiles \cite{frauxChemfileschemfilesVersion01042023,frauxChemfiles2023}, MDAnalysis \cite{gowersMdanalysisPythonPackage2016,michaudAgrawalMDAnalysisToolkit2011}, the Open Visualization Tool (OVITO) \cite{stukowskiVisualizationAnalysisAtomistic2010} and Open Babel \cite{oboyleOpenBabelOpen2011}.
 Of the four, none opens a version-1 CON file or a CON 3.1 file, and the eon module of ASE opens both but stops at the velocity section of the frame of Section~\ref{sec:worked}.
 
-Most atomistic formats have no specification apart from the code that reads them, so that code is the de facto definition of the format.
+The CHARMM documentation states that only the CHARMM source code describes the precise format of its files \cite{charmmCharmmDocumentationIo2026}.
+Of the formats of Table~\ref*{tab:spec-compare} of the supplementary material, only CON~3.1 specifies a version in the file, atom identifiers and a per-component mask.
 Particle physics fixed the files that pass between independent event generators in published texts: the Les Houches event file \cite{Alwall2007LHEF}, the second Les Houches Accord for supersymmetric spectra \cite{Allanach2009SLHA2} and the HepMC3 library for generator events \cite{Buckley2021HepMC3}.
 Electronic structure has done the same for densities and wavefunctions with the European Theoretical Spectroscopy Facility (ETSF) file format \cite{Gonze2008ETSF} and TREXIO \cite{posenitskiyTrexioFileFormat2023}, and for pseudopotentials with the pseudopotential markup language (PSML) \cite{Garcia2018PSML}.
 A computed barrier is reproducible from a file only when every reader returns the same fields from it.
@@ -643,7 +647,7 @@ In harmonic transition state theory the rate is \(k=\nu\exp(-\Delta E^\ddagger/k
 \nu=\frac{\prod_{i=1}^{n}\nu_i^{\mathrm{min}}}{\prod_{i=1}^{n-1}\nu_i^{\ddagger}},
 \end{equation}
 where the products run over the \(n\) free modes of the minimum and the \(n-1\) real modes of the saddle.
-A mask that frees one more component can move the saddle itself, besides adding a mode to each product.
+A mask that frees one more component adds a mode to each product, and on the slab below it also moves the saddle.
 We wrote the endpoints of the same slab through each route and read them back before relaxing them, converged a climbing-image band with the fast inertial relaxation engine (FIRE) \cite{bitzekStructuralRelaxationMade2006}, and took the Hessian of the highest image.
 With the height held, the barrier is \(\eFiveBarrierHeld\,\mathrm{eV}\) on a path of \(\eFivePathHeld\,\text{\AA}\).
 The highest image has \(\eFiveModesHeld\) free modes, one imaginary mode of \(\eFiveImagHeld\,\mathrm{meV}\) with \(\eFiveWeightHeld\) of its weight on the lateral motion of the adatom, and a prefactor of \(\num{\eFivePrefactorHeldNum}\,\mathrm{Hz}\).
@@ -731,6 +735,8 @@ The C reader does that file in 0.080~s and peaks at 140~MiB.
 The eon client takes 0.276~s.
 Those medians are six serial samples on one pinned core.
 
+On the benchmark systems of chemfiles and extxyz, rerun on our host, \texttt{read\_positions} returns the positions of the water trajectory of chemfiles in \ccRatioWaterArraysChemfiles{} of the time chemfiles takes, and \texttt{read\_con} returns the \num{200000}-atom Cu frame of extxyz with its forces in \ccRatioCuAse{} of the time ASE takes (Section~\ref*{sec:supp-cc-text} of the supplementary material).
+On the two XTC files shipped with libxtc, libxtc returns positions beyond the tolerance of those formats as well (Section~\ref*{sec:supp-cc-libxtc} of the supplementary material).
 The times for XYZ, HDF5 and the mapped binary coordinate file are context for choosing a format, in Section~\ref*{sec:supp-timing}.
 h5py reads the same frames in \rcHdfMedian~s against readcon's \rcTipMedian~s.
 The mapped binary file reads them in \rcConbinMedian~s.
@@ -824,11 +830,11 @@ A format that defines no place for the mask cannot return that field.
 Unlike a format whose meaning lives in the code of one reader, CON 3.1 lets any program test its reader against the corpus, add a section under a later minor without breaking older readers, and resume a search from the files of another code.
 
 \FloatBarrier \section*{Data availability}\label{sec:data} The software described here is readcon-core~\readconversion{}.
-The public commit on the main branch is \begin{center} \texttt{ac4f437989dea5aad9f75ff045af09ccf7127eba} \end{center} and the latest release tag is v\readconCargoVersion{} at commit \texttt{12ca800bc2212c565941e04094cba6b4d99a62e0}.
+The public commit on the main branch is \path{ac4f437989dea5aad9f75ff045af09ccf7127eba} and the latest release tag is v\readconCargoVersion{} at commit \path{12ca800bc2212c565941e04094cba6b4d99a62e0}.
 The deposited timing records name the candidate commit \texttt{\readconcommit}.
 That candidate is not a public tag.
 Rebuild the library from the public commit with \texttt{cargo build -{}-release}.
-The concept record of readcon-core \cite{goswamiReadconcoreConConvel2026} is \begin{center} \url{https://doi.org/10.5281/zenodo.18753567} \end{center} \DOIPENDING
+The concept record of readcon-core \cite{goswamiReadconcoreConConvel2026} is \url{https://doi.org/10.5281/zenodo.18753567}. \DOIPENDING
 
 Two earlier commits of the main branch carry parts of the reader used here: \texttt{\readconpbccommit} gives the Python binding one periodic flag per cell vector, and \texttt{\readconrcidxcommit} (pull request~\readconrcidxpr) adds the frame index.
 In a checkout of the public commit, \texttt{cargo build -{}-release} builds the Rust library, the shared and static C libraries and the command-line program \texttt{readcon-core}, and \texttt{-{}-features zstd,parallel} adds the two features.

@@ -71,6 +71,7 @@ Elsevier%
 \input{figures/generated/test_run_macros}
 \input{figures/generated/si_macros}
 \input{figures/generated/dlpack_macros}
+\input{figures/generated/claimcheck_macros}
 % Import labels from the main text without its \\bibcite entries (same keys in both aux files).
 % Captions in the main text contain generated macros, so those macros are defined first.
 \makeatletter
@@ -265,7 +266,7 @@ Path writer: temporary file, rename and removal & \texttt{\srcReplaceFile} \\
 All frames at the offsets of a frame index & \texttt{\srcReadIndexed} \\
 Trajectory open, with or without a written index & \texttt{\srcTrajectoryOpen} \\
 Binary image: layout check and copy & \texttt{\srcRcbinCopy} \\
-Binary image: CRC-32C check & \texttt{\srcRcbinCrc} \\
+Binary image: payload offset, no cyclic redundancy check & \texttt{src/conbin.rs} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -443,6 +444,192 @@ The chemfiles row copies each frame out of the trajectory iterator, and that cop
 
 \input{figures/generated/format_context}
 
+\FloatBarrier
+\section{Cited results on our host}\label{sec:supp-claimcheck}
+Each check of this section builds or installs a cited code from its official release or source and runs it.
+It writes one record in \path{paper/cpc/data/claimcheck}.
+The record pins every download by its URL, size and SHA-256.
+It gives every command with its exit code and names the host, \ccHost.
+A timed check runs one untimed round and then eleven timed rounds, each round a fresh order of fresh processes.
+A time is the median of the timed rounds of a cell, with the type~7 interquartile range, and a ratio divides the readcon median by the median of the other reader.
+Section~\ref{sec:supp-repro} names the script and the pixi task of each record.
+
+\subsection{The CON files of eOn and of a published workflow}\label{sec:supp-cc-eon}
+The eOn~3.6.0 release \cite{rohitgoswamiTheochemuieonV3602026} contains \ccEonFiles{} CON files, and the Materials Cloud archive \cite{goswamiReproducibleOrchestrationBest2026a} of the reaction-path workflow of Ref.~\cite{goswamiReproducibleOrchestrationBest2026} releases \ccWorkflowFiles{}.
+Table~\ref{tab:cc-files} counts the files that the published readcon~0.17.3 wheel, readcon~\readconversion{} and the eon module of ASE~3.29.0 read.
+readcon~\readconversion{} and the 0.17.3 wheel refuse the same files, and every file that two of the readers read returns the same positions from both, bit for bit.
+\path{paper/cpc/data/claimcheck/eon_files.json} gives every refusal with its error.
+Two files of the release are read by ASE and refused by both readcon builds.
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{The CON files of the eOn~3.6.0 release and of the workflow archive, and the files each reader reads (\texttt{claimcheck/\allowbreak eon\_files.py}).
+Read by both counts the files that readcon~\readconversion{} and ASE both read, and same positions compares their positions bit for bit.}
+\label{tab:cc-files}
+\input{figures/generated/claimcheck_files}
+\end{table}
+
+\subsection{Adaptive kinetic Monte Carlo in eOn}\label{sec:supp-cc-akmc}
+The adaptive kinetic Monte Carlo (AKMC) example of eOn~3.6.0, \path{examples/akmc-pt}, is a Pt heptamer island on a Pt slab, \ccAkmcAtoms{} atoms under the Morse potential, with a confidence of 0.95 on the event table of each state (Table~\ref{tab:cc-cited}).
+It ran \ccAkmcSteps{} AKMC steps from each of \ccAkmcRuns{} seeds (Table~\ref{tab:cc-akmc}).
+Each state it left took \ccAkmcStateMin{} to \ccAkmcStateMax{} saddle searches, \ccAkmcSearches{} in the \ccAkmcRuns{} runs, and the simulated clock reached \num{\ccAkmcSimMin} to \num{\ccAkmcSimMax}\,s.
+readcon~\readconversion{} reads all \ccAkmcConRead{} CON files the runs wrote, including the \ccAkmcConCopies{} byte copies of the example input.
+The conda-forge package of eOn~3.6.0 lacks \ccAkmcMissing{} of the \ccAkmcDeps{} Python dependencies that the \path{pyproject.toml} of the release names, and \texttt{python -m eon} stops with \texttt{\ccAkmcPackageError}.
+The check installs those \ccAkmcMissing{} beside the package, as pinned wheels.
+eOn~3.6.0 sends client runs to local processes, Message Passing Interface (MPI) ranks or a cluster queue, and its client and server dropped the Berkeley Open Infrastructure for Network Computing (BOINC) communicator \cite{andersonBoincSystemPublicresource2004,pedersenDistributedImplementationAdaptive2010} in \ccBoincYear{} (Table~\ref{tab:cc-sources}).
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{AKMC runs of the \texttt{examples/\allowbreak akmc-pt} example of eOn~3.6.0, one per seed (\texttt{claimcheck/\allowbreak akmc.py}).
+Searches counts the saddle searches of every state of the run.
+Processes counts the distinct processes they found.
+The simulated time is the clock of the run after its last step.}
+\label{tab:cc-akmc}
+\input{figures/generated/claimcheck_akmc}
+\end{table}
+
+\subsection{Sella from a CON file}\label{sec:supp-cc-sella}
+Sella~2.6.0 \cite{hermesSellaOpensourceAutomationfriendly2022}, installed from its source distribution, ran the saddle search of its README: a Cu adatom on a bridge site of a Cu(111) slab of \(5\times5\times6\) atoms under the effective medium theory potential, with the lower half of the slab held.
+It started three ways: from the slab in memory, from the slab written and read by readcon, and from the slab written and read by the eon module of ASE (Table~\ref{tab:cc-sella}).
+From the readcon file Sella takes the start of the run from memory bit for bit and converges in \ccSellaSteps{} steps to the same saddle, \ccSellaEnergy\,eV, and the saddle file it writes reads back exact with its mask.
+The eon module of ASE returns no periodic flags (Table~\ref{tab:cc-sources}), so Sella relaxes an open slab and stops after \ccSellaAseSteps{} steps at a saddle of \ccSellaAseEnergy\,eV, in \ccSellaAseRatio{} times the time.
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{The Sella saddle search of the Sella README from the slab in memory, from a readcon CON file and from an ASE CON file (\texttt{claimcheck/\allowbreak sella\_con.py}).
+Periodic gives the flags of the slab after the read, and saddle of memory compares the saddle bit for bit with the run from memory.}
+\label{tab:cc-sella}
+\input{figures/generated/claimcheck_sella}
+\end{table}
+
+\subsection{eOn and xtb on a published band}\label{sec:supp-cc-xtb}
+The reaction-path workflow of Ref.~\cite{goswamiReproducibleOrchestrationBest2026} publishes the endpoints and the band settings of the HCN to HNC isomerization.
+The check keeps those settings and sets the potential to GFN2-xTB \cite{bannwarthGFN2xTBAccurateBroadly2019}, so the C++ client of eOn~3.6.0 hands each image to the Fortran library of xtb and writes the band as CON (Table~\ref{tab:cc-xtb}).
+The band of \ccXtbImages{} images converges after \ccXtbForceCalls{} force calls with its highest image at \(\ccXtbBarrier\,\mathrm{eV}\), in \(\ccXtbMedian\,\mathrm{s}\) a run (type~7 interquartile range \(\ccXtbIqr\,\mathrm{s}\), \ccXtbRuns{} runs).
+The energies of the band file agree with the six decimals that eOn prints in \texttt{results.dat}, to \(\num{\ccXtbResultsDiff}\,\mathrm{eV}\).
+readcon~\readconversion{}, the readcon~0.17.3 wheel and ASE read all \ccXtbConFiles{} CON files of a run and return the same positions.
+On one thread, \ccXtbOneThreadRuns{} runs write one band file bit for bit.
+With the default threads of xtb, its parallel sums give \ccXtbDistinct{} distinct band files in \ccXtbBandRuns{} runs, which differ by at most \(\num{\ccXtbSpread}\,\text{\AA}\) and \(\num{\ccXtbEnergySpread}\,\mathrm{eV}\).
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{The HCN to HNC band of Ref.~\cite{goswamiReproducibleOrchestrationBest2026} in eOn~3.6.0 with GFN2-xTB (\texttt{claimcheck/\allowbreak xtb\_neb.py}).
+The energies of the band file are compared with those of \texttt{results.dat}, and the band files of the runs with each other.}
+\label{tab:cc-xtb}
+\input{figures/generated/claimcheck_xtb}
+\end{table}
+
+\subsection{libxtc on its own files}\label{sec:supp-cc-libxtc}
+libxtc \cite{krylovLibxtcEfficientLibrary2021} reports read rates 1.5 to 2.8 times those of xdrfile, the mean of 20 reads of 1000 frames on each of two machines, for three trajectories of \num{20138} to \num{210566} atoms that its authors release only on request (Table~\ref{tab:cc-cited}).
+Its source contains a trajectory with the atom count of the smallest of them, \path{examples/md.xtc} with \ccLibxtcMdFrames{} frames of \ccLibxtcMdAtoms{} atoms, and the test file \path{tests/data/pep.xtc} with the positions \path{pep.npy} that its tests compare with.
+The only tag of libxtc, v1.0.0, has a decoder that returns false for every frame, and the decoder replaced that stub on 16 April 2021 (Table~\ref{tab:cc-sources}).
+The paper appeared on 1 April 2021, before that commit (Table~\ref{tab:cc-cited}).
+The check builds libxtc at commit \texttt{\bfLibxtcCommit} with the flags of its \path{setup.py}, and once more without \texttt{-ffast-math} and \texttt{-march=native}.
+On \path{md.xtc}, libxtc reads all frames in \ccRatioLibxtcXdrfile{} of the time of xdrfile, and \ccLibxtcMdPercent\,\% of the positions it returns lie beyond the tolerance recorded for that format, up to \(\ccLibxtcMdMax\,\text{\AA}\) away (Table~\ref{tab:cc-libxtc}).
+The build without those two flags puts the same share of positions beyond the tolerance.
+On \path{pep.xtc}, libxtc returns its own \path{pep.npy}, and xdrfile and MDAnalysis agree with each other and differ from \path{pep.npy} in \ccLibxtcPepOff{} of the \ccLibxtcPepPositions{} positions.
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{The positions that MDAnalysis and libxtc return from the two XTC files of the libxtc source, against those of xdrfile (\texttt{claimcheck/\allowbreak binary\_cited.py}).
+Atom-frames beyond counts the positions farther from those of xdrfile than the tolerance recorded for XTC.}
+\label{tab:cc-libxtc}
+\input{figures/generated/claimcheck_libxtc}
+\end{table}
+
+\subsection{TNG on its example files}\label{sec:supp-cc-tng}
+The TNG papers \cite{spangbergTrajectoryNgPortable2011,lundborgEfficientExtensibleFormat2014} time TNG on their own simulations and release none of those files.
+The TNG repository includes example files written by GROMACS, and the check reads two of them, an argon box of \ccTngArgonAtoms{} atoms and a water box of \ccTngWaterAtoms{} atoms with \ccTngFrames{} stored frames each.
+\path{claimcheck/tng_read.c} reads them in bulk and with one range read per stored frame (Table~\ref{tab:cc-tng}).
+TNG~\ccTngVersion{} at commit \texttt{\ccTngCommit}, the 1.8.4 named by GROMACS~2026.4 (Tables~\ref{tab:cc-sources} and~\ref{tab:cc-cited}), returns the same positions from both reads of both files.
+The commit that \path{bench/binary_formats.py} pins is TNG~\bfTngVersion{} at \texttt{\bfTngCommit}.
+Its bulk read of the argon file fails with the same box-shape error as the last tag.
+The last tag of TNG, \ccTngTag{} at commit \texttt{\ccTngTagCommit}, refuses the bulk read of the argon file with \texttt{\ccTngTagError}, and its range reads return one frame of each file at other positions, up to \(\ccTngTagMax\,\text{\AA}\) away.
+From its binary image, readcon reads the positions that TNG~\ccTngVersion{} returns in \ccRatioArgonImageTng{} and \ccRatioWaterImageTng{} of the time of the TNG bulk read (Table~\ref{tab:cc-binary}).
+The image is the CON-bin of this source: a page of header whose bytes 32 to 40 are the payload offset, and not a cyclic redundancy check (CRC-32C) of the payload.
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{The two TNG example files read by \texttt{claimcheck/\allowbreak tng\_read.c} against TNG~\ccTngVersion{} and TNG~\ccTngTag{} (\texttt{claimcheck/\allowbreak binary\_cited.py}).
+Argon is \texttt{argon\_npt\_\allowbreak compressed.tng} and water is \texttt{water\_npt\_\allowbreak compressed\_\allowbreak trjconv.tng}.
+Each read is compared with the bulk read of TNG~\ccTngVersion.}
+\label{tab:cc-tng}
+\input{figures/generated/claimcheck_tng}
+\end{table}
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{All-frames reads of the libxtc and TNG files on one thread, and readcon on the same positions written as CON with two decimals and as its CON-bin image (\texttt{claimcheck/\allowbreak binary\_cited.py}).
+The CON and image ratios divide the readcon median by the median of the reader of the row.}
+\label{tab:cc-binary}
+\input{figures/generated/claimcheck_binary}
+\end{table}
+
+\subsection{chemfiles and extxyz on their benchmark systems}\label{sec:supp-cc-text}
+The benchmark repository of chemfiles \cite{frauxChemfileschemfilesVersion01042023} reads \path{water.xyz}, 100 frames of 297 atoms, and its gzip with chemfiles, ASE, MDAnalysis and Open Babel, and publishes the mean of up to 50 reads after up to three warm-up reads on two machines (Table~\ref{tab:cc-cited}).
+The benchmark of extxyz \cite{kermodeLibatomsExtxyzV0462026} reads one frame of 10 to \num{200000} Cu atoms with forces, written by its C writer, and publishes the best of three reads with no machine named.
+The check runs both benchmarks on our host with chemfiles~\ccVerChemfiles, ASE~\ccVerAse, MDAnalysis~\ccVerMda, Open Babel~\ccVerOpenbabel, extxyz~\ccVerExtxyz{} and its ASE plugin~\ccVerAseExtxyz, a fresh process for every run that reads the file once before the timed read, and readcon reads the same atoms from CON (Tables~\ref{tab:cc-text} and~\ref{tab:cc-extxyz}).
+readcon \texttt{read\_positions} returns the positions of the water frames in \ccRatioWaterArraysChemfiles{} of the time chemfiles takes, and its ratio to MDAnalysis is \ccRatioWaterArraysMda, to Open Babel \ccRatioWaterArraysOpenbabel, to ASE \ccRatioWaterArraysAse{} and to chemfiles on the gzip \ccRatioWaterGzArraysChemfiles.
+On the frame of \num{200000} Cu atoms, readcon \texttt{read\_con} returns the frame with its forces in \ccRatioCuAse{} of the time of the built-in reader of ASE.
+An ASE atoms object with no cell, written by \texttt{ConFrame.from\_ase}, stores right angles for the undefined cell angles, and the file reads back.
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{The water benchmark of chemfiles on our host, readcon on the same frames as CON, and the times the benchmark publishes for its Linux machine (\texttt{claimcheck/\allowbreak cited\_text.py}).
+The ratios divide the readcon median by the median of the reader of the row; \texttt{read\_positions} returns the positions alone.}
+\label{tab:cc-text}
+\input{figures/generated/claimcheck_text}
+\end{table}
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{The Cu frames of the extxyz benchmark on our host, readcon on the same atoms with their forces as CON, and the times the benchmark publishes (\texttt{claimcheck/\allowbreak cited\_text.py}).
+The ratios divide the readcon median by the median of the reader of the row.}
+\label{tab:cc-extxyz}
+\input{figures/generated/claimcheck_extxyz}
+\end{table}
+
+\subsection{Decimals}\label{sec:supp-cc-decimals}
+The parse-number-fxx test data \cite{taoParsenumberfxxtestdata2022} pair decimal strings with their binary64 values, and CPython gives the values of the canada and mesh files of the benchmark code of Ref.~\cite{lemireNumberParsingGigabytes2021}, \ccDecimalStrings{} strings in all.
+readcon returns that value for every one of the \ccDecimals{} finite decimals, through \texttt{read\_positions} and through \texttt{read\_con\_string}, with \ccDecimalMismatches{} mismatches, and refuses each decimal that overflows as a non-finite value.
+Its writer prints each of the \ccWriterValues{} distinct values as the shortest decimal that reads back to it, with \ccWriterFailures{} failures.
+
+\subsection{Constants and statistics}\label{sec:supp-cc-constants}
+CODATA 2018 \cite{tiesingaCodataRecommendedValues2021} gives the atomic mass constant and the electronvolt, which fix the natural time unit at \(\num{\ccNaturalFs}\,\mathrm{fs}\), and readcon carries those two values.
+ASE uses the CODATA \ccAseCodata{} values, whose unit differs from it by \num{\ccAseUnitDiff} in relative terms.
+SciPy~\ccScipy{} and statsmodels~\ccStatsmodels{} recompute the ordering tests and take the same decision on each ratio.
+
+\subsection{Statements checked in source}\label{sec:supp-cc-sources}
+Table~\ref{tab:cc-sources} gives each statement of the paper that rests on the code or documentation of another program, the pinned file that contains it and the lines of that file, and Table~\ref{tab:cc-cited} gives the same for each number that this section quotes from a cited paper or code (\texttt{claimcheck/\allowbreak sources.py}).
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{Statements checked in a pinned copy of the source or documentation that contains them (\texttt{claimcheck/\allowbreak sources.py}).
+Lines are the lines of the file that match the check, and a documentation page is read as its text.}
+\label{tab:cc-sources}
+\input{figures/generated/claimcheck_sources}
+\end{table}
+
+\begin{table}[tbp]
+\centering
+\scriptsize
+\caption{Numbers of cited works that the claim check quotes, checked in a pinned copy of the source or paper that contains them (\texttt{claimcheck/\allowbreak sources.py}).
+Lines are the lines of the file that match the check, and a PDF is read as the text of \texttt{pdftotext}.}
+\label{tab:cc-cited}
+\input{figures/generated/claimcheck_cited}
+\end{table}
+
+\FloatBarrier
 \section{Measured versions}\label{sec:supp-versions} The survey of Table~\ref{tab:survey} ran ASE 3.29.0, chemfiles 0.10.4, MDAnalysis 2.10.0, h5py 3.16.0, OVITO 3.16.1 and Open Babel 3.2.1.
 chemfiles 0.10.4, MDAnalysis 2.10.0, OVITO 3.16.1 and Open Babel 3.2.1 open neither a version-1 CON file nor a CON 3.1 file, and the eon module of ASE 3.29.0 opens both (\texttt{scripts/\allowbreak con\_\allowbreak openers.py}).
 The drift files of Table~\ref{tab:drift} went to ASE 3.29.0, the libAtoms \texttt{extxyz} 0.4.6 package, chemfiles 0.10.4, OVITO 3.16.1, MDAnalysis 2.10.0 and Open Babel 3.2.1.
@@ -452,6 +639,10 @@ The readers timed on this branch are named in Section~\ref{sec:host} of the main
 On files of two frames whose line~1 is empty, the first refuses the file and the later three read two frames.
 Only the second refuses a file with a legacy velocity label in capitals or separated by tabs, which the other three read.
 On a blank symbol line and on a symbol line that starts with \texttt{\{}, the third and the fourth refuse the file and the earlier two read it, and the fourth returns the outcome of the third on every probe.
+
+\input{figures/generated/sizes_table}
+
+\input{figures/generated/sizes_table}
 
 \FloatBarrier \section{Reproduction}\label{sec:supp-repro} Table~\ref{tab:versionmap} names the build and host of every record from a readcon-core build.
 Each of them was written by readcon-core~\readconversion{} built from the library of the \readconcommitrole{} \texttt{\readconcommitshort}, and each names that library by its digest, \texttt{\readcondigest}.
@@ -485,6 +676,9 @@ For the performance records, \texttt{bench/\allowbreak make\_payloads.py} writes
 For the conformance records, \texttt{scripts/\allowbreak corpus31\_results.py} runs \texttt{examples/\allowbreak corpus31\_report} of readcon-core over the CON 3.1 corpus, \texttt{scripts/\allowbreak corpus\_paths.py} reads both corpora through the readcon module and through the C library that \texttt{cargo build -{}-release} builds and that \texttt{cargo build -{}-release -{}-features parallel} builds into \path{target/clib-parallel}, \texttt{scripts/\allowbreak every\_path\_count.py} runs the reader-path tests of readcon-core and counts their inputs, \texttt{scripts/\allowbreak corpus\_crosscheck.py} runs the three readers of Table~\ref{tab:corpus-crosscheck}, \texttt{scripts/\allowbreak referee\_probes.py} runs the probes of \path{paper/cpc/data/referee_probes.json}, \texttt{scripts/\allowbreak mutant\_differential.py} reads the mutants of Section~\ref{sec:supp-corpus31} with the independent reader and the readcon module, and \texttt{scripts/\allowbreak clause\_coverage.py} lists what names each clause.
 Listing~\ref{lst:measure} gives the command line of each of these performance and conformance scripts, the environment variables it reads with their defaults, and the command lines it runs for each cell, file or build, among them those of memray, Valgrind and cargo.
 The comparison of the earlier releases of CON 3.1 reads each of four published wheels in its own process: \texttt{scripts/\allowbreak spec\_version\_drift.py} takes the readcon wheels of 0.17.0, 0.17.1, 0.17.2 and \readconCargoVersion{} and rewrites \texttt{data/\allowbreak spec/\allowbreak version\_drift.json}.
+The checks of Section~\ref{sec:supp-claimcheck} are tasks of \path{paper/cpc/pixi.toml} whose names start with \texttt{cpc-cc-}, each running one script of \path{paper/cpc/claimcheck}.
+Each script writes its record into \path{paper/cpc/data/claimcheck}.
+The step \texttt{scripts/\allowbreak claimcheck\_tables.py} of \texttt{regen\_paper.py} writes the tables and macros of that section from those records.
 
 \begin{lstlisting}[caption={Rebuild of the paper in a checkout of the \readconcommitrole.},label={lst:repro},basicstyle=\ttfamily\scriptsize,breaklines=false,escapeinside={(*}{*)}]
 git clone readcon-core.bundle readcon-core
