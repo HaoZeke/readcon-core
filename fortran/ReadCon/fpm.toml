@@ -20,6 +20,11 @@ link = ["readcon_core"]
 library = true
 
 [[test]]
+name = "test_iterator_stream"
+source-dir = "test"
+main = "test_iterator_stream.f90"
+
+[[test]]
 name = "test_read_con"
 source-dir = "test"
 main = "test_read_con.f90"
