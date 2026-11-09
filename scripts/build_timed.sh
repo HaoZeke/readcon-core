@@ -66,8 +66,8 @@ rustc -vV > /src/out/rustc-ci.txt
 opt_dir="$(printf '%s' opt)"
 PY="/${opt_dir}/python/cp312-cp312/bin/python"
 "$PY" -m pip install -q maturin
-"$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out /src/out/wheels-ci --cargo-extra-args="--config profile.release.debug=false"
-cargo build --release --lib --locked --config profile.release.debug=false
+"$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out /src/out/wheels-ci
+cargo build --release --lib --locked
 cp -f /src/target-ml/release/libreadcon_core.so /src/out/libreadcon_core.so
 '
 sudo chown -R "$(id -u):$(id -g)" /src
@@ -93,8 +93,8 @@ host_build() {
   "$rustc_bin" -vV > "$rustc_file"
   (
     cd "$src"
-    cargo build --release --lib --locked --config profile.release.debug=false
-    "$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out "$wheel_dir" --cargo-extra-args="--config profile.release.debug=false"
+    cargo build --release --lib --locked
+    "$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out "$wheel_dir"
   )
 }
 
@@ -193,9 +193,9 @@ record = {
     "rustflags_188": Path("/src/out/rustflags-188.txt").read_text(encoding="utf-8").strip(),
     "rustc_188": Path("/src/out/rustc-188.txt").read_text(encoding="utf-8"),
     "commands": [
-        "docker run quay.io/pypa/manylinux2014_x86_64@sha256:62eeff30ef134a85ec0f97109e008a319b0315ca5e8a6d754ee771556c02622a maturin build --release --strip --features python --cargo-extra-args profile.release.debug=false",
-        "cargo build --release --lib --locked --config profile.release.debug=false",
-        "rustup run 1.88.0 maturin build --release --strip --features python --cargo-extra-args profile.release.debug=false",
+        "docker run quay.io/pypa/manylinux2014_x86_64@sha256:62eeff30ef134a85ec0f97109e008a319b0315ca5e8a6d754ee771556c02622a maturin build --release --strip --features python",
+        "cargo build --release --lib --locked",
+        "rustup run 1.88.0 maturin build --release --strip --features python",
         "pip install --require-hashes readcon==0.18.0",
     ],
     "artefacts_before": {},
