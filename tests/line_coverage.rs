@@ -406,12 +406,17 @@ fn parallel_advise_covers_the_short_map_branches() {
     file.set_len(1).unwrap();
     let map = unsafe { memmap2::Mmap::map(&file).unwrap() };
     compression::advise_dontneed_parallel(&map, 3);
+    assert_eq!(map.len(), 1);
+    assert_eq!(map[0], 0);
     drop(map);
     file.set_len(64 * 1024).unwrap();
     let map = unsafe { memmap2::Mmap::map(&file).unwrap() };
     compression::advise_dontneed_parallel(&map, 0);
+    assert_eq!(map.len(), 64 * 1024);
     compression::advise_dontneed_parallel(&map, 1);
+    assert_eq!(map[0], 0);
     compression::advise_dontneed_parallel(&map, 4);
+    assert_eq!(map[map.len() - 1], 0);
     let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
     let owned =
         compression::read_file_text(std::path::Path::new("resources/test/tiny_cuh2.con")).unwrap();
