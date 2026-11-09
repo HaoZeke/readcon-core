@@ -247,4 +247,98 @@ mod tests {
         }
         assert!(reader.next().is_none());
     }
+
+    /// `Read` whose calls return a fixed list, then end.
+    struct Scripted {
+        steps: Vec<io::Result<Vec<u8>>>,
+        at: usize,
+        pending: Vec<u8>,
+    }
+
+    impl Read for Scripted {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            if self.pending.is_empty() {
+                if self.at >= self.steps.len() {
+                    return Ok(0);
+                }
+                let step = std::mem::replace(&mut self.steps[self.at], Ok(Vec::new()));
+                self.at += 1;
+                match step {
+                    Ok(bytes) => self.pending = bytes,
+                    Err(err) => return Err(err),
+                }
+            }
+            let n = self.pending.len().min(buf.len());
+            buf[..n].copy_from_slice(&self.pending[..n]);
+            self.pending.drain(..n);
+            Ok(n)
+        }
+    }
+
+    fn boxed(steps: Vec<io::Result<Vec<u8>>>) -> ConFrameReader<Box<dyn Read + Send>> {
+        ConFrameReader::with_read_size(
+            Box::new(Scripted {
+                steps,
+                at: 0,
+                pending: Vec::new(),
+            }),
+            64,
+        )
+    }
+
+    #[test]
+    fn open_reads_one_frame_and_a_missing_path_fails() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let frame = zero_atom_frame(160);
+        let path = dir.path().join("one.con");
+        std::fs::write(&path, &frame).expect("write");
+        let mut reader = ConFrameReader::open(&path).expect("open");
+        let got = reader.next().expect("frame").expect("parse");
+        let want = ConFrameIterator::from_bytes(&frame)
+            .next()
+            .unwrap()
+            .unwrap();
+        assert_eq!(got, want);
+        assert!(ConFrameReader::open(&dir.path().join("missing.con")).is_err());
+    }
+
+    #[test]
+    fn an_interrupted_read_is_retried_and_the_frame_is_returned() {
+        let frame = zero_atom_frame(160);
+        let mut reader = boxed(vec![
+            Err(io::Error::new(io::ErrorKind::Interrupted, "again")),
+            Ok(frame.clone()),
+        ]);
+        let got = reader.next().expect("a frame").expect("parsed");
+        let want = ConFrameIterator::from_bytes(&frame).next().unwrap().unwrap();
+        assert_eq!(got, want);
+        assert!(reader.next().is_none());
+    }
+
+    #[test]
+    fn a_read_error_after_a_partial_frame_is_returned() {
+        let mut reader = boxed(vec![
+            Err(io::Error::new(io::ErrorKind::Interrupted, "again")),
+            Ok(b"user\n".to_vec()),
+            Err(io::Error::new(io::ErrorKind::ConnectionReset, "disk gone")),
+        ]);
+        let err = reader.next().expect("a result").expect_err("read error");
+        assert!(err.to_string().contains("disk gone"), "{err}");
+    }
+
+    #[test]
+    fn a_read_error_on_forward_is_returned() {
+        let mut reader = boxed(vec![
+            Ok(b"user\n".to_vec()),
+            Err(io::Error::new(
+                io::ErrorKind::ConnectionReset,
+                "forward gone",
+            )),
+        ]);
+        let err = reader
+            .forward()
+            .expect("a result")
+            .expect_err("forward error");
+        assert!(err.to_string().contains("forward gone"), "{err}");
+    }
 }

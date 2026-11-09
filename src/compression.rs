@@ -398,7 +398,7 @@ pub fn zstd_writer(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Write;
+    use std::io::{Read, Write};
 
     fn text_of_at_least(len: usize) -> Vec<u8> {
         let frame = include_bytes!("../resources/test/tiny_cuh2.con");
@@ -622,5 +622,53 @@ mod tests {
         let mid = dir.path().join("skip-between.con.zst");
         std::fs::write(&mid, &between).unwrap();
         assert_eq!(read_file_text(&mid).unwrap(), format!("{text}{text}"));
+    }
+
+    #[test]
+    fn open_decoded_plain_gzip_missing_and_zstd() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let plain = dir.path().join("plain.con");
+        std::fs::write(&plain, b"plain-bytes").expect("write");
+        let mut got = Vec::new();
+        open_decoded(&plain)
+            .expect("plain")
+            .read_to_end(&mut got)
+            .expect("read plain");
+        assert_eq!(got, b"plain-bytes");
+
+        let gz_path = dir.path().join("plain.con.gz");
+        let mut enc = flate2::write::GzEncoder::new(
+            std::fs::File::create(&gz_path).expect("create gz"),
+            flate2::Compression::default(),
+        );
+        enc.write_all(b"gzip-bytes").expect("gzip write");
+        enc.finish().expect("gzip finish");
+        got.clear();
+        open_decoded(&gz_path)
+            .expect("gzip")
+            .read_to_end(&mut got)
+            .expect("read gzip");
+        assert_eq!(got, b"gzip-bytes");
+
+        let missing = open_decoded(&dir.path().join("missing.con"));
+        assert!(missing.is_err());
+
+        match open_decoded(dir.path()) {
+            Err(err) => {
+                let msg = err.to_string();
+                assert!(
+                    msg.contains("Is a directory") || msg.contains("os error 21"),
+                    "{msg}"
+                );
+            }
+            Ok(_) => panic!("a directory opened as a file"),
+        }
+
+        let zst = dir.path().join("frame.zst");
+        std::fs::write(&zst, [0x28, 0xb5, 0x2f, 0xfd]).expect("zst magic");
+        match open_decoded(&zst) {
+            Err(err) => assert!(err.to_string().contains("zstd"), "{err}"),
+            Ok(_) => panic!("zstd magic opened without an error"),
+        }
     }
 }
