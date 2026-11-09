@@ -2,7 +2,7 @@
 //!
 //! A path iterator parses through [`crate::stream::ConFrameReader`], so the
 //! buffer stays near one frame plus one read. A string or byte-buffer
-//! iterator keeps the text the caller already owns.
+//! iterator copies the text the caller already owns.
 
 use crate::iterators::ConFrameIterator;
 use crate::stream::ConFrameReader;

@@ -5,6 +5,7 @@ program test_iterator_stream
   implicit none
   call assert_missing_file()
   call assert_null_iterator_errors()
+  call assert_empty_path()
   call assert_stream_matches_read_all()
   call assert_truncated_last_frame()
 contains
@@ -32,7 +33,31 @@ contains
     if (skipped /= 0_c_size_t) error stop "null iterator skip"
     frame = it%nth(0)
     if (frame%valid()) error stop "null iterator nth"
+    call frame%free()
+    if (frame%valid()) error stop "freed null frame stays invalid"
     call it%free()
+  end subroutine
+
+  subroutine assert_empty_path()
+    type(iterator_t) :: it
+    type(frame_t) :: frame
+    integer :: status
+    integer(c_size_t) :: skipped
+    it = open_iterator("")
+    if (it%valid()) error stop "empty path must not open"
+    frame = it%next()
+    if (frame%valid()) error stop "empty path next"
+    call frame%free()
+    if (frame%valid()) error stop "freed empty frame"
+    status = it%forward()
+    if (status /= rkr_status_null_pointer) error stop "empty path forward"
+    skipped = it%skip(0)
+    if (skipped /= 0_c_size_t) error stop "empty path skip zero"
+    frame = it%nth(0)
+    if (frame%valid()) error stop "empty path nth"
+    call frame%free()
+    call it%free()
+    if (it%valid()) error stop "freed empty iterator"
   end subroutine
 
   subroutine assert_stream_matches_read_all()
@@ -113,6 +138,17 @@ contains
     it = open_iterator(path)
     if (.not. it%valid()) error stop "reopen"
     if (it%skip(-1) /= 0_c_size_t) error stop "negative skip"
+    call it%free()
+    it = open_iterator(path)
+    if (.not. it%valid()) error stop "reopen skip zero"
+    if (it%skip(0) /= 0_c_size_t) error stop "skip zero"
+    streamed = it%next()
+    if (.not. streamed%valid()) error stop "frame after skip zero"
+    if (streamed%natoms() /= batch(1)%natoms()) error stop "skip zero atoms"
+    call streamed%free()
+    call it%free()
+    it = open_iterator(path)
+    if (.not. it%valid()) error stop "reopen skip one"
     if (it%skip(1) /= 1_c_size_t) error stop "skip one"
     streamed = it%next()
     if (.not. streamed%valid()) error stop "frame after skip"
