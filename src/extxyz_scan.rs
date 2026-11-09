@@ -13,6 +13,9 @@ pub struct XyzTables {
     pub positions: Vec<f64>,
     pub masses: Vec<f64>,
     pub cell: Vec<f64>,
+    /// Atomic numbers, one per atom, frame-major. The lookup is
+    /// [`crate::helpers::symbol_to_atomic_number`].
+    pub types: Vec<u64>,
 }
 
 fn trim(bytes: &[u8]) -> &[u8] {
@@ -74,10 +77,11 @@ fn quoted_after<'a>(line: &'a [u8], key: &[u8]) -> Option<&'a [u8]> {
     None
 }
 
-fn column_layout(properties: &[u8]) -> Result<(usize, Option<usize>), String> {
+fn column_layout(properties: &[u8]) -> Result<(usize, Option<usize>, usize), String> {
     let mut offset = 0;
     let mut pos = None;
     let mut mass = None;
+    let mut species = None;
     let mut rest = properties;
     while !rest.is_empty() {
         let name_end = rest.iter().position(|byte| *byte == b':').ok_or("properties")?;
@@ -91,6 +95,8 @@ fn column_layout(properties: &[u8]) -> Result<(usize, Option<usize>), String> {
             pos = Some(offset);
         } else if name == b"masses" {
             mass = Some(offset);
+        } else if name == b"species" {
+            species = Some(offset);
         }
         offset += count;
         if count_end == rest.len() {
@@ -98,7 +104,7 @@ fn column_layout(properties: &[u8]) -> Result<(usize, Option<usize>), String> {
         }
         rest = &rest[count_end + 1..];
     }
-    Ok((pos.ok_or("pos")?, mass))
+    Ok((pos.ok_or("pos")?, mass, species.ok_or("species")?))
 }
 
 fn lattice_cell(lattice: &[u8]) -> Result<[f64; 6], String> {
@@ -125,14 +131,32 @@ fn lattice_cell(lattice: &[u8]) -> Result<[f64; 6], String> {
     Ok([la, lb, lc, alpha, beta, gamma])
 }
 
-fn atom_values(line: &[u8], pos_col: usize, mass_col: Option<usize>) -> Result<(f64, f64, f64, f64), String> {
+fn atomic_number_at(token: &[u8]) -> Result<u64, String> {
+    let symbol = std::str::from_utf8(token).map_err(|_| "species".to_string())?;
+    let atomic_number = crate::helpers::symbol_to_atomic_number(symbol);
+    if atomic_number == 0 {
+        return Err(format!("species {symbol}"));
+    }
+    Ok(atomic_number)
+}
+
+fn atom_values(
+    line: &[u8],
+    pos_col: usize,
+    mass_col: Option<usize>,
+    species_col: usize,
+) -> Result<(f64, f64, f64, f64, u64), String> {
     let mut index = 0;
     let mut column = 0;
     let mut coords = [0.0; 3];
     let mut mass = f64::NAN;
     let mut got = 0;
+    let mut species = None;
+    let last_needed = species_col.max(pos_col + 2).max(mass_col.unwrap_or(0));
     while let Some((start, end)) = next_token(line, index) {
-        if column >= pos_col && column < pos_col + 3 {
+        if column == species_col {
+            species = Some(atomic_number_at(&line[start..end])?);
+        } else if column >= pos_col && column < pos_col + 3 {
             coords[column - pos_col] = parse_f64(&line[start..end])?;
             got += 1;
         } else if Some(column) == mass_col {
@@ -140,14 +164,15 @@ fn atom_values(line: &[u8], pos_col: usize, mass_col: Option<usize>) -> Result<(
         }
         column += 1;
         index = end;
-        if got == 3 && mass_col.map(|item| column > item).unwrap_or(true) {
+        if column > last_needed && got == 3 && species.is_some() {
             break;
         }
     }
     if got != 3 {
         return Err("atom".to_string());
     }
-    Ok((coords[0], coords[1], coords[2], mass))
+    let atomic_number = species.ok_or_else(|| "species".to_string())?;
+    Ok((coords[0], coords[1], coords[2], mass, atomic_number))
 }
 
 pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
@@ -170,6 +195,7 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
     let mut positions = Vec::new();
     let mut masses = Vec::new();
     let mut cell = Vec::new();
+    let mut types = Vec::new();
     let mut cursor = 0;
     let mut n_atoms = 0;
     let mut n_frames = 0;
@@ -186,18 +212,20 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
         let comment = lines[cursor + 1];
         let lattice = quoted_after(comment, b"Lattice=").ok_or("lattice")?;
         let properties = quoted_after(comment, b"Properties=").ok_or("properties")?;
-        let (pos_col, mass_col) = column_layout(properties)?;
+        let (pos_col, mass_col, species_col) = column_layout(properties)?;
         let frame_cell = lattice_cell(lattice)?;
         cursor += 2;
         if cursor + count > lines.len() {
             return Err("atoms".to_string());
         }
         for line in &lines[cursor..cursor + count] {
-            let (x, y, z, mass) = atom_values(line, pos_col, mass_col)?;
+            let (x, y, z, mass, atomic_number) =
+                atom_values(line, pos_col, mass_col, species_col)?;
             positions.push(x);
             positions.push(y);
             positions.push(z);
             masses.push(mass);
+            types.push(atomic_number);
         }
         cell.extend_from_slice(&frame_cell);
         cursor += count;
@@ -213,6 +241,7 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
         positions,
         masses,
         cell,
+        types,
     })
 }
 
@@ -233,12 +262,48 @@ Lattice=\"10 0 0 0 12 0 0 0 14\" Properties=species:S:1:pos:R:3:masses:R:1 pbc=\
 Cu 1.0 2.0 3.0 63.546
 Cu 4.0 5.0 6.0 63.546
 ";
-        let tables = tables_from_extxyz_bytes(text.as_bytes()).unwrap();
+        let tables = tables_from_extxyz_bytes(text.as_bytes()).expect("parse");
         assert_eq!(tables.n_frames, 1);
         assert_eq!(tables.n_atoms, 2);
         assert_eq!(tables.positions, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
         assert_eq!(tables.masses, vec![63.546, 63.546]);
+        assert_eq!(tables.types, vec![29, 29]);
         assert!((tables.cell[0] - 10.0).abs() < 1e-12);
         assert!((tables.cell[3] - 90.0).abs() < 1e-8);
+    }
+
+    #[test]
+    fn mixed_species_frames_keep_each_atomic_number() {
+        let text = "\
+2
+Lattice=\"8 0 0 0 8 0 0 0 8\" Properties=species:S:1:pos:R:3
+Cu 1.0 0.0 0.0
+H 0.0 2.0 0.0
+2
+Lattice=\"9 0 0 0 9 0 0 0 9\" Properties=species:S:1:pos:R:3
+O 0.0 0.0 3.0
+Cu 4.0 0.0 0.0
+";
+        let tables = tables_from_extxyz_bytes(text.as_bytes()).expect("parse");
+        assert_eq!(tables.n_frames, 2);
+        assert_eq!(tables.n_atoms, 2);
+        assert_eq!(tables.types, vec![29, 1, 8, 29]);
+        assert_eq!(tables.positions[0], 1.0);
+        assert_eq!(tables.positions[9], 4.0);
+        assert!((tables.cell[0] - 8.0).abs() < 1e-12);
+        assert!((tables.cell[6] - 9.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn malformed_species_is_an_error() {
+        let text = "\
+1
+Lattice=\"10 0 0 0 10 0 0 0 10\" Properties=species:S:1:pos:R:3
+Nope 0.0 0.0 0.0
+";
+        let parsed = tables_from_extxyz_bytes(text.as_bytes());
+        assert!(parsed.is_err());
+        let message = parsed.expect_err("unknown species");
+        assert!(message.contains("species"), "{message}");
     }
 }
