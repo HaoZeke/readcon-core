@@ -33,6 +33,8 @@ def extension_sha256() -> dict[str, dict[str, str]]:
     found: dict[str, dict[str, str]] = {}
     for arm, names in IMPORTS.items():
         files: dict[str, str] = {}
+        if "readcon" in names:
+            continue
         for name in names:
             module = importlib.import_module(name)
             file_attr = getattr(module, "__file__", None)
@@ -432,6 +434,13 @@ def main() -> int:
     try:
         for name in IMPORTS[args.arm]:
             importlib.import_module(name)
+        if "readcon" in IMPORTS[args.arm]:
+            import readcon
+
+            extension = readcon.readcon
+            loaded = Path(extension.__file__).resolve()
+            lines.append(f"readcon_file {recorded_path(loaded)}")
+            lines.append(f"readcon_so_sha256 {sha256_file(loaded)}")
         if args.op == "write":
             elapsed = _write(args.arm, args.path, args.dest)
             if args.arm == "readcon_py":

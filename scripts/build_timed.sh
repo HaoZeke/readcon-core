@@ -6,7 +6,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 PY="${H2H_PYTHON:-python3}"
-IMAGE="quay.io/pypa/manylinux2014_x86_64"
+# Host shells may set this to 1. That adds debuginfo on top of Cargo.toml release.
+export CARGO_PROFILE_RELEASE_DEBUG=false
+DIGEST="sha256:62eeff30ef134a85ec0f97109e008a319b0315ca5e8a6d754ee771556c02622a"
+IMAGE="quay.io/pypa/manylinux2014_x86_64@${DIGEST}"
 R27="cb8443d30ebce59833bf350fdf83cfc5bac16578"
 PUBLISHED_SHA="e78e7fc4d7290909a24a2d6a582c960aebf395cc23908be9d43513bdb4190110"
 
@@ -16,11 +19,31 @@ rm -rf /src/readcon-head /src/readcon-r27 /src/out
 mkdir -p /src/readcon-head /src/readcon-r27 /src/out/wheels-ci /src/out/wheels-188 /src/out/wheels-r27
 git -C "$ROOT" archive HEAD | tar -C /src/readcon-head -xf -
 git -C "$ROOT" archive "$R27" | tar -C /src/readcon-r27 -xf -
+HEAD_COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
+"$PY" - /src/readcon-head "head.${HEAD_COMMIT:0:8}" <<'PY'
+import pathlib, sys
+src, label = sys.argv[1:]
+path = pathlib.Path(src) / "pyproject.toml"
+text = path.read_text(encoding="utf-8")
+old = 'version = "0.18.0"'
+if old not in text:
+    raise SystemExit("version line missing")
+path.write_text(text.replace(old, f'version = "0.18.0+{label}"', 1), encoding="utf-8")
+PY
+"$PY" - /src/readcon-r27 "r27.${R27:0:8}" <<'PY'
+import pathlib, sys
+src, label = sys.argv[1:]
+path = pathlib.Path(src) / "pyproject.toml"
+text = path.read_text(encoding="utf-8")
+old = 'version = "0.18.0"'
+if old not in text:
+    raise SystemExit("version line missing")
+path.write_text(text.replace(old, f'version = "0.18.0+{label}"', 1), encoding="utf-8")
+PY
 # The timing drivers live in HEAD. The r2.7 tree is built for its library only.
 
 sudo docker pull "$IMAGE" >/dev/null
-DIGEST="$(sudo docker image inspect "$IMAGE" --format '{{index .RepoDigests 0}}')"
-printf '%s\n' "$DIGEST" > /src/out/image-digest.txt
+printf '%s\n' "$IMAGE" > /src/out/image-digest.txt
 
 sudo docker run --rm \
   -v /src:/src \
@@ -34,6 +57,7 @@ if [[ ! -x /src/rustup-ml/toolchains/1.99.1-x86_64-unknown-linux-gnu/bin/rustc ]
   curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.99.1 --profile minimal
 fi
 export PATH="/src/cargo-ml/bin:${PATH}"
+export CARGO_PROFILE_RELEASE_DEBUG=false
 rustc --version
 SYSROOT="$(rustc --print sysroot)"
 export RUSTFLAGS="-C link-arg=-fuse-ld=bfd --remap-path-prefix=${SYSROOT}=/rustc --remap-path-prefix=/src/cargo-ml=/cargo"
@@ -42,8 +66,8 @@ rustc -vV > /src/out/rustc-ci.txt
 opt_dir="$(printf '%s' opt)"
 PY="/${opt_dir}/python/cp312-cp312/bin/python"
 "$PY" -m pip install -q maturin
-"$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out /src/out/wheels-ci
-cargo build --release --lib --locked
+"$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out /src/out/wheels-ci --cargo-extra-args="--config profile.release.debug=false"
+cargo build --release --lib --locked --config profile.release.debug=false
 cp -f /src/target-ml/release/libreadcon_core.so /src/out/libreadcon_core.so
 '
 sudo chown -R "$(id -u):$(id -g)" /src
@@ -63,13 +87,14 @@ host_build() {
   export CARGO_HOME="$cargo_home"
   export CARGO_TARGET_DIR="$target"
   export RUSTUP_TOOLCHAIN="$toolchain"
+  export CARGO_PROFILE_RELEASE_DEBUG=false
   export RUSTFLAGS="-C link-arg=-fuse-ld=bfd --remap-path-prefix=${sysroot}=/rustc --remap-path-prefix=${cargo_home}=/cargo"
   printf '%s\n' "$RUSTFLAGS" > "$flag_file"
   "$rustc_bin" -vV > "$rustc_file"
   (
     cd "$src"
-    cargo build --release --lib --locked
-    "$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out "$wheel_dir"
+    cargo build --release --lib --locked --config profile.release.debug=false
+    "$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out "$wheel_dir" --cargo-extra-args="--config profile.release.debug=false"
   )
 }
 
@@ -99,6 +124,7 @@ EOF
 rm -rf /src/py-0180
 mkdir -p /src/py-0180
 "$PY" -m pip install --no-deps --require-hashes --target /src/py-0180 -r "$PIN"
+"$PY" -m pip uninstall -y readcon >/dev/null
 
 MAPS=(
   -ffile-prefix-map=/src/readcon-head=.
@@ -154,7 +180,11 @@ head = subprocess.check_output(["git", "-C", root, "rev-parse", "HEAD"], text=Tr
 head_commit, head_tree = meta(head)
 r27_commit, r27_tree = meta(r27)
 original = "9d61dfdf9968d83d7cbd0ffaf3fa620f59e84ba3de5f6e1becb4bc088271d04e"
-r27_so = sha256(so_in(Path("/src/py-r27")))
+r27_so_path = so_in(Path("/src/py-r27"))
+ci_so_path = so_in(Path("/src/py-ci"))
+so_188_path = so_in(Path("/src/py-188"))
+pypi_so_path = so_in(Path("/src/py-0180"))
+r27_so = sha256(r27_so_path)
 record = {
     "container_image": Path("/src/out/image-digest.txt").read_text(encoding="utf-8").strip(),
     "profile": "release",
@@ -163,9 +193,9 @@ record = {
     "rustflags_188": Path("/src/out/rustflags-188.txt").read_text(encoding="utf-8").strip(),
     "rustc_188": Path("/src/out/rustc-188.txt").read_text(encoding="utf-8"),
     "commands": [
-        "docker run quay.io/pypa/manylinux2014_x86_64 maturin build --release --features python",
-        "cargo build --release --lib --locked",
-        "rustup run 1.88.0 maturin build --release --features python",
+        "docker run quay.io/pypa/manylinux2014_x86_64@sha256:62eeff30ef134a85ec0f97109e008a319b0315ca5e8a6d754ee771556c02622a maturin build --release --strip --features python --cargo-extra-args profile.release.debug=false",
+        "cargo build --release --lib --locked --config profile.release.debug=false",
+        "rustup run 1.88.0 maturin build --release --strip --features python --cargo-extra-args profile.release.debug=false",
         "pip install --require-hashes readcon==0.18.0",
     ],
     "artefacts_before": {},
@@ -176,8 +206,10 @@ record = {
             "tree": head_tree,
             "rustc": Path("/src/out/rustc-ci.txt").read_text(encoding="utf-8").splitlines()[0],
             "rustflags": Path("/src/out/rustflags-ci.txt").read_text(encoding="utf-8").strip(),
-            "binary_sha256": sha256(so_in(Path("/src/py-ci"))),
+            "binary_sha256": sha256(ci_so_path),
+            "binary_path": str(ci_so_path),
             "wheel_sha256": sha256(Path(ci_wheel)),
+            "wheel_path": ci_wheel,
         },
         "readcon_extxyz_188": {
             "role": "HEAD build with rustc 1.88.0",
@@ -185,8 +217,10 @@ record = {
             "tree": head_tree,
             "rustc": Path("/src/out/rustc-188.txt").read_text(encoding="utf-8").splitlines()[0],
             "rustflags": Path("/src/out/rustflags-188.txt").read_text(encoding="utf-8").strip(),
-            "binary_sha256": sha256(so_in(Path("/src/py-188"))),
+            "binary_sha256": sha256(so_188_path),
+            "binary_path": str(so_188_path),
             "wheel_sha256": sha256(Path(w188)),
+            "wheel_path": w188,
         },
         "readcon_extxyz_r27": {
             "role": "r2.7 commit rebuilt with rustc 1.88.0",
@@ -195,7 +229,9 @@ record = {
             "rustc": Path("/src/out/rustc-r27.txt").read_text(encoding="utf-8").splitlines()[0],
             "rustflags": Path("/src/out/rustflags-r27.txt").read_text(encoding="utf-8").strip(),
             "binary_sha256": r27_so,
+            "binary_path": str(r27_so_path),
             "wheel_sha256": sha256(Path(wr27)),
+            "wheel_path": wr27,
             "timed_so_sha256": original,
             "reproduced_timed_so": r27_so == original,
         },
@@ -203,7 +239,8 @@ record = {
             "role": "published wheel",
             "commit": None,
             "tree": None,
-            "binary_sha256": sha256(so_in(Path("/src/py-0180"))),
+            "binary_sha256": sha256(pypi_so_path),
+            "binary_path": str(pypi_so_path),
             "wheel_sha256": published,
         },
     },

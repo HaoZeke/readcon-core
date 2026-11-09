@@ -23,6 +23,7 @@ from common import (
     median_iqr,
     recorded_path,
     script_sha256,
+    sha256_file,
     thread_env,
 )
 
@@ -132,7 +133,7 @@ def run_sample(arm: str, path: Path, truth: Path, log: Path, op: str, dest: Path
             data[key] = float(value)
         elif key in {"correct", "frames_ok", "atoms_ok", "types_ok", "cell_parsed"}:
             data[key] = value == "True"
-        elif key in {"status", "cache", "types_dtype"}:
+        elif key in {"status", "cache", "types_dtype", "readcon_file", "readcon_so_sha256"}:
             data[key] = value.strip()
     return data
 
@@ -143,6 +144,14 @@ def main() -> None:
     rev, status = git_capture()
     if status != "":
         raise SystemExit(f"worktree is dirty: {status!r}")
+    build_path = Path(os.environ.get("H2H_BUILD", "/src/out")) / "build.json"
+    build = json.loads(build_path.read_text(encoding="utf-8"))
+    so_before = {}
+    for key, info in build["arms"].items():
+        digest = sha256_file(Path(info["binary_path"]))
+        if digest != info["binary_sha256"]:
+            raise SystemExit(f"before hash mismatch for {key}")
+        so_before[key] = digest
     samples = []
     cache_notes = {}
     for group in GROUPS:
@@ -281,6 +290,42 @@ def main() -> None:
             else:
                 record["verdict"] = "not a head-to-head"
             pairs.append(record)
+    arm_key = {
+        "readcon_extxyz": "readcon_extxyz",
+        "readcon_extxyz_188": "readcon_extxyz_188",
+        "readcon_extxyz_r27": "readcon_extxyz_r27",
+        "readcon_pypi": "readcon_pypi",
+        "readcon_py": "readcon_extxyz",
+    }
+    loaded = {}
+    extension = {}
+    for arm, key in arm_key.items():
+        rows = [s for s in samples if s["arm"] == arm and s.get("readcon_so_sha256")]
+        if len(rows) < REPEATS:
+            raise SystemExit(f"missing loaded hash for {arm}")
+        found = {s["readcon_so_sha256"] for s in rows}
+        if len(found) != 1:
+            raise SystemExit(f"mixed loaded hashes for {arm}: {found}")
+        got = found.pop()
+        info = build["arms"][key]
+        expected = info["binary_sha256"]
+        binary = Path(info["binary_path"])
+        before = so_before[key]
+        after = sha256_file(binary)
+        if got != expected or before != expected or after != expected:
+            raise SystemExit(
+                f"{arm} hash mismatch loaded {got} record {expected} before {before} after {after}"
+            )
+        loaded[arm] = {
+            "sha256": got,
+            "path": rows[0]["readcon_file"],
+            "before": before,
+            "after": after,
+            "n": len(rows),
+            "commit": info["commit"],
+            "tree": info["tree"],
+        }
+        extension[arm] = {Path(rows[0]["readcon_file"]).name: got}
     payload = {
         "commit": rev,
         "git_status": status,
@@ -295,6 +340,8 @@ def main() -> None:
         "not_ratio": NOT_RATIO,
         "host": host_block(),
         "script_sha256": script_sha256(),
+        "loaded_so": loaded,
+        "extension_sha256": extension,
     }
     out = Path(os.environ.get("H2H_RESULTS", str(KIT / "results.json")))
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

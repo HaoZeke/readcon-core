@@ -53,10 +53,18 @@ build = json.loads((build_dir / "build.json").read_text(encoding="utf-8"))
 after = {}
 for name, item in build["artefacts_before"].items():
     path = Path(item["path"])
-    after[name] = {"path": rel(path), "sha256": sha256(path)}
+    digest = sha256(path)
+    if digest != item["sha256"]:
+        raise SystemExit(f"after hash mismatch for {name}")
+    after[name] = {"path": rel(path), "sha256": digest}
+for key, info in build["arms"].items():
+    digest = sha256(Path(info["binary_path"]))
+    if digest != info["binary_sha256"]:
+        raise SystemExit(f"after arm hash mismatch for {key}")
 build["artefacts_after"] = after
 extxyz["iterator"] = iterator
-extxyz["extension_sha256"] = sample.extension_sha256()
+others = sample.extension_sha256()
+extxyz.setdefault("extension_sha256", {}).update(others)
 extxyz["script_sha256"] = iterator["script_sha256"]
 extxyz["build"] = build
 extxyz["python_wheels"] = common.timed_wheel_record()
