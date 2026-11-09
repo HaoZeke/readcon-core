@@ -99,6 +99,7 @@ def write_report(root: Path, per_file: dict[str, dict[str, int]]) -> None:
         lines.extend(
             [
                 "No file in this kit contained either prefix. No path was rewritten, and this note lists no file.",
+                "The coverage scripts already strip home and repo paths before a report is written.",
                 "",
             ]
         )
@@ -124,6 +125,7 @@ def write_report(root: Path, per_file: dict[str, dict[str, int]]) -> None:
             [
                 "",
                 f"Totals: home prefix {home_total}, cursor prefix {work_total}.",
+                "The coverage scripts already strip home and repo paths before a report is written.",
                 "",
             ]
         )

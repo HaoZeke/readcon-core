@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Branch coverage for the iterator sources.
 #
-# Runs `cargo +nightly llvm-cov --branch` on the library tests whose names
-# contain c_iter, then writes llvm-cov's own reports:
-#   functions.txt        report --show-functions
-#   c_iter-branches.txt  show --show-branches=count src/c_iter.rs
-#   ffi-branches.txt     show --show-branches=count src/ffi.rs
-#   stream-branches.txt  show --show-branches=count src/stream.rs
-#   branch.json          export of those three files
+# Runs `cargo +nightly llvm-cov --branch` on the iterator, stream, and
+# open_decoded tests, then writes llvm-cov's own reports:
+#   functions.txt            report --show-functions
+#   c_iter-branches.txt      show --show-branches=count src/c_iter.rs
+#   ffi-branches.txt         show --show-branches=count src/ffi.rs
+#   stream-branches.txt      show --show-branches=count src/stream.rs
+#   compression-branches.txt show --show-branches=count src/compression.rs
+#   branch.json              export of those files
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -19,7 +20,7 @@ export CARGO_TARGET_DIR="$ROOT/target/llvm-cov-target"
 unset RUSTC_WRAPPER || true
 
 cargo +nightly llvm-cov clean --workspace
-cargo +nightly llvm-cov --branch --lib --no-report -- c_iter --test-threads=1
+cargo +nightly llvm-cov --branch --lib --no-report -- --test-threads=1 c_iter stream::tests open_decoded
 
 SYSROOT="$(rustc +nightly --print sysroot)"
 LLVM="$SYSROOT/lib/rustlib/x86_64-unknown-linux-gnu/bin"
@@ -47,7 +48,7 @@ strip_paths() {
   sed "s|$ROOT/||g; s|$HOME/||g"
 }
 
-SOURCES=("$ROOT/src/c_iter.rs" "$ROOT/src/ffi.rs" "$ROOT/src/stream.rs")
+SOURCES=("$ROOT/src/c_iter.rs" "$ROOT/src/ffi.rs" "$ROOT/src/stream.rs" "$ROOT/src/compression.rs")
 
 "$LLVM/llvm-cov" report --show-functions --instr-profile="$PROFDATA" "$BIN" "${SOURCES[@]}" \
   | strip_paths > "$OUT/functions.txt"
@@ -57,6 +58,8 @@ SOURCES=("$ROOT/src/c_iter.rs" "$ROOT/src/ffi.rs" "$ROOT/src/stream.rs")
   "$ROOT/src/ffi.rs" | strip_paths > "$OUT/ffi-branches.txt"
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "$BIN" \
   "$ROOT/src/stream.rs" | strip_paths > "$OUT/stream-branches.txt"
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "$BIN" \
+  "$ROOT/src/compression.rs" | strip_paths > "$OUT/compression-branches.txt"
 "$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "$BIN" "${SOURCES[@]}" \
   | strip_paths > "$OUT/branch.json"
 
