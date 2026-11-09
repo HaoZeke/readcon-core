@@ -1,3 +1,4 @@
+pub mod c_iter;
 pub mod array;
 pub mod compression;
 pub mod conbin;
