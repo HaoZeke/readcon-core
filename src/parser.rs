@@ -3272,48 +3272,160 @@ Coordinates of Component 1
 
     #[test]
     fn cold_parser_branches() {
-        let _ = parse_finite_at("", 0);
-        let _ = parse_finite_at("inf", 0);
-        let _ = parse_finite_at("infinity", 0);
-        let _ = parse_finite_at("nan", 0);
-        let _ = parse_finite_at("1.0x", 0);
-        let _ = parse_finite_at("nope", 0);
-        let _ = parse_finite_at("1e9999", 0);
-        let _ = parse_fixed_flag("", 2);
-        let _ = parse_fixed_flag("1.5", 2);
-        let _ = parse_fixed_flag("1", 1);
-        let _ = parse_fixed_flag("2", 1);
-        let _ = parse_fixed_flag("8", 2);
-        let _ = parse_fixed_flag("5", 2);
-        let _ = parse_atom_id_token("");
-        let _ = parse_atom_id_token("-3");
-        let _ = parse_atom_id_token(&"9".repeat(40));
-        let _ = parse_coord_row("1 2", 2, 0);
-        let _ = parse_coord_row("1 2 3 0 1 extra", 2, 0);
-        let _ = parse_vector_section_row("0 0 0 0", 2);
-        let _ = count_tokens_on_line(b"  a   b\t", 0);
-        let _ = count_tokens_on_line(b"", 0);
-        let _ = parse_count_line("-1 2", 2);
-        let _ = parse_count_line(&"9".repeat(30), 1);
-        let _ = parse_frame_header(&mut ["only-one"].into_iter());
-        let _ = parse_frame_header(&mut ["line", "[1]"].into_iter());
-        let _ = parse_frame_header(&mut ["line", "{\"con_spec_version\":\"no\"}"].into_iter());
-        let _ = parse_frame_header(&mut ["line", "{}"].into_iter());
-        let _ = parse_frame_header(&mut ["\u{feff}line", "{}"].into_iter());
-        let _ = parse_f64_at(b"", 0, 0);
-        let _ = parse_f64_at(b"\xff rest", 0, 0);
-        let _ = parse_f64_at(b"inf", 0, 0);
-        let _ = parse_f64_at(b"1.0x", 0, 0);
-        let _ = parse_f64_at(b"abc", 0, 0);
-        let _ = parse_f64_at(b"1e9999", 0, 0);
-        let _ = parse_coord_fields_detailed(b"\n", 0, 2, None);
-        let _ = parse_coord_fields_detailed(b"1.0 2.0 3.0 0 4\n", 0, 2, Some(0));
-        let _ = parse_coord_fields_detailed(b"1.0 2.0 3.0 no\n", 0, 2, None);
-        let _ = parse_flag_at(b"9\n", 0, 2);
-        let _ = parse_flag_at(b"1\n", 0, 1);
-        let _ = parse_id_at(b"", 0);
-        let _ = parse_id_at(b"12x", 0);
-        let _ = parse_id_at(&b"9".repeat(40), 0);
+        assert!(matches!(
+            parse_finite_at("", 0),
+            Err(ParseError::InvalidVectorLength {
+                expected: 3,
+                found: 0
+            })
+        ));
+        assert!(matches!(
+            parse_finite_at("inf", 0),
+            Err(ParseError::NonFiniteValue(_))
+        ));
+        assert!(matches!(
+            parse_finite_at("infinity", 0),
+            Err(ParseError::NonFiniteValue(_))
+        ));
+        assert!(matches!(
+            parse_finite_at("nan", 0),
+            Err(ParseError::NonFiniteValue(_))
+        ));
+        assert!(matches!(
+            parse_finite_at("1.0x", 0),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_finite_at("nope", 0),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_finite_at("1e9999", 0),
+            Err(ParseError::NonFiniteValue(_))
+        ));
+        assert!(matches!(
+            parse_fixed_flag("", 2),
+            Err(ParseError::InvalidFixedFlag(_))
+        ));
+        assert!(matches!(
+            parse_fixed_flag("1.5", 2),
+            Err(ParseError::InvalidFixedFlag(_))
+        ));
+        assert_eq!(parse_fixed_flag("1", 1).unwrap(), [true, true, true]);
+        assert!(matches!(
+            parse_fixed_flag("2", 1),
+            Err(ParseError::InvalidFixedFlag(_))
+        ));
+        assert!(matches!(
+            parse_fixed_flag("8", 2),
+            Err(ParseError::InvalidFixedFlag(_))
+        ));
+        assert_eq!(parse_fixed_flag("5", 2).unwrap(), [true, false, true]);
+        assert!(matches!(
+            parse_atom_id_token(""),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_atom_id_token("-3"),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_atom_id_token(&"9".repeat(40)),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_coord_row("1 2", 2, 0),
+            Err(ParseError::InvalidVectorLength { .. })
+        ));
+        assert!(matches!(
+            parse_coord_row("1 2 3 0 1 extra", 2, 0),
+            Err(ParseError::InvalidVectorLength { expected: 5, .. })
+        ));
+        assert!(matches!(
+            parse_vector_section_row("0 0 0 0", 2),
+            Err(ParseError::InvalidVectorLength { expected: 5, .. })
+        ));
+        assert_eq!(count_tokens_on_line(b"  a   b\t", 0), 2);
+        assert_eq!(count_tokens_on_line(b"", 0), 0);
+        assert!(matches!(
+            parse_count_line("-1 2", 2),
+            Err(ParseError::InvalidCount(_))
+        ));
+        assert!(matches!(
+            parse_count_line(&"9".repeat(30), 1),
+            Err(ParseError::InvalidCount(_))
+        ));
+        assert!(matches!(
+            parse_frame_header(&mut ["only-one"].into_iter()),
+            Err(ParseError::IncompleteHeader)
+        ));
+        let array_header = parse_frame_header(&mut ["line", "[1]"].into_iter());
+        assert!(
+            matches!(array_header, Err(ParseError::IncompleteHeader)),
+            "{array_header:?}"
+        );
+        assert!(matches!(
+            parse_frame_header(&mut ["line", "{\"con_spec_version\":\"no\"}"].into_iter()),
+            Err(ParseError::InvalidMetadataJson(_))
+        ));
+        assert!(matches!(
+            parse_frame_header(&mut ["line", "{}"].into_iter()),
+            Err(ParseError::MissingSpecVersion)
+        ));
+        assert!(matches!(
+            parse_frame_header(&mut ["\u{feff}line", "{}"].into_iter()),
+            Err(ParseError::ValidationError(_))
+        ));
+        assert!(matches!(
+            parse_f64_at(b"", 0, 0),
+            Err(ParseError::InvalidVectorLength { .. })
+        ));
+        assert!(matches!(
+            parse_f64_at(b"\xff rest", 0, 0),
+            Err(ParseError::ValidationError(_))
+        ));
+        assert!(matches!(
+            parse_f64_at(b"inf", 0, 0),
+            Err(ParseError::NonFiniteValue(_))
+        ));
+        assert!(matches!(
+            parse_f64_at(b"1.0x", 0, 0),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_f64_at(b"abc", 0, 0),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_f64_at(b"1e9999", 0, 0),
+            Err(ParseError::NonFiniteValue(_))
+        ));
+        assert!(matches!(
+            parse_coord_fields_detailed(b"\n", 0, 2, None),
+            Err(ParseError::InvalidVectorLength { .. })
+        ));
+        assert!(parse_coord_fields_detailed(b"1.0 2.0 3.0 0 4\n", 0, 2, Some(0)).is_ok());
+        assert!(matches!(
+            parse_coord_fields_detailed(b"1.0 2.0 3.0 no\n", 0, 2, None),
+            Err(ParseError::InvalidFixedFlag(_))
+        ));
+        assert!(matches!(
+            parse_flag_at(b"9\n", 0, 2),
+            Err(ParseError::InvalidFixedFlag(_))
+        ));
+        assert_eq!(parse_flag_at(b"1\n", 0, 1).unwrap().0, [true, true, true]);
+        assert!(matches!(
+            parse_id_at(b"", 0),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_id_at(b"12x", 0),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
+        assert!(matches!(
+            parse_id_at(&b"9".repeat(40), 0),
+            Err(ParseError::InvalidNumberFormat(_))
+        ));
 
         let good = [
             "user",
@@ -3344,26 +3456,47 @@ Coordinates of Component 1
         ] {
             header.sections = vec![name.to_string()];
             let mut empty = std::iter::empty::<&str>().peekable();
-            let _ = parse_declared_sections(&mut empty, &mut header, &mut atoms);
+            assert!(matches!(
+                parse_declared_sections(&mut empty, &mut header, &mut atoms),
+                Err(ParseError::IncompleteSection(_))
+            ));
         }
-        let _ = validate_section_component("Energies", 0, 0, "H", "wrong label", &header, &atoms);
+        assert!(matches!(
+            validate_section_component("Energies", 0, 0, "H", "wrong label", &header, &atoms),
+            Err(ParseError::ValidationError(_))
+        ));
         header.natms_per_type[0] = 0;
-        let _ = validate_section_component(
-            "Energies",
-            0,
-            0,
-            "H",
-            "Energies of Component 1",
-            &header,
-            &atoms,
+        assert!(
+            validate_section_component(
+                "Energies",
+                0,
+                0,
+                "H",
+                "Energies of Component 1",
+                &header,
+                &atoms,
+            )
+            .is_ok()
         );
         header.natms_per_type[0] = 1;
-        let _ = validate_section_atom_identity("energies", 9, [false, false, false], 0, &atoms);
-        let _ = validate_section_atom_identity("energies", 0, [true, false, false], 1, &atoms);
-        let _ = validate_section_atom_identity("energies", 0, atoms[0].fixed, 99, &atoms);
+        assert!(matches!(
+            validate_section_atom_identity("energies", 9, [false, false, false], 0, &atoms),
+            Err(ParseError::ValidationError(_))
+        ));
+        assert!(matches!(
+            validate_section_atom_identity("energies", 0, [true, false, false], 1, &atoms),
+            Err(ParseError::ValidationError(_))
+        ));
+        assert!(matches!(
+            validate_section_atom_identity("energies", 0, atoms[0].fixed, 99, &atoms),
+            Err(ParseError::ValidationError(_))
+        ));
 
         let mut energy_lines = ["", "H", "not a label"].into_iter().peekable();
-        let _ = parse_energy_section(&mut energy_lines, &header, &mut atoms);
+        assert!(matches!(
+            parse_energy_section(&mut energy_lines, &header, &mut atoms),
+            Err(ParseError::IncompleteSection(_))
+        ));
 
         use serde_json::{Map, Value, json};
         let shapes = [
@@ -3376,12 +3509,10 @@ Coordinates of Component 1
             json!({"bonds": [{"i": u64::MAX, "j": 1}]}),
             json!({"bonds": [{"i": 0, "j": 1, "order": "no"}]}),
             json!({"bonds": ["no"]}),
-            json!({"bonds": [[0, 1], {"i": 0, "j": 1, "order": 2}]}),
             json!({"lattice_vectors": "no"}),
             json!({"lattice_vectors": [[1.0, 0.0, 0.0]]}),
             json!({"lattice_vectors": [1.0, [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
             json!({"lattice_vectors": [[1.0, 0.0, "a"], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
-            json!({"lattice_vectors": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
             json!({"section_arity": "no"}),
             json!({"section_arity": {"velocities": "x"}}),
             json!({"section_arity": {"velocities": 0}}),
@@ -3389,15 +3520,23 @@ Coordinates of Component 1
             json!({"potential": {"type": 1}}),
             json!({"units": 1}),
             json!({"pbc": [true]}),
-            json!({"converged": true}),
             json!({"energy": "hot"}),
         ];
         for value in shapes {
             let Value::Object(map) = value else { continue };
-            let _ = validate_metadata_schema(&map);
+            assert!(validate_metadata_schema(&map).is_err(), "{map:?}");
+        }
+        let good_meta = [
+            json!({"bonds": [[0, 1], {"i": 0, "j": 1, "order": 2}]}),
+            json!({"lattice_vectors": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
+            json!({"converged": true}),
+        ];
+        for value in good_meta {
+            let Value::Object(map) = value else { continue };
+            assert!(validate_metadata_schema(&map).is_ok(), "{map:?}");
         }
         let mut ok = Map::new();
         ok.insert("converged".into(), Value::Bool(true));
-        let _ = validate_metadata_schema(&ok);
+        assert!(validate_metadata_schema(&ok).is_ok());
     }
 }

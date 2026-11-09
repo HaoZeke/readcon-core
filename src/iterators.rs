@@ -3346,23 +3346,38 @@ mod phased_read_tests {
     fn timed_parse_and_position_copy_cover_the_worker_arms() {
         let text = fixture("tiny_cuh2.con");
         let bytes = text.as_bytes();
-        let _ = parse_bytes_timed(bytes, Some(2));
-        let _ = parse_bytes_timed(bytes, Some(1));
-        let _ = parse_bytes_timed(bytes, None);
-        let _ = sample_llc_misses();
-        let _ = numa_remote_pages();
+        let pooled = parse_bytes_timed(bytes, Some(2));
+        assert_eq!(pooled.slots.len(), 1);
+        assert!(pooled.slots[0].is_ok());
+        assert!(pooled.pool.is_some());
+        let serial = parse_bytes_timed(bytes, Some(1));
+        assert!(serial.pool.is_none());
+        assert_eq!(serial.slots.len(), 1);
+        assert!(serial.slots[0].is_ok());
+        let defaulted = parse_bytes_timed(bytes, None);
+        assert_eq!(defaulted.slots.len(), 1);
+        assert!(defaulted.slots[0].is_ok());
         let frame = read_first_frame(std::path::Path::new("resources/test/tiny_cuh2.con")).unwrap();
-        let mut dest = vec![0.0; 3];
-        assert!(copy_positions(&frame, &mut dest).is_err());
+        let mut short = vec![0.0; 3];
+        assert!(matches!(
+            copy_positions(&frame, &mut short),
+            Err(error::ParseError::InvalidCount(_))
+        ));
         let mut wide = vec![0.0; frame.positions.nrows() * 3];
-        let _ = copy_positions(&frame, &mut wide);
+        copy_positions(&frame, &mut wide).unwrap();
+        assert_eq!(wide, frame.positions.f64_slice().unwrap());
         assert!(pack_position_slab(&[], 2).is_none());
-        let other =
-            read_first_frame(std::path::Path::new("resources/test/tiny_cuh2_forces.con")).unwrap();
-        if other.positions.nrows() != frame.positions.nrows() {
-            let _ = pack_position_slab(&[frame.clone(), other], 3);
-        }
-        let _ = parse_byte_span(bytes, 0, bytes.len());
-        let _ = parse_byte_span(bytes, bytes.len(), bytes.len());
+        let mut one = types::ConFrameBuilder::new([8.0, 8.0, 8.0], [90.0, 90.0, 90.0]);
+        one.add_atom("H", 0.0, 0.0, 0.0, [false, false, false], 1, 1.0);
+        let mut two = types::ConFrameBuilder::new([8.0, 8.0, 8.0], [90.0, 90.0, 90.0]);
+        two.add_atom("H", 0.0, 0.0, 0.0, [false, false, false], 1, 1.0)
+            .add_atom("O", 1.0, 0.0, 0.0, [false, false, false], 8, 16.0);
+        assert!(pack_position_slab(&[one.build().unwrap(), two.build().unwrap()], 3).is_none());
+        let parsed = parse_byte_span(bytes, 0, bytes.len()).unwrap();
+        assert_eq!(parsed.atom_data.len(), frame.atom_data.len());
+        assert!(matches!(
+            parse_byte_span(bytes, bytes.len(), bytes.len()),
+            Err(error::ParseError::IncompleteFrame)
+        ));
     }
 }
