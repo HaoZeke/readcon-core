@@ -3577,11 +3577,14 @@ fn chemfiles_opts_from_kwargs(
     }
 }
 
-/// Read an extended XYZ file into positions, masses and the cell.
+/// Read an extended XYZ file into positions, masses, the cell and types.
 ///
 /// The comment line gives the lattice and the column order. Positions
 /// have shape `(frames, atoms, 3)`. Masses have shape `(frames, atoms)`.
-/// The cell has shape `(frames, 6)`.
+/// The cell has shape `(frames, 6)`. Types have shape `(frames, atoms)`
+/// and dtype ``uint64``. Each entry is the atomic number from
+/// ``symbol_to_atomic_number``, the same lookup ``read_con`` uses for a
+/// chemical symbol. An unknown species raises ``ValueError``.
 #[pyfunction]
 fn read_extxyz<'py>(
     py: Python<'py>,
@@ -3590,6 +3593,7 @@ fn read_extxyz<'py>(
     Bound<'py, numpy::PyArray3<f64>>,
     Bound<'py, numpy::PyArray2<f64>>,
     Bound<'py, numpy::PyArray2<f64>>,
+    Bound<'py, numpy::PyArray2<u64>>,
 )> {
     let tables = crate::extxyz_scan::tables_from_extxyz_path(std::path::Path::new(path))
         .map_err(|err| pyo3::exceptions::PyValueError::new_err(err))?;
@@ -3600,10 +3604,13 @@ fn read_extxyz<'py>(
         .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
     let cell = ndarray::Array2::from_shape_vec((tables.n_frames, 6), tables.cell)
         .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
+    let types = ndarray::Array2::from_shape_vec((tables.n_frames, tables.n_atoms), tables.types)
+        .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
     Ok((
         positions.into_pyarray(py),
         masses.into_pyarray(py),
         cell.into_pyarray(py),
+        types.into_pyarray(py),
     ))
 }
 
