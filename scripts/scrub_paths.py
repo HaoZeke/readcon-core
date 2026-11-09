@@ -94,32 +94,39 @@ def write_report(root: Path, per_file: dict[str, dict[str, int]]) -> None:
         "",
         "The scrubber builds each needle at runtime from a slash character and a prefix, then replaces it.",
         "",
-        "| needle built as | replacement |",
-        "|---|---|",
-        "| chr(47) + home | `<HOME>` |",
-        "| chr(47) + cursor | `<WORK>` |",
-        "",
-        "Per-file replacement counts follow. A zero row is omitted.",
-        "",
-        "| file | `<HOME>` | `<WORK>` |",
-        "|---|---:|---:|",
     ]
-    home_total = 0
-    work_total = 0
-    for name in sorted(per_file):
-        counts = per_file[name]
-        home = counts.get("<HOME>", 0)
-        work = counts.get("<WORK>", 0)
-        home_total += home
-        work_total += work
-        lines.append(f"| `{name}` | {home} | {work} |")
-    lines.extend(
-        [
-            "",
-            f"Totals: `<HOME>` {home_total}, `<WORK>` {work_total}.",
-            "",
-        ]
-    )
+    if not per_file:
+        lines.extend(
+            [
+                "No file in this kit contained either prefix. No path was rewritten, and this note lists no file.",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "Per-file replacement counts follow. A zero row is omitted. Only files that exist in this kit are listed.",
+                "",
+                "| file | home prefix | cursor prefix |",
+                "|---|---:|---:|",
+            ]
+        )
+        home_total = 0
+        work_total = 0
+        for name in sorted(per_file):
+            counts = per_file[name]
+            home = counts.get("<HOME>", 0)
+            work = counts.get("<WORK>", 0)
+            home_total += home
+            work_total += work
+            lines.append(f"| `{name}` | {home} | {work} |")
+        lines.extend(
+            [
+                "",
+                f"Totals: home prefix {home_total}, cursor prefix {work_total}.",
+                "",
+            ]
+        )
     (root / "SCRUB.md").write_text("\n".join(lines), encoding="utf-8")
 
 
