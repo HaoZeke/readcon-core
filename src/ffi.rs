@@ -5599,6 +5599,17 @@ pub unsafe extern "C" fn rkr_unpack_rcso_forces(
 mod tests {
     use super::*;
     use std::ffi::{CStr, CString};
+
+    #[test]
+    fn dlpack_error_mapping_covers_each_arm() {
+        use crate::error::ParseError;
+        let _ = map_dlpack_err(ParseError::ValidationError("device mismatch".into()));
+        let _ = map_dlpack_err(ParseError::ValidationError("no device allocator".into()));
+        let _ = map_dlpack_err(ParseError::ValidationError("allocator missing".into()));
+        let _ = map_dlpack_err(ParseError::ValidationError("other".into()));
+        let _ = map_dlpack_err(ParseError::InvalidCount("no".into()));
+    }
+
     #[test]
     fn frame_copy_positions_without_cframe() {
         let handle = test_frame_handle();
