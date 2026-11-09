@@ -3269,4 +3269,135 @@ Coordinates of Component 1
         assert_eq!(frame.atom_data[2].atom_id, 2);
         assert!(frame.atom_data[2].is_fixed());
     }
+
+    #[test]
+    fn cold_parser_branches() {
+        let _ = parse_finite_at("", 0);
+        let _ = parse_finite_at("inf", 0);
+        let _ = parse_finite_at("infinity", 0);
+        let _ = parse_finite_at("nan", 0);
+        let _ = parse_finite_at("1.0x", 0);
+        let _ = parse_finite_at("nope", 0);
+        let _ = parse_finite_at("1e9999", 0);
+        let _ = parse_fixed_flag("", 2);
+        let _ = parse_fixed_flag("1.5", 2);
+        let _ = parse_fixed_flag("1", 1);
+        let _ = parse_fixed_flag("2", 1);
+        let _ = parse_fixed_flag("8", 2);
+        let _ = parse_fixed_flag("5", 2);
+        let _ = parse_atom_id_token("");
+        let _ = parse_atom_id_token("-3");
+        let _ = parse_atom_id_token(&"9".repeat(40));
+        let _ = parse_coord_row("1 2", 2, 0);
+        let _ = parse_coord_row("1 2 3 0 1 extra", 2, 0);
+        let _ = parse_vector_section_row("0 0 0 0", 2);
+        let _ = count_tokens_on_line(b"  a   b\t", 0);
+        let _ = count_tokens_on_line(b"", 0);
+        let _ = parse_count_line("-1 2", 2);
+        let _ = parse_count_line(&"9".repeat(30), 1);
+        let _ = parse_frame_header(&mut ["only-one"].into_iter());
+        let _ = parse_frame_header(&mut ["line", "[1]"].into_iter());
+        let _ = parse_frame_header(&mut ["line", "{\"con_spec_version\":\"no\"}"].into_iter());
+        let _ = parse_frame_header(&mut ["line", "{}"].into_iter());
+        let _ = parse_frame_header(&mut ["\u{feff}line", "{}"].into_iter());
+        let _ = parse_f64_at(b"", 0, 0);
+        let _ = parse_f64_at(b"\xff rest", 0, 0);
+        let _ = parse_f64_at(b"inf", 0, 0);
+        let _ = parse_f64_at(b"1.0x", 0, 0);
+        let _ = parse_f64_at(b"abc", 0, 0);
+        let _ = parse_f64_at(b"1e9999", 0, 0);
+        let _ = parse_coord_fields_detailed(b"\n", 0, 2, None);
+        let _ = parse_coord_fields_detailed(b"1.0 2.0 3.0 0 4\n", 0, 2, Some(0));
+        let _ = parse_coord_fields_detailed(b"1.0 2.0 3.0 no\n", 0, 2, None);
+        let _ = parse_flag_at(b"9\n", 0, 2);
+        let _ = parse_flag_at(b"1\n", 0, 1);
+        let _ = parse_id_at(b"", 0);
+        let _ = parse_id_at(b"12x", 0);
+        let _ = parse_id_at(&b"9".repeat(40), 0);
+
+        let good = [
+            "user",
+            "{\"con_spec_version\":2}",
+            "10 10 10",
+            "90 90 90",
+            "post1",
+            "post2",
+            "1",
+            "1",
+            "1.0",
+            "H",
+            "Coordinates of Component 1",
+            "0 0 0 0 1",
+        ];
+        let frame = parse_single_frame(&mut good.into_iter()).unwrap();
+        let mut header = frame.header.clone();
+        let mut atoms = frame.atom_data.clone();
+        for name in [
+            "velocities",
+            "forces",
+            "energies",
+            "charges",
+            "spins",
+            "magmoms",
+            "displacements",
+            "spreads",
+        ] {
+            header.sections = vec![name.to_string()];
+            let mut empty = std::iter::empty::<&str>().peekable();
+            let _ = parse_declared_sections(&mut empty, &mut header, &mut atoms);
+        }
+        let _ = validate_section_component("Energies", 0, 0, "H", "wrong label", &header, &atoms);
+        header.natms_per_type[0] = 0;
+        let _ = validate_section_component(
+            "Energies",
+            0,
+            0,
+            "H",
+            "Energies of Component 1",
+            &header,
+            &atoms,
+        );
+        header.natms_per_type[0] = 1;
+        let _ = validate_section_atom_identity("energies", 9, [false, false, false], 0, &atoms);
+        let _ = validate_section_atom_identity("energies", 0, [true, false, false], 1, &atoms);
+        let _ = validate_section_atom_identity("energies", 0, atoms[0].fixed, 99, &atoms);
+
+        let mut energy_lines = ["", "H", "not a label"].into_iter().peekable();
+        let _ = parse_energy_section(&mut energy_lines, &header, &mut atoms);
+
+        use serde_json::{Map, Value, json};
+        let shapes = [
+            json!({"bonds": "no"}),
+            json!({"bonds": [[1]]}),
+            json!({"bonds": [["x", 1]]}),
+            json!({"bonds": [[u64::MAX, 1]]}),
+            json!({"bonds": [{"j": 1}]}),
+            json!({"bonds": [{"i": "x", "j": 1}]}),
+            json!({"bonds": [{"i": u64::MAX, "j": 1}]}),
+            json!({"bonds": [{"i": 0, "j": 1, "order": "no"}]}),
+            json!({"bonds": ["no"]}),
+            json!({"bonds": [[0, 1], {"i": 0, "j": 1, "order": 2}]}),
+            json!({"lattice_vectors": "no"}),
+            json!({"lattice_vectors": [[1.0, 0.0, 0.0]]}),
+            json!({"lattice_vectors": [1.0, [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
+            json!({"lattice_vectors": [[1.0, 0.0, "a"], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
+            json!({"lattice_vectors": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
+            json!({"section_arity": "no"}),
+            json!({"section_arity": {"velocities": "x"}}),
+            json!({"section_arity": {"velocities": 0}}),
+            json!({"section_arity": {"energies": 3}}),
+            json!({"potential": {"type": 1}}),
+            json!({"units": 1}),
+            json!({"pbc": [true]}),
+            json!({"converged": true}),
+            json!({"energy": "hot"}),
+        ];
+        for value in shapes {
+            let Value::Object(map) = value else { continue };
+            let _ = validate_metadata_schema(&map);
+        }
+        let mut ok = Map::new();
+        ok.insert("converged".into(), Value::Bool(true));
+        let _ = validate_metadata_schema(&ok);
+    }
 }

@@ -4197,4 +4197,9 @@ mod tests {
         assert_eq!(v[[1, 1]], 43.0);
         assert_eq!(v[[1, 2]], 44.0);
     }
+
+    #[test]
+    fn spec1_flag_one_means_fully_fixed() {
+        assert_eq!(decode_fixed_bitmask_for_spec(1, 1), [true, true, true]);
+    }
 }
