@@ -37,7 +37,7 @@ def test_coordinate_arrays_round_trip(tmp_path):
     assert written["write_s"] >= 0.0
     again = readcon.read_coords(str(dest))
     assert again["n_atoms"] == coords["n_atoms"]
-    with pytest.raises(Exception):
+    with pytest.raises(TypeError, match="not contiguous"):
         readcon.write_coords(
             str(tmp_path / "bad.con"),
             coords["positions"],
@@ -118,9 +118,10 @@ def test_readers_writers_and_feature_flags(tmp_path):
     path = resource("tiny_cuh2.con")
     frames, phases = readcon.read_con_phases(path, build="lazy")
     assert phases["n_frames"] >= 1
-    eager, _ = readcon.read_con_phases(path, 2, build="eager")
+    eager, eager_phases = readcon.read_con_phases(path, 2, build="eager")
     assert len(eager) == len(frames)
-    with pytest.raises(Exception):
+    assert eager_phases["n_frames"] == phases["n_frames"]
+    with pytest.raises(ValueError, match="unknown build"):
         readcon.read_con_phases(path, build="sideways")
     listed = readcon.read_all_frames(path, 2)
     assert len(listed) >= 1
@@ -128,25 +129,26 @@ def test_readers_writers_and_feature_flags(tmp_path):
     digest, seconds = listed.touch_checksum()
     assert isinstance(digest, int)
     assert seconds >= 0.0
-    listed.release_frames()
+    assert listed.release_frames() >= 0.0
     single = readcon.read_con(path)
-    try:
-        single.touch_checksum()
-    except Exception:
-        pass
-    single.release_frames()
-    with pytest.raises(Exception):
+    digest, seconds = single.touch_checksum()
+    assert isinstance(digest, int)
+    assert seconds >= 0.0
+    assert single.release_frames() >= 0.0
+    with pytest.raises(NotImplementedError, match="comm= needs readcon built with the mpi feature"):
         readcon.read_con(path, comm=object())
-    with pytest.raises(Exception):
+    with pytest.raises(NotImplementedError, match="comm= needs readcon built with the mpi feature"):
         readcon.write_con(str(tmp_path / "mpi.con"), frames, comm=object())
     dest = tmp_path / "plain.con"
     readcon.write_con(str(dest), frames, precision=6, compression="none", canonical=True)
+    assert dest.stat().st_size > 0
     gzip = tmp_path / "plain.con.gz"
     readcon.write_con(str(gzip), frames, compression="gzip")
-    with pytest.raises(Exception):
+    assert gzip.read_bytes()[:2] == b"\x1f\x8b"
+    with pytest.raises(OSError, match="unknown compression: bzip2"):
         readcon.write_con(str(tmp_path / "nope.con"), frames, compression="bzip2")
     text = readcon.write_con_string(frames, precision=8, canonical=True)
-    assert "Cu" in text or len(text) > 0
+    assert "Cu" in text
     first = readcon.read_first_frame(path)
     nth = readcon.read_nth_frame(path, 0)
     assert len(first) == len(nth)
@@ -154,36 +156,31 @@ def test_readers_writers_and_feature_flags(tmp_path):
     assert positions.shape[-1] == 3
     probe = readcon.scan_probe(path, 2, True)
     assert probe[0] >= 1
-    assert readcon.has_parallel_support() in (True, False)
+    assert readcon.has_parallel_support() is True
     assert readcon.has_mpi_support() is False
-    assert readcon.has_chemfiles_support() in (True, False)
-    with pytest.raises(Exception):
+    assert readcon.has_chemfiles_support() is False
+    with pytest.raises(OSError, match="CON-bin"):
         readcon.read_conbin(path)
-    with pytest.raises(Exception):
+    chemfiles = "chemfiles support is not enabled"
+    with pytest.raises(RuntimeError, match=chemfiles):
         readcon.read_chemfiles(path)
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         readcon.read_chemfiles_first(path)
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         readcon.read_chemfiles_nth(path, 0)
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         readcon.read_chemfiles_nsteps(path)
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         readcon.read_chemfiles_memory("H 0 0 0\n", "XYZ")
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         readcon.select_on_frame(first, "name H")
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         readcon.select_atom_indices(first, "name H")
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         first.select("name H")
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match=chemfiles):
         first.select_atoms("name H")
-    xyz = resource("water_min.xyz")
-    try:
-        arrays = readcon.read_extxyz(xyz)
-        assert arrays[0].shape[-1] == 3
-    except Exception:
-        pass
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="no atoms"):
         readcon.read_pdb(path)
     uneven = tmp_path / "uneven.con"
     wide = readcon.ConFrame(
@@ -197,7 +194,8 @@ def test_readers_writers_and_feature_flags(tmp_path):
         atoms=[one_atom()],
     )
     readcon.write_con(str(uneven), [wide, narrow])
-    with pytest.raises(Exception):
+    assert uneven.stat().st_size > 0
+    with pytest.raises(ValueError, match="same atom count"):
         readcon.read_coords(str(uneven))
 
 
@@ -207,10 +205,11 @@ def test_sections_extxyz_pdb_conbin_and_ase(tmp_path):
     assert frame.vel is not None
     assert frame.frc is not None
     multi = readcon.read_con(resource("tiny_multi_cuh2.con"), 8)
-    multi.release_frames()
+    assert multi.release_frames() >= 0.0
     text = open(resource("tiny_multi_cuh2.con"), encoding="utf-8").read()
     from_text = readcon.read_con_string(text, 2)
-    from_text.release_frames()
+    assert len(from_text) >= 2
+    assert from_text.release_frames() >= 0.0
     ase_frames = readcon.read_con_as_ase(resource("tiny_cuh2.con"))
     assert ase_frames
     from ase import Atoms
@@ -218,10 +217,11 @@ def test_sections_extxyz_pdb_conbin_and_ase(tmp_path):
     finite = Atoms("H", positions=[[0.0, 0.0, 0.0]], cell=[4.0, 4.0, 4.0], pbc=True)
     assert readcon.ConFrame.from_ase(finite).cell[0] > 0
     zero = Atoms("H", positions=[[0.0, 0.0, 0.0]], cell=[0.0, 0.0, 0.0], pbc=False)
-    readcon.ConFrame.from_ase(zero)
+    zero_frame = readcon.ConFrame.from_ase(zero)
+    assert zero_frame.cell[0] == pytest.approx(0.0)
     bad = Atoms("H", positions=[[0.0, 0.0, 0.0]])
     bad.set_cell([[float("nan"), 0, 0], [0, 1, 0], [0, 0, 1]])
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="finite numbers"):
         readcon.ConFrame.from_ase(bad)
     ext = tmp_path / "one.extxyz"
     ext.write_text(
@@ -255,7 +255,7 @@ def test_sections_extxyz_pdb_conbin_and_ase(tmp_path):
     assert atoms == n_atoms
     narrow = tmp_path / "f32.conbin"
     readcon.write_conbin(resource("tiny_cuh2.con"), str(narrow), binary32=True)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="binary32"):
         readcon.read_conbin(str(narrow))
 
 
@@ -264,22 +264,18 @@ def test_iterator_and_index_edges():
     listed_from_text = readcon.read_con_string(text, 2)
     assert len(listed_from_text) >= 2
     iterator = readcon.iter_con(resource("tiny_multi_cuh2.con"), stream=True)
-    assert iterator.forward() in (True, False)
-    skipped = iterator.skip(1)
-    assert skipped >= 0
-    try:
-        iterator.nth(0)
-    except Exception:
-        pass
+    assert iterator.forward() is True
+    assert iterator.skip(1) == 1
+    assert iterator.nth(0) is None
     mapped = readcon.iter_con(resource("tiny_cuh2.con"), mmap=True)
-    assert mapped.forward() in (True, False)
-    with pytest.raises(Exception):
+    assert mapped.forward() is True
+    with pytest.raises(ValueError, match="mmap and stream cannot both be true"):
         readcon.iter_con(resource("tiny_cuh2.con"), mmap=True, stream=True)
     frames = list(readcon.read_con(resource("tiny_cuh2.con")))
     assert frames
     listed = readcon.read_con(resource("tiny_multi_cuh2.con"))
     assert listed[0] is not None
     assert listed[-1] is not None
-    with pytest.raises(Exception):
+    with pytest.raises(IndexError, match="out of range"):
         listed[99]
     assert len(listed[:]) >= 1
