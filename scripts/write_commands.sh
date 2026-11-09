@@ -26,6 +26,9 @@ scripts/coverage_branch.sh iterator_coverage
 # Timings. The build runs first, then the bench scripts produce results.json.
 scripts/run_timings.sh
 
+# Session drift. The command checks the sha256 of each input before it reads the files.
+python3 scripts/session_drift.py drift/r2.9-results.json results.json --old-extension drift/r2.9-188.so --new-extension drift/r2.10-188.so --log logs.tar.xz --expect drift/SHA256
+
 # Fortran annotations. Writes the two .gcov files and fortran-procedures.txt.
 READCON_LIB_DIR=target/release scripts/coverage_fortran.sh iterator_coverage
 # gfortran -c -g -O0 --coverage -cpp fortran/ReadCon/src/readcon.f90 fortran/ReadCon/test/test_iterator_stream.f90
