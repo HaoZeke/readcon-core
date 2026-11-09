@@ -15,7 +15,7 @@ OUT="${1:-iterator_coverage}"
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
 
-export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/llvm-cov-target}"
+export CARGO_TARGET_DIR="$ROOT/target/llvm-cov-target"
 unset RUSTC_WRAPPER || true
 
 cargo +nightly llvm-cov clean --workspace
@@ -37,9 +37,9 @@ while IFS= read -r candidate; do
   if [[ -n "$candidate" && -x "$candidate" && -f "$candidate" ]]; then
     BIN="$candidate"
   fi
-done < <(find "$CARGO_TARGET_DIR/debug/deps" -type f -name 'readcon_core-*' ! -name '*.*' -printf '%T@ %p\n' | sort -n | awk '{print $2}')
+done < <(find "$CARGO_TARGET_DIR" -type f -name 'readcon_core-*' ! -name '*.*' -printf '%T@ %p\n' | sort -n | awk '{print $2}')
 if [[ -z "$BIN" ]]; then
-  echo "no lib test binary under $CARGO_TARGET_DIR/debug/deps" >&2
+  echo "no lib test binary under $CARGO_TARGET_DIR" >&2
   exit 1
 fi
 
