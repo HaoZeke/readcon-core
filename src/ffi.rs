@@ -1,5 +1,5 @@
 use crate::helpers::symbol_to_atomic_number;
-use crate::iterators::{self, ConFrameIterator};
+use crate::iterators;
 use crate::types::{ConFrame, ConFrameBuilder, meta};
 use crate::writer::{ConFrameWriter, binding_rewrite_frame};
 use std::cell::RefCell;
@@ -605,34 +605,66 @@ pub struct CAtom {
 }
 #[repr(C)]
 pub struct CConFrameIterator {
-    iterator: *mut ConFrameIterator<'static>,
+    /// Heap [`crate::c_iter::Cursor`]. NULL means the handle is invalid.
+    iterator: *mut crate::c_iter::Cursor,
+    /// Unused. Kept so the struct stays two pointers, matching the C header.
     file_contents: *mut String,
 }
 
-/// Build a path/buffer-backed C iterator from an owned CON text buffer.
+fn c_iterator_from_cursor(cursor: crate::c_iter::Cursor) -> *mut CConFrameIterator {
+    Box::into_raw(Box::new(CConFrameIterator {
+        iterator: Box::into_raw(Box::new(cursor)),
+        file_contents: ptr::null_mut(),
+    }))
+}
+
+/// Build a string/buffer iterator. The text is the caller's buffer, copied once.
 fn c_iterator_from_owned_string(contents: String) -> *mut CConFrameIterator {
-    let file_contents_box = Box::new(contents);
-    let file_contents_ptr = Box::into_raw(file_contents_box);
-    let static_file_contents: &'static str = unsafe { &*file_contents_ptr };
-    let iterator = Box::new(ConFrameIterator::new(static_file_contents));
-    let c_iterator = Box::new(CConFrameIterator {
-        iterator: Box::into_raw(iterator),
-        file_contents: file_contents_ptr,
-    });
-    Box::into_raw(c_iterator)
+    c_iterator_from_cursor(crate::c_iter::Cursor::from_text(contents))
+}
+
+fn cursor_mut<'a>(iterator: *mut CConFrameIterator) -> Option<&'a mut crate::c_iter::Cursor> {
+    if iterator.is_null() {
+        return None;
+    }
+    let inner = unsafe { (*iterator).iterator };
+    if inner.is_null() {
+        return None;
+    }
+    Some(unsafe { &mut *inner })
+}
+
+#[cfg(test)]
+pub(crate) fn invalid_c_iterator() -> *mut CConFrameIterator {
+    Box::into_raw(Box::new(CConFrameIterator {
+        iterator: ptr::null_mut(),
+        file_contents: ptr::null_mut(),
+    }))
+}
+
+pub(crate) fn open_file_iterator_sized(
+    path: &std::path::Path,
+    read_size: usize,
+) -> *mut CConFrameIterator {
+    match crate::c_iter::Cursor::open_file(path, read_size) {
+        Ok(cursor) => c_iterator_from_cursor(cursor),
+        Err(_) => ptr::null_mut(),
+    }
 }
 
 //=============================================================================
 // Iterator and Memory Management
 //=============================================================================
 /// Creates a new iterator for a .con / .convel path, including transparent
-/// gzip (`.con.gz`) and zstd (`.con.zst`, requires `zstd` feature) inputs via
-/// [`crate::compression::read_file_contents`].
+/// gzip (`.con.gz`) and zstd (`.con.zst`, requires `zstd` feature) inputs.
 ///
-/// Returns NULL if the file cannot be read, decompressed, or is not valid
-/// UTF-8. A successfully-opened file with zero frames returns a non-NULL
-/// iterator that yields NULL on the first call to [`con_frame_iterator_next`].
-/// The caller OWNS the returned pointer and MUST call [`free_con_frame_iterator`].
+/// The file is read through a bounded buffer, the same reader as
+/// [`crate::stream::ConFrameReader`]. Memory stays near one frame plus one
+/// read, not the size of the file. Returns NULL if the file cannot be
+/// opened or decompressed. A successfully-opened file with zero frames
+/// returns a non-NULL iterator that yields NULL on the first call to
+/// [`con_frame_iterator_next`]. The caller OWNS the returned pointer and
+/// MUST call [`free_con_frame_iterator`].
 ///
 /// # Safety
 /// filename_c must be a valid null-terminated string. The caller takes
@@ -648,14 +680,7 @@ pub unsafe extern "C" fn read_con_file_iterator(
         Ok(s) => s,
         Err(_) => return ptr::null_mut(),
     };
-    let owned = match crate::compression::read_file_contents(Path::new(filename)) {
-        Ok(fc) => match fc.as_str() {
-            Ok(s) => s.to_owned(),
-            Err(_) => return ptr::null_mut(),
-        },
-        Err(_) => return ptr::null_mut(),
-    };
-    c_iterator_from_owned_string(owned)
+    open_file_iterator_sized(Path::new(filename), crate::stream::DEFAULT_READ_SIZE)
 }
 
 /// Iterate frames from an in-memory CON text buffer (null-terminated C string).
@@ -712,11 +737,10 @@ pub unsafe extern "C" fn read_con_buffer_iterator(
 pub unsafe extern "C" fn con_frame_iterator_next(
     iterator: *mut CConFrameIterator,
 ) -> *mut RKRConFrame {
-    if iterator.is_null() {
+    let Some(cursor) = cursor_mut(iterator) else {
         return ptr::null_mut();
-    }
-    let iter = unsafe { &mut *(*iterator).iterator };
-    match iter.next() {
+    };
+    match cursor.next_frame() {
         Some(Ok(frame)) => Box::into_raw(Box::new(frame)) as *mut RKRConFrame,
         _ => ptr::null_mut(),
     }
@@ -726,29 +750,27 @@ pub unsafe extern "C" fn con_frame_iterator_next(
 /// `RKR_STATUS_INDEX_OUT_OF_BOUNDS` at EOF, other codes on parse error.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn con_frame_iterator_forward(iterator: *mut CConFrameIterator) -> RKRStatus {
-    if iterator.is_null() {
+    let Some(cursor) = cursor_mut(iterator) else {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
-    }
-    let iter = unsafe { &mut *(*iterator).iterator };
-    match iter.forward() {
+    };
+    match cursor.forward() {
         Some(Ok(())) => RKRStatus::RKR_STATUS_SUCCESS,
         Some(Err(_)) => RKRStatus::RKR_STATUS_IO_ERROR,
         None => RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS,
     }
 }
 
-/// Skip `n` frames without parsing atoms. Returns the number skipped, or
-/// `usize::MAX` on a null iterator.
+/// Skip `n` frames without parsing atoms. Returns the number skipped.
+/// `usize::MAX` on a null iterator or a parse error.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn con_frame_iterator_skip(
     iterator: *mut CConFrameIterator,
     n: usize,
 ) -> usize {
-    if iterator.is_null() {
+    let Some(cursor) = cursor_mut(iterator) else {
         return usize::MAX;
-    }
-    let iter = unsafe { &mut *(*iterator).iterator };
-    iter.skip_frames(n).unwrap_or(usize::MAX)
+    };
+    cursor.skip(n).unwrap_or(usize::MAX)
 }
 
 /// Skip `index` frames, then parse the next. NULL at EOF or on error.
@@ -757,15 +779,14 @@ pub unsafe extern "C" fn con_frame_iterator_nth(
     iterator: *mut CConFrameIterator,
     index: usize,
 ) -> *mut RKRConFrame {
-    if iterator.is_null() {
+    let Some(cursor) = cursor_mut(iterator) else {
         return ptr::null_mut();
-    }
-    let iter = unsafe { &mut *(*iterator).iterator };
-    match iter.skip_frames(index) {
+    };
+    match cursor.skip(index) {
         Ok(skipped) if skipped == index => {}
         _ => return ptr::null_mut(),
     }
-    match iter.next() {
+    match cursor.next_frame() {
         Some(Ok(frame)) => Box::into_raw(Box::new(frame)) as *mut RKRConFrame,
         _ => ptr::null_mut(),
     }
@@ -951,8 +972,12 @@ pub unsafe extern "C" fn free_con_frame_iterator(iterator: *mut CConFrameIterato
     }
     unsafe {
         let c_iterator_box = Box::from_raw(iterator);
-        let _ = Box::from_raw(c_iterator_box.iterator);
-        let _ = Box::from_raw(c_iterator_box.file_contents);
+        if !c_iterator_box.iterator.is_null() {
+            drop(Box::from_raw(c_iterator_box.iterator));
+        }
+        if !c_iterator_box.file_contents.is_null() {
+            drop(Box::from_raw(c_iterator_box.file_contents));
+        }
     }
 }
 //=============================================================================
@@ -6422,5 +6447,23 @@ mod tests {
             free_rkr_frame(fr);
             free_con_frame_iterator(it);
         }
+    }
+
+    #[test]
+    fn free_drops_a_legacy_file_contents_pointer() {
+        let iterator = Box::into_raw(Box::new(CConFrameIterator {
+            iterator: ptr::null_mut(),
+            file_contents: Box::into_raw(Box::new(String::from("legacy"))),
+        }));
+        assert!(!iterator.is_null());
+        unsafe { free_con_frame_iterator(iterator) };
+        let again = Box::into_raw(Box::new(CConFrameIterator {
+            iterator: ptr::null_mut(),
+            file_contents: ptr::null_mut(),
+        }));
+        assert!(!again.is_null());
+        unsafe { free_con_frame_iterator(again) };
+        let status = unsafe { con_frame_iterator_forward(ptr::null_mut()) };
+        assert_eq!(status, RKRStatus::RKR_STATUS_NULL_POINTER);
     }
 }

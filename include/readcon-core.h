@@ -286,7 +286,9 @@ typedef struct String String;
 typedef struct RKRConFrame RKRConFrame;
 
 typedef struct CConFrameIterator {
+    /* Private. A path iterator streams through a bounded buffer. */
     struct ConFrameIterator *iterator;
+    /* Private. Not a copy of the file. */
     struct String *file_contents;
 } CConFrameIterator;
 
@@ -656,10 +658,11 @@ const char *rkr_last_error_message(void);
 /**
  * Creates a new iterator for a .con / .convel path, including transparent
  * gzip (`.con.gz`) and zstd (`.con.zst`, requires `zstd` feature) inputs via
- * [`crate::compression::read_file_contents`].
+ * [`crate::stream::ConFrameReader`]. The read buffer stays near one frame
+ * plus one read, not the size of the file.
  *
- * Returns NULL if the file cannot be read, decompressed, or is not valid
- * UTF-8. A successfully-opened file with zero frames returns a non-NULL
+ * Returns NULL if the file cannot be opened or decompressed. A
+ * successfully-opened file with zero frames returns a non-NULL
  * iterator that yields NULL on the first call to [`con_frame_iterator_next`].
  * The caller OWNS the returned pointer and MUST call [`free_con_frame_iterator`].
  *
@@ -707,8 +710,8 @@ struct RKRConFrame *con_frame_iterator_next(struct CConFrameIterator *iterator);
 enum RKRStatus con_frame_iterator_forward(struct CConFrameIterator *iterator);
 
 /**
- * Skip `n` frames without parsing atoms. Returns the number skipped, or
- * `usize::MAX` on a null iterator.
+ * Skip `n` frames without parsing atoms. Returns the number skipped.
+ * `UINTPTR_MAX` on a null iterator or a parse error.
  */
 uintptr_t con_frame_iterator_skip(struct CConFrameIterator *iterator,
                                   uintptr_t n);

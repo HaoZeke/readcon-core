@@ -941,6 +941,8 @@ contains
     frame_c_handle = fr%handle
   end function
 
+  !> Stream frames from a path. The C iterator keeps one frame plus its
+  !> read buffer, not a copy of the file. A missing path is an invalid iterator.
   function open_iterator(path) result(it)
     character(len=*), intent(in) :: path
     type(iterator_t) :: it
