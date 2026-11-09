@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import os
 import sys
 import time
 import traceback
@@ -49,6 +50,9 @@ def extension_sha256() -> dict[str, dict[str, str]]:
 
 IMPORTS = {
     "readcon_extxyz": ("readcon",),
+    "readcon_extxyz_188": ("readcon",),
+    "readcon_extxyz_r27": ("readcon",),
+    "readcon_pypi": ("readcon",),
     "readcon_py": ("readcon",),
     "ase_extxyz": ("ase", "ase.io"),
     "ase_eon": ("ase", "ase.io"),
@@ -71,6 +75,25 @@ def read_extxyz(path: str) -> dict:
         "angles": np.asarray(cell[:, 3:], dtype=np.float64),
         "types": np.asarray(types),
         "types_dtype": str(types.dtype),
+        "cell_parsed": True,
+    }
+
+
+def read_extxyz_wheel(path: str) -> dict:
+    import readcon
+
+    got = readcon.read_extxyz(path)
+    if len(got) != 3:
+        raise RuntimeError(f"published wheel returned {len(got)} arrays")
+    positions, masses, cell = got
+    del masses
+    return {
+        "positions": np.asarray(positions, dtype=np.float64),
+        "lengths": np.asarray(cell[:, :3], dtype=np.float64),
+        "angles": np.asarray(cell[:, 3:], dtype=np.float64),
+        "types": None,
+        "types_dtype": "absent",
+        "types_available": False,
         "cell_parsed": True,
     }
 
@@ -297,6 +320,9 @@ def read_readcon_con(path: str) -> dict:
 
 READERS = {
     "readcon_extxyz": read_extxyz,
+    "readcon_extxyz_188": read_extxyz,
+    "readcon_extxyz_r27": read_extxyz,
+    "readcon_pypi": read_extxyz_wheel,
     "readcon_py": read_readcon_con,
     "ase_extxyz": read_ase,
     "ase_eon": read_ase_eon,
@@ -354,13 +380,38 @@ def load_truth(path: Path) -> dict:
     return {"positions": positions, "lengths": lengths, "angles": angles, "types": types}
 
 
+def _write(arm: str, path: str, dest: str) -> float:
+    if arm == "readcon_py":
+        import readcon
+
+        frames = readcon.read_con(path, n_threads=1)
+        started = time.perf_counter()
+        readcon.write_con(dest, frames)
+        return time.perf_counter() - started
+    if arm == "ase_eon":
+        from ase.io import read, write
+
+        images = read(path, index=":", format="eon")
+        if not isinstance(images, list):
+            images = [images]
+        started = time.perf_counter()
+        write(dest, images, format="eon")
+        return time.perf_counter() - started
+    raise RuntimeError(f"no write for {arm}")
+
+
 def main() -> int:
+    site = os.environ.get("H2H_READCON_SITE")
+    if site:
+        sys.path.insert(0, site)
     parser = argparse.ArgumentParser()
     parser.add_argument("--arm", required=True)
     parser.add_argument("--path", required=True)
     parser.add_argument("--truth", required=True)
     parser.add_argument("--log", required=True)
     parser.add_argument("--command", default="")
+    parser.add_argument("--op", default="read")
+    parser.add_argument("--dest", default="")
     args = parser.parse_args()
     lines = []
     rev, status = git_capture()
@@ -381,11 +432,35 @@ def main() -> int:
     try:
         for name in IMPORTS[args.arm]:
             importlib.import_module(name)
-        t0 = time.perf_counter()
-        result = READERS[args.arm](args.path)
-        elapsed = time.perf_counter() - t0
-        checked = compare(result, load_truth(Path(args.truth)))
+        if args.op == "write":
+            elapsed = _write(args.arm, args.path, args.dest)
+            if args.arm == "readcon_py":
+                result = read_readcon_con(args.dest)
+            else:
+                result = read_ase_eon(args.dest)
+        else:
+            t0 = time.perf_counter()
+            result = READERS[args.arm](args.path)
+            elapsed = time.perf_counter() - t0
         lines.append(f"elapsed_s {g(elapsed)}")
+        if result.get("types_available", True) is False:
+            coords = compare(
+                {
+                    "positions": result["positions"],
+                    "lengths": result["lengths"],
+                    "angles": result["angles"],
+                    "types": load_truth(Path(args.truth))["types"],
+                    "cell_parsed": True,
+                    "types_dtype": "absent",
+                },
+                load_truth(Path(args.truth)),
+            )
+            coords["types_ok"] = False
+            coords["types_available"] = False
+            coords["correct"] = False
+            checked = coords
+        else:
+            checked = compare(result, load_truth(Path(args.truth)))
         for key, value in checked.items():
             lines.append(f"{key} {g(value) if isinstance(value, float) else value}")
         lines.append("status ok")

@@ -33,9 +33,9 @@ from common import (
 )
 
 _WORK = Path.home() / "h2h-work"
-BUILD = _WORK / "r28-build"
+BUILD = Path("/src/out")
 LIB = BUILD
-LOGS = _WORK / "r28-logs" / "iterator"
+LOGS = _WORK / "r29-logs" / "iterator"
 DUMPS = _WORK / "data" / "dumps"
 SIZES = ("cu32_f1k", "cu32_f10k", "cu32_f100k", "cu1000_f1k")
 ARMS = (("readcon_c", "c"), ("readcon_fortran", "fortran"))

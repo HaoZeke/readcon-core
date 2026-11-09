@@ -5,9 +5,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PY="${H2H_PYTHON:-$(python3 -c 'import sys; print(sys.executable)')}"
-OUT="${H2H_OUT:-$("$PY" -c 'from pathlib import Path; print(Path.home() / "h2h-work" / "r28-logs")')}"
+OUT="${H2H_OUT:-$("$PY" -c 'from pathlib import Path; print(Path.home() / "h2h-work" / "r29-logs")')}"
 export H2H_PYTHON="$PY"
-export H2H_BUILD="${H2H_BUILD:-$("$PY" -c 'from pathlib import Path; print(Path.home() / "h2h-work" / "r28-build")')}"
+export H2H_BUILD="${H2H_BUILD:-/src/out}"
 export H2H_OUT="$OUT"
 export H2H_REQUIRE_CLEAN=1
 mkdir -p "$OUT"
@@ -41,7 +41,7 @@ def rel(path: Path) -> str:
     return text
 
 extxyz = json.loads((out / "extxyz.json").read_text(encoding="utf-8"))
-summary_path = Path.home() / "h2h-work" / "r28-logs" / "iterator" / "summary.json"
+summary_path = Path.home() / "h2h-work" / "r29-logs" / "iterator" / "summary.json"
 iterator = json.loads(summary_path.read_text(encoding="utf-8"))
 spec = importlib.util.spec_from_file_location("h2h_sample", Path("sample.py").resolve())
 sample = importlib.util.module_from_spec(spec)
@@ -52,7 +52,7 @@ common_spec.loader.exec_module(common)
 build = json.loads((build_dir / "build.json").read_text(encoding="utf-8"))
 after = {}
 for name, item in build["artefacts_before"].items():
-    path = Path.home() / item["path"]
+    path = Path(item["path"])
     after[name] = {"path": rel(path), "sha256": sha256(path)}
 build["artefacts_after"] = after
 extxyz["iterator"] = iterator

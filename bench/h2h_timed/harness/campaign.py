@@ -27,16 +27,26 @@ from common import (
 )
 
 KIT = Path(__file__).resolve().parents[1]
-LOG_ROOT = Path.home() / "h2h-work" / "r28-logs"
+LOG_ROOT = Path.home() / "h2h-work" / "r29-logs"
 SIZES = ("cu32_f1k", "cu32_f10k", "cu32_f100k", "cu1000_f1k")
 ARMS = (
     "readcon_extxyz",
+    "readcon_extxyz_188",
+    "readcon_extxyz_r27",
+    "readcon_pypi",
     "ase_extxyz",
     "chemfiles",
     "ovito",
     "mdanalysis",
     "pymatgen",
 )
+SITES = {
+    "readcon_extxyz": "/src/py-ci",
+    "readcon_extxyz_188": "/src/py-188",
+    "readcon_extxyz_r27": "/src/py-r27",
+    "readcon_pypi": "/src/py-0180",
+    "readcon_py": "/src/py-ci",
+}
 RATIO_PEERS = ("ase_extxyz", "chemfiles", "ovito")
 NOT_RATIO = {
     "mdanalysis": "MDAnalysis XYZReader reads coordinates and names and does not parse the Lattice line, so the cell is absent.",
@@ -50,7 +60,8 @@ GROUPS = (
         "truth_suffix": ".truth.h2h",
         "arms": ARMS,
         "baseline": "readcon_extxyz",
-        "peers": RATIO_PEERS,
+        "peers": RATIO_PEERS + ("readcon_extxyz_188", "readcon_extxyz_r27", "readcon_pypi"),
+        "op": "read",
     },
     {
         "format": "con",
@@ -59,10 +70,22 @@ GROUPS = (
         "arms": ("readcon_py", "ase_eon"),
         "baseline": "readcon_py",
         "peers": ("ase_eon",),
+        "op": "read",
+    },
+    {
+        "format": "con_write",
+        "suffix": ".con",
+        "truth_suffix": ".con.readcon.h2h",
+        "arms": ("readcon_py", "ase_eon"),
+        "baseline": "readcon_py",
+        "peers": ("ase_eon",),
+        "op": "write",
     },
 )
 MUST_MATCH = {
     "readcon_extxyz",
+    "readcon_extxyz_188",
+    "readcon_extxyz_r27",
     "ase_extxyz",
     "chemfiles",
     "ovito",
@@ -71,13 +94,15 @@ MUST_MATCH = {
 }
 
 
-def run_sample(arm: str, path: Path, truth: Path, log: Path) -> dict:
+def run_sample(arm: str, path: Path, truth: Path, log: Path, op: str, dest: Path | None) -> dict:
     cmd = [
         "taskset",
         "-c",
         "0",
         str(PYTHON),
         str(KIT / "harness" / "sample.py"),
+        "--op",
+        op,
         "--arm",
         arm,
         "--path",
@@ -87,11 +112,17 @@ def run_sample(arm: str, path: Path, truth: Path, log: Path) -> dict:
         "--log",
         str(log),
     ]
+    if dest is not None:
+        cmd.extend(["--dest", str(dest)])
     shown = " ".join(shlex.quote(part) for part in cmd)
     home = Path.home().resolve().as_posix()
     shown = shown.replace(home + "/", "")
     cmd.extend(["--command", shown])
-    subprocess.run(cmd, env=thread_env(), check=False)
+    env = thread_env()
+    site = SITES.get(arm)
+    if site:
+        env["H2H_READCON_SITE"] = site
+    subprocess.run(cmd, env=env, check=False)
     data = {"arm": arm, "path": recorded_path(path), "log": recorded_path(log)}
     for line in log.read_text(encoding="utf-8").splitlines():
         if " " not in line:
@@ -131,7 +162,11 @@ def main() -> None:
                     order.reverse()
                 for arm in order:
                     log = LOG_ROOT / fmt / size / arm / f"r{repeat:02d}.log"
-                    parsed = run_sample(arm, path, truth, log)
+                    dest = None
+                    if group["op"] == "write":
+                        dest = Path("/tmp/r29-writes") / fmt / size / arm / f"r{repeat:02d}.con"
+                        dest.parent.mkdir(parents=True, exist_ok=True)
+                    parsed = run_sample(arm, path, truth, log, group["op"], dest)
                     parsed.update(size=size, repeat=repeat, format=fmt)
                     samples.append(parsed)
                     print(
