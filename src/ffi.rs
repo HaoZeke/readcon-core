@@ -5603,11 +5603,26 @@ mod tests {
     #[test]
     fn dlpack_error_mapping_covers_each_arm() {
         use crate::error::ParseError;
-        let _ = map_dlpack_err(ParseError::ValidationError("device mismatch".into()));
-        let _ = map_dlpack_err(ParseError::ValidationError("no device allocator".into()));
-        let _ = map_dlpack_err(ParseError::ValidationError("allocator missing".into()));
-        let _ = map_dlpack_err(ParseError::ValidationError("other".into()));
-        let _ = map_dlpack_err(ParseError::InvalidCount("no".into()));
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("device mismatch".into())),
+            RKRStatus::RKR_STATUS_DEVICE_MISMATCH
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("no device allocator".into())),
+            RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("allocator missing".into())),
+            RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("other".into())),
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::InvalidCount("no".into())),
+            RKRStatus::RKR_STATUS_INTERNAL_ERROR
+        );
     }
 
     #[test]

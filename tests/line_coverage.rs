@@ -146,44 +146,54 @@ fn builder_mutation_round_trip_covers_the_c_setters() {
     unsafe { rkr_dlpack_delete(tensor) };
     success(unsafe { rkr_frame_builder_positions_dlpack_ex(handle, ptr::null(), &mut tensor) });
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_builder_velocities_dlpack(handle, &mut tensor) };
+    success(unsafe { rkr_frame_builder_velocities_dlpack(handle, &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_builder_forces_dlpack(handle, &mut tensor) };
+    success(unsafe { rkr_frame_builder_forces_dlpack(handle, &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_builder_displacements_dlpack(handle, &mut tensor) };
+    success(unsafe { rkr_frame_builder_displacements_dlpack(handle, &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_builder_spreads_dlpack(handle, &mut tensor) };
+    success(unsafe { rkr_frame_builder_spreads_dlpack(handle, &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_builder_atom_energies_dlpack(handle, &mut tensor) };
+    success(unsafe { rkr_frame_builder_atom_energies_dlpack(handle, &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_builder_masses_dlpack(handle, &mut tensor) };
+    success(unsafe { rkr_frame_builder_masses_dlpack(handle, &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_builder_positions_data(handle) };
-    let _ = unsafe { rkr_frame_builder_velocities_data(handle) };
-    let _ = unsafe { rkr_frame_builder_forces_data(handle) };
-    let _ = unsafe { rkr_frame_builder_displacements_data(handle) };
-    let _ = unsafe { rkr_frame_builder_spreads_data(handle) };
-    let _ = unsafe { rkr_frame_builder_atom_energies_data(handle) };
-    let _ = unsafe { rkr_frame_builder_masses_data(handle) };
-    let _ = unsafe { rkr_frame_builder_atom_ids_data(handle) };
+    assert!(!unsafe { rkr_frame_builder_positions_data(handle) }.is_null());
+    assert!(!unsafe { rkr_frame_builder_velocities_data(handle) }.is_null());
+    assert!(!unsafe { rkr_frame_builder_forces_data(handle) }.is_null());
+    assert!(!unsafe { rkr_frame_builder_displacements_data(handle) }.is_null());
+    assert!(!unsafe { rkr_frame_builder_spreads_data(handle) }.is_null());
+    assert!(!unsafe { rkr_frame_builder_atom_energies_data(handle) }.is_null());
+    assert!(!unsafe { rkr_frame_builder_masses_data(handle) }.is_null());
+    assert!(!unsafe { rkr_frame_builder_atom_ids_data(handle) }.is_null());
     let clone = unsafe { rkr_frame_builder_clone(handle) };
     assert!(!clone.is_null());
     unsafe { free_rkr_frame_builder(clone) };
     let frame = unsafe { rkr_frame_builder_build(handle) };
     assert!(!frame.is_null());
     let mut buf = vec![0.0_f64; 12];
-    let _ = unsafe { rkr_frame_copy_positions(frame, buf.as_mut_ptr(), buf.len()) };
-    let _ = unsafe { rkr_frame_copy_velocities(frame, buf.as_mut_ptr(), buf.len()) };
-    let _ = unsafe { rkr_frame_copy_forces(frame, buf.as_mut_ptr(), buf.len()) };
-    let _ = unsafe { rkr_frame_copy_displacements(frame, buf.as_mut_ptr(), buf.len()) };
-    let _ = unsafe { rkr_frame_copy_spreads(frame, buf.as_mut_ptr(), buf.len()) };
-    let _ = unsafe { rkr_frame_copy_atom_energies(frame, buf.as_mut_ptr(), buf.len()) };
-    let _ = unsafe { rkr_frame_copy_masses(frame, buf.as_mut_ptr(), buf.len()) };
+    success(unsafe { rkr_frame_copy_positions(frame, buf.as_mut_ptr(), buf.len()) });
+    assert_eq!(&buf[..3], &[1.0, 2.0, 3.0]);
+    success(unsafe { rkr_frame_copy_velocities(frame, buf.as_mut_ptr(), buf.len()) });
+    success(unsafe { rkr_frame_copy_forces(frame, buf.as_mut_ptr(), buf.len()) });
+    success(unsafe { rkr_frame_copy_displacements(frame, buf.as_mut_ptr(), buf.len()) });
+    success(unsafe { rkr_frame_copy_spreads(frame, buf.as_mut_ptr(), buf.len()) });
+    success(unsafe { rkr_frame_copy_atom_energies(frame, buf.as_mut_ptr(), buf.len()) });
+    success(unsafe { rkr_frame_copy_masses(frame, buf.as_mut_ptr(), buf.len()) });
     let mut idbuf = vec![0_u64; 4];
-    let _ = unsafe { rkr_frame_copy_atom_ids(frame, idbuf.as_mut_ptr(), idbuf.len()) };
-    let _ = unsafe { rkr_frame_positions_dlpack(frame, &mut tensor) };
+    success(unsafe { rkr_frame_copy_atom_ids(frame, idbuf.as_mut_ptr(), idbuf.len()) });
+    assert_eq!(idbuf[0], 7);
+    success(unsafe { rkr_frame_positions_dlpack(frame, &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
-    let _ = unsafe { rkr_frame_positions_dlpack_ex(frame, ptr::null(), &mut tensor) };
+    success(unsafe { rkr_frame_positions_dlpack_ex(frame, ptr::null(), &mut tensor) });
+    assert!(!tensor.is_null());
     unsafe { rkr_dlpack_delete(tensor) };
     let mut out_len = 0usize;
     success(unsafe { rkr_pack_rcso(frame, ptr::null_mut(), 0, &mut out_len) });
@@ -194,14 +204,16 @@ fn builder_mutation_round_trip_covers_the_c_setters() {
         RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
     );
     let mut natoms = 0u32;
-    let _ = unsafe { rkr_unpack_rcso_natoms(packed.as_ptr(), packed.len(), &mut natoms) };
-    let mut xyz_out = vec![0.0_f64; (natoms.max(1) as usize) * 3];
-    let _ = unsafe {
+    success(unsafe { rkr_unpack_rcso_natoms(packed.as_ptr(), packed.len(), &mut natoms) });
+    assert_eq!(natoms, 1);
+    let mut xyz_out = vec![0.0_f64; (natoms as usize) * 3];
+    success(unsafe {
         rkr_unpack_rcso_positions(packed.as_ptr(), packed.len(), xyz_out.as_mut_ptr(), natoms)
-    };
-    let _ = unsafe {
+    });
+    assert_eq!(&xyz_out[..3], &[1.0, 2.0, 3.0]);
+    success(unsafe {
         rkr_unpack_rcso_forces(packed.as_ptr(), packed.len(), xyz_out.as_mut_ptr(), natoms)
-    };
+    });
     let path = cstr("resources/test/tiny_cuh2.con");
     let mut nframes = 0usize;
     assert!(unsafe { rkr_read_chemfiles_first(ptr::null()) }.is_null());
@@ -221,24 +233,17 @@ fn builder_mutation_round_trip_covers_the_c_setters() {
     assert!(
         unsafe { rkr_read_chemfiles_memory(ptr::null(), fmt.as_ptr(), &mut nframes) }.is_null()
     );
-    let _ = unsafe { rkr_read_chemfiles_memory(xyz.as_ptr(), fmt.as_ptr(), &mut nframes) };
+    assert!(
+        unsafe { rkr_read_chemfiles_memory(xyz.as_ptr(), fmt.as_ptr(), &mut nframes) }.is_null()
+    );
+    assert_eq!(rkr_has_chemfiles_support(), 0);
     let mut selected: *mut RKRSelectionResult = ptr::null_mut();
     let query = cstr("name Cu");
-    let _ = unsafe { rkr_frame_select(frame, query.as_ptr(), &mut selected) };
-    if !selected.is_null() {
-        let _ = unsafe { rkr_selection_result_match_count(selected) };
-        let _ = unsafe { rkr_selection_result_context_size(selected) };
-        let mut atoms = [0_u64; 4];
-        let mut size = 0_u32;
-        let _ =
-            unsafe { rkr_selection_result_match_at(selected, 0, atoms.as_mut_ptr(), &mut size) };
-        let mut primary = 0_u64;
-        let mut written = 0_u64;
-        let _ = unsafe {
-            rkr_selection_result_primary_indices(selected, &mut primary, 1, &mut written)
-        };
-        unsafe { rkr_selection_result_free(selected) };
-    }
+    assert_eq!(
+        unsafe { rkr_frame_select(frame, query.as_ptr(), &mut selected) },
+        RKRStatus::RKR_STATUS_SELECTION_ERROR
+    );
+    assert!(selected.is_null());
     unsafe { rkr_selection_result_free(ptr::null_mut()) };
     unsafe { free_rkr_frame(frame) };
     assert!(unsafe { rkr_frame_builder_build(ptr::null_mut()) }.is_null());
@@ -256,7 +261,7 @@ fn trajectory_and_iterators_cover_index_errors() {
     success(unsafe { rkr_trajectory_read_frame(traj, 0, &mut frame) });
     assert!(!frame.is_null());
     let mut header_buf = [0_u8; 64];
-    let _ = unsafe {
+    success(unsafe {
         rkr_frame_get_header_line(
             frame,
             true,
@@ -264,11 +269,11 @@ fn trajectory_and_iterators_cover_index_errors() {
             header_buf.as_mut_ptr().cast(),
             header_buf.len(),
         )
-    };
+    });
+    assert!(header_buf.iter().any(|byte| *byte != 0));
     let header = unsafe { rkr_frame_get_header_line_cpp(frame, true, 0) };
-    if !header.is_null() {
-        unsafe { rkr_free_string(header) };
-    }
+    assert!(!header.is_null());
+    unsafe { rkr_free_string(header) };
     unsafe { free_rkr_frame(frame) };
     assert_eq!(
         unsafe { rkr_trajectory_read_frame(traj, len + 5, &mut frame) },
@@ -283,18 +288,17 @@ fn trajectory_and_iterators_cover_index_errors() {
     assert!(unsafe { rkr_read_first_frame(missing.as_ptr()) }.is_null());
     let mut n = 0usize;
     let frames = unsafe { rkr_read_all_frames_n_threads(path.as_ptr(), &mut n, 2) };
-    if !frames.is_null() {
-        unsafe { free_rkr_frame_array(frames, n) };
-    }
+    assert!(!frames.is_null());
+    assert!(n >= 2);
+    unsafe { free_rkr_frame_array(frames, n) };
     let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
     let owned = cstr(&text);
     let iter = unsafe { read_con_string_iterator(owned.as_ptr()) };
     assert!(!iter.is_null());
-    let _ = unsafe { con_frame_iterator_skip(iter, 0) };
+    assert_eq!(unsafe { con_frame_iterator_skip(iter, 0) }, 0);
     let got = unsafe { con_frame_iterator_nth(iter, 0) };
-    if !got.is_null() {
-        unsafe { free_rkr_frame(got) };
-    }
+    assert!(!got.is_null());
+    unsafe { free_rkr_frame(got) };
     unsafe { free_con_frame_iterator(iter) };
     assert!(unsafe { read_con_file_iterator(ptr::null()) }.is_null());
 }
@@ -328,24 +332,25 @@ fn metadata_schema_rejects_each_bad_shape() {
         )]),
         obj(&[("bonds", Value::Array(vec![Value::from(1)]))]),
         obj(&[("converged", Value::from("yes"))]),
-        obj(&[
-            ("energy", Value::from(1.0)),
-            ("sections", Value::Array(vec![])),
-            (
-                "bonds",
-                Value::Array(vec![Value::Array(vec![Value::from(0), Value::from(1)])]),
-            ),
-        ]),
     ];
     for value in &bad {
-        let _ = validate_metadata_schema(value);
+        assert!(validate_metadata_schema(value).is_err(), "{value:?}");
     }
     let mut ok_map = Map::new();
     ok_map.insert("energy".into(), Value::from(1.0));
     ok_map.insert("sections".into(), Value::Array(vec![]));
     assert!(validate_metadata_schema(&ok_map).is_ok());
-    let _ = parser::parse_line_of_n_f64("1.0 2.0 not", 3);
-    let _ = parser::parse_line_of_n_f64("1.0 2.0 3.0", 3);
+    let mut bonded = ok_map.clone();
+    bonded.insert(
+        "bonds".into(),
+        Value::Array(vec![Value::Array(vec![Value::from(0), Value::from(1)])]),
+    );
+    assert!(validate_metadata_schema(&bonded).is_ok());
+    assert!(parser::parse_line_of_n_f64("1.0 2.0 not", 3).is_err());
+    assert_eq!(
+        parser::parse_line_of_n_f64("1.0 2.0 3.0", 3).unwrap(),
+        vec![1.0, 2.0, 3.0]
+    );
 }
 
 #[test]
@@ -363,17 +368,17 @@ fn built_frame_exposes_every_section_view() {
     built.positions_mut()[0] = 0.2;
     assert!(built.velocities().len() >= 3);
     assert!(built.forces().len() >= 3);
-    let _ = built.atom_energies();
-    let _ = built.masses();
-    let _ = built.positions_view();
-    let _ = built.positions_2d_ref();
-    let _ = built.velocities_2d_ref();
-    let _ = built.forces_2d_ref();
-    let _ = built.positions_dlpack();
-    let _ = built.velocities_dlpack();
-    let _ = built.forces_dlpack();
-    let _ = built.atom_energies_dlpack();
-    let _ = built.masses_dlpack();
+    assert_eq!(built.atom_energies().len(), 1);
+    assert_eq!(built.masses().len(), 1);
+    assert_eq!(built.positions_view().nrows(), 1);
+    assert_eq!(built.positions_2d_ref().nrows(), 1);
+    assert_eq!(built.velocities_2d_ref().nrows(), 1);
+    assert_eq!(built.forces_2d_ref().nrows(), 1);
+    assert!(built.positions_dlpack().is_ok());
+    assert!(built.velocities_dlpack().unwrap().is_some());
+    assert!(built.forces_dlpack().unwrap().is_some());
+    assert!(built.atom_energies_dlpack().unwrap().is_some());
+    assert!(built.masses_dlpack().is_ok());
     built.clear_forces_section();
     built.set_forces_from_flat(&[0.1, 0.2, 0.3]).unwrap();
     let _frame = built.build().unwrap();
@@ -383,7 +388,9 @@ fn built_frame_exposes_every_section_view() {
     assert!(block.values.len() >= 3);
     let empty = tempfile::NamedTempFile::new().unwrap();
     empty.as_file().write_all(b"   \n").unwrap();
-    let _ = read_positions_with_threads(empty.path(), Some(1));
+    let empty_block = read_positions_with_threads(empty.path(), Some(1)).unwrap();
+    assert_eq!(empty_block.n_frames, 0);
+    assert!(empty_block.values.is_empty());
 }
 
 #[test]
@@ -417,21 +424,30 @@ fn parsed_frames_cover_the_public_readers() {
     let text = std::fs::read_to_string(path).unwrap();
     assert!(count_frames(path).unwrap() >= 2);
     let first = read_first_frame(path).unwrap();
-    let _ = read_nth_frame(path, 1).unwrap();
-    let _ = read_nth_frame_from_text(&text, 3);
-    let _ = read_all_frames_indexed(path, Some(2)).unwrap();
-    let _ = read_all_frames_phased(path, Some(2)).unwrap();
-    let _ = parse_frames_parallel_with_threads(&text, Some(2));
-    let _ = parse_frames_at_offsets(&text, &[0], Some(1));
-    let _ = parse_frames_at_offsets(&text, &[], None);
+    let second = read_nth_frame(path, 1).unwrap();
+    assert_eq!(second.atom_data.len(), first.atom_data.len());
+    assert!(read_nth_frame_from_text(&text, 3).is_err());
+    let indexed = read_all_frames_indexed(path, Some(2)).unwrap();
+    assert!(indexed.len() >= 2);
+    let phased = read_all_frames_phased(path, Some(2)).unwrap();
+    assert!(phased.frames.len() >= 2);
+    let parallel = parse_frames_parallel_with_threads(&text, Some(2));
+    assert!(parallel.iter().all(|frame| frame.is_ok()));
+    assert!(!parallel.is_empty());
+    let at_zero = parse_frames_at_offsets(&text, &[0], Some(1));
+    assert_eq!(at_zero.len(), 1);
+    assert!(at_zero[0].is_ok());
+    assert!(parse_frames_at_offsets(&text, &[], None).is_empty());
     let slab = pack_position_slab(std::slice::from_ref(&first), 2).unwrap();
-    let _ = touch_frame_checksum(std::slice::from_ref(&first), &slab, 2);
-    let _ = touch_frame_checksum(&[], &[], 1);
-    let _ = touch_option_checksum(&[Some(first.clone())], &slab, 2);
-    let _ = touch_option_checksum(&[None], &[], 1);
-    let _ = touch_option_checksum(&[], &[], 1);
-    let _ = measure_newline_scan(&text, 2, true);
-    let _ = measure_newline_scan(&text, 1, false);
+    assert!(touch_frame_checksum(std::slice::from_ref(&first), &slab, 2).is_some());
+    assert_eq!(touch_frame_checksum(&[], &[], 1), Some(0));
+    assert!(touch_option_checksum(&[Some(first.clone())], &slab, 2).is_some());
+    assert_eq!(touch_option_checksum(&[None], &[], 1), None);
+    assert_eq!(touch_option_checksum(&[], &[], 1), Some(0));
+    let (chunked, chunked_s) = measure_newline_scan(&text, 2, true);
+    let (plain, plain_s) = measure_newline_scan(&text, 1, false);
+    assert_eq!(chunked, plain);
+    assert!(chunked_s >= 0.0 && plain_s >= 0.0);
     let vel = read_first_frame(std::path::Path::new(
         "resources/test/tiny_cuh2_vel_forces.con",
     ))
@@ -448,13 +464,14 @@ fn parsed_frames_cover_the_public_readers() {
         "resources/test/tiny_cuh2_charges_spins_magmoms.con",
     ))
     .unwrap();
-    for frame in [&vel, &force, &spread, &disp, &extra] {
-        let _ = frame.velocities_as_dlpack(dlpk_cpu());
-        let _ = frame.forces_as_dlpack(dlpk_cpu());
-        let _ = frame.atom_energies_as_dlpack(dlpk_cpu());
-    }
-    let _ = cell_vectors([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
-    let _ = Bond::new(1, 0).with_order(2);
+    assert!(vel.velocities_as_dlpack(dlpk_cpu()).unwrap().is_some());
+    assert!(force.forces_as_dlpack(dlpk_cpu()).unwrap().is_some());
+    assert!(spread.forces_as_dlpack(dlpk_cpu()).is_ok());
+    assert!(disp.atom_energies_as_dlpack(dlpk_cpu()).is_ok());
+    assert!(extra.atom_energies_as_dlpack(dlpk_cpu()).is_ok());
+    let cell = cell_vectors([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+    assert!(cell.iter().flatten().all(|value| value.is_finite()));
+    assert_eq!(Bond::new(1, 0).with_order(2).order, Some(2));
 }
 
 fn dlpk_cpu() -> dlpk::sys::DLDevice {
@@ -477,48 +494,48 @@ fn builder_and_frame_sections_cover_the_empty_arms() {
     built.with_magmom([0.0, 0.0, 1.0]);
     built.add_atom("H", 0.0, 0.0, 0.0, [true, true, true], 1, 1.0);
     assert!(built.velocities().is_empty());
-    let _ = built.velocities_mut();
+    assert_eq!(built.velocities_mut().len(), 3);
     assert!(built.forces().is_empty());
-    let _ = built.forces_mut();
-    let _ = built.atom_energies_mut();
-    let _ = built.set_atom_velocity(4, [1.0, 0.0, 0.0]);
-    let _ = built.set_atom_force(4, [1.0, 0.0, 0.0]);
-    let _ = built.set_atom_spread(4, [1.0, 0.0, 0.0]);
-    let _ = built.set_atom_energy(4, 1.0);
-    let _ = built.set_atom_fixed(4, [true, false, false]);
-    let _ = built.set_atom_mass(4, 2.0);
-    let _ = built.set_atom_velocity(0, [0.1, 0.0, 0.0]);
-    let _ = built.set_atom_force(0, [0.0, 0.1, 0.0]);
-    let _ = built.set_atom_spread(0, [0.0, 0.0, 0.1]);
-    let _ = built.set_atom_energy(0, -1.0);
-    let _ = built.clear_atom_velocity(0);
-    let _ = built.clear_atom_force(0);
-    let _ = built.clear_atom_displacement(0);
-    let _ = built.clear_atom_energy(0);
-    let _ = built.clear_atom_velocity(4);
+    assert_eq!(built.forces_mut().len(), 3);
+    assert_eq!(built.atom_energies_mut().len(), 1);
+    assert!(built.set_atom_velocity(4, [1.0, 0.0, 0.0]).is_err());
+    assert!(built.set_atom_force(4, [1.0, 0.0, 0.0]).is_err());
+    assert!(built.set_atom_spread(4, [1.0, 0.0, 0.0]).is_err());
+    assert!(built.set_atom_energy(4, 1.0).is_err());
+    assert!(built.set_atom_fixed(4, [true, false, false]).is_err());
+    assert!(built.set_atom_mass(4, 2.0).is_err());
+    built.set_atom_velocity(0, [0.1, 0.0, 0.0]).unwrap();
+    built.set_atom_force(0, [0.0, 0.1, 0.0]).unwrap();
+    built.set_atom_spread(0, [0.0, 0.0, 0.1]).unwrap();
+    built.set_atom_energy(0, -1.0).unwrap();
+    built.clear_atom_velocity(0).unwrap();
+    built.clear_atom_force(0).unwrap();
+    built.clear_atom_displacement(0).unwrap();
+    built.clear_atom_energy(0).unwrap();
+    assert!(built.clear_atom_velocity(4).is_err());
     built.clear_energies_section();
     built.clear_displacements_section();
     built.clear_spreads_section();
-    let _ = built.set_forces_from_flat(&[1.0]);
-    let _ = built.set_atom_energies_from_flat(&[1.0, 2.0]);
-    let _ = built.get_atom_force(0);
-    let _ = built.get_atom_force(4);
-    let _ = built.get_atom_energy(0);
-    let _ = built.get_atom_energy(4);
-    let _ = built.get_atom_mass(4);
-    let _ = built.get_atom_velocity(0);
-    let _ = built.clear_atom_force(9);
-    let _ = built.clear_atom_displacement(9);
-    let _ = built.clear_atom_energy(9);
-    assert!(built.atom_energies().is_empty() || !built.atom_energies().is_empty());
-    let _ = built.velocities_view();
-    let _ = built.forces_view();
-    let _ = built.velocities_dlpack();
-    let _ = built.forces_dlpack();
-    let _ = built.atom_energies_dlpack();
-    let _ = built.masses_dlpack();
-    let _ = built.atom_ids_dlpack();
-    let _ = built.positions_dlpack();
+    assert!(built.set_forces_from_flat(&[1.0]).is_err());
+    assert!(built.set_atom_energies_from_flat(&[1.0, 2.0]).is_err());
+    assert_eq!(built.get_atom_force(0).unwrap(), Some([0.0, 0.0, 0.0]));
+    assert!(built.get_atom_force(4).is_err());
+    assert_eq!(built.get_atom_energy(0).unwrap(), None);
+    assert!(built.get_atom_energy(4).is_err());
+    assert!(built.get_atom_mass(4).is_err());
+    assert_eq!(built.get_atom_velocity(0).unwrap(), Some([0.0, 0.0, 0.0]));
+    assert!(built.clear_atom_force(9).is_err());
+    assert!(built.clear_atom_displacement(9).is_err());
+    assert!(built.clear_atom_energy(9).is_err());
+    assert!(built.atom_energies().is_empty());
+    assert_eq!(built.velocities_view().ncols(), 3);
+    assert_eq!(built.forces_view().ncols(), 3);
+    assert!(built.velocities_dlpack().is_ok());
+    assert!(built.forces_dlpack().is_ok());
+    assert!(built.atom_energies_dlpack().unwrap().is_none());
+    assert!(built.masses_dlpack().is_ok());
+    assert!(built.atom_ids_dlpack().is_ok());
+    assert!(built.positions_dlpack().is_ok());
     built.set_bonds(&[]);
     built.add_bond(Bond::new(0, 0).with_order(1));
     let mut frame = built.build().unwrap();
@@ -552,14 +569,19 @@ fn builder_and_frame_sections_cover_the_empty_arms() {
     frame.sync_arrays_from_atom_data();
     frame.atom_data.clear();
     frame.sync_arrays_from_atom_data();
-    let _ = cell_vectors([1.0, 1.0, 1.0], [0.0, 0.0, 90.0]);
+    let skewed = cell_vectors([1.0, 1.0, 1.0], [0.0, 0.0, 90.0]);
+    assert_eq!(skewed[0], [1.0, 0.0, 0.0]);
     let mut bonds = serde_json::Map::new();
     bonds.insert("bonds".into(), serde_json::json!("no"));
-    let _ = readcon_core::types::parse_bonds_from_metadata(&bonds.into_iter().collect());
+    assert!(
+        readcon_core::types::parse_bonds_from_metadata(&bonds.into_iter().collect()).is_empty()
+    );
     let mut ordered = serde_json::Map::new();
     ordered.insert(
         "bonds".into(),
         serde_json::json!([{"i": 0, "j": 1, "order": 2}, [1]]),
     );
-    let _ = readcon_core::types::parse_bonds_from_metadata(&ordered.into_iter().collect());
+    let parsed = readcon_core::types::parse_bonds_from_metadata(&ordered.into_iter().collect());
+    assert_eq!(parsed.len(), 1);
+    assert_eq!(parsed[0].order, Some(2));
 }
