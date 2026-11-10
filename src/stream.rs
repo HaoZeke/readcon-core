@@ -73,6 +73,11 @@ impl<R: Read> ConFrameReader<R> {
         }
     }
 
+    /// Bytes reserved for the unread tail and the next read.
+    pub(crate) fn buffer_capacity(&self) -> usize {
+        self.buf.capacity()
+    }
+
     /// Skip one frame without parsing its atoms, as
     /// [`ConFrameIterator::forward`] does.
     pub fn forward(&mut self) -> Option<Result<(), StreamError>> {
