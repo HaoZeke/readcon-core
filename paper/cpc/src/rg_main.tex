@@ -363,8 +363,8 @@ Sections~\ref{sec:implementation} and~\ref{sec:conformance} give the
 reader and test it against the corpora, Section~\ref{sec:cases} resumes
 saddle searches from checkpoints that we wrote and read back with
 readcon-core and with other libraries, and Section~\ref{sec:performance}
-times readcon-core against ASE, MDAnalysis, OVITO, pymatgen and a pure
-Python parse of the same CON file.
+times readcon-core against chemfiles, OVITO, MDAnalysis, pymatgen, ASE
+and eOn \texttt{loadcons} on one CON file.
 Unlike H5MD, TNG and extended XYZ, the CON 3.1 specification defines all
 four fields that a restart reads, and its corpus of legal and illegal
 files decides the verdict of any reader on each clause.
@@ -1170,24 +1170,15 @@ A \(\velSlabAtoms\)-atom slab drawn at
 \input{figures/generated/sizes_table} It reads one 100000-frame file,
 six times, one fresh process per sample.
 
-\begin{figure*}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/timing.pdf} \caption{Wall time of the full-frame CON readers on one 100000-frame file, six
-interleaved repeats.
-The bar is the type 7 median of that arm in
-\texttt{paper/cpc/logs/reader-exchange-public.log}.
-Table~\ref{tab:host} uses the same log.}
+\begin{figure*}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/timing.pdf} \caption{Wall times from \texttt{reader-exchange-public.log}, the 32-atom file.
+This is not the independent comparison.
+That comparison is Table~\ref{tab:peers}, and its bars are not drawn until its log is in.}
 \label{fig:timing} \end{figure*}
 
-\begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/ratios.pdf} \caption{Full-frame readers at 1 thread, each divided by \texttt{read\_con} at 1
-thread, on one 100000-frame file.
-Each point is the median of the six per-repeat ratios, and the whisker
-is their type 7 interquartile range.
-The text quotes the ratio of the medians.
-The horizontal line is 1.
-A point above the line is a slower arm, and \texttt{read\_con} is that
-many times as fast.
-A point below the line is a faster arm.
-The C++ arm is below the line.
-\texttt{read\_positions} is not on this figure.}
+\begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/ratios.pdf} \caption{Regression panel, not the independent comparison.
+Each point is a readcon build or the C++ arm, divided by \texttt{read\_con} of the v0.18.0 build, on the 32-atom file in \texttt{reader-exchange-public.log}.
+The independent readers are Table~\ref{tab:peers}.
+Their medians are not drawn here.}
 \label{fig:ratios} \end{figure}
 
 \begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/memory.pdf} \caption{MiB added to the high-water mark by the read, after the import, six
@@ -1215,34 +1206,52 @@ Memory is the VmHWM after the read minus the VmHWM after the import.
 \texttt{MKL\_NUM\_THREADS}, \texttt{NUMEXPR\_NUM\_THREADS} and
 \texttt{RAYON\_NUM\_THREADS} are set to the thread count of the arm.
 
-\subsection{Results}\label{sec:results} On the coordinate file, \texttt{read\_con} of the v0.18.0 build takes \rcFullOneMedian~s.
-The baseline \texttt{read\_con} takes \rcReleaseMedian~s.
-\texttt{read\_con} of the v0.18.0 build is \rcTipOverRelease{} times as
-fast as that baseline.
-ASE ase.io (format eon) calls \texttt{get\_positions} and takes
-\rcAseMedian~s.
-\texttt{read\_con} is \rcTipOverAse{} times as fast as that call.
-eOn 3.6.0 \texttt{loadcons} reads every frame and takes \rcEonMedian~s.
-\texttt{read\_con} is \rcTipOverEon{} times as fast as \texttt{loadcons}.
-\texttt{read\_positions} returns one coordinate array and builds no
-per-frame object.
-It takes \rcPosOneMedian~s.
-That is an absolute time.
-It is not a ratio against ASE or \texttt{loadcons}, which build a frame
-object per record.
-The C++ arm calls \texttt{read\_all\_frames} and then \texttt{con2matter} on every frame.
-It takes \rcApiMedian~s, which is \rcApiOverRead{} times the \texttt{read\_con} time.
-That ratio is below 1, so this C++ arm is slightly faster than \texttt{read\_con}.
+\subsection{Results}\label{sec:results} The headline comparison is independent readers of one CON file: chemfiles, OVITO, MDAnalysis, pymatgen, ASE \texttt{get\_positions} and eOn \texttt{loadcons}.
+Each reader must return the same positions, the same cell and the same atom types.
+The log header names the resolved path and the sha256 of each library.
+Table~\ref{tab:peers} is that comparison.
+The cells are empty on purpose.
+The same-format log is not in this draft, and no median is filled in ahead of it.
+Times will be absolute seconds, and a ratio will use the fastest of those peers as the denominator, not \texttt{read\_con}.
+
+\begin{table}[tbp]
+\centering
+\footnotesize
+\caption{Independent CON readers.
+Six fresh processes, type 7 median, same positions, cell and atom types.
+Path and sha256 of each library belong in the log header.
+Every numeric cell is pending.}
+\label{tab:peers}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Reader & File & Median (s) & / fastest peer \\
+\midrule
+chemfiles & CON & pending & pending \\
+OVITO & CON & pending & pending \\
+MDAnalysis & CON & pending & pending \\
+pymatgen & CON & pending & pending \\
+ASE \texttt{get\_positions} & CON & pending & pending \\
+eOn \texttt{loadcons} & CON & pending & pending \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Where readcon ties chemfiles, and what the iterator, the writer, the multi-frame read and the C, Fortran, Julia and Rust bindings add, will be quoted from that same log.
+Those sentences are not written until the medians exist.
+
+\paragraph{Regression of readcon against itself.}
+This note is not Table~\ref{tab:peers}.
+On the 32-atom, 100000-frame CON file in \texttt{reader-exchange-public.log}, \texttt{read\_con} of v0.18.0 takes \rcFullOneMedian~s and the untagged 0.17.3 baseline takes \rcReleaseMedian~s, so v0.18.0 is \rcTipOverRelease{} times that baseline.
+The C++ arm, \texttt{read\_all\_frames} then \texttt{con2matter}, takes \rcApiMedian~s, which is \rcApiOverRead{} times that same \texttt{read\_con}.
+The ratio is below 1, so the C++ arm is slightly faster than \texttt{read\_con} of the same build.
 Its \texttt{libemt.so} digest begins \texttt{5088ec8e06f7}.
-readcon-db ingests the same file in \rcDbMedian~s.
-That row writes a corpus and then reads the corpus, so it is not a
-speedup against a read of the file.
-Every all-frame arm matches 100000 of 100000 frames, and the failure
-count is 0.
-\texttt{read\_con} at 1 thread adds \rcTipMib~MiB.
-ASE ase.io (format eon) adds \rcAseMib~MiB.
-chemfiles adds \rcChemMib~MiB and OVITO adds \rcOvitoMib~MiB, and those
-two figures read XYZ at 1 thread.
+Figure~\ref{fig:ratios} is this regression.
+\texttt{read\_positions} takes \rcPosOneMedian~s and returns one coordinate array, so it is not a peer of the frame-building readers.
+readcon-db takes \rcDbMedian~s because it writes a corpus and then reads it.
+
+\texttt{read\_con} at 1 thread adds \rcTipMib~MiB on that CON file.
+ASE \texttt{get\_positions} on the same CON file adds \rcAseMib~MiB.
+chemfiles adds \rcChemMib~MiB and OVITO adds \rcOvitoMib~MiB on the XYZ file, not on the CON file, so those two memory figures are not part of Table~\ref{tab:peers}.
 
 The first-frame rows read one frame of the same file.
 They are not compared with a full read.
@@ -1276,6 +1285,8 @@ h5py reads the HDF5 dataset at 1 thread in \rcHdfMedian~s.
 \rcTipMedian~s.
 The mapped binary file reads them in \rcConbinMedian~s.
 
+Table~\ref{tab:host} is the 32-atom regression log, including the 0.17.3 baseline and the C++ arm.
+It is not the independent comparison in Table~\ref{tab:peers}.
 \input{figures/generated/host_table}
 
 We ingest 40 frames of 8 copper atoms into readcon-db and into the ASE
