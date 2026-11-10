@@ -67,7 +67,11 @@ unset CMAKE_INSTALL_PREFIX || true
 mkdir -p "$CARGO_TARGET_DIR"
 OUT="${COVERAGE_JSON:-$CARGO_TARGET_DIR/coverage.json}"
 mkdir -p "$(dirname "$OUT")"
-FEATURES=parallel,zstd,grammar,python,chemfiles-from-sources
+# capi is an empty switch. rpc and metatensor build from crates.
+# mpi needs an MPI library and libclang. cuda needs the NVIDIA driver
+# and libcudart. This host has neither mpicc nor nvcc, so those two
+# features stay out of the report.
+FEATURES=parallel,zstd,grammar,python,chemfiles-from-sources,capi,rpc,metatensor
 
 echo "==> workspace, all targets, merged features"
 cargo llvm-cov clean --workspace
@@ -127,6 +131,24 @@ python -m pytest \
   tests/python/test_line_coverage.py \
   tests/python/test_physical_coverage.py \
   tests/python/test_helpers.py \
+  tests/python/test_paper_cover_a.py \
+  tests/python/test_paper_cover_b.py \
+  tests/python/test_paper_cover_c.py \
+  tests/python/test_paper_cover_d.py \
+  tests/python/test_paper_cover_e.py \
+  tests/python/test_paper_cover_f.py \
+  tests/python/test_paper_cover_g.py \
+  tests/python/test_paper_cover_h.py \
+  tests/python/test_paper_branches.py \
+  tests/python/test_paper_every.py \
+  tests/python/test_paper_mains.py \
+  tests/python/test_paper_paths.py \
+  tests/python/test_indep_reader_paths.py \
+  tests/python/test_cpc_helpers.py \
+  tests/python/test_bench_host.py \
+  tests/python/test_version_gate.py \
+  tests/python/test_version_sot.py \
+  tests/python/test_check_release_artifacts.py \
   --tb=short
 
 EXT=$(find "$VENV" -path '*/site-packages/readcon/*.so' -type f | head -n 1)
