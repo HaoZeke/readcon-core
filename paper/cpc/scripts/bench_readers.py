@@ -355,7 +355,6 @@ def main() -> int:
         f"date_utc {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}",
         f"uname_m {platform.machine()}",
         f"nproc {os.cpu_count()}",
-        f"hostname {platform.node()}",
         f"cpu_model {cpu_model()}",
         f"baseline_commit {BASE_COMMIT}",
         f"release_commit {RELEASE_COMMIT}",
