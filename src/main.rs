@@ -113,20 +113,19 @@ fn main() {
     }
     println!("-> Successfully parsed {} valid frames.", all_frames.len());
 
-    if let Some(last_frame) = all_frames.last() {
-        println!("\n-> Summary of last valid frame:");
-        println!("  - Box vectors: {:?}", last_frame.header.boxl);
-        println!("  - Angles: {:?}", last_frame.header.angles);
-        println!("  - Atom masses: {:?}", last_frame.header.masses_per_type);
-        println!("  - Number of atom types: {}", last_frame.header.natm_types);
-        println!(
-            "  - Atom numbers per type: {:?}",
-            last_frame.header.natms_per_type
-        );
-        println!("  - Total atoms: {}", last_frame.atom_data.len());
-        if let Some(last_atom) = last_frame.atom_data.last() {
-            println!("  - Last atom: {last_atom:?}");
-        }
+    let last_frame = &all_frames[all_frames.len() - 1];
+    println!("\n-> Summary of last valid frame:");
+    println!("  - Box vectors: {:?}", last_frame.header.boxl);
+    println!("  - Angles: {:?}", last_frame.header.angles);
+    println!("  - Atom masses: {:?}", last_frame.header.masses_per_type);
+    println!("  - Number of atom types: {}", last_frame.header.natm_types);
+    println!(
+        "  - Atom numbers per type: {:?}",
+        last_frame.header.natms_per_type
+    );
+    println!("  - Total atoms: {}", last_frame.atom_data.len());
+    if let Some(last_atom) = last_frame.atom_data.last() {
+        println!("  - Last atom: {last_atom:?}");
     }
 
     if let Some(output_fname_str) = args.get(2) {
@@ -136,9 +135,12 @@ fn main() {
                 if let Err(e) = writer.extend(all_frames.iter()) {
                     eprintln!("Error writing to output file: {e}");
                     process::exit(1);
-                } else {
-                    println!("-> Successfully wrote all frames to the output file.");
                 }
+                if let Err(e) = writer.flush() {
+                    eprintln!("Error writing to output file: {e}");
+                    process::exit(1);
+                }
+                println!("-> Successfully wrote all frames to the output file.");
             }
             Err(e) => {
                 eprintln!("Failed to create output file: {e}");
