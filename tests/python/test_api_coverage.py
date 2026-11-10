@@ -88,33 +88,58 @@ def test_read_con_as_ase_and_feature_flags():
     assert atoms[0].get_chemical_symbols()[0] == "Cu"
     assert readcon.has_parallel_support() is True
     assert readcon.has_mpi_support() is False
-    assert readcon.has_chemfiles_support() is False
+    assert readcon.has_chemfiles_support() in (True, False)
 
 
 def test_chemfiles_and_selection_report_the_build():
     path = _resource("water_min.xyz")
-    with pytest.raises(RuntimeError):
-        readcon.read_chemfiles(path)
-    with pytest.raises(RuntimeError):
-        readcon.read_chemfiles_first(path)
-    with pytest.raises(RuntimeError):
-        readcon.read_chemfiles_nth(path, 0)
-    with pytest.raises(RuntimeError):
-        readcon.read_chemfiles_nsteps(path)
-    with pytest.raises(RuntimeError):
-        readcon.read_chemfiles_memory("Cu 0 0 0\n", "XYZ")
+    xyz = "1\nwater\nO 0.0 0.0 0.0\n"
     frame = readcon.read_con(_resource("tiny_cuh2.con"))[0]
-    with pytest.raises(Exception):
-        readcon.select_on_frame(frame, "name Cu")
-    with pytest.raises(Exception):
-        frame.select("name Cu")
-    with pytest.raises(Exception):
-        readcon.select_atom_indices(frame, "name Cu")
     frames = readcon.read_con(_resource("tiny_multi_cuh2.con"))
-    with pytest.raises(Exception):
-        readcon.evaluate_selection_on_frames(frames, "name Cu")
-    with pytest.raises(Exception):
-        readcon.select_atom_positions_on_frames(frames, "name Cu")
+    if readcon.has_chemfiles_support():
+        loaded = readcon.read_chemfiles(path)
+        assert len(loaded) == 1
+        assert {atom.symbol for atom in loaded[0].atoms} == {"O", "H"}
+        first = readcon.read_chemfiles_first(path)
+        assert len(first) == 3
+        nth = readcon.read_chemfiles_nth(path, 0)
+        assert len(nth) == 3
+        assert readcon.read_chemfiles_nsteps(path) == 1
+        memory = readcon.read_chemfiles_memory(xyz, "XYZ")
+        assert len(memory) == 1
+        assert memory[0].atoms[0].symbol == "O"
+        selected = readcon.select_on_frame(frame, "name Cu")
+        assert selected["selection"] == "name Cu"
+        assert selected["context_size"] == 1
+        assert len(selected["primary_indices"]) >= 1
+        assert frame.select("name Cu")["selection"] == "name Cu"
+        indices = readcon.select_atom_indices(frame, "name Cu")
+        assert indices == selected["primary_indices"]
+        multi = readcon.evaluate_selection_on_frames("name Cu", frames)
+        assert multi["selection"] == "name Cu"
+        assert len(multi["frames"]) == len(frames)
+        positions = readcon.select_atom_positions_on_frames("name Cu", frames)
+        assert positions["selection"] == "name Cu"
+        assert len(positions["frames"]) == len(frames)
+        return
+    for call in (
+        lambda: readcon.read_chemfiles(path),
+        lambda: readcon.read_chemfiles_first(path),
+        lambda: readcon.read_chemfiles_nth(path, 0),
+        lambda: readcon.read_chemfiles_nsteps(path),
+        lambda: readcon.read_chemfiles_memory(xyz, "XYZ"),
+    ):
+        with pytest.raises(RuntimeError, match="(?i)chemfiles"):
+            call()
+    for call in (
+        lambda: readcon.select_on_frame(frame, "name Cu"),
+        lambda: frame.select("name Cu"),
+        lambda: readcon.select_atom_indices(frame, "name Cu"),
+        lambda: readcon.evaluate_selection_on_frames("name Cu", frames),
+        lambda: readcon.select_atom_positions_on_frames("name Cu", frames),
+    ):
+        with pytest.raises(Exception, match="(?i)chemfiles|feature"):
+            call()
 
 
 def test_write_con_compression_and_mpi_stub(tmp_path):
@@ -260,18 +285,23 @@ def test_bonds_release_and_indexes(tmp_path):
 
 def test_lean_selection_and_bad_indexes_fail():
     frame = _one()
-    with pytest.raises(Exception) as selected:
-        readcon.select_on_frame(frame, "name Cu")
-    assert "chemfiles" in str(selected.value).lower() or "feature" in str(selected.value).lower()
-    with pytest.raises(Exception) as indices:
-        readcon.select_atom_indices(frame, "name Cu")
-    assert "chemfiles" in str(indices.value).lower() or "feature" in str(indices.value).lower()
-    with pytest.raises(Exception) as multi:
-        readcon.evaluate_selection_on_frames("name Cu", [frame])
-    assert "chemfiles" in str(multi.value).lower() or "feature" in str(multi.value).lower()
-    with pytest.raises(Exception) as positions:
-        readcon.select_atom_positions_on_frames("name Cu", [frame])
-    assert "chemfiles" in str(positions.value).lower() or "feature" in str(positions.value).lower()
+    if readcon.has_chemfiles_support():
+        selected = readcon.select_on_frame(frame, "name Cu")
+        assert selected["context_size"] == 1
+        assert readcon.select_atom_indices(frame, "name Cu") == selected["primary_indices"]
+        multi = readcon.evaluate_selection_on_frames("name Cu", [frame])
+        assert len(multi["frames"]) == 1
+        positions = readcon.select_atom_positions_on_frames("name Cu", [frame])
+        assert len(positions["frames"]) == 1
+    else:
+        with pytest.raises(Exception, match="(?i)chemfiles|feature"):
+            readcon.select_on_frame(frame, "name Cu")
+        with pytest.raises(Exception, match="(?i)chemfiles|feature"):
+            readcon.select_atom_indices(frame, "name Cu")
+        with pytest.raises(Exception, match="(?i)chemfiles|feature"):
+            readcon.evaluate_selection_on_frames("name Cu", [frame])
+        with pytest.raises(Exception, match="(?i)chemfiles|feature"):
+            readcon.select_atom_positions_on_frames("name Cu", [frame])
     frames = readcon.read_con(_resource("tiny_multi_cuh2.con"))
     with pytest.raises(IndexError):
         frames[99]
