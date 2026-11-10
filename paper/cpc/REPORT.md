@@ -145,3 +145,30 @@ Residual arms from that measurement:
   starts with the temporary-directory prefixes. The only caller of
   `hold_coverage_profile` from the suite is `run_namespace_suite`.
   The child no longer builds a profile on those prefixes.
+
+## Python arms that a caller cannot reach
+
+These lines stay at a zero count unless the function builds a vector
+whose length disagrees with the shape it just chose, or a library
+aborts first. A public call that reaches the success path is in
+`tests/python/test_python_error_arms.py` and
+`tests/python/test_numpy_absent.py`.
+
+- `src/python.rs:549`, `571`, `591`, `613`, `632`, `654`, `680`,
+  `1103`, `1486`, `1488`, `1490`, `1957`, `2291`, `2322`, `3647`,
+  `3649`, `3651`, `3677`, `3679`, `3681`. `from_shape_vec` is called
+  with a length taken from the same rows the vector just received.
+  Callers are the `vel`, `frc`, coordinate, displacement and spread
+  getters, `read_coords`, `read_positions`, `frames_from_parsed`,
+  `read_extxyz` and `read_pdb`.
+- `src/python.rs:1729`. `release_frames` (`python.rs:1821`) takes the
+  whole frame vector. The next index reports zero frames at
+  `python.rs:1760` and does not call `frame_obj`.
+- `src/python.rs:2337`. `comm_from_py` is called from `read_con_mpi`
+  (`python.rs:2355`) and `write_con_mpi` (`python.rs:2845`). A fortran
+  handle that is not a live communicator aborts inside
+  `MPI_Comm_f2c` before that call returns a status.
+- `src/python.rs:2521` and `2558`. `release_before`
+  (`compression.rs:316`) returns `Ok` unless `madvise` fails. The
+  text iterator calls it from `__next__` and `forward`. The error
+  closure runs only when that advise fails.
