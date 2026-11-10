@@ -31,4 +31,31 @@ fn a_two_frame_sidecar_matches_the_scan_and_a_directory_errors() {
     fs::create_dir(&side).unwrap();
     let err = read_sidecar(&data).unwrap_err();
     assert_eq!(err.kind(), io::ErrorKind::IsADirectory);
+    fs::remove_dir(&side).unwrap();
+
+    let bytes_txt = text.as_bytes();
+    let mut mid = idx.clone();
+    let second = idx.offsets[1] as usize;
+    assert_eq!(bytes_txt[second - 1], b'\n');
+    mid.offsets[1] = (second + 1) as u64;
+    write_sidecar(&data, &mid).unwrap();
+    assert!(read_sidecar(&data).unwrap().is_none());
+
+    let mut extra = bytes_txt.to_vec();
+    extra.push(b'\n');
+    fs::write(&data, &extra).unwrap();
+    let text2 = std::str::from_utf8(&extra).unwrap();
+    let scanned = FrameIndex::scan(text2).unwrap();
+    let tail = extra
+        .iter()
+        .enumerate()
+        .skip(1)
+        .find(|(i, _)| extra[i - 1] == b'\n' && extra[*i..].iter().all(u8::is_ascii_whitespace))
+        .map(|(i, _)| i as u64)
+        .expect("a newline with only whitespace after it");
+    assert!(tail < extra.len() as u64);
+    let mut blank = scanned.clone();
+    blank.offsets = vec![scanned.offsets[0], tail];
+    write_sidecar(&data, &blank).unwrap();
+    assert!(read_sidecar(&data).unwrap().is_none());
 }
