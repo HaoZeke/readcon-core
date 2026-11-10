@@ -1,9 +1,11 @@
 # Coverage measurement
 
-v14.2 is a checkpoint, not a pass. `COVERAGE_TABLE.md` is the table
-for this checkpoint. `scripts/coverage_table.py` wrote it from a fresh
-`cargo llvm-cov --branch` JSON export. Seven source files are OPEN
-because they are under 98 percent on lines or branches:
+v14.2 is a checkpoint, not a pass. The v14.3 table in
+`COVERAGE_TABLE.md` is newer. `scripts/coverage_table.py` writes it
+from a fresh `cargo llvm-cov --branch` JSON export. Seven source
+files are still OPEN because they are under 98 percent on lines or
+branches. After the live-handle tests, ffi.rs is at 97.96 percent
+lines and 97.44 percent branches. The v14.2 checkpoint list was:
 
 - src/conbin.rs
 - src/ffi.rs
