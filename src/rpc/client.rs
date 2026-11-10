@@ -247,6 +247,12 @@ mod unix_tests {
         assert!(rejected.is_err(), "a short cell must fail the write");
         let rejected = bad_stamp_write(&spec);
         assert!(rejected.is_err(), "a breaking ABI major must fail the write");
+        let mut bad_counts = frames[0].clone();
+        bad_counts.header.natms_per_type = vec![99];
+        assert!(
+            client.write_frames(&[bad_counts]).is_err(),
+            "a frame whose type count does not match its atoms must fail"
+        );
         let _ = std::fs::remove_file(&sock);
     }
 
@@ -264,8 +270,15 @@ mod unix_tests {
             let _ = rt.block_on(local.run_until(crate::rpc::server::start_server(&spec_server)));
         });
         let started = std::time::Instant::now();
+        let mut tried_bad_spec = false;
         let client = loop {
-            if let Ok(client) = RpcClient::new(&spec) {
+            let attempt = if tried_bad_spec {
+                spec.as_str()
+            } else {
+                tried_bad_spec = true;
+                ""
+            };
+            if let Ok(client) = RpcClient::new(attempt) {
                 if client.parse_bytes(MINIMAL.as_bytes()).is_ok() {
                     break client;
                 }
