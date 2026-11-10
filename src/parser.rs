@@ -4611,9 +4611,21 @@ Coordinates of Component 1
             parse_velocity_section(&mut short_atoms, &header, &mut []).unwrap(),
             true
         );
-        let force = "\nCu\nForces of Component 1\n0.1 0.2 0.3 0 1\n";
+        let force = "\nH\nForces of Component 1\n0.1 0.2 0.3 0 1\n";
         let mut forces = crate::iterators::MemchrLines::new(force);
         assert_eq!(parse_force_section(&mut forces, &header, &mut []).unwrap(), true);
+        let mut no_blank = crate::iterators::MemchrLines::new("H\n");
+        assert_eq!(
+            parse_force_section(&mut no_blank, &header, &mut atoms).unwrap(),
+            false
+        );
+        header.strict_validation = true;
+        let mut checked = crate::iterators::MemchrLines::new(force);
+        assert_eq!(
+            parse_force_section(&mut checked, &header, &mut atoms).unwrap(),
+            true
+        );
+        header.strict_validation = false;
         let energy = "\nCu\nEnergies of Component 1\n4.5 0 1\n";
         let mut energies = crate::iterators::MemchrLines::new(energy);
         assert_eq!(

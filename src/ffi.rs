@@ -10004,6 +10004,99 @@ mod tests {
     }
 
     #[test]
+    fn null_builders_and_frames_hit_each_guard() {
+        let null_b = std::ptr::null_mut();
+        let null_f = std::ptr::null();
+        let null_status = RKRStatus::RKR_STATUS_NULL_POINTER;
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_force(null_b, null_f) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_position(null_b, 0, 0.0, 0.0, 0.0) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_force(null_b, 0, null_f) },
+            null_status
+        );
+        let mut xyz = [0.0f64; 3];
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_get_atom_position(std::ptr::null(), 0, xyz.as_mut_ptr())
+            },
+            null_status
+        );
+        let mut tensor = std::ptr::null_mut();
+        assert_eq!(
+            unsafe { rkr_frame_builder_positions_dlpack_ex(null_b, std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_velocities_dlpack_ex(null_b, std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_forces_dlpack_ex(null_b, std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_displacements_dlpack_ex(null_b, std::ptr::null(), &mut tensor)
+            },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_spreads_dlpack_ex(null_b, std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_atom_energies_dlpack_ex(null_b, std::ptr::null(), &mut tensor)
+            },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_masses_dlpack_ex(null_b, std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_atom_ids_dlpack_ex(null_b, std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert!(unsafe { rkr_frame_builder_positions_data(null_b) }.is_null());
+        let builder = test_builder_handle();
+        assert!(!unsafe { rkr_frame_builder_positions_data(builder) }.is_null());
+        unsafe { free_rkr_frame_builder(builder) };
+        assert_eq!(unsafe { rkr_frame_atom_count(std::ptr::null()) }, 0);
+        assert_eq!(
+            unsafe {
+                rkr_frame_positions_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor)
+            },
+            null_status
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_displacements_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor)
+            },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_spreads_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_selection_result_match_at(std::ptr::null(), 0, std::ptr::null_mut(), std::ptr::null_mut()) },
+            null_status
+        );
+        let mut nframes = 0usize;
+        assert!(
+            unsafe { rkr_read_chemfiles_memory(std::ptr::null(), std::ptr::null(), &mut nframes) }
+                .is_null()
+        );
+    }
+
+    #[test]
     fn writers_dlpack_ingest_and_selection_edges() {
         let dir = tempfile::tempdir().unwrap();
         let missing = dir.path().join("missing-parent/out.con");
