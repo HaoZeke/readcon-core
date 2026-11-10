@@ -355,6 +355,7 @@ def main() -> int:
         f"date_utc {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}",
         f"uname_m {platform.machine()}",
         f"nproc {os.cpu_count()}",
+        f"hostname {platform.node()}",
         f"cpu_model {cpu_model()}",
         f"baseline_commit {BASE_COMMIT}",
         f"release_commit {RELEASE_COMMIT}",
@@ -412,9 +413,13 @@ def main() -> int:
         for name in order:
             doc = one(name, paths[name])
             samples[name].append(doc)
+            seconds = doc.get("seconds")
+            seconds_txt = f"{seconds:.17g}" if isinstance(seconds, float) else seconds
+            mib = doc.get("mib")
+            mib_txt = f"{mib:.17g}" if isinstance(mib, float) else mib
             lines.append(
-                f"sample arm={name} rep={rep} seconds={doc.get('seconds')} "
-                f"mib={doc.get('mib')} matched={doc.get('matched')} got={doc.get('got')} "
+                f"sample arm={name} rep={rep} seconds={seconds_txt} "
+                f"mib={mib_txt} matched={doc.get('matched')} got={doc.get('got')} "
                 f"requested={doc.get('requested')} exit={doc.get('exit')} error={doc.get('error', '')}"
             )
     for name, _path in arms:
