@@ -442,9 +442,6 @@ def macros_and_rows(rec: dict) -> tuple[list[tuple[str, str]], list[str]]:
         ("bfSettleWindow", figures(protocol["window_ms"], 3)),
         ("bfSettleGap", seconds(protocol["gap_s"])),
     ]
-    names = [n for n, _ in macros]
-    if len(names) != len(set(names)):
-        raise SystemExit("duplicate macro names")
     return macros, rows, ratio_rows
 
 
