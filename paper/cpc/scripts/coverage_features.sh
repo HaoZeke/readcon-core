@@ -6,6 +6,11 @@
 # chemfiles feature on and compiles libchemfiles, because the prebuilt
 # archive faults on the first frame under rust-lld.
 #
+# A second instrumented build omits chemfiles. That is the only binary
+# that contains cfg(not(feature = "chemfiles")), including the lean
+# return in read_frames_for_convert. Both profraw sets stay in the
+# llvm-cov target and one report reads them.
+#
 # The python feature builds an extension module, so the test binary does
 # not link libpython on its own. This script adds that link, then runs
 # pytest against an extension built with the same instrumentation. The
@@ -106,6 +111,13 @@ if ! find "$PROFDIR" -maxdepth 1 -name '*.profraw' | grep -q .; then
   exit 1
 fi
 
+echo "==> lean configuration, no chemfiles"
+# Do not clean. The chemfiles profiles remain for the merged report.
+LEAN_FEATURES=parallel,zstd,grammar,python,capi,rpc,metatensor,mpi
+cargo llvm-cov --workspace --all-targets \
+  --features "$LEAN_FEATURES" \
+  --branch --no-fail-fast --no-report --remap-path-prefix
+
 echo "==> python extension"
 cargo llvm-cov show-env --branch --export-prefix > "$CARGO_TARGET_DIR/py-env.sh"
 set -a
@@ -143,8 +155,21 @@ link_host_tool pandoc
 link_host_tool cargo
 link_host_tool rustc
 echo "==> release library, newer than the sources the probes compare"
+# The probes compare mtimes. An instrumented RUSTFLAGS would not be
+# the cpc-clib library, so this build drops the coverage flags.
+saved_rustflags=${RUSTFLAGS:-}
+saved_profile=${LLVM_PROFILE_FILE:-}
+unset LLVM_PROFILE_FILE || true
+export RUSTFLAGS="-C link-arg=-lpython3.12"
 cargo build --release --lib --features parallel,zstd,mpi --target-dir "$ROOT/target"
-maturin develop --features python,zstd,chemfiles-from-sources
+export RUSTFLAGS="$saved_rustflags"
+if [ -n "$saved_profile" ]; then
+  export LLVM_PROFILE_FILE="$saved_profile"
+fi
+
+echo "==> lean python extension"
+maturin develop --features python,zstd
+set +e
 python -m pytest \
   tests/python/test_v143_arms.py \
   tests/python/test_v143_behaviour.py \
@@ -189,6 +214,66 @@ python -m pytest \
   tests/python/test_version_sot.py \
   tests/python/test_check_release_artifacts.py \
   --tb=short
+lean_pytest=$?
+set -e
+LEAN_EXT=$(find "$VENV" -path '*/site-packages/readcon/*.so' -type f | head -n 1)
+if [ -z "$LEAN_EXT" ]; then
+  echo "the lean python extension was not installed" >&2
+  exit 1
+fi
+mkdir -p "$PROFDIR/debug"
+cp "$LEAN_EXT" "$PROFDIR/debug/libreadcon_core-lean.so"
+chmod +x "$PROFDIR/debug/libreadcon_core-lean.so"
+
+echo "==> chemfiles python extension"
+maturin develop --features python,zstd,chemfiles-from-sources
+set +e
+python -m pytest \
+  tests/python/test_v143_arms.py \
+  tests/python/test_v143_behaviour.py \
+  tests/python/test_extension_edges.py \
+  tests/python/test_edge_inputs.py \
+  tests/python/test_readcon.py \
+  tests/python/test_numpy_absent.py \
+  tests/python/test_error_results.py \
+  tests/python/test_ase.py \
+  tests/python/test_ase_physical_units.py \
+  tests/python/test_chemfiles_import.py \
+  tests/python/test_chemfiles_selection.py \
+  tests/python/test_conformance_goldens.py \
+  tests/python/test_convert_migrate.py \
+  tests/python/test_empty_header_lines.py \
+  tests/python/test_index_proj.py \
+  tests/python/test_position_slab.py \
+  tests/python/test_trajectory.py \
+  tests/python/test_tutorial_core.py \
+  tests/python/test_tutorial_chemfiles.py \
+  tests/python/test_api_coverage.py \
+  tests/python/test_line_coverage.py \
+  tests/python/test_physical_coverage.py \
+  tests/python/test_helpers.py \
+  tests/python/test_v144_public.py \
+  tests/python/test_paper_cover_a.py \
+  tests/python/test_paper_cover_b.py \
+  tests/python/test_paper_cover_c.py \
+  tests/python/test_paper_cover_d.py \
+  tests/python/test_paper_cover_e.py \
+  tests/python/test_paper_cover_f.py \
+  tests/python/test_paper_cover_g.py \
+  tests/python/test_paper_cover_h.py \
+  tests/python/test_paper_branches.py \
+  tests/python/test_paper_every.py \
+  tests/python/test_paper_mains.py \
+  tests/python/test_paper_paths.py \
+  tests/python/test_indep_reader_paths.py \
+  tests/python/test_cpc_helpers.py \
+  tests/python/test_bench_host.py \
+  tests/python/test_version_gate.py \
+  tests/python/test_version_sot.py \
+  tests/python/test_check_release_artifacts.py \
+  --tb=short
+chem_pytest=$?
+set -e
 
 EXT=$(find "$VENV" -path '*/site-packages/readcon/*.so' -type f | head -n 1)
 if [ -z "$EXT" ]; then
@@ -206,3 +291,7 @@ export CARGO_TARGET_DIR="${PROFDIR%/*}"
 echo "==> report"
 cargo llvm-cov report --branch --remap-path-prefix --json --output-path "$OUT"
 echo "wrote $OUT"
+if [ "$lean_pytest" -ne 0 ] || [ "$chem_pytest" -ne 0 ]; then
+  echo "pytest lean=$lean_pytest chemfiles=$chem_pytest" >&2
+  exit 1
+fi
