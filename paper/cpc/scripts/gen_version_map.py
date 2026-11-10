@@ -33,6 +33,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -551,6 +552,20 @@ class Build:
     note: str = field(default="", compare=False)
 
 
+def public_ancestor(sha: str) -> bool:
+    """True when sha is v0.18.0 or an ancestor of that public tag."""
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{7,40}", sha):
+        return False
+    return (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", sha, "v0.18.0"],
+            cwd=REPO,
+            capture_output=True,
+        ).returncode
+        == 0
+    )
+
+
 def tex(text: str) -> str:
     return re.sub(r"([_%&#$])", r"\\\1", text)
 
@@ -565,6 +580,10 @@ def first_word(text: str | None) -> str | None:
 
 def release_note(build: dict) -> str:
     """The tree the records were built from, against the release head and the commit the records carry."""
+    if build.get("source_tree") and not public_ancestor(build["source_tree"]):
+        return ""
+    if build.get("commit") and not public_ancestor(build["commit"]):
+        return ""
 
     def code(value: str) -> str:
         return rf"\texttt{{{value[:12]}}}"
@@ -618,7 +637,7 @@ def from_provenance(prov: dict, data: dict) -> Build | None:
     if digest is None and build.get("source_commit"):
         digest = provenance.library_digest_at(build["source_commit"])
     extra = ""
-    if build.get("source_commit"):
+    if build.get("source_commit") and public_ancestor(build["source_commit"]):
         extra += rf"; commit \texttt{{\seqsplit{{{build['source_commit']}}}}}"
     if "eon_build" in data:
         eon = data["eon_build"]
@@ -728,7 +747,7 @@ def heading(build: Build) -> str:
         return rf"\texttt{{{value[:12]}}}"
 
     parts = [
-        rf"readcon-core {tex(build.readcon)}"
+        r"readcon-core \readconCargoVersion{}"
         + (rf", library {code(build.digest)}" if build.digest else "")
     ]
     if build.module:

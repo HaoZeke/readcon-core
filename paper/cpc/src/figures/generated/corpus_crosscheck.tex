@@ -13,7 +13,7 @@ For \texttt{read\_con}, the rewrite of each file that its entry marks keeps the 
 It writes a frame of major 1 or 2 as major 3, with each unit that the frame declares and the same fields, as the Python, Julia and Fortran writers do.
 That rewrite keeps the minor of a frame that declares one or whose velocities carry a time label, which pins it to minor 0; a frame of version 3.0 with neither comes back at minor 1, and no marked file contains one.
 A reader that differs from an explicit entry disagrees with the specification, and one that differs from any other entry departs from the reading that entry records.
-readcon-core 0.18.1 puts no line number in its Python exceptions, so its lines are not compared; it warns of a declared time unit that it does not apply only when it converts a frame to ASE (\texttt{ConFrame.to\_ase}), and the check converts every frame that has velocities.
+readcon-core \readconCargoVersion{} puts no line number in its Python exceptions, so its lines are not compared; it warns of a declared time unit that it does not apply only when it converts a frame to ASE (\texttt{ConFrame.to\_ase}), and the check converts every frame that has velocities.
 \texttt{read\_con} and \texttt{iter\_con} are two paths through readcon-core; the independent reader is pure Python written from the released text, and it follows the reading the manifest records where that text leaves a case open.
 Field-identical counts the files that both \texttt{read\_con} and the independent reader accept with equal fields: coordinates, velocities and cell equal in every bit, and the same masks, identifiers, symbols, masses, version, minor, declared and applied time unit and periodicity.}
 \label{tab:corpus-crosscheck}

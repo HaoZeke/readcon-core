@@ -220,22 +220,6 @@ allow_exact = {
     "paper/cpc/logs/reader-exchange-public.log",
     "paper/cpc/logs/mutant-differential.txt",
     "paper/cpc/variants/NUMBERS.txt",
-    # Generated tables quote the crate version stored in the records.
-    "paper/cpc/src/figures/generated/corpus_crosscheck.tex",
-    "paper/cpc/src/figures/generated/r0174_macros.tex",
-    "paper/cpc/src/figures/generated/restart_kernels.tex",
-    "paper/cpc/src/figures/generated/sizes_macros.tex",
-    "paper/cpc/src/figures/generated/survey_listing.tex",
-    "paper/cpc/src/figures/generated/test_run.tex",
-    "paper/cpc/src/figures/generated/version_map.tex",
-    "tests/python/test_paper_cover_a.py",
-}
-# These may name the public tag 0.18.0 and not the crate version.
-optional_exact = {
-    "paper/cpc/src/release.tex",
-    "paper/cpc/packet/CPC-FORM.md",
-    "paper/cpc/logs/reader-exchange-public.log",
-    "paper/cpc/variants/NUMBERS.txt",
 }
 skip_dirs = {
     ".git",
@@ -277,7 +261,17 @@ if bad:
 else:
     print("OK: no stray package-version strings")
 
-required = sorted(allow_exact - {"VERSION", "CHANGELOG.md", "Cargo.lock"} - optional_exact)
+# release.tex, the submission form, the public exchange log and the variant
+# note record the public tag. They are not a second copy of the crate version.
+public_tag_records = {
+    "paper/cpc/src/release.tex",
+    "paper/cpc/packet/CPC-FORM.md",
+    "paper/cpc/logs/reader-exchange-public.log",
+    "paper/cpc/variants/NUMBERS.txt",
+}
+required = sorted(
+    allow_exact - {"VERSION", "CHANGELOG.md", "Cargo.lock"} - public_tag_records
+)
 for rel in required:
     data = (root / rel).read_text(encoding="utf-8")
     if version not in data:

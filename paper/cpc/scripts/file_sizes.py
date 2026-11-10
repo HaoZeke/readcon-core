@@ -248,7 +248,7 @@ Format & raw & gzip & raw & gzip \\
     macros = {
         "sizeFrames": tex_int(frames),
         "sizeGzipLevel": str(GZIP_LEVEL),
-        "sizeWriter": con["writer"].split()[-1],
+        "sizeWriter": r"\readconCargoVersion{}",
         "sizeConVersion": con_version,
     }
     stems = {payload: stem for payload, stem, _v in PAYLOAD_SETS}

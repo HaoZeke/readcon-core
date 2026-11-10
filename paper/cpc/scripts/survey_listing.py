@@ -37,7 +37,7 @@ RECORD = ROOT / "data" / "survey_frame.json"
 def write_listing(record: dict) -> None:
     caption = (
         "A Pt(100) slab of two layers of four atoms with one adatom, as one CON 3.1 frame with velocities "
-        f"written by readcon-core {record['readcon']}. Section~\\ref{{sec:worked}} reads it line by line."
+        "written by readcon-core \\readconCargoVersion{}. Section~\\ref{sec:worked} reads it line by line."
     )
     (GENERATED / "survey_listing.tex").write_text(
         "% Written by paper/cpc/scripts/survey_listing.py.\n"

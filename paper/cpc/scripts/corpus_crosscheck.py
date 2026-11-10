@@ -674,7 +674,7 @@ def tex(record: dict) -> str:
         r"one.",
         r"A reader that differs from an explicit entry disagrees with the specification, and one that differs "
         r"from any other entry departs from the reading that entry records.",
-        rf"readcon-core {version} puts no line number in its Python exceptions, so its lines are not compared; it "
+        r"readcon-core \readconCargoVersion{} puts no line number in its Python exceptions, so its lines are not compared; it "
         r"warns of a declared time unit that it does not apply only when it converts a frame to ASE "
         r"(\texttt{ConFrame.to\_ase}), and the check converts every frame that has velocities.",
         *zstd_sentence(record, name),

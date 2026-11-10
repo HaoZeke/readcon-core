@@ -166,7 +166,7 @@ def listing(record: dict) -> str:
         "\n"
     ).split("\n")
     caption = (
-        f"Test run. The example program of readcon-core {record['readcon_version']}, built with "
+        "Test run. The example program of readcon-core \\readconCargoVersion{}, built with "
         f"{record['rustc'].split(' (')[0]}, reads Listing~\\ref{{lst:frame}} and prints its cell, "
         "its counts and its first five atoms with their fixed flags, identifiers and velocities."
     )

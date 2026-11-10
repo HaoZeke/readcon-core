@@ -15,9 +15,10 @@ fn every_export_accepts_a_null_argument() {
         c"readcon-core/abi-1.1/layout-1"
     );
     assert_eq!(unsafe { rkr_con_spec_version() }, 3);
+    let expected = std::ffi::CString::new(env!("CARGO_PKG_VERSION")).unwrap();
     assert_eq!(
         unsafe { std::ffi::CStr::from_ptr(rkr_library_version()) },
-        c"0.18.1"
+        expected.as_c_str()
     );
     assert_eq!(
         unsafe { rkr_frame_atom_index_by_id(ptr::null(), 0u64) },

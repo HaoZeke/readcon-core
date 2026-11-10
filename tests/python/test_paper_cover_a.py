@@ -1958,12 +1958,13 @@ def test_entry_points_and_corpus_readers(tmp_path, monkeypatch):
 
     drift_mod = load("spec_version_drift.py")
     assert "con_spec_version" in drift_mod.frame()
-    wheel = ROOT / "target" / "wheels" / "readcon-0.18.1-cp312-cp312-linux_x86_64.whl"
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    wheel = ROOT / "target" / "wheels" / f"readcon-{version}-cp312-cp312-linux_x86_64.whl"
     if wheel.is_file():
         monkeypatch.setattr(
             sys,
             "argv",
-            ["spec_version_drift.py", "--reader", f"0.18.1={wheel}", "--out", str(tmp_path / "drift-out")],
+            ["spec_version_drift.py", "--reader", f"{version}={wheel}", "--out", str(tmp_path / "drift-out")],
         )
         assert drift_mod.main() == 0
     assert drift_mod.outcome({"verdict": "accept", "frames": 2}) == "accept 2"

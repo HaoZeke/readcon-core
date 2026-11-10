@@ -372,7 +372,7 @@ def main() -> None:
                 if walls
                 else " and"
             )
-            + f" the build is readcon {record['provenance']['build']['readcon_version']} with "
+            + r" the build is readcon \readconCargoVersion{} with "
             f"ASE {record['provenance']['peers']['ase']}.",
         ]
         if part
