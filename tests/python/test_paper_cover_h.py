@@ -252,8 +252,19 @@ def test_host_stamp_tolerates_a_missing_cpuinfo_and_rewrites_one_tree(tmp_path, 
         return real(self, *args, **kwargs)
 
     monkeypatch.setattr(pathlib.Path, "read_text", denied)
-    host = load("stamp_host.py")
-    assert host.RAW == ""
+    denied_host = load("stamp_host.py")
+    assert denied_host.RAW == ""
+    monkeypatch.undo()
+
+    def blank(self, *args, **kwargs):
+        if self.name == "cpuinfo":
+            return "processor : 0\n"
+        return real(self, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, "read_text", blank)
+    blank_host = load("stamp_host.py")
+    assert blank_host.RAW == ""
+    assert blank_host.stamp_text("plain") == "plain"
     monkeypatch.undo()
 
     folder = tmp_path / "tree"
