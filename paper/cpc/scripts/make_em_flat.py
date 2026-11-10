@@ -291,7 +291,7 @@ def main() -> int:
                 ):
                     # Allow the listings First-Aid bang only; labels-changed must be zero after 3.
                     failures.append(f"{cat}: {v['count']}")
-                elif cat != "labels changed" or v["count"]:
+                else:
                     failures.append(f"{cat}: {v['count']}")
         # Soft-filter: listings First Aid "!" is not a TeX error with halt-on-error success.
         err_examples = comp["found"].get("error", {}).get("examples", [])
