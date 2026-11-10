@@ -98,3 +98,50 @@ Files still under 98 percent on lines or branches:
 Sixteen source files are at or above 98 percent on both bars.
 conbin.rs is at 99.65 percent lines and 99.46 percent branches.
 types.rs is at 99.79 percent lines and 98.61 percent branches.
+
+## Run 84 checkpoint
+
+`paper/cpc/receipts/run84-taken.txt` is the summary
+`coverage_features.sh` wrote for the mixed tree, before that commit
+was split. python.rs is under 98 percent on both bars in that file.
+The split replaced the mixed commit with one fix per removed guard.
+The namespace child no longer uses a fixed profile path. It creates
+a directory under `target/cov-live`, deletes it, and also runs with
+the profile variable unset. This tip has not been measured again.
+
+The seven paper-record tests still fail. The producers
+`bench/reads.py`, `bench/cpp_reads.py` and `bench/r0174.py` have not
+been run at this tip. The values the checks compare:
+
+- `bench/results/r0174/reads.json` names release 0.17.4.
+  `provenance.json` names the version in `Cargo.toml`.
+- `cpp/build.json` hashes `readcon_read.cpp` as `1c37e6df28f3`.
+  `bench/native/readcon_read.cpp` hashes to `65fd82243ef1`.
+- `cpp/build.json` hashes `cpp_reads.py` as `775e2eda69a0`.
+  `paper/cpc/bench/cpp_reads.py` hashes to `faebe04d52cb`.
+- `cpp/build.json` records library digest `3b4d00ae2427e0e1`.
+  `provenance.json` records `d94b6ad922e9980e`.
+  The binary-format records name both, with one binary sha256.
+
+Residual arms from that measurement:
+
+- `src/chemfiles_import_imp.rs:920`. The test
+  `imports_xyz_from_temp_file_via_chemfiles_io` asserts an oxygen at
+  the origin and an oxygen whose z is above 0.5. The export left one
+  side of the origin comparison at count 0.
+- `src/conbin.rs:594`. `handle.join().is_err` inside
+  `sum_pieces_in_order`. Callers: `sum_split_streams` at line 523 and
+  `split_stream_sum` at line 641. The worker only receives a piece
+  index and adds a range. A join error requires that worker to panic.
+- `src/conbin.rs:690`. `err_rx.try_recv` inside `split_stream_sum`.
+  Callers: `sum_split_streams` at line 619, and the tests at lines
+  2000, 2623 and 2986. The zero side is an error string on that
+  channel. The fault cases that fail an open do not send on it.
+- `src/conbin.rs:2811`. The `Ok` arm of `stream_one_span` after the
+  first round in `run_fault_suite`. The only caller is that loop.
+  The page is unmapped, and the call returns the error the test
+  asserts, so the `Ok` arm does not run.
+- `src/conbin.rs:3138` and `src/conbin.rs:3214`. The profile directory
+  starts with the temporary-directory prefixes. The only caller of
+  `hold_coverage_profile` from the suite is `run_namespace_suite`.
+  The child no longer builds a profile on those prefixes.

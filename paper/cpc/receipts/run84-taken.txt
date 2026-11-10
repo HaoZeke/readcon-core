@@ -1,0 +1,10 @@
+producer: paper/cpc/scripts/coverage_features.sh
+json: target/cov-live/coverage.json
+measured-tree: f268440 before the split
+
+src/chemfiles_import_imp.rs lines 1205/1209 99.6691
+src/chemfiles_import_imp.rs branches 129/130 99.2308
+src/conbin.rs lines 2560/2579 99.2633
+src/conbin.rs branches 208/212 98.1132
+src/python.rs lines 3302/3427 96.3525
+src/python.rs branches 338/346 97.6879
