@@ -545,8 +545,7 @@ impl PyConFrame {
                     data.extend_from_slice(&frame.velocities.as_f64_row(i));
                 }
             }
-            let array = Array2::from_shape_vec((n, 3), data)
-                .map_err(|e| PyValueError::new_err(format!("vel shape error: {e}")))?;
+            let array = Array2::from_shape_vec((n, 3), data).unwrap();
             return Ok(Some(array.into_pyarray(py)));
         }
         self.velocities_array(py)
@@ -567,8 +566,7 @@ impl PyConFrame {
                     data.extend_from_slice(&frame.forces.as_f64_row(i));
                 }
             }
-            let array = Array2::from_shape_vec((n, 3), data)
-                .map_err(|e| PyValueError::new_err(format!("frc shape error: {e}")))?;
+            let array = Array2::from_shape_vec((n, 3), data).unwrap();
             return Ok(Some(array.into_pyarray(py)));
         }
         self.forces_array(py)
@@ -587,8 +585,7 @@ impl PyConFrame {
         for atom in &atoms {
             data.extend_from_slice(&[atom.x, atom.y, atom.z]);
         }
-        let array = Array2::from_shape_vec((atoms.len(), 3), data)
-            .map_err(|e| PyValueError::new_err(format!("coords_array shape error: {e}")))?;
+        let array = Array2::from_shape_vec((atoms.len(), 3), data).unwrap();
         Ok(array.into_pyarray(py))
     }
 
@@ -609,8 +606,7 @@ impl PyConFrame {
             data.push(atom.vy.unwrap_or(0.0));
             data.push(atom.vz.unwrap_or(0.0));
         }
-        let array = Array2::from_shape_vec((atoms.len(), 3), data)
-            .map_err(|e| PyValueError::new_err(format!("velocities_array shape error: {e}")))?;
+        let array = Array2::from_shape_vec((atoms.len(), 3), data).unwrap();
         Ok(Some(array.into_pyarray(py)))
     }
 
@@ -628,8 +624,7 @@ impl PyConFrame {
             data.push(atom.fy.unwrap_or(0.0));
             data.push(atom.fz.unwrap_or(0.0));
         }
-        let array = Array2::from_shape_vec((atoms.len(), 3), data)
-            .map_err(|e| PyValueError::new_err(format!("forces_array shape error: {e}")))?;
+        let array = Array2::from_shape_vec((atoms.len(), 3), data).unwrap();
         Ok(Some(array.into_pyarray(py)))
     }
 
@@ -650,8 +645,7 @@ impl PyConFrame {
             data.push(atom.dy.unwrap_or(0.0));
             data.push(atom.dz.unwrap_or(0.0));
         }
-        let array = Array2::from_shape_vec((atoms.len(), 3), data)
-            .map_err(|e| PyValueError::new_err(format!("displacements_array shape error: {e}")))?;
+        let array = Array2::from_shape_vec((atoms.len(), 3), data).unwrap();
         Ok(Some(array.into_pyarray(py)))
     }
 
@@ -676,8 +670,7 @@ impl PyConFrame {
             data.push(atom.sy.unwrap_or(0.0));
             data.push(atom.sz.unwrap_or(0.0));
         }
-        let array = Array2::from_shape_vec((atoms.len(), 3), data)
-            .map_err(|e| PyValueError::new_err(format!("spreads_array shape error: {e}")))?;
+        let array = Array2::from_shape_vec((atoms.len(), 3), data).unwrap();
         Ok(Some(array.into_pyarray(py)))
     }
 
@@ -1099,8 +1092,7 @@ impl PyConFrame {
                     data.extend_from_slice(&frame.positions.as_f64_row(i));
                 }
             }
-            let xyz = Array2::from_shape_vec((n_atoms, 3), data)
-                .map_err(|e| PyValueError::new_err(format!("xyz shape error: {e}")))?
+            let xyz = Array2::from_shape_vec((n_atoms, 3), data).unwrap()
                 .into_pyarray(py)
                 .unbind();
             frame.positions = crate::storage_dtype::FloatArray2::zeros_f64(0, 3);
@@ -1482,12 +1474,9 @@ fn read_coords(py: Python<'_>, path: &str) -> PyResult<Py<PyDict>> {
     }
     let convert_s = convert_start.elapsed().as_secs_f64();
     let copy_start = std::time::Instant::now();
-    let pos = ndarray::Array3::from_shape_vec((n_frames, n_atoms, 3), positions)
-        .map_err(|err| PyValueError::new_err(err.to_string()))?;
-    let mass = ndarray::Array2::from_shape_vec((n_frames, n_atoms), masses)
-        .map_err(|err| PyValueError::new_err(err.to_string()))?;
-    let cell_arr = ndarray::Array2::from_shape_vec((n_frames, 6), cell)
-        .map_err(|err| PyValueError::new_err(err.to_string()))?;
+    let pos = ndarray::Array3::from_shape_vec((n_frames, n_atoms, 3), positions).unwrap();
+    let mass = ndarray::Array2::from_shape_vec((n_frames, n_atoms), masses).unwrap();
+    let cell_arr = ndarray::Array2::from_shape_vec((n_frames, 6), cell).unwrap();
     let dict = PyDict::new(py);
     dict.set_item("positions", pos.into_pyarray(py))?;
     dict.set_item("masses", mass.into_pyarray(py))?;
@@ -1953,8 +1942,7 @@ fn slab_from_values(
     n_frames: usize,
     n_atoms: usize,
 ) -> PyResult<Py<PyArray3<f64>>> {
-    let array = Array3::from_shape_vec((n_frames, n_atoms, 3), values)
-        .map_err(|e| PyValueError::new_err(format!("positions shape error: {e}")))?;
+    let array = Array3::from_shape_vec((n_frames, n_atoms, 3), values).unwrap();
     Ok(array.into_pyarray(py).unbind())
 }
 
@@ -2287,8 +2275,7 @@ fn read_positions(
                 .map_err(|e| e.to_string())
         })
         .map_err(PyIOError::new_err)?;
-    let array = Array3::from_shape_vec((block.n_frames, block.n_atoms, 3), block.values)
-        .map_err(|e| PyValueError::new_err(format!("positions shape error: {e}")))?;
+    let array = Array3::from_shape_vec((block.n_frames, block.n_atoms, 3), block.values).unwrap();
     Ok(array.into_pyarray(py).unbind())
 }
 
@@ -2318,8 +2305,7 @@ fn frames_from_parsed(py: Python<'_>, frames: Vec<ConFrame>) -> PyResult<Vec<PyC
             }
         }
     }
-    let slab = Array3::from_shape_vec((frames.len(), n_atoms, 3), values)
-        .map_err(|e| PyValueError::new_err(format!("positions shape error: {e}")))?
+    let slab = Array3::from_shape_vec((frames.len(), n_atoms, 3), values).unwrap()
         .into_pyarray(py)
         .unbind();
     frames
@@ -3643,12 +3629,9 @@ fn read_extxyz<'py>(
     let tables = crate::extxyz_scan::tables_from_extxyz_path(std::path::Path::new(path))
         .map_err(|err| pyo3::exceptions::PyValueError::new_err(err))?;
     let positions =
-        ndarray::Array3::from_shape_vec((tables.n_frames, tables.n_atoms, 3), tables.positions)
-            .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
-    let masses = ndarray::Array2::from_shape_vec((tables.n_frames, tables.n_atoms), tables.masses)
-        .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
-    let cell = ndarray::Array2::from_shape_vec((tables.n_frames, 6), tables.cell)
-        .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
+        ndarray::Array3::from_shape_vec((tables.n_frames, tables.n_atoms, 3), tables.positions).unwrap();
+    let masses = ndarray::Array2::from_shape_vec((tables.n_frames, tables.n_atoms), tables.masses).unwrap();
+    let cell = ndarray::Array2::from_shape_vec((tables.n_frames, 6), tables.cell).unwrap();
     Ok((
         positions.into_pyarray(py),
         masses.into_pyarray(py),
@@ -3673,12 +3656,9 @@ fn read_pdb<'py>(
     let tables = crate::pdb_scan::tables_from_pdb_path(std::path::Path::new(path))
         .map_err(|err| pyo3::exceptions::PyValueError::new_err(err))?;
     let positions =
-        ndarray::Array3::from_shape_vec((tables.n_frames, tables.n_atoms, 3), tables.positions)
-            .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
-    let masses = ndarray::Array2::from_shape_vec((tables.n_frames, tables.n_atoms), tables.masses)
-        .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
-    let cell = ndarray::Array2::from_shape_vec((tables.n_frames, 6), tables.cell)
-        .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
+        ndarray::Array3::from_shape_vec((tables.n_frames, tables.n_atoms, 3), tables.positions).unwrap();
+    let masses = ndarray::Array2::from_shape_vec((tables.n_frames, tables.n_atoms), tables.masses).unwrap();
+    let cell = ndarray::Array2::from_shape_vec((tables.n_frames, 6), tables.cell).unwrap();
     Ok((
         positions.into_pyarray(py),
         masses.into_pyarray(py),
