@@ -4569,4 +4569,48 @@ Coordinates of Component 1
         assert_eq!(stored.positions.as_f64_row(0), [0.0, 0.0, 0.0]);
     }
 
+    #[test]
+    fn memchr_header_and_labels_take_each_rejected_value() {
+        for (text, needle) in [
+            (
+                "user\n{\"con_spec_version\":4294967296}\n",
+                "UnsupportedVersion",
+            ),
+            ("user\n{\"con_spec_version\":0}\n", "UnsupportedVersion"),
+            ("user\n{\"con_spec_version\":1}\n", "UnsupportedVersion"),
+            ("user\n{\"con_spec_version\":9}\n", "UnsupportedVersion"),
+            ("user\n{\"con_spec_version\":-3}\n", "UnsupportedVersion"),
+            (
+                "user\n{\"con_spec_version\":2,\"section_arity\":{\"widgets\":0}}\n",
+                ">= 1",
+            ),
+            (
+                "user\n{\"con_spec_version\":2,\"section_arity\":{\"velocities\":1}}\n",
+                "expected 3",
+            ),
+        ] {
+            let err = ConFrameIterator::new(text).next().unwrap().unwrap_err();
+            assert!(
+                err.to_string().contains(needle) || format!("{err:?}").contains(needle),
+                "{text} -> {err}"
+            );
+        }
+        assert!(!line_has_component_label("", 1));
+        assert!(!line_has_component_label("speed of component 1", 1));
+        assert!(!line_has_component_label("velocities on component 1", 1));
+        assert!(!line_has_component_label("velocities of part 1", 1));
+        assert!(!line_has_component_label("velocities of component 2", 1));
+        assert!(!line_has_component_label("velocities of component 1 extra", 1));
+        assert!(line_has_component_label("Velocities of Component 1", 1));
+
+        let three = parse_line_of_range_f64("1 2 3", 3, 3, &[0.0; 3]).unwrap();
+        assert_eq!(three, vec![1.0, 2.0, 3.0]);
+        let six = parse_line_of_range_f64("1 2 3 4 5 6", 6, 6, &[0.0; 6]).unwrap();
+        assert_eq!(six, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+
+        let short = b"\n";
+        let err = parse_coord_fields_detailed(short, 0, 2, Some(1)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { found: 0, .. }), "{err}");
+    }
+
 }
