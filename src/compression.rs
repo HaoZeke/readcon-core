@@ -597,14 +597,17 @@ mod tests {
         // one below the region shows that no such gap is left above it.
         let mut fillers = Vec::new();
         let mut use_hint = true;
+        let mut saw_plain = false;
         loop {
             let filler = if use_hint {
                 use_hint = false;
-                let hint = unsafe { region.cast::<u8>().add(map_len + GUARD + page) };
+                // A zero-length request is rejected. The anonymous map that
+                // replaces it is the filler, and the next pass asks for a
+                // plain map.
                 let hinted = unsafe {
                     libc::mmap(
-                        hint.cast(),
-                        map_len,
+                        std::ptr::null_mut(),
+                        0,
                         libc::PROT_READ | libc::PROT_WRITE,
                         libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
                         -1,
@@ -617,13 +620,15 @@ mod tests {
                     hinted
                 }
             } else {
+                saw_plain = true;
                 anonymous(map_len)
             };
-            if mapping_is_below(filler, region) {
+            if saw_plain && mapping_is_below(filler, region) {
                 unsafe { libc::munmap(filler, map_len) };
                 break;
             }
             fillers.push(filler);
+            assert!(fillers.len() < 64, "the address space did not yield a lower map");
         }
         unsafe { libc::munmap(region, map_len) };
         let mut text = ForwardText::open(&path, true).unwrap();
