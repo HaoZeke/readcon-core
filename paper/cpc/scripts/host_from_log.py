@@ -12,27 +12,33 @@ LOG = ROOT / "logs" / "reader-exchange.log"
 GEN = ROOT / "src" / "figures" / "generated"
 
 LABELS = {
-    "readcon_tip": "readcon, tip",
-    "readcon_v0173": "readcon-core",
-    "readcon_base": "readcon, main",
-    "ase_eon": r"ASE ase.io (format eon)",
-    "eon_py": r"eOn \texttt{loadcons}",
-    "readcon_eon_api": r"readcon through the eOn C++ API",
-    "readcon_db": "readcon-db",
-    "readcon_first": "readcon, first frame",
-    "eon": r"eOn \texttt{con2matter}, first frame",
-    "numpy": "NumPy",
-    "chemfiles": "chemfiles",
-    "ovito": "OVITO",
-    "ase_extxyz": "ASE, extended XYZ",
-    "pymatgen": "pymatgen",
-    "h5py": "h5py",
-    "mdanalysis": "MDAnalysis",
-    "conbin": "CON-bin mmap",
+    "readcon_full_t1": r"readcon \texttt{read\_con}, 1 thread",
+    "readcon_full_t8": r"readcon \texttt{read\_con}, 8 threads",
+    "readcon_pos_t1": r"readcon \texttt{read\_positions}, 1 thread",
+    "readcon_pos_t8": r"readcon \texttt{read\_positions}, 8 threads",
+    "readcon_v0173": r"readcon-core \texttt{read\_con}, 1 thread",
+    "readcon_base": r"baseline \texttt{read\_con}, 1 thread",
+    "ase_eon": r"ASE \texttt{get\_positions}, 1 thread",
+    "eon_py": r"eOn \texttt{loadcons}, 1 thread",
+    "readcon_eon_api": r"\texttt{read\_all\_frames} then \texttt{con2matter}, 1 thread",
+    "readcon_db": r"readcon-db ingest, 1 thread",
+    "readcon_first": r"\texttt{read\_first\_frame}, 1 frame",
+    "eon": r"eOn \texttt{con2matter}, 1 frame",
+    "numpy": r"NumPy \texttt{loadtxt}, 1 thread",
+    "chemfiles": r"chemfiles positions, 1 thread",
+    "ovito": r"OVITO positions, 1 thread",
+    "ase_extxyz": r"ASE extended XYZ \texttt{get\_positions}, 1 thread",
+    "pymatgen": r"pymatgen \texttt{cart\_coords}, 1 thread",
+    "h5py": r"h5py dataset, 1 thread",
+    "mdanalysis": r"MDAnalysis positions, 1 thread",
+    "conbin": r"CON-bin \texttt{read\_conbin}, 1 thread",
 }
 
 CON_ORDER = (
-    "readcon_tip",
+    "readcon_full_t1",
+    "readcon_full_t8",
+    "readcon_pos_t1",
+    "readcon_pos_t8",
     "readcon_v0173",
     "readcon_base",
     "ase_eon",
@@ -94,6 +100,7 @@ def table(
         "\\footnotesize",
         f"\\caption{{{caption}}}",
         f"\\label{{{label}}}",
+        "\\resizebox{\\linewidth}{!}{%",
         "\\begin{tabular}{@{}lrrrr@{}}",
         "\\toprule",
         "Reader & Median (s) & IQR (s) & MiB & Matched \\\\",
@@ -117,7 +124,7 @@ def table(
             f"{LABELS[name]} & {num(row['median_s'], 4)} & {num(row['iqr_s'], 3)} "
             f"& {num(row['mib_median'], 4)} & {matched} \\\\"
         )
-    lines.extend(["\\bottomrule", "\\end{tabular}", "\\end{table}"])
+    lines.extend(["\\bottomrule", "\\end{tabular}}", "\\end{table}"])
     return "\n".join(lines)
 
 
@@ -185,16 +192,36 @@ def main() -> int:
             return f"{version}, tag {tag}"
         return f"{version}, untagged"
 
-    LABELS["readcon_tip"] = arm_label(measured, measured_version)
-    LABELS["readcon_v0173"] = arm_label(release_commit, release_version)
-    LABELS["readcon_base"] = arm_label(baseline, baseline_version) + ", baseline"
-    tip = arm_s(found, "readcon_tip")
+    LABELS["readcon_full_t1"] = (
+        f"{measured_version} \\texttt{{read\\_con}}, 1 thread"
+    )
+    LABELS["readcon_full_t8"] = (
+        f"{measured_version} \\texttt{{read\\_con}}, 8 threads"
+    )
+    LABELS["readcon_pos_t1"] = (
+        f"{measured_version} \\texttt{{read\\_positions}}, 1 thread"
+    )
+    LABELS["readcon_pos_t8"] = (
+        f"{measured_version} \\texttt{{read\\_positions}}, 8 threads"
+    )
+    LABELS["readcon_v0173"] = (
+        f"{arm_label(release_commit, release_version)} \\texttt{{read\\_con}}, 1 thread"
+    )
+    LABELS["readcon_base"] = (
+        f"{arm_label(baseline, baseline_version)} \\texttt{{read\\_con}}, 1 thread, baseline"
+    )
+    full = arm_s(found, "readcon_full_t1")
+    full8 = arm_s(found, "readcon_full_t8")
+    pos1 = arm_s(found, "readcon_pos_t1")
+    pos8 = arm_s(found, "readcon_pos_t8")
     base = arm_s(found, "readcon_v0173")
     h5 = arm_s(found, "h5py")
     conbin = arm_s(found, "conbin")
     ase = arm_s(found, "ase_eon")
     eon = arm_s(found, "eon_py")
     db = arm_s(found, "readcon_db")
+    mem_gib = int(round(int(field(text, "mem_kib")) / 1024 / 1024))
+    ghz = float(field(text, "cpu_mhz")) / 1000
     GEN.mkdir(parents=True, exist_ok=True)
     macros = "\n".join(
         [
@@ -205,24 +232,42 @@ def main() -> int:
             f"\\newcommand{{\\rcMeasuredVersion}}{{{measured_version}}}",
             f"\\newcommand{{\\rcBaselineCommit}}{{\\seqsplit{{{baseline}}}}}",
             f"\\newcommand{{\\rcBaselineVersion}}{{{baseline_version}}}",
-            f"\\newcommand{{\\rcTipMedian}}{{{tip:.4g}}}",
+            f"\\newcommand{{\\rcFullT1Median}}{{{full:.4g}}}",
+            f"\\newcommand{{\\rcFullT8Median}}{{{full8:.4g}}}",
+            f"\\newcommand{{\\rcPosT1Median}}{{{pos1:.4g}}}",
+            f"\\newcommand{{\\rcPosT8Median}}{{{pos8:.4g}}}",
+            f"\\newcommand{{\\rcTipMedian}}{{{full:.4g}}}",
             f"\\newcommand{{\\rcReleaseMedian}}{{{base:.4g}}}",
-            f"\\newcommand{{\\rcTipOverRelease}}{{{base / tip:.3g}}}",
+            f"\\newcommand{{\\rcTipOverRelease}}{{{base / full:.3g}}}",
+            f"\\newcommand{{\\rcFullThreads}}{{{full / full8:.3g}}}",
             f"\\newcommand{{\\rcHdfMedian}}{{{h5:.4g}}}",
             f"\\newcommand{{\\rcConbinMedian}}{{{conbin:.4g}}}",
-            f"\\newcommand{{\\rcTipMib}}{{{arm_mib(found, 'readcon_tip'):.4g}}}",
+            f"\\newcommand{{\\rcTipMib}}{{{arm_mib(found, 'readcon_full_t1'):.4g}}}",
             f"\\newcommand{{\\rcAseMedian}}{{{ase:.4g}}}",
-            f"\\newcommand{{\\rcTipOverAse}}{{{ase / tip:.3g}}}",
+            f"\\newcommand{{\\rcTipOverAse}}{{{ase / full:.3g}}}",
+            f"\\newcommand{{\\rcPosOverAse}}{{{ase / pos1:.3g}}}",
             f"\\newcommand{{\\rcEonMedian}}{{{eon:.4g}}}",
-            f"\\newcommand{{\\rcTipOverEon}}{{{eon / tip:.3g}}}",
+            f"\\newcommand{{\\rcTipOverEon}}{{{eon / full:.3g}}}",
+            f"\\newcommand{{\\rcPosOverEon}}{{{eon / pos1:.3g}}}",
             f"\\newcommand{{\\rcApiMedian}}{{{arm_s(found, 'readcon_eon_api'):.4g}}}",
             f"\\newcommand{{\\rcDbMedian}}{{{db:.4g}}}",
-            f"\\newcommand{{\\rcTipOverDb}}{{{db / tip:.3g}}}",
             f"\\newcommand{{\\rcAseMib}}{{{arm_mib(found, 'ase_eon'):.4g}}}",
             f"\\newcommand{{\\rcChemMib}}{{{arm_mib(found, 'chemfiles'):.4g}}}",
             f"\\newcommand{{\\rcOvitoMib}}{{{arm_mib(found, 'ovito'):.4g}}}",
             f"\\newcommand{{\\rcFirstMedian}}{{{arm_s(found, 'readcon_first'):.4g}}}",
             f"\\newcommand{{\\rcMatterMedian}}{{{arm_s(found, 'eon'):.4g}}}",
+            f"\\newcommand{{\\rcCpuFamily}}{{{field(text, 'cpu_family')}}}",
+            f"\\newcommand{{\\rcCpuModelId}}{{{field(text, 'cpu_model_id')}}}",
+            f"\\newcommand{{\\rcCpuName}}{{{field(text, 'cpu_model')}}}",
+            f"\\newcommand{{\\rcCpuGhz}}{{{ghz:.1f}}}",
+            f"\\newcommand{{\\rcCores}}{{{field(text, 'nproc')}}}",
+            f"\\newcommand{{\\rcMemGiB}}{{{mem_gib}}}",
+            f"\\newcommand{{\\rcKernel}}{{{field(text, 'kernel')}}}",
+            f"\\newcommand{{\\rcOs}}{{{field(text, 'os')}}}",
+            f"\\newcommand{{\\rcRustc}}{{{field(text, 'rustc')}}}",
+            f"\\newcommand{{\\rcCxx}}{{{field(text, 'cxx')}}}",
+            f"\\newcommand{{\\rcFs}}{{{field(text, 'filesystem')}}}",
+            f"\\newcommand{{\\rcCache}}{{{field(text, 'page_cache')}}}",
             "",
         ]
     )
@@ -231,9 +276,15 @@ def main() -> int:
         table(
             found,
             CON_ORDER,
-            "All-frame coordinate reads of 100000 frames, six fresh processes, type 7 median. "
-            "The last two rows are first-frame reads of the same file. "
-            "The eOn C++ row is readcon through that API.",
+            "Coordinate reads of 100000 frames and 32 atoms, six fresh processes, type 7 median. "
+            "Each row names the call and the thread count. "
+            "\\texttt{read\\_con} builds a frame per record. "
+            "\\texttt{read\\_positions} returns one coordinate array. "
+            "ASE \\texttt{get\\_positions} and eOn \\texttt{loadcons} build every frame on 1 thread. "
+            "The C++ row is \\texttt{read\\_all\\_frames} and then \\texttt{con2matter} on every frame. "
+            "readcon-db is an ingest of the file followed by a read of that corpus. "
+            "The last two rows read one frame. "
+            "A one-frame row is not a ratio against a full read, and the ingest is not a ratio against a read.",
             "tab:host",
         )
         + "\n",
@@ -243,7 +294,7 @@ def main() -> int:
         table(
             found,
             CONTEXT_ORDER,
-            "Context for choosing a format. These readers open XYZ, HDF5, or the mapped binary coordinate file.",
+            "Context for choosing a format, each call at 1 thread. These readers open XYZ, HDF5, or the mapped binary coordinate file. readcon does not read XYZ or HDF5.",
             "tab:format-context",
         )
         + "\n",

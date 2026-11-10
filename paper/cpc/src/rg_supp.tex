@@ -124,9 +124,10 @@ We call two reads equal when their coordinates match.
 We count the frames a reader returns and the bytes it keeps.
 We draw each restored figure from a record in this directory.
 We leave a version deposit unnamed until the record exists.
-We build the library from the public commit named in the manuscript.
+We build the library from the untagged commit named in the manuscript.
+That commit is not on the public main branch.
 We run one cell at a time on one host.
-We keep the machine line to the architecture, the processor count and the processor string.
+We name the processor family and model, the model string, the clock, the core count, the memory, the kernel, the operating system and the compilers.
 
 \section{Normative specification}\label{sec:spec-normative} This section is the specification of CON 3.1 as readcon-core~\readconversion{} distributes it, the file \texttt{docs/\allowbreak orgmode/\allowbreak spec.org} of the \readconcommitrole{} \texttt{\readconcommitshort} at git blob \texttt{\specTextBlob}.
 \texttt{scripts/\allowbreak gen\_spec\_supp.py -{}-as-is} typesets that file, and its \texttt{-{}-check} fails unless the typeset text matches the file.
@@ -293,7 +294,8 @@ The comparison covers the verdicts and the frame counts or error classes and lea
 The record still keeps the error line of each reader.
 Each group has a variant of the independent reader that follows readcon-core on one rule.
 A differing case belongs to the first group whose variant returns the verdict and class of readcon-core.
-This run leaves all \(\mutantUnexplained\) differing cases unexplained.
+All \(\mutantDiffer\) differing cases fall in the count-line group.
+The record leaves \(\mutantUnexplained\) cases unexplained.
 The first variant is a count line with the wrong number of tokens and a token that is not an unsigned integer, so it breaks CON-error.3 and CON-num.9 on one line; CON-error.4 orders errors by line alone, and readcon-core checks the number of tokens first, the independent reader each token first.
 The second variant is line 2 with a number such as \texttt{1e999}, which the JSON grammar of Request for Comments (RFC)~8259 admits and binary64 cannot represent.
 The independent reader rejects such a number anywhere in line 2, and readcon-core keeps it in an unreserved key and reads on; no clause requires either reading.
@@ -459,7 +461,9 @@ On a blank symbol line and on a symbol line that starts with \texttt{\{}, the th
 This checkout is readcon-core~\readconversion{}, the \readconcommitrole{} \texttt{\readconcommitshort}.
 The library of this checkout has a digest that begins \texttt{\readcondigest}.
 This checkout rejects a cell whose radicand lies outside the rounding window of \texttt{cell\_vectors}, and a declared atom count larger than the bytes that remain.
-The timing records reused here were not rerun on that commit; each names the library it was measured with, and that digest begins \texttt{\readconrecorddigest}.
+The reader exchange in \path{paper/cpc/logs/reader-exchange.log} was measured on the clean commit \texttt{\rcHostCommit}.
+The stored campaigns in Table~\ref{tab:versionmap}, including r0174 and the head-to-head records, were not rerun on that commit.
+Each of those records names the library it was measured with, and that digest begins \texttt{\readconrecorddigest}.
 Two of them also run other builds, which their headings name: the drift comparison reads the published wheels of 0.17.0, 0.17.1, 0.17.2 and 0.17.3, the earlier releases of CON 3.1, and the eOn case runs the public eOn client and the readcon-core it embeds.
 \texttt{scripts/provenance.py} writes the digests of the readcon module and of the library sources into each record.
 The version history of Table~\ref{tab:versions}, \texttt{data/\allowbreak spec/\allowbreak versions.json}, is read from \texttt{spec.org} at each release tag by \texttt{gen\_spec\_supp.py -{}-measure}, which runs no readcon-core code, so the table does not list it.
@@ -505,9 +509,6 @@ bash paper/cpc/scripts/build_tex.sh    # or bash paper/cpc/scripts/build_tex_tec
 python3 paper/cpc/scripts/trace_numbers.py -{}-check
 \end{lstlisting}
 
-\iffalse
-# proseguard:off rgoswami.Headings
-\fi
 \begin{lstlisting}[caption={The commands of the performance and conformance records, run from the checkout of Listing~\ref{lst:repro}. The comment after a command names the task of \texttt{paper/cpc/pixi.toml} that runs it. The comments at the top and under each command give the environment variables that the script reads, each with its default, and the command lines that the script runs for each cell, file or build.},label={lst:measure},basicstyle=\ttfamily\scriptsize,breaklines=false,escapeinside={(*}{*)}]
 # NAME=value: a variable the script reads, with its default; after env, the environment
 # of the command that follows. $ENV is the environment of the python3 that runs the
@@ -616,10 +617,62 @@ python3 paper/cpc/scripts/mutant_differential.py                # cpc-mutants
 python3 paper/cpc/scripts/clause_coverage.py                    # cpc-clauses
 #   reads docs/orgmode/spec.org, both corpus manifests, the probes of
 #   paper/cpc/data/referee_probes.json and the tests under tests/ and src/
+python3 paper/cpc/scripts/bench_readers.py                      # reader exchange
+#   LARGE_FRAMES=100000. The script writes paper/cpc/logs/reader-exchange.log.
+#   It sets these variables in the child of every arm, from the checkout:
+#   READCON_BASE=paper/cpc/build/baseline-readcon
+#   READCON_V0173=paper/cpc/build/readcon-0.18.1
+#   EON_PKG=paper/cpc/bench/work/peers/eon
+#   EON_ALLFRAMES=paper/cpc/bench/work/eon_allframes
+#   READCON_BASE is the baseline module on PYTHONPATH for readcon_base.
+#   READCON_V0173 is the 0.17.3 module on PYTHONPATH for readcon_v0173.
+#   EON_PKG is the eOn tree whose eon.fileio.loadcons the eon_py arm imports.
+#   EON_ALLFRAMES is the binary built from paper/cpc/bench/eon_allframes.cpp.
+#   Before the samples the script runs, from the repository root:
+#   /usr/bin/g++ -std=c++20 -O3 -DNDEBUG -pthread -DQUILL_DISABLE_NON_PREFIXED_MACROS
+#     -o paper/cpc/bench/work/eon_allframes paper/cpc/bench/eon_allframes.cpp
+#     -Ipaper/cpc/bench/work/peers/eon/include
+#     -Ipaper/cpc/bench/work/peers/eon/client/thirdparty
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/quill-11.1.0/include
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/inih-r62/cpp
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/nlohmann_json-3.12.0/single_include
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/highway-1.4.0
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/rgpot/third_party/vesin
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/readcon-core/include
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/rgpot/CppCore
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/rgpot/include
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/rgpot/CppCore/rgpot/rpc
+#     -Ipaper/cpc/bench/work/peers/eon/subprojects/rgpot/third_party/lepton/include
+#     -I/usr/include/eigen3
+#     -Lpaper/cpc/bench/work/peers/eon/build-h2h/subprojects/readcon-core
+#     -Wl,-rpath,$ORIGIN/peers/eon/build-h2h/subprojects/readcon-core
+#     -leonclib -lreadcon_core -lsocket_nwchem -lemt -lasap -lextpot
+#     -lrgpot_pot -llammps_pot -l:librgpot.so.4
+#   Each arm is one fresh process, six times, interleaved. The child command is
+#   python3 -c '<worker in bench_readers.py>' ARM FILE 100000 32
+#   and the script sets OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS,
+#   NUMEXPR_NUM_THREADS and RAYON_NUM_THREADS to the thread count of that arm.
+#   readcon_full_t1: readcon.read_con(FILE, 1) on frames.con
+#   readcon_full_t8: readcon.read_con(FILE, 8) on frames.con
+#   readcon_pos_t1: readcon.read_positions(FILE, 1) on frames.con
+#   readcon_pos_t8: readcon.read_positions(FILE, 8) on frames.con
+#   readcon_base: readcon.read_con(FILE, 1) with READCON_BASE on PYTHONPATH
+#   readcon_v0173: readcon.read_con(FILE, 1) with READCON_V0173 on PYTHONPATH
+#   readcon_first: readcon.read_first_frame(FILE), one frame
+#   readcon_db: ConCorpus.append_trajectory_str then get_positions, an ingest
+#   ase_eon: ase.io.read(FILE, index=':', format='eon') then get_positions
+#   eon: Matter.con2matter(FILE), the first frame only
+#   eon_py: eon.fileio.loadcons(FILE), every frame, with EON_PKG on PYTHONPATH
+#   readcon_eon_api: $EON_ALLFRAMES FILE, read_all_frames then con2matter
+#   conbin: readcon.read_conbin on frames.conbin
+#   numpy: numpy.loadtxt usecols on frames.xyz
+#   chemfiles: chemfiles.Trajectory positions on frames.xyz
+#   ovito: pipeline.compute particles.positions on frames.xyz
+#   ase_extxyz: ase.io.read then get_positions on frames.xyz
+#   pymatgen: XYZ.from_file cart_coords on frames.xyz
+#   h5py: the position dataset of frames.h5md
+#   mdanalysis: Universe.atoms.positions on frames.h5md
 \end{lstlisting}
-\iffalse
-# proseguard:on rgoswami.Headings
-\fi
 
 % A digital object identifier in the reference list stays on one line.
 \DeclareUrlCommand\path{\def\UrlFont{\footnotesize\ttfamily}\mathchardef\UrlBreakPenalty=10000 \mathchardef\UrlBigBreakPenalty=10000 }

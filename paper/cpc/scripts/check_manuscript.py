@@ -965,6 +965,87 @@ def check_names() -> str:
     return f"{len(files)} files and PDFs name no credit or affiliation"
 
 
+def mutant_prose(totals: dict) -> list[str]:
+    """The mutant sentences must match mutant_differential.json, including totals.unexplained."""
+    record = json.loads((ROOT / "data" / "spec" / "mutant_differential.json").read_text())
+    groups = [
+        group
+        for group in record["groups"]
+        if group["count"] and group["group"] != "unexplained"
+    ]
+    unexplained = totals["unexplained"]
+    problems = []
+    need = r"All \(\mutantDiffer\) differing cases fall in the count-line group."
+    leave = r"The record leaves \(\mutantUnexplained\) cases unexplained."
+    for label, path in (("rg_main.tex", MAIN), ("rg_supp.tex", SUPP)):
+        text = path.read_text(encoding="utf-8")
+        if "differing cases are unexplained" in text:
+            problems.append(f"{label} calls the differing cases unexplained")
+        if unexplained == 0 and len(groups) == 1 and groups[0]["group"] == "count line":
+            if groups[0]["count"] != totals["differ"]:
+                problems.append(
+                    f"count-line group has {groups[0]['count']} cases and the record differs by {totals['differ']}"
+                )
+            if need not in text:
+                problems.append(f"{label} does not put every differing case in the count-line group")
+            if leave not in text:
+                problems.append(f"{label} does not state the unexplained count")
+        else:
+            problems.append(
+                f"{label} is written for 0 unexplained cases in the count-line group; "
+                f"the record has unexplained {unexplained} and "
+                + ", ".join(f"{group['group']} {group['count']}" for group in groups)
+            )
+    values = macros()
+    if values.get("mutantUnexplained") != str(unexplained):
+        problems.append(
+            f"\\mutantUnexplained is {values.get('mutantUnexplained')}; the record gives {unexplained}"
+        )
+    printed = f"{totals['differ']:,}"
+    if values.get("mutantDiffer") != printed:
+        problems.append(f"\\mutantDiffer is {values.get('mutantDiffer')}; the record gives {printed}")
+    return problems
+
+
+def citation_prose() -> list[str]:
+    """The manuscript may cite a public commit only when a reader can find it."""
+    problems = []
+    measure = SUPP.read_text(encoding="utf-8")
+    for label, path in (
+        ("rg_main.tex", MAIN),
+        ("rg_supp.tex", SUPP),
+        ("CPC-FORM.md", ROOT / "packet" / "CPC-FORM.md"),
+    ):
+        text = path.read_text(encoding="utf-8")
+        if "public commit" in text.lower():
+            problems.append(f"{label} calls a commit public")
+    required = (
+        "python3 paper/cpc/scripts/bench_readers.py",
+        "READCON_BASE",
+        "READCON_V0173",
+        "EON_PKG",
+        "EON_ALLFRAMES",
+        "readcon_full_t1",
+        "readcon_full_t8",
+        "readcon_pos_t1",
+        "readcon_pos_t8",
+        "readcon_base",
+        "readcon_v0173",
+        "readcon_first",
+        "readcon_db",
+        "ase_eon",
+        "eon_py",
+        "readcon_eon_api",
+        "eon_allframes.cpp",
+    )
+    for token in required:
+        if token not in measure:
+            problems.append(f"lst:measure does not name {token}")
+    if "Matter.con2matter(FILE), the first frame only" not in measure:
+        problems.append("lst:measure does not say that Matter.con2matter reads the first frame")
+    return problems
+
+
 def check_conformance() -> str:
     """The corpus31, cross-check, corpus-path and probe records name no disagreement, their counts are the macros
     the paper prints, reruns of the Rust reader and of the reads of corpus_paths.py give the corpus31 and corpus-path
@@ -996,6 +1077,8 @@ def check_conformance() -> str:
         bad.append(
             f"mutant_differential.json: {mutants['unexplained']} cases no group explains"
         )
+    bad += mutant_prose(mutants)
+    bad += citation_prose()
     values = macros()
     for macro, value, record in (
         ("cthreeoneFiles", c31["files"], "corpus31-results.json"),

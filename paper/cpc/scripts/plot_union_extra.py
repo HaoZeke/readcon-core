@@ -175,8 +175,9 @@ def _reader_samples() -> dict[str, list[float]]:
         if seconds in (None, "", "None"):
             continue
         arms.setdefault(fields["arm"], []).append(float(seconds))
-    if "readcon_tip" not in arms or len(arms["readcon_tip"]) < 6:
-        raise SystemExit("The tip readcon row needs at least six samples.")
+    for name in ("readcon_full_t1", "readcon_pos_t1"):
+        if name not in arms or len(arms[name]) < 6:
+            raise SystemExit(f"The {name} row needs at least six samples.")
     return arms
 
 
@@ -189,30 +190,57 @@ def _summary_rows() -> list[dict[str, str]]:
     return rows
 
 
-# All-frame CON readers. First-frame rows stay out of these figures.
+# Full-frame CON readers. The ratio uses the 1-thread read_con arm.
+# First-frame rows and the database ingest stay out of these figures.
 CON_ARMS = (
-    "readcon_tip",
+    "readcon_full_t1",
+    "readcon_full_t8",
     "readcon_v0173",
     "readcon_base",
     "ase_eon",
     "eon_py",
-    "readcon_db",
 )
 CON_LABELS = {
-    "readcon_tip": "readcon tip",
-    "readcon_v0173": "readcon release",
-    "readcon_base": "readcon main",
-    "ase_eon": "ASE ase.io (format eon)",
-    "eon_py": "eOn loadcons",
-    "readcon_db": "readcon-db",
+    "readcon_full_t1": "read_con, 1 thread",
+    "readcon_full_t8": "read_con, 8 threads",
+    "readcon_v0173": "0.17.3 read_con, 1 thread",
+    "readcon_base": "baseline read_con, 1 thread",
+    "ase_eon": "ASE get_positions, 1 thread",
+    "eon_py": "eOn loadcons, 1 thread",
+}
+FULL_RATIO = (
+    "readcon_v0173",
+    "readcon_base",
+    "ase_eon",
+    "eon_py",
+)
+POS_RATIO = (
+    "ase_eon",
+    "eon_py",
+    "numpy",
+    "chemfiles",
+    "ovito",
+    "ase_extxyz",
+    "pymatgen",
+    "h5py",
+    "mdanalysis",
+    "conbin",
+)
+POS_LABELS = {
+    "ase_eon": "ASE get_positions, 1 thread",
+    "eon_py": "eOn loadcons frame.r, 1 thread",
+    "numpy": "NumPy loadtxt, 1 thread",
+    "chemfiles": "chemfiles positions, 1 thread",
+    "ovito": "OVITO positions, 1 thread",
+    "ase_extxyz": "ASE XYZ get_positions, 1 thread",
+    "pymatgen": "pymatgen cart_coords, 1 thread",
+    "h5py": "h5py dataset, 1 thread",
+    "mdanalysis": "MDAnalysis positions, 1 thread",
+    "conbin": "read_conbin, 1 thread",
 }
 
 
-def ratios(theme) -> None:
-    arms = _reader_samples()
-    tip = arms["readcon_tip"]
-    order = [name for name in CON_ARMS if name in arms and name != "readcon_tip"]
-    fig, ax = plt.subplots(figsize=(7.2, 3.2))
+def _ratio_panel(ax, tip: list[float], arms: dict[str, list[float]], order: list[str], labels: dict[str, str], xlabel: str) -> None:
     y = list(range(len(order)))
     med, lo, hi = [], [], []
     for name in order:
@@ -225,10 +253,32 @@ def ratios(theme) -> None:
     ax.errorbar(med, y, xerr=xerr, fmt="o", color=TEAL, ecolor=CORAL, capsize=3)
     ax.axvline(1.0, color=BLACK, lw=0.6)
     ax.set_yticks(y)
-    ax.set_yticklabels([CON_LABELS.get(name, name) for name in order], fontsize=8)
-    ax.set_xlabel("other CON time / readcon tip time")
+    ax.set_yticklabels([labels.get(name, name) for name in order], fontsize=7)
+    ax.set_xlabel(xlabel)
     ax.set_xscale("log")
-    pf._theme_axes([ax], theme)
+
+
+def ratios(theme) -> None:
+    """Matched ratios. Left: full frames at 1 thread. Right: positions at 1 thread."""
+    arms = _reader_samples()
+    fig, axes = plt.subplots(1, 2, figsize=(7.4, 3.6))
+    _ratio_panel(
+        axes[0],
+        arms["readcon_full_t1"],
+        arms,
+        [name for name in FULL_RATIO if name in arms],
+        CON_LABELS,
+        "full-frame time / read_con at 1 thread",
+    )
+    _ratio_panel(
+        axes[1],
+        arms["readcon_pos_t1"],
+        arms,
+        [name for name in POS_RATIO if name in arms],
+        POS_LABELS,
+        "positions time / read_positions at 1 thread",
+    )
+    pf._theme_axes(list(axes), theme)
     pf._save(fig, "ratios", None)
 
 

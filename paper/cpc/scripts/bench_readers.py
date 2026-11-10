@@ -5,8 +5,15 @@ Each sample is a fresh process. The clock starts after the import.
 Memory is VmHWM after the read minus VmHWM after the import.
 CON readers read the CON file, XYZ readers the XYZ file, HDF5 readers the HDF5 file.
 readcon does not read XYZ or HDF5.
-eOn all-frame arms are eon.fileio.loadcons and a C++ loop over ConFileIO.
-Matter.con2matter and read_first_frame are first-frame rows.
+
+Full-frame arms and positions-only arms are separate.
+read_con at 1 thread is the full-frame tip.
+read_con at 8 threads is the same call with the thread count stated.
+read_positions at 1 thread and at 8 threads are the positions-only tip.
+Release, baseline, ASE ase.io and eon.fileio.loadcons build every frame on 1 thread.
+Matter.con2matter(path) and read_first_frame read the first frame only.
+readcon-db appends the file to a corpus and then reads that corpus back.
+The C++ arm is readcon::read_all_frames and then con2matter on every frame.
 """
 
 from __future__ import annotations
@@ -54,6 +61,58 @@ EON_LIB = (
 EON_BIN = PAPER / "bench" / "work" / "eon_allframes"
 EON_COMMIT = "579738a9387e8d0ea55496f45dd057812cfab892"
 EON_VERSION = "3.6.0"
+EON_INCLUDE = (
+    "include",
+    "client/thirdparty",
+    "subprojects/quill-11.1.0/include",
+    "subprojects/inih-r62/cpp",
+    "subprojects/nlohmann_json-3.12.0/single_include",
+    "subprojects/highway-1.4.0",
+    "subprojects/rgpot/third_party/vesin",
+    "subprojects/readcon-core/include",
+    "subprojects/rgpot/CppCore",
+    "subprojects/rgpot/include",
+    "subprojects/rgpot/CppCore/rgpot/rpc",
+    "subprojects/rgpot/third_party/lepton/include",
+)
+
+
+def eon_build_argv() -> list[str]:
+    """The g++ command that builds the all-frames eOn arm. Paths are relative to the repository."""
+    eon = Path("paper/cpc/bench/work/peers/eon")
+    link = eon / "build-h2h" / "subprojects" / "readcon-core"
+    argv = [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O3",
+        "-DNDEBUG",
+        "-pthread",
+        "-DQUILL_DISABLE_NON_PREFIXED_MACROS",
+        "-o",
+        "paper/cpc/bench/work/eon_allframes",
+        "paper/cpc/bench/eon_allframes.cpp",
+    ]
+    argv += [f"-I{eon / inc}" for inc in EON_INCLUDE]
+    argv += [
+        "-I/usr/include/eigen3",
+        f"-L{link}",
+        "-Wl,-rpath,$ORIGIN/peers/eon/build-h2h/subprojects/readcon-core",
+        "-leonclib",
+        "-lreadcon_core",
+        "-lsocket_nwchem",
+        "-lemt",
+        "-lasap",
+        "-lextpot",
+        "-lrgpot_pot",
+        "-llammps_pot",
+        "-l:librgpot.so.4",
+    ]
+    return argv
+
+
+def rebuild_eon_allframes() -> None:
+    argv = eon_build_argv()
+    subprocess.run(argv, cwd=ROOT, check=True)
 REPEATS = 6
 N_FRAMES = int(os.environ.get("LARGE_FRAMES", "100000"))
 N_ATOMS = 32
@@ -66,6 +125,60 @@ def hwm_kib() -> int:
             if line.startswith("VmHWM:"):
                 return int(line.split()[1])
     return 0
+
+
+def filesystem(path: Path) -> str:
+    """The filesystem type of ``path``, with no device name."""
+    target = str(path.resolve())
+    found = ""
+    mount = ""
+    for line in Path("/proc/mounts").read_text(encoding="utf-8").splitlines():
+        parts = line.split()
+        if len(parts) < 3:
+            continue
+        point, kind = parts[1].replace("\\040", " "), parts[2]
+        if target.startswith(point) and len(point) >= len(mount):
+            mount, found = point, kind
+    if not found:
+        raise SystemExit(f"no filesystem for {path}")
+    return found
+
+
+def _os_name() -> str:
+    for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
+        if line.startswith("PRETTY_NAME="):
+            return line.split("=", 1)[1].strip().strip('"')
+    raise SystemExit("/etc/os-release has no PRETTY_NAME")
+
+
+def _hardware_lines() -> list[str]:
+    family = model = mhz = ""
+    for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
+        key, _, value = line.partition(":")
+        key, value = key.strip(), value.strip()
+        if key == "cpu family" and not family:
+            family = value
+        elif key == "model" and not model:
+            model = value
+        elif key == "cpu MHz" and not mhz:
+            mhz = value.split(".", 1)[0]
+    mem = ""
+    for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
+        if line.startswith("MemTotal:"):
+            mem = line.split()[1]
+    rustc = subprocess.check_output(["rustc", "--version"], text=True).split()[1]
+    cxx = subprocess.check_output(["/usr/bin/g++", "--version"], text=True).splitlines()[0]
+    cxx_version = next(part for part in cxx.split() if part[0].isdigit())
+    return [
+        f"cpu_family {family}",
+        f"cpu_model_id {model}",
+        f"cpu_mhz {mhz}",
+        f"mem_kib {mem}",
+        f"kernel {platform.release()}",
+        f"os {_os_name()}",
+        f"rustc {rustc}",
+        f"cxx g++ {cxx_version}",
+    ]
 
 
 def cpu_model() -> str:
@@ -143,18 +256,28 @@ def hwm_kib():
 arm, path, n_frames_s, n_atoms_s = sys.argv[1:5]
 n_frames = int(n_frames_s)
 n_atoms = int(n_atoms_s)
-if arm in {"readcon_tip", "readcon_base", "readcon_v0173", "readcon_first"}:
+READCON_ARMS = {
+    "readcon_full_t1": ("read_con", 1),
+    "readcon_full_t8": ("read_con", 8),
+    "readcon_pos_t1": ("read_positions", 1),
+    "readcon_pos_t8": ("read_positions", 8),
+    "readcon_base": ("read_con", 1),
+    "readcon_v0173": ("read_con", 1),
+    "readcon_first": ("read_first_frame", 1),
+}
+if arm in READCON_ARMS:
     if arm == "readcon_base":
         sys.path.insert(0, os.environ["READCON_BASE"])
     if arm == "readcon_v0173":
         sys.path.insert(0, os.environ["READCON_V0173"])
     import readcon
+    call, threads = READCON_ARMS[arm]
     def parse():
-        if arm == "readcon_first":
+        if call == "read_first_frame":
             return [np.array(readcon.read_first_frame(path).xyz, dtype=float)]
-        if arm == "readcon_tip" and hasattr(readcon, "read_positions"):
-            return readcon.read_positions(path)
-        return [np.array(frame.xyz, dtype=float) for frame in readcon.read_con(path)]
+        if call == "read_positions":
+            return readcon.read_positions(path, threads)
+        return [np.array(frame.xyz, dtype=float) for frame in readcon.read_con(path, threads)]
 elif arm == "readcon_db":
     from readcon_db import ConCorpus
     def parse():
@@ -287,11 +410,27 @@ print(json.dumps({"seconds": dt, "hwm_before": before, "hwm_after": after, "matc
 """
 
 
+def thread_count(arm: str) -> int:
+    """The thread count the arm is allowed to use. Eight only where the call takes it."""
+    if arm.endswith("_t8"):
+        return 8
+    return 1
+
+
 def one(arm: str, path: Path) -> dict:
     env = os.environ.copy()
     env["READCON_BASE"] = str(BASE_DIR)
     env["READCON_V0173"] = str(RELEASE_DIR)
     env.pop("TMPDIR", None)
+    threads = str(thread_count(arm))
+    for key in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+        "RAYON_NUM_THREADS",
+    ):
+        env[key] = threads
     if arm == "eon":
         env["PYTHONPATH"] = str(EON_PY) + os.pathsep + env.get("PYTHONPATH", "")
         env["LD_LIBRARY_PATH"] = (
@@ -340,6 +479,7 @@ def type7(values: list[float]) -> tuple[float, float]:
 
 
 def main() -> int:
+    rebuild_eon_allframes()
     head = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
@@ -364,6 +504,7 @@ def main() -> int:
         status or "(clean)",
         "git_status_end",
         "command python3 paper/cpc/scripts/bench_readers.py",
+        "eon_build " + " ".join(eon_build_argv()),
         f"frames {N_FRAMES}",
         f"atoms {N_ATOMS}",
         f"repeats {REPEATS}",
@@ -373,12 +514,30 @@ def main() -> int:
         "numpy_percentile method=linear type=7",
         "readcon_xyz no",
         "readcon_hdf5 no",
-        "eon_first Matter.con2matter first frame",
-        "eon_py eon.fileio.loadcons all frames",
-        "readcon_eon_api readcon through the eOn C++ API, all frames",
-        "conbin mmap zero-copy positions",
-        "eon_reader eon.fileio.loadcons",
-        "readcon_first read_first_frame first frame",
+        "page_cache warm",
+        "filesystem " + filesystem(WORK),
+        *_hardware_lines(),
+        "arm_api readcon_full_t1 read_con 1 all_frames",
+        "arm_api readcon_full_t8 read_con 8 all_frames",
+        "arm_api readcon_pos_t1 read_positions 1 positions",
+        "arm_api readcon_pos_t8 read_positions 8 positions",
+        "arm_api readcon_base read_con 1 all_frames",
+        "arm_api readcon_v0173 read_con 1 all_frames",
+        "arm_api readcon_first read_first_frame 1 first_frame",
+        "arm_api ase_eon ase.io.read format=eon get_positions 1 all_frames",
+        "arm_api eon_py eon.fileio.loadcons 1 all_frames",
+        "arm_api eon Matter.con2matter 1 first_frame",
+        "arm_api readcon_eon_api read_all_frames+con2matter 1 all_frames",
+        "arm_api readcon_db ConCorpus.append_trajectory_str+get_positions 1 ingest",
+        "arm_api conbin read_conbin 1 positions",
+        "arm_api numpy numpy.loadtxt usecols 1 positions",
+        "arm_api chemfiles Trajectory.positions 1 positions",
+        "arm_api ovito particles.positions 1 positions",
+        "arm_api ase_extxyz ase.io.read get_positions 1 positions",
+        "arm_api pymatgen XYZ.cart_coords 1 positions",
+        "arm_api h5py dataset slice 1 positions",
+        "arm_api mdanalysis Universe.atoms.positions 1 positions",
+        "threads_env OMP_NUM_THREADS OPENBLAS_NUM_THREADS MKL_NUM_THREADS NUMEXPR_NUM_THREADS RAYON_NUM_THREADS",
     ]
     frames = reference(N_FRAMES, N_ATOMS)
     write_files(frames)
@@ -386,7 +545,10 @@ def main() -> int:
     xyz = WORK / "frames.xyz"
     h5 = WORK / "frames.h5md"
     arms = [
-        ("readcon_tip", con),
+        ("readcon_full_t1", con),
+        ("readcon_full_t8", con),
+        ("readcon_pos_t1", con),
+        ("readcon_pos_t8", con),
         ("readcon_base", con),
         ("readcon_v0173", con),
         ("readcon_first", con),
@@ -437,11 +599,23 @@ def main() -> int:
         mib, mib_iqr = type7([row["mib"] for row in got])
         matched = min(row["matched"] for row in got)
         requested = got[0]["requested"]
-        scope = "first_frame" if name in {"eon", "readcon_first"} else "all_frames"
-        if name == "readcon_eon_api":
-            scope = "readcon_through_eon"
+        scope = {
+            "eon": "first_frame",
+            "readcon_first": "first_frame",
+            "readcon_db": "ingest",
+            "readcon_pos_t1": "positions",
+            "readcon_pos_t8": "positions",
+            "conbin": "positions",
+            "numpy": "positions",
+            "chemfiles": "positions",
+            "ovito": "positions",
+            "ase_extxyz": "positions",
+            "pymatgen": "positions",
+            "h5py": "positions",
+            "mdanalysis": "positions",
+        }.get(name, "all_frames")
         lines.append(
-            f"summary arm={name} scope={scope} n_rep={len(got)} median_s={med:.9e} iqr_s={iqr:.9e} "
+            f"summary arm={name} scope={scope} threads={thread_count(name)} n_rep={len(got)} median_s={med:.9e} iqr_s={iqr:.9e} "
             f"mib_median={mib:.6f} mib_iqr={mib_iqr:.6f} "
             f"requested={requested} matched={matched} failed={requested - matched} exit=0"
         )

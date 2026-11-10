@@ -11,6 +11,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
     }
     ++index;
   }
-  std::cout << seconds << " " << before << " " << after << " " << matched << " " << frames.size()
-            << " " << checksum << "\n";
+  std::cout << std::format("{:.17g} {} {} {} {} {:.17g}\n", seconds, before, after, matched,
+                           frames.size(), checksum);
   return 0;
 }
