@@ -19,6 +19,16 @@ def test_a_non_atom_entry_is_rejected():
     frames[0].atoms.append("nope")
     with pytest.raises(TypeError, match="Atom"):
         frames[0].coords_array()
+    for name in ("has_velocities", "has_forces", "has_displacements", "has_spreads"):
+        with pytest.raises(TypeError, match="Atom"):
+            getattr(frames[0], name)
+
+
+def test_a_bond_dict_without_j_is_rejected():
+    frames = readcon.read_con(_resource("tiny_cuh2.con"))
+    frames[0].metadata["bonds"] = [{"i": 0}]
+    with pytest.raises(ValueError, match="missing j"):
+        frames[0].bonds
 
 
 def test_a_non_frame_write_is_rejected():
