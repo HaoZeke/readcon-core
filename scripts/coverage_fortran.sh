@@ -8,15 +8,20 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-iterator_coverage}"
 mkdir -p "$OUT"
-OUT="$(cd "$OUT" && pwd)"
+case "$OUT" in
+  /*) ;;
+  *) OUT="$ROOT/$OUT" ;;
+esac
 LIB="${READCON_LIB_DIR:-$ROOT/target/release}"
 if [[ ! -f "$LIB/libreadcon_core.so" ]]; then
-  echo "libreadcon_core.so not found in $LIB" >&2
+  echo "libreadcon_core.so was not found" >&2
   exit 1
 fi
 
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+dir_target="target"
+WORK="$ROOT/$dir_target/fortran-cov-work"
+rm -rf "$WORK"
+mkdir -p "$WORK"
 cd "$WORK"
 gfortran -c -g -O0 --coverage -cpp \
   "$ROOT/fortran/ReadCon/src/readcon.f90" \
@@ -104,4 +109,4 @@ for name, executed, executable, taken, branches, returned, calls in rows:
 (out / "fortran-procedures.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 print("\n".join(lines))
 PY
-echo "wrote $OUT"
+echo "wrote fortran coverage"
