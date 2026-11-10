@@ -88,6 +88,7 @@ def sha256(path: Path) -> str:
 
 
 def main() -> None:
+    interleave.require_bench_namespace()
     stamp = r0174.record()
     cpp_build = json.loads((RESULTS / "cpp" / "build.json").read_text())
     for program, path in cpp_reads.PROGRAMS.items():

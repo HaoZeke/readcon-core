@@ -248,6 +248,9 @@ def check(cell: tuple, references: dict, files: dict) -> dict:
 
 
 def main() -> None:
+    import interleave
+
+    interleave.require_bench_namespace()
     src = Path(os.environ.get("READCON_SRC", "").strip() or HERE.parents[2]).resolve()
     OUT.mkdir(parents=True, exist_ok=True)
     RESULTS.mkdir(parents=True, exist_ok=True)

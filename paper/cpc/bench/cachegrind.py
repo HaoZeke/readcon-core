@@ -71,6 +71,7 @@ def scenario(name: str, tmp: Path):
 
 
 def main() -> None:
+    interleave.require_bench_namespace()
     env = {**os.environ, "CARGO_TARGET_DIR": str(TARGET)}
     subprocess.run(
         [

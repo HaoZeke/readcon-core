@@ -90,6 +90,8 @@ def main() -> None:
     import readers
     from portable import portable
 
+    interleave.require_bench_namespace()
+
     references = json.loads(args.payloads_json.read_text())["references"]["traj"]
     cells = {
         f"{reader}:{threads}": capture(reader, threads)

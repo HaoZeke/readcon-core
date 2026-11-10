@@ -224,7 +224,6 @@ def campaign(
     artifacts: Mapping[str, Path] | None = None,
 ) -> dict:
     """Run ``cells`` in interleaved rounds; return the protocol, hardware and per-cell summary of the record."""
-    require_bench_namespace()
     n_rounds = rounds() if n_rounds is None else n_rounds
     if n_rounds < 6:
         raise SystemExit(f"a timing record takes at least 6 rounds, got {n_rounds}")

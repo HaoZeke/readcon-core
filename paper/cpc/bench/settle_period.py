@@ -90,6 +90,7 @@ def utc() -> str:
 
 
 def main() -> None:
+    interleave.require_bench_namespace()
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument(
         "--record",
