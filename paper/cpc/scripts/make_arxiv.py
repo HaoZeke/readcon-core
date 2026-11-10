@@ -873,10 +873,6 @@ def main() -> int:
                     f"\\externaldocument{{{doc}}}: only a single {SUPP} is supported"
                 )
         supp_keys = (refs - main_defined) if label_docs else set()
-        if supp_keys and not label_docs:
-            raise PackError(
-                f"undefined labels and no \\externaldocument: {sorted(supp_keys)}"
-            )
         strip_stats = collections.Counter()
         for p, text in sources.items():
             name = str(p.relative_to(snap))
