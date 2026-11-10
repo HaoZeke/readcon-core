@@ -1401,4 +1401,38 @@ END
         assert_eq!(con.atom_data[0].symbol.as_ref(), "H");
         assert!(con.header.metadata.get(CHEMFILES_RESIDUES_KEY).is_none());
     }
+
+    #[test]
+    fn a_named_atom_keeps_its_display_name_velocity_and_charge() {
+        let mut frame = Frame::new();
+        frame.add_velocities();
+        let mut named = Atom::new("H1");
+        named.set_atomic_type("H");
+        named.set_charge(-0.4);
+        frame.add_atom(&named, [0.1, 0.2, 0.3], Some([0.4, 0.0, 0.0]));
+        frame.add_atom(&Atom::new("O"), [1.0, 0.0, 0.0], Some([0.0, 0.2, 0.0]));
+        let con = con_frame_from_chemfiles(&frame).expect("convert");
+        let hydrogen = con
+            .atom_data
+            .iter()
+            .find(|atom| atom.atom_id == 0)
+            .expect("hydrogen");
+        assert_eq!(hydrogen.symbol.as_ref(), "H");
+        assert_eq!(hydrogen.velocity(), Some([0.4, 0.0, 0.0]));
+        let names = con
+            .header
+            .metadata
+            .get(CHEMFILES_ATOM_NAMES_KEY)
+            .and_then(|value| value.as_array())
+            .expect("names");
+        assert_eq!(names[0], "H1");
+        let props = con
+            .header
+            .metadata
+            .get(CHEMFILES_ATOM_PROPS_KEY)
+            .and_then(|value| value.as_array())
+            .expect("properties");
+        let charge = props[0].get("charge").and_then(|value| value.as_f64());
+        assert_eq!(charge, Some(-0.4));
+    }
 }
