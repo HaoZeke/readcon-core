@@ -1038,15 +1038,17 @@ fn chunk_each(
             };
             handles.push(scope.spawn(move || chunk_worker(map, start, end, window, page, op)));
         }
-        handles.into_iter().try_for_each(|handle| {
-            handle
-                .join()
-                .expect("CON-bin prefetch thread panicked")
-        })
+        handles
+            .into_iter()
+            .try_for_each(|handle| join_worker(handle.join())?)
     })
 }
 
 #[cfg(target_os = "linux")]
+fn join_worker<T>(joined: std::thread::Result<T>) -> Result<T, ParseError> {
+    joined.map_err(|_| ParseError::ValidationError("CON-bin worker panicked".into()))
+}
+
 fn chunk_worker(
     map: &memmap2::MmapMut,
     start: usize,
@@ -1193,12 +1195,12 @@ fn advise_spans(
             start += take;
             handles.push(scope.spawn(move || map.advise_range(advice, off, take)));
         }
-        handles.into_iter().try_for_each(|handle| {
-            handle
-                .join()
-                .expect("CON-bin populate thread panicked")
-                .map_err(|err| ParseError::ValidationError(err.to_string()))
-        })
+        handles
+            .into_iter()
+            .try_for_each(|handle| {
+                join_worker(handle.join())
+                    .and_then(|inner| inner.map_err(|err| ParseError::ValidationError(err.to_string())))
+            })
     })
 }
 
@@ -1633,6 +1635,17 @@ pub fn write_from_con(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_panicked_worker_is_an_error() {
+        let panicked = std::thread::spawn(|| -> Result<(), crate::error::ParseError> {
+            panic!("worker");
+        });
+        let err = super::join_worker(panicked.join()).unwrap_err();
+        assert!(err.to_string().contains("panicked"), "{err}");
+        let finished = std::thread::spawn(|| -> Result<(), crate::error::ParseError> { Ok(()) });
+        assert!(super::join_worker(finished.join()).is_ok());
+    }
+
     use super::*;
     #[cfg(unix)]
     use std::os::fd::AsRawFd;
@@ -2842,9 +2855,11 @@ Coordinates of Component 1
     #[cfg(target_os = "linux")]
     fn compile_preload() -> String {
         static ONCE: std::sync::Once = std::sync::Once::new();
+        static PATH: std::sync::OnceLock<String> = std::sync::OnceLock::new();
         ONCE.call_once(|| {
-            let source = std::env::temp_dir().join("conbin_cov_preload.c");
-            let object = std::env::temp_dir().join("conbin_cov_preload.so");
+            let dir = tempfile::tempdir().expect("preload directory");
+            let source = dir.path().join(format!("preload-{}.c", std::process::id()));
+            let object = dir.path().join(format!("preload-{}.so", std::process::id()));
             std::fs::write(&source, PRELOAD_C).unwrap();
             let out = std::process::Command::new("gcc")
                 .args([
@@ -2864,11 +2879,11 @@ Coordinates of Component 1
                 "gcc preload: {}",
                 String::from_utf8_lossy(&out.stderr)
             );
+            // The directory has to outlive the child processes that load the object.
+            PATH.set(object.to_string_lossy().into_owned()).ok();
+            std::mem::forget(dir);
         });
-        std::env::temp_dir()
-            .join("conbin_cov_preload.so")
-            .to_string_lossy()
-            .into_owned()
+        PATH.get().expect("preload path").clone()
     }
 
     #[cfg(target_os = "linux")]
