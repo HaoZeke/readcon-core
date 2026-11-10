@@ -402,6 +402,71 @@ fn probe_section(after_blank: &[u8]) -> SectionProbe {
     }
 }
 
+/// How far a legacy velocity block has got in this buffer.
+///
+/// `after_blank` begins at the first line after the blank separator.
+enum LegacyVelocity {
+    /// A present line shows this is not a velocity block (CON-frame.7).
+    NotABlock,
+    /// Nothing present contradicts a block, and a line is still missing.
+    /// On a prefix those bytes may arrive. At EOF only an opened block,
+    /// one whose component label was seen, is an error.
+    NeedsMore { opened: bool },
+    Complete,
+}
+
+/// A line that is present and is not a velocity label, or a row that is
+/// present and does not have five fields, cannot become a block when more
+/// bytes arrive (CON-frame.7). A missing line can.
+fn legacy_velocity_prefix(after_blank: &[u8], counts: &[usize]) -> LegacyVelocity {
+    let mut rest = after_blank;
+    let mut opened = false;
+    for (type_idx, &count) in counts.iter().enumerate() {
+        let Some((raw_symbol, after_symbol)) = take_full_line(rest) else {
+            return LegacyVelocity::NeedsMore { opened };
+        };
+        rest = after_symbol;
+        let symbol = strip_cr(raw_symbol);
+        if symbol.iter().all(|b| b.is_ascii_whitespace()) || symbol.first() == Some(&b'{') {
+            return LegacyVelocity::NotABlock;
+        }
+        let Some((raw_label, after_label)) = take_full_line(rest) else {
+            return LegacyVelocity::NeedsMore { opened };
+        };
+        rest = after_label;
+        let Ok(label) = std::str::from_utf8(strip_cr(raw_label)) else {
+            return LegacyVelocity::NotABlock;
+        };
+        if !crate::parser::line_has_component_label(label, (type_idx + 1) as u32) {
+            return LegacyVelocity::NotABlock;
+        }
+        opened = true;
+        for _ in 0..count {
+            let Some((raw_row, after_row)) = take_full_line(rest) else {
+                return LegacyVelocity::NeedsMore { opened };
+            };
+            rest = after_row;
+            let Ok(row) = std::str::from_utf8(strip_cr(raw_row)) else {
+                return LegacyVelocity::NotABlock;
+            };
+            if crate::parser::token_count(row) != 5 {
+                return LegacyVelocity::NotABlock;
+            }
+        }
+    }
+    LegacyVelocity::Complete
+}
+
+/// A whole line, including its terminating newline. A partial line at the
+/// end of a prefix is not whole: more bytes can still extend it.
+fn take_full_line(bytes: &[u8]) -> Option<(&[u8], &[u8])> {
+    if bytes.is_empty() {
+        return None;
+    }
+    let i = memchr::memchr(b'\n', bytes)?;
+    Some((&bytes[..i], &bytes[i + 1..]))
+}
+
 /// Every component of a legacy velocity block has a `velocities` label and
 /// five fields on each row (CON-frame.5).
 fn legacy_rows_complete(after_blank: &[u8], counts: &[usize]) -> bool {
@@ -793,9 +858,23 @@ impl<'a> ConFrameIterator<'a> {
                 SectionProbe::Opens => {}
             }
             if declared.is_none() && !legacy_rows_complete(after, &natms_per_type) {
-                // A short velocity row is not a block. The blank is line 1
-                // of the next frame (CON-frame.7).
-                break;
+                // A short row that is present is not a block (CON-frame.7).
+                // A block whose label was seen and whose rows are missing is
+                // truncated: IncompleteFrame at EOF, and not yet decided on
+                // a prefix.
+                match legacy_velocity_prefix(after, &natms_per_type) {
+                    LegacyVelocity::NeedsMore { opened: true }
+                        if self.lines.input_complete =>
+                    {
+                        return Some(Err(error::ParseError::IncompleteFrame));
+                    }
+                    LegacyVelocity::NeedsMore { .. } if !self.lines.input_complete => {
+                        return Some(Err(error::ParseError::IncompleteSection(
+                            "velocities".into(),
+                        )));
+                    }
+                    _ => break,
+                }
             }
             if let Some(names) = &mut declared {
                 names.remove(0);
@@ -833,6 +912,27 @@ impl<'a> ConFrameIterator<'a> {
     /// Byte offset of the next frame start in the buffer passed to [`Self::new`].
     pub fn byte_pos(&self) -> usize {
         self.lines.pos
+    }
+
+    /// The frame just parsed left a blank that is a prefix of a legacy
+    /// velocity block. More bytes can still attach that block to the frame.
+    fn legacy_velocity_prefix_is_open(&self, header: &types::FrameHeader) -> bool {
+        if header.sections_declared || !header.sections.is_empty() {
+            return false;
+        }
+        let Some(peeked) = &self.lines.peeked else {
+            return false;
+        };
+        if !peeked.trim().is_empty() {
+            return false;
+        }
+        matches!(
+            legacy_velocity_prefix(
+                &self.lines.bytes[self.lines.pos.min(self.lines.bytes.len())..],
+                &header.natms_per_type,
+            ),
+            LegacyVelocity::NeedsMore { .. }
+        )
     }
 
     /// Skip `n` frames without parsing atom data. Returns how many were skipped.
@@ -970,6 +1070,27 @@ impl<'a> Iterator for ConFrameIterator<'a> {
             };
         if sections > 0 {
             frame.sync_arrays_from_atom_data();
+        }
+        // A prefix may end inside a legacy velocity block. The block is part
+        // of this frame once its rows arrive, so the frame is not finished.
+        if sections == 0 && self.legacy_velocity_prefix_is_open(&frame.header) {
+            // The label was seen. Missing rows are IncompleteFrame once the
+            // file has ended, and not a finished frame while bytes remain.
+            let opened = matches!(
+                legacy_velocity_prefix(
+                    &self.lines.bytes[self.lines.pos.min(self.lines.bytes.len())..],
+                    &frame.header.natms_per_type,
+                ),
+                LegacyVelocity::NeedsMore { opened: true }
+            );
+            if !self.lines.input_complete {
+                return Some(Err(error::ParseError::IncompleteSection(
+                    "velocities".into(),
+                )));
+            }
+            if opened {
+                return Some(Err(error::ParseError::IncompleteFrame));
+            }
         }
         Some(Ok(frame))
     }

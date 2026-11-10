@@ -121,6 +121,19 @@ impl<R: Read> ConFrameReader<R> {
                     it.allow_mid_file_bom();
                 }
                 let result = op(&mut it);
+                // A legacy velocity block that is cut between its label and
+                // its last row is not finished. More bytes can still attach
+                // it to this frame. The error is final only at end of input,
+                // where the same bytes are parsed as a whole file.
+                if !ended && incomplete_prefix(&result) {
+                    cut = true;
+                    if let Some(e) = self.failed.take() {
+                        self.done = true;
+                        return Some(Err(e.into()));
+                    }
+                    self.fill();
+                    continue;
+                }
                 if ended || settled(text, it.byte_pos()) {
                     match result {
                         Some(Ok((value, used))) => {
@@ -173,6 +186,20 @@ impl<R: Read> ConFrameReader<R> {
             }
         }
     }
+}
+
+/// An incomplete frame or section on a prefix. More bytes may complete it.
+fn incomplete_prefix<T>(
+    result: &Option<Result<(T, usize), ParseError>>,
+) -> bool {
+    matches!(
+        result,
+        Some(Err(
+            ParseError::IncompleteSection(_)
+                | ParseError::IncompleteFrame
+                | ParseError::IncompleteHeader
+        ))
+    )
 }
 
 /// Whether `text` has, after `pos`, any whitespace-only lines, then a
@@ -232,6 +259,37 @@ mod tests {
                 );
                 assert!(capacity <= len + DEFAULT_READ_SIZE, "{message}");
             }
+        }
+    }
+
+    /// Reproducer for the one-byte stream disagreeing with the string reader.
+    ///
+    /// `resources/test/tiny_cuh2.convel` is one frame. After the coordinate
+    /// block a blank line opens a legacy velocity block: a symbol, then
+    /// `Velocities of Component N`, then five-field rows. Mutation 0 of the
+    /// differential appends a form-feed line (`\n\u{000c}\n`), which is
+    /// trailing whitespace and does not add a frame (CON-frame.1).
+    ///
+    /// A one-byte read used to end the frame at the blank while the velocity
+    /// rows were still outside the buffer. The next chunk then started a
+    /// frame at `Velocities` and rejected it as a float. The block belongs
+    /// to the frame when its labels and rows are present. A chunk boundary
+    /// inside those rows waits. A row that is present and not five fields
+    /// is not a block (CON-frame.7) and stays a new frame.
+    #[test]
+    fn one_byte_stream_keeps_the_legacy_velocity_block() {
+        let mut bytes = std::fs::read("resources/test/tiny_cuh2.convel").unwrap();
+        bytes.extend_from_slice(b"\n\x0c\n");
+        let expect: Vec<_> = crate::iterators::ConFrameIterator::from_bytes(&bytes)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(expect.len(), 1);
+        assert!(expect[0].atom_data.iter().all(|atom| atom.velocity().is_some()));
+        for size in [1usize, 3, 61, DEFAULT_READ_SIZE] {
+            let got: Vec<_> = ConFrameReader::with_read_size(std::io::Cursor::new(&bytes), size)
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap_or_else(|err| panic!("read size {size}: {err}"));
+            assert_eq!(got, expect, "read size {size}");
         }
     }
 
