@@ -38,14 +38,17 @@ def test_display_matches_the_observed_rounding():
 
 
 def test_union_keeps_one_line_and_the_highest_count():
-    first = _export("src/ffi.rs", [[10, 1, 0, True], [10, 4, 5, True], [11, 1, 0, False]])
-    second = _export("src/ffi.rs", [[10, 1, 0, True], [12, 1, 3, True]])
+    first = _export(
+        "src/ffi.rs",
+        [[10, 1, 0, True], [10, 4, 5, True], [11, 1, 0, False], [13, 1, 0, True]],
+    )
+    second = _export("src/ffi.rs", [[10, 1, 0, True], [12, 1, 3, True], [13, 1, 0, True]])
     scored = union_lines([first, second], ["src/ffi.rs"])
     # Line 10 is covered by the count of 5. Line 12 is covered by 3.
     # The gap segment on line 11 is not an executable line.
     assert scored["src/ffi.rs"]["hit"] == 2
-    assert scored["src/ffi.rs"]["total"] == 2
-    assert scored["src/ffi.rs"]["miss"] == []
+    assert scored["src/ffi.rs"]["total"] == 3
+    assert scored["src/ffi.rs"]["miss"] == [13]
     hits = line_hits(first, "src/ffi.rs")
     assert hits[10] == 5
 

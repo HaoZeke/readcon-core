@@ -80,7 +80,7 @@ def line_hits(export: dict, source: str) -> dict[int, int]:
                 if isinstance(line, bool) or not isinstance(line, int):
                     raise ScoreError(f"{source}: bad line {line!r}")
                 count = _count(segment[2], f"{source}:{line}")
-                if count > lines.get(line, 0):
+                if line not in lines or count > lines[line]:
                     lines[line] = count
     if not found:
         raise ScoreError(f"missing source {source}")
@@ -98,7 +98,9 @@ def union_lines(exports: list[dict], sources: list[str]) -> dict[str, dict]:
         best: dict[int, int] = {}
         for export in exports:
             for line, count in line_hits(export, source).items():
-                if count > best.get(line, 0):
+                # A zero count still marks the line executable. Dropping it
+                # would hide a line no object ran.
+                if line not in best or count > best[line]:
                     best[line] = count
         missed = sorted(line for line, count in best.items() if count == 0)
         hit = len(best) - len(missed)
