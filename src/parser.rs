@@ -3973,8 +3973,7 @@ Coordinates of Component 1
             &frame.header,
             &mut frame.atom_data,
         );
-        let shown = format!("{energy:?}");
-        assert!(energy.is_err(), "{shown}");
+        assert!(energy.is_err());
 
         let spreads = "\nCu\nSpreads of Component 1\nnan nan nan 0 0\n0 0 0 0 1\nH\nSpreads of Component 2\n0 0 0 0 2\n0 0 0 0 3\n";
         let mut spread_lines = spreads.lines().peekable();

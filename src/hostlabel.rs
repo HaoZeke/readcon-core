@@ -137,8 +137,10 @@ mod tests {
                 }
                 Err(err) => {
                     let kind = err.kind();
-                    let shown = format!("{err}");
-                    assert!(kind == std::io::ErrorKind::NotFound || kind == std::io::ErrorKind::IsADirectory, "{shown}");
+                    assert!(
+                        kind == std::io::ErrorKind::NotFound
+                            || kind == std::io::ErrorKind::IsADirectory
+                    );
                 }
             }
         }

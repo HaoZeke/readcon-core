@@ -3322,9 +3322,7 @@ mod parallel_strong_scale_tests {
                 .output()
                 .unwrap();
             let stdout = String::from_utf8_lossy(&out.stdout);
-            let stderr = String::from_utf8_lossy(&out.stderr);
-            let child = format!("{stdout}{stderr}");
-            assert!(out.status.success() && stdout.contains("test result: ok. 1 passed;"), "{child}");
+            assert!(out.status.success() && stdout.contains("test result: ok. 1 passed;"));
             return;
         }
         let dir = tempfile::tempdir().unwrap();
@@ -3343,11 +3341,7 @@ mod parallel_strong_scale_tests {
         let text = std::fs::read_to_string(&path).unwrap();
         let sequential = super::frames_from_text(&text, None).unwrap();
         assert_eq!(sequential.len(), frames.len());
-        let coordinate = format!(
-            "default read changed a coordinate: {} vs {}",
-            sequential[0].atom_data[0].x, frames[0].atom_data[0].x
-        );
-        assert_eq!(sequential[0].atom_data[0].x, frames[0].atom_data[0].x, "{coordinate}");
+        assert_eq!(sequential[0].atom_data[0].x, frames[0].atom_data[0].x);
     }
 }
 
@@ -3700,8 +3694,7 @@ zero-atom frame
                     let byte_err = frames_from_bytes(broken.as_bytes(), Some(workers))
                         .err()
                         .map(|e| format!("{e:?}"));
-                    let chopped = format!("{name} chopped bytes workers {workers}");
-                    assert_eq!(byte_err, serial_err, "{chopped}");
+                    assert_eq!(byte_err, serial_err);
                 }
             }
         }
@@ -3732,8 +3725,7 @@ mod phased_read_tests {
                 phased.scan_s >= 0.0 && phased.slot_alloc_s >= 0.0 && phased.worker_parse_s >= 0.0
             );
             assert_eq!(parallel[0], serial[0], "workers={workers} first");
-            let last = format!("workers={workers} last");
-            assert_eq!(parallel.last().unwrap(), serial.last().unwrap(), "{last}");
+            assert_eq!(parallel.last().unwrap(), serial.last().unwrap());
             let slab = pack_position_slab(&serial, workers).expect("slab");
             let stride = serial[0].positions.nrows() * 3;
             let src = serial[0].positions.f64_slice().expect("f64");
@@ -3785,8 +3777,7 @@ mod phased_read_tests {
             let serial = outcome(frames_from_bytes(&bytes, None));
             for threads in [2usize, 8] {
                 let parallel = outcome(frames_from_bytes(&bytes, Some(threads)));
-                let where_ = format!("{} at {threads} threads", path.display());
-                assert_eq!(serial, parallel, "{where_}");
+                assert_eq!(serial, parallel);
             }
         }
     }
@@ -3914,13 +3905,12 @@ mod differential_entry_points {
     }
 
     fn agree(reference: &Result<Vec<ConFrame>, ParseError>, got: Result<Vec<ConFrame>, ParseError>, what: &str) {
-        let compared = format!("{what}");
-        assert_eq!(reference.is_ok(), got.is_ok(), "{compared}");
+        assert_eq!(reference.is_ok(), got.is_ok(), "{what}");
         if let (Ok(left), Ok(right)) = (reference, &got) {
-            assert_eq!(left, right, "{compared}");
+            assert_eq!(left, right, "{what}");
         }
         if let (Err(left), Err(right)) = (reference, &got) {
-            assert_eq!(class(left), class(right), "{compared}");
+            assert_eq!(class(left), class(right), "{what}");
         }
     }
 
