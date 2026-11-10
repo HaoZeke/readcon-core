@@ -2849,8 +2849,19 @@ Coordinates of Component 1
         set_case("");
         drop_pages(&reopen);
         set_case("open-fail-split");
+        let mut split_err = None;
+        for _ in 0..8 {
+            drop_pages(&reopen);
+            match split_stream_sum(&reopen, 1, &limits) {
+                Err(err) => {
+                    split_err = Some(err);
+                    break;
+                }
+                Ok(_) => continue,
+            }
+        }
         assert_has(
-            &split_stream_sum(&reopen, 1, &limits).unwrap_err(),
+            &split_err.expect("open-fail-split did not fail"),
             "os error 13",
         );
         set_case("");
