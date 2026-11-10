@@ -1,6 +1,6 @@
 """Chemfiles → CON ingress via Python (read_chemfiles*).
 
-Skips when the wheel is lean (has_chemfiles_support is False).
+A lean build runs the same tests and checks that each call names chemfiles.
 """
 
 from __future__ import annotations
@@ -11,10 +11,14 @@ import pytest
 
 import readcon
 
-pytestmark = pytest.mark.skipif(
-    not getattr(readcon, "has_chemfiles_support", lambda: False)(),
-    reason="chemfiles not linked in this wheel (install readcon-chemfiles)",
-)
+
+def _lean_names_chemfiles(call) -> bool:
+    if readcon.has_chemfiles_support():
+        return False
+    with pytest.raises(Exception) as ei:
+        call()
+    assert "chemfiles" in str(ei.value).lower()
+    return True
 
 
 @pytest.fixture
@@ -31,6 +35,8 @@ def water_xyz(tmp_path: Path) -> Path:
 
 
 def test_read_chemfiles_first_xyz(water_xyz: Path, tmp_path: Path):
+    if _lean_names_chemfiles(lambda: readcon.read_chemfiles_first(str(water_xyz))):
+        return
     frame = readcon.read_chemfiles_first(str(water_xyz))
     assert len(frame.atoms) == 3
     out = tmp_path / "water.con"
@@ -41,6 +47,8 @@ def test_read_chemfiles_first_xyz(water_xyz: Path, tmp_path: Path):
 
 
 def test_read_chemfiles_all_and_memory(water_xyz: Path):
+    if _lean_names_chemfiles(lambda: readcon.read_chemfiles(str(water_xyz))):
+        return
     frames = readcon.read_chemfiles(str(water_xyz))
     assert len(frames) == 1
     data = water_xyz.read_text()
@@ -50,6 +58,8 @@ def test_read_chemfiles_all_and_memory(water_xyz: Path):
 
 
 def test_chemfiles_stamps_internal_units(water_xyz: Path):
+    if _lean_names_chemfiles(lambda: readcon.read_chemfiles_first(str(water_xyz))):
+        return
     frame = readcon.read_chemfiles_first(str(water_xyz))
     units = frame.metadata["units"]
     assert units["length"] == "angstrom"
@@ -59,6 +69,8 @@ def test_chemfiles_stamps_internal_units(water_xyz: Path):
 
 
 def test_read_chemfiles_nth_and_nsteps(tmp_path: Path):
+    if _lean_names_chemfiles(lambda: readcon.read_chemfiles_nsteps("nope.xyz")):
+        return
     p = tmp_path / "three.xyz"
     p.write_text(
         "2\nframe0\nCu 0.0 0.0 0.0\nH 1.0 0.0 0.0\n"
@@ -80,6 +92,8 @@ def test_read_chemfiles_nth_and_nsteps(tmp_path: Path):
 
 
 def test_select_methods_on_frame_with_bonds():
+    if _lean_names_chemfiles(lambda: readcon.read_chemfiles_first("nope.xyz")):
+        return
     atoms = [
         readcon.Atom(
             "O", 0.0, 0.0, 0.0, fixed=[False, False, False], atom_id=0, mass=16.0

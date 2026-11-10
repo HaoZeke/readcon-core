@@ -14,12 +14,13 @@ import pytest
 
 import readcon
 
-# APIs are always exported; lean builds return FEATURE_DISABLED / errors unless
-# the extension was built with chemfiles. Gate on the shipped capability flag.
-pytestmark = pytest.mark.skipif(
-    not getattr(readcon, "has_chemfiles_support", lambda: False)(),
-    reason="chemfiles feature not enabled in this wheel (has_chemfiles_support() is False)",
-)
+def _lean_names_chemfiles(call) -> bool:
+    if readcon.has_chemfiles_support():
+        return False
+    with pytest.raises(Exception) as ei:
+        call()
+    assert "chemfiles" in str(ei.value).lower()
+    return True
 
 _REPO = Path(__file__).resolve().parents[2]
 _TINY_MULTI = _REPO / "resources" / "test" / "tiny_multi_cuh2.con"
@@ -64,6 +65,8 @@ def _ho_frame():
 
 
 def test_select_atom_indices_name_h():
+    if _lean_names_chemfiles(lambda: readcon.select_atom_indices(_ho_frame(), "name H")):
+        return
     frame = _ho_frame()
     idxs = readcon.select_atom_indices(frame, "name H")
     assert idxs == [0, 1]
@@ -74,6 +77,8 @@ def test_select_atom_indices_name_h():
 
 
 def test_select_on_frame_name_o_context():
+    if _lean_names_chemfiles(lambda: readcon.select_on_frame(_ho_frame(), "name O")):
+        return
     frame = _ho_frame()
     out = readcon.select_on_frame(frame, "name O")
     assert out["selection"] == "name O"
@@ -83,23 +88,21 @@ def test_select_on_frame_name_o_context():
 
 
 def test_select_all_atom_count():
+    if _lean_names_chemfiles(lambda: readcon.select_on_frame(_ho_frame(), "all")):
+        return
     frame = _ho_frame()
     out = readcon.select_on_frame(frame, "all")
     assert out["context_size"] == 1
     assert len(out["primary_indices"]) == 3
 
 
-@pytest.mark.skipif(
-    not (
-        hasattr(readcon, "select_atom_positions_on_frames")
-        and callable(readcon.select_atom_positions_on_frames)
-        and _TINY_MULTI.is_file()
-    ),
-    reason="multi-frame select API or fixture missing",
-)
 def test_select_atom_positions_on_frames_name_h_trajectory():
     """``name H`` yields per-frame positions across the multi-frame CON trajectory."""
     frames = readcon.read_all_frames(str(_TINY_MULTI))
+    if _lean_names_chemfiles(
+        lambda: readcon.select_atom_positions_on_frames("name H", frames)
+    ):
+        return
     assert len(frames) >= 2
 
     multi = readcon.select_atom_positions_on_frames("name H", frames)

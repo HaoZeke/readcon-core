@@ -24,10 +24,6 @@ def test_convert_to_con_native_multi_frame(tmp_path: Path):
     assert back[0].atoms[0].atom_id == 0
 
 
-@pytest.mark.skipif(
-    not getattr(readcon, "has_chemfiles_support", lambda: False)(),
-    reason="chemfiles not linked",
-)
 def test_convert_to_con_xyz_chemfiles(tmp_path: Path):
     xyz = tmp_path / "water.xyz"
     xyz.write_text(
@@ -35,6 +31,12 @@ def test_convert_to_con_xyz_chemfiles(tmp_path: Path):
         encoding="utf-8",
     )
     out = tmp_path / "water.con"
+    if not readcon.has_chemfiles_support():
+        with pytest.raises(Exception) as ei:
+            readcon.convert_to_con(str(xyz), str(out))
+        assert "chemfiles" in str(ei.value).lower()
+        assert not out.exists()
+        return
     report = readcon.convert_to_con(str(xyz), str(out))
     assert report["native_con"] is False
     assert report["n_frames"] == 1
@@ -44,26 +46,3 @@ def test_convert_to_con_xyz_chemfiles(tmp_path: Path):
     symbols = [a.symbol for a in frame.atoms]
     assert symbols.count("O") == 1
     assert symbols.count("H") == 2
-
-
-def test_xyz_conversion_follows_chemfiles_support(tmp_path: Path):
-    xyz = tmp_path / "water.xyz"
-    xyz.write_text(
-        "3\nmigrate\nO 0 0 0\nH 0.96 0 0\nH -0.24 0.93 0\n",
-        encoding="utf-8",
-    )
-    out = tmp_path / "water.con"
-    linked = getattr(readcon, "has_chemfiles_support", lambda: False)()
-    if linked:
-        report = readcon.convert_to_con(str(xyz), str(out))
-        assert report["native_con"] is False
-        assert report["n_frames"] == 1
-        assert report["n_atoms_last"] == 3
-        frame = readcon.read_first_frame(str(out))
-        symbols = [atom.symbol for atom in frame.atoms]
-        assert symbols.count("O") == 1
-        assert symbols.count("H") == 2
-    else:
-        with pytest.raises(Exception) as ei:
-            readcon.convert_to_con(str(xyz), str(out))
-        assert "chemfiles" in str(ei.value).lower()

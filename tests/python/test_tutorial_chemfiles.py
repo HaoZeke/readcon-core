@@ -40,12 +40,6 @@ def _env() -> dict[str, str]:
     return env
 
 
-pytestmark = pytest.mark.skipif(
-    not getattr(readcon, "has_chemfiles_support", lambda: False)(),
-    reason="chemfiles not linked (CI chemfiles matrix)",
-)
-
-
 def test_chemfiles_notebook_org_declares_tangle():
     org = ORG.read_text(encoding="utf-8")
     assert ":tangle ../notebooks/chemfiles_ingress.py" in org
@@ -61,6 +55,11 @@ def test_chemfiles_notebook_org_declares_tangle():
 
 
 def test_org_babel_chemfiles_notebook_script():
+    if not readcon.has_chemfiles_support():
+        with pytest.raises(Exception) as ei:
+            readcon.read_chemfiles_first("nope.xyz")
+        assert "chemfiles" in str(ei.value).lower()
+        return
     if _emacs_path() is None:
         if os.environ.get("CI"):
             pytest.fail("emacs required on CI for Org Babel chemfiles notebook")
