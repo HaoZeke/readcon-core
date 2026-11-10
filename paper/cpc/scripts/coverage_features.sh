@@ -107,7 +107,13 @@ if [ ! -x "$VENV/bin/python" ]; then
 fi
 # shellcheck disable=SC1091
 . "$VENV/bin/activate"
-python -m pip install -q maturin pytest numpy
+python -m pip install -q maturin pytest numpy h5py threadpoolctl chemparseplot xyzrender rgpycrumbs polars
+if command -v pdftotext >/dev/null; then
+  ln -sfn "$(command -v pdftotext)" "$VENV/bin/pdftotext"
+fi
+if command -v pandoc >/dev/null; then
+  ln -sfn "$(command -v pandoc)" "$VENV/bin/pandoc"
+fi
 maturin develop --features python,zstd,chemfiles-from-sources
 python -m pytest \
   tests/python/test_v143_arms.py \

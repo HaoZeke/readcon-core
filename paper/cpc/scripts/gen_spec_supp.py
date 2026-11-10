@@ -761,7 +761,7 @@ def org_source() -> tuple[str, list[str], int]:
 
 def pandoc(org: str) -> str:
     return subprocess.run(
-        [*PANDOC, "-f", "org", "-t", "latex", "--syntax-highlighting=none"],
+        [*PANDOC, "-f", "org", "-t", "latex", "--no-highlight"],
         input=org,
         capture_output=True,
         text=True,
