@@ -425,7 +425,6 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
     let mut chfl_names: Vec<String> = Vec::with_capacity(n);
     let mut chfl_types: Vec<String> = Vec::with_capacity(n);
     let mut symbols: Vec<String> = Vec::with_capacity(n);
-    let mut any_name_type_extra = false;
 
     for i in 0..n {
         let atom = frame.atom(i);
@@ -450,9 +449,6 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
         } else {
             symbol.clone()
         };
-        if display_name != symbol {
-            any_name_type_extra = true;
-        }
         chfl_names.push(display_name);
         chfl_types.push(atomic_type_str);
         symbols.push(symbol);
@@ -546,14 +542,12 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
         metadata.insert(CHEMFILES_ATOM_PROPS_KEY.into(), Value::Array(arr));
     }
 
-    // Always store name/type sidecars on chemfiles import so selection can restore
-    // display names (H1) distinct from CON symbol/type (H) without CON v3.
-    if any_name_type_extra || n > 0 {
-        let names_json: Vec<Value> = chfl_names.into_iter().map(Value::String).collect();
-        let types_json: Vec<Value> = chfl_types.into_iter().map(Value::String).collect();
-        metadata.insert(CHEMFILES_ATOM_NAMES_KEY.into(), Value::Array(names_json));
-        metadata.insert(CHEMFILES_ATOM_TYPES_KEY.into(), Value::Array(types_json));
-    }
+    // A zero-atom frame returned above. Every frame that reaches here has
+    // at least one atom, so the name and type sidecars are always written.
+    let names_json: Vec<Value> = chfl_names.into_iter().map(Value::String).collect();
+    let types_json: Vec<Value> = chfl_types.into_iter().map(Value::String).collect();
+    metadata.insert(CHEMFILES_ATOM_NAMES_KEY.into(), Value::Array(names_json));
+    metadata.insert(CHEMFILES_ATOM_TYPES_KEY.into(), Value::Array(types_json));
 
     // Record chemfiles library version as an extra for provenance.
     metadata.insert(
