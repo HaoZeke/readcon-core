@@ -4203,6 +4203,13 @@ mod one_thread_and_numa {
         let multi = std::fs::read("resources/test/tiny_multi_cuh2.con").unwrap();
         let span_err = super::parse_byte_span(&multi, 0, multi.len()).unwrap_err();
         assert!(span_err.to_string().contains("more than one frame"));
+        let multi_text = std::str::from_utf8(&multi).unwrap();
+        let text_err = super::parse_text_span(multi_text, 0, multi_text.len()).unwrap_err();
+        assert!(text_err.to_string().contains("more than one frame"));
+        let mut mid = super::MemchrLines::from_bytes(b"abcd\n");
+        mid.newlines = Some(vec![4]);
+        mid.pos = 2;
+        let _ = mid.next_line();
         let bytes = multi.as_slice();
         let parse = |start: usize, end: usize| super::parse_byte_span(bytes, start, end);
         let _ = parse(0, bytes.len());
