@@ -1118,5 +1118,35 @@ mod tests {
             assert!(!ids.is_empty());
             assert_eq!(ids.len(), 4);
         }
+
+        for &kind in ElementKind::all_hosted() {
+            assert!(!kind.as_str().is_empty());
+            assert_eq!(ElementKind::parse(kind.as_str()).unwrap(), kind);
+            let mut block = Array2Storage::zeros(kind, 1, 3);
+            block.set_f64_row(0, [1.0, 2.0, 4.0]);
+            assert_eq!(block.kind(), kind);
+            let row = block.as_f64_row(0);
+            let mut column = Array1Storage::zeros(kind, 2);
+            column.set_f64(1, 4.0);
+            assert_eq!(column.kind(), kind);
+            let scalar = column.get_f64(1);
+            if kind == ElementKind::Bool {
+                assert_eq!(row, [1.0, 1.0, 1.0]);
+                assert_eq!(scalar, 1.0);
+            } else {
+                assert_eq!(row, [1.0, 2.0, 4.0]);
+                assert_eq!(scalar, 4.0);
+            }
+        }
+        assert_eq!(
+            Array1Storage::zeros_f64(2).f64_slice().unwrap(),
+            &[0.0, 0.0]
+        );
+        for name in [
+            "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "boolean", "c64", "c128", "f16",
+            "half", "double", "single", "f32", "f64",
+        ] {
+            assert!(ElementKind::parse(name).is_ok(), "{name}");
+        }
     }
 }

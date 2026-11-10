@@ -2507,7 +2507,7 @@ Coordinates of Component 1
         advise_readahead(&file, 0, page).unwrap();
         let directory = File::open("/tmp").unwrap();
         let err = advise_readahead(&directory, 0, page).err().unwrap();
-        assert!(err.contains("Invalid") || err.contains("os error"), "{err}");
+        assert!(err.contains("Invalid"), "{err}");
         willneed(&file, 0, page).unwrap();
 
         let fifo = dir.path().join("pipe");
@@ -2564,7 +2564,7 @@ Coordinates of Component 1
             },
         )
         .err().unwrap();
-        assert!(missing.contains("os error 2") || missing.contains("No such"), "{missing}");
+        assert!(missing.contains("os error 2"), "{missing}");
         let denied = stream_one_span(
             Path::new("/tmp"),
             SpanGeom {
@@ -2579,7 +2579,7 @@ Coordinates of Component 1
             },
         )
         .err().unwrap();
-        assert!(denied.contains("Invalid") || denied.contains("os error"), "{denied}");
+        assert!(denied.contains("Invalid"), "{denied}");
 
         let ptr = unsafe {
             libc::mmap(

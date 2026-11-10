@@ -526,6 +526,9 @@ mod tests {
             array_from_host_f64_on_device(&[2], vec![4.0, 5.0], DLDevice::cuda(1)).unwrap();
         assert!(values.as_any().is::<DeviceTaggedF64Array>());
         assert!(values.as_any_mut().is::<DeviceTaggedF64Array>());
+        let dt = values.dtype();
+        assert_eq!(dt.bits, 64);
+        assert_eq!(dt.code, dlpk::sys::DLDataTypeCode::kDLFloat);
         let copied = values.copy();
         assert_eq!(copied.shape(), vec![2]);
         assert_eq!(copied.device(), DLDevice::cuda(1));

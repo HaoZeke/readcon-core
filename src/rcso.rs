@@ -328,6 +328,12 @@ mod tests {
         bad_magic[..4].copy_from_slice(b"NOPE");
         let err = Rcso::decode(&bad_magic).unwrap_err();
         assert!(err.to_string().contains("bad magic"), "{err}");
+        let mut short_body = bad_magic.clone();
+        short_body[0..4].copy_from_slice(RCSO_MAGIC);
+        short_body[4..8].copy_from_slice(&RCSO_VERSION.to_le_bytes());
+        short_body[8..12].copy_from_slice(&1u32.to_le_bytes());
+        let err = Rcso::decode(&short_body).unwrap_err();
+        assert!(err.to_string().contains("truncated body"), "{err}");
 
         let mut batch = encode_batch(&[vec![1, 2, 3]]).unwrap();
         batch[0] = b'X';

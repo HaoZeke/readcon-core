@@ -208,7 +208,8 @@ fn parse_expr(s: &str, table: &HashMap<&str, UnitValue>) -> Result<(f64, Dimensi
         }
     }
     // `m/` and `m*` leave the operator for an empty atom. That is an error.
-    if pending_div || bytes.last().is_some_and(|b| *b == b'*' || *b == b'/') {
+    // A trailing `/` sets `pending_div`. A trailing `*` does not.
+    if pending_div || bytes.last() == Some(&b'*') {
         parse_atom("", table)?;
     }
     Ok((factor, dim))
@@ -640,6 +641,8 @@ mod tests {
     fn parser_rejects_broken_expressions_and_accepts_powers() {
         let trailing = parse_unit_expression("m/").unwrap_err();
         assert!(trailing.to_string().contains("trailing operator"), "{trailing}");
+        let star = parse_unit_expression("m*").unwrap_err();
+        assert!(star.to_string().contains("trailing operator"), "{star}");
         let unbalanced = parse_unit_expression("(m").unwrap_err();
         assert!(unbalanced.to_string().contains("unbalanced"), "{unbalanced}");
         let bad_token = parse_unit_expression("m*!").unwrap_err();
@@ -647,7 +650,7 @@ mod tests {
         let unknown = parse_unit_expression("furlong").unwrap_err();
         assert!(unknown.to_string().contains("unknown unit"), "{unknown}");
         let bare = parse_unit_expression("^").unwrap_err();
-        assert!(bare.to_string().contains("expected exponent") || bare.to_string().contains("expected unit"), "{bare}");
+        assert!(bare.to_string().contains("expected unit name"), "{bare}");
         let missing_exp = parse_unit_expression("m^").unwrap_err();
         assert!(missing_exp.to_string().contains("expected exponent"), "{missing_exp}");
         let missing_neg = parse_unit_expression("m^-").unwrap_err();
@@ -701,7 +704,8 @@ mod tests {
         assert!(bad_override.to_string().contains("not valid"), "{bad_override}");
 
         let fs = velocity_scale_to_natural("fs").unwrap();
-        assert!(fs.is_finite() && fs > 0.0, "{fs}");
+        assert!(fs.is_finite(), "{fs}");
+        assert!(fs > 0.0, "{fs}");
         let zero = velocity_scale_to_natural("fs^400/s^399").unwrap_err();
         assert!(zero.to_string().contains("zero scale"), "{zero}");
         let infinite = velocity_scale_to_natural("s^400/fs^399").unwrap_err();
@@ -759,6 +763,10 @@ mod tests {
         }))
         .unwrap();
 
+        let empty = parse_unit_expression("").unwrap_err();
+        assert!(empty.to_string().contains("empty unit"), "{empty}");
+        let blank = parse_unit_expression("   ").unwrap_err();
+        assert!(blank.to_string().contains("empty unit"), "{blank}");
         assert!(canonicalize_unit_expression("   ").is_err());
         assert_eq!(canonicalize_unit_expression("nm").unwrap(), "nm");
         assert_eq!(canonicalize_unit_expression("nanometer").unwrap(), "nm");

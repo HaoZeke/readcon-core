@@ -283,7 +283,16 @@ mod tests {
         let err = convert_path_to_con(&fixture("tiny_multi_cuh2.con"), Path::new("/dev/full"))
             .unwrap_err();
         assert!(matches!(err, ConvertError::Io(_)), "{err}");
-        assert!(err.to_string().contains("I/O"), "{err}");
+        assert!(err.to_string().to_ascii_lowercase().contains("space"), "{err}");
+
+        let garbage = dir.join("garbage.con");
+        fs::write(&garbage, b"this is not a con frame\n").unwrap();
+        let err = read_frames_for_convert(&garbage).unwrap_err();
+        assert!(matches!(err, ConvertError::Parse(_)), "{err}");
+        let empty = dir.join("empty.con");
+        fs::write(&empty, b"\n").unwrap();
+        let err = read_frames_for_convert(&empty).unwrap_err();
+        assert!(matches!(err, ConvertError::Empty) || matches!(err, ConvertError::Parse(_)), "{err}");
 
         assert!(path_looks_like_con(Path::new("dir/A.CON.ZST")));
         assert!(!path_looks_like_con(Path::new("")));

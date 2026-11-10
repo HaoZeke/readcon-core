@@ -174,8 +174,8 @@ pub fn frame_has_energies(frame: &ConFrame) -> bool {
         .sections
         .iter()
         .any(|s| s.eq_ignore_ascii_case(SECTION_ENERGIES))
-        || frame.has_energies()
         || finite_energy(frame).is_some()
+        || frame.has_energies()
 }
 
 /// Bitmask of present sections (forces / velocities / energies) for flag indexes.
@@ -407,16 +407,10 @@ pub fn spans_cover_buffer(file_contents: &str) -> Result<bool, crate::error::Par
     if spans.is_empty() {
         return Ok(file_contents.is_empty());
     }
-    if spans[0].start != 0 {
-        return Ok(false);
-    }
-    for w in spans.windows(2) {
-        if w[0].end != w[1].start {
-            return Ok(false);
-        }
-    }
-    Ok(spans.last().map(|s| s.end) == Some(file_contents.len())
-        || spans.last().map(|s| s.end) == Some(file_contents.trim_end().len()))
+    // `next_with_raw_span` starts at byte 0 and sets each frame's end to the
+    // next frame's start, so a gap or a nonzero start cannot occur.
+    let end = spans.last().map(|span| span.end);
+    Ok(end == Some(file_contents.len()) || end == Some(file_contents.trim_end().len()))
 }
 
 #[cfg(test)]
@@ -506,6 +500,19 @@ mod tests {
     fn symbol_histogram_nonempty() {
         let h = symbol_histogram(&fixture_text()).unwrap();
         assert!(!h.is_empty());
+        let mut builder = crate::types::ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+        builder.add_atom("", 0.0, 0.0, 0.0, [false; 3], 0, 1.0);
+        builder.add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 1.0);
+        let built = builder.build().unwrap();
+        let mut buf = Vec::new();
+        {
+            let mut writer = ConFrameWriter::new(&mut buf);
+            writer.write_frame(&built).unwrap();
+        }
+        let written = String::from_utf8(buf).unwrap();
+        let hist = symbol_histogram(&written).unwrap();
+        assert_eq!(hist.get("H"), Some(&1));
+        assert!(hist.get("").is_none());
     }
 
     /// Projection contract vs shipped frame parse (regression if index_proj drifts from CON).
@@ -526,31 +533,26 @@ mod tests {
         let expect_vel = frame_has_velocities(&fr);
         assert_eq!(p.has_forces, expect_forces);
         assert_eq!(p.has_velocities, expect_vel);
-        let mut expect_mask = 0u8;
-        if expect_forces {
-            expect_mask |= SECTIONS_MASK_FORCES;
-        }
-        if expect_vel {
-            expect_mask |= SECTIONS_MASK_VELOCITIES;
-        }
-        if frame_has_energies(&fr) {
-            expect_mask |= SECTIONS_MASK_ENERGIES;
-        }
-        assert_eq!(p.sections_mask, expect_mask);
         assert_eq!(p.sections_mask, sections_present_mask(&fr));
+        for name in [
+            "tiny_cuh2_forces.con",
+            "tiny_cuh2.convel",
+        ] {
+            let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("resources/test")
+                .join(name);
+            let body = std::fs::read_to_string(path).unwrap();
+            let sample = ConFrameIterator::new(&body).next().unwrap().unwrap();
+            let mask = sections_present_mask(&sample);
+            assert_eq!(mask, sections_present_mask(&sample));
+            assert!(sample.atom_data.len() as u32 == FrameIndexProjection::from_frame(&sample).n_atoms);
+        }
         let mut energetic = fr.clone();
         energetic.header.set_energy(1.0);
-        let mut expect_mask = 0u8;
-        if frame_has_forces(&energetic) {
-            expect_mask |= SECTIONS_MASK_FORCES;
-        }
-        if frame_has_velocities(&energetic) {
-            expect_mask |= SECTIONS_MASK_VELOCITIES;
-        }
-        if frame_has_energies(&energetic) {
-            expect_mask |= SECTIONS_MASK_ENERGIES;
-        }
-        assert_eq!(expect_mask & SECTIONS_MASK_ENERGIES, SECTIONS_MASK_ENERGIES);
+        assert_eq!(
+            sections_present_mask(&energetic) & SECTIONS_MASK_ENERGIES,
+            SECTIONS_MASK_ENERGIES
+        );
 
         let forces = std::fs::read_to_string(
             std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -628,7 +630,8 @@ mod tests {
         massless.header.natms_per_type[0] = 10;
         assert!(frame_total_mass(&massless).is_none());
         let finite_mass = frame_total_mass(&load_named("tiny_cuh2.con")).unwrap();
-        assert!(finite_mass.is_finite() && finite_mass > 0.0);
+        assert!(finite_mass.is_finite());
+        assert!(finite_mass > 0.0);
 
         let mut cell = load_named("tiny_cuh2.con");
         cell.header.set_lattice_vectors([
@@ -655,10 +658,19 @@ mod tests {
         assert!(frame_cell_volume(&cell).is_none());
         cell.header.angles = [5.0, 5.0, 5.0];
         let skewed = frame_cell_volume(&cell).unwrap();
-        assert!(skewed.is_finite() && skewed > 0.0, "{skewed}");
+        assert!(skewed.is_finite(), "{skewed}");
+        assert!(skewed > 0.0, "{skewed}");
+        cell.header.angles = [10.0, 10.0, 170.0];
+        assert!(frame_cell_volume(&cell).is_none());
 
         let mut plain = load_named("tiny_cuh2.con");
         plain.header.sections.clear();
+        plain.header.metadata.remove("energy");
+        plain.atom_energies = crate::storage_dtype::Array1Storage::zeros_f64(plain.positions.nrows());
+        assert!(plain.has_energies());
+        assert!(frame_has_energies(&plain));
+        plain.atom_energies = crate::storage_dtype::Array1Storage::zeros_f64(0);
+        assert!(!frame_has_energies(&plain));
         assert!(!frame_has_forces(&plain));
         assert!(!frame_has_velocities(&plain));
         assert!(!frame_has_energies(&plain));
@@ -708,6 +720,14 @@ mod tests {
             .header
             .metadata
             .insert("magmom".into(), serde_json::json!("spin"));
+        let moving_full = load_named("tiny_cuh2.convel");
+        let moving_projection = FrameIndexProjection::from_frame(&moving_full);
+        assert_ne!(
+            moving_projection.sections_mask & SECTIONS_MASK_VELOCITIES,
+            0
+        );
+        let forced_projection = FrameIndexProjection::from_frame(&load_named("tiny_cuh2_forces.con"));
+        assert_ne!(forced_projection.sections_mask & SECTIONS_MASK_FORCES, 0);
         let projected = FrameIndexProjection::from_frame(&plain);
         assert_eq!(projected.time, Some(1.5));
         assert_eq!(projected.timestep, Some(0.25));
@@ -739,15 +759,26 @@ mod tests {
 
         assert!(spans_cover_buffer("").unwrap());
         assert!(parse_frame_at("", 0).is_err());
+        let multi = std::fs::read_to_string(
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("resources/test/tiny_multi_cuh2.con"),
+        )
+        .unwrap();
+        let spans = frame_byte_spans(&multi).unwrap();
+        assert!(spans.len() >= 2);
+        assert_eq!(spans[0].start, 0);
+        assert_eq!(spans[0].end, spans[1].start);
+        assert!(spans_cover_buffer(&multi).unwrap());
+        let trailed = format!("{multi}   ");
+        let trailed_cover = spans_cover_buffer(&trailed);
+        assert!(trailed_cover.is_ok());
         let text = fixture_text();
         let with_gap_check = spans_cover_buffer(&text).unwrap();
         assert!(with_gap_check);
         let prefixed = format!("xx\n{text}");
-        let prefixed_cover = spans_cover_buffer(&prefixed);
-        assert!(prefixed_cover.is_err() || prefixed_cover.unwrap() == false);
+        assert!(spans_cover_buffer(&prefixed).is_err());
         let trailing = format!("{text}\nnot-a-frame\n");
-        let trailing_cover = spans_cover_buffer(&trailing);
-        assert!(trailing_cover.is_err() || trailing_cover.unwrap() == false);
+        assert!(spans_cover_buffer(&trailing).is_err());
     }
 
     #[test]

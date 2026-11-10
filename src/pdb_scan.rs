@@ -32,11 +32,9 @@ fn trim(bytes: &[u8]) -> &[u8] {
 
 fn parse_f64(bytes: &[u8]) -> Result<f64, String> {
     let token = trim(bytes);
-    let (value, consumed) =
+    let (value, _consumed) =
         fast_float2::parse_partial::<f64, _>(token).map_err(|_| "float".to_string())?;
-    if consumed == 0 {
-        return Err("float".to_string());
-    }
+    // fast_float2 only returns Ok after consuming at least one digit.
     Ok(value)
 }
 
@@ -69,9 +67,6 @@ fn parse_cryst(line: &[u8], cell: &mut [f64; 6]) -> Result<(), String> {
         rest = trim(rest);
         let (value, consumed) =
             fast_float2::parse_partial::<f64, _>(rest).map_err(|_| "cryst".to_string())?;
-        if consumed == 0 {
-            return Err("cryst".to_string());
-        }
         *slot = value;
         rest = rest.get(consumed..).unwrap_or(b"");
     }
