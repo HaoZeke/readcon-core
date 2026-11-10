@@ -877,21 +877,18 @@ O  0.000  0.000  0.000
         frame.add_atom(&Atom::new("H"), [0.0, 0.0, 0.0], None);
         frame.set("frame_index", Property::Double(f64::NAN));
         let con = con_frame_from_chemfiles(&frame).expect("import");
-        assert_eq!(
-            con.header
-                .metadata
-                .get(meta::FRAME_INDEX)
-                .and_then(|v| v.as_u64()),
-            Some(0),
-            "a NaN index does not replace the step"
-        );
-        assert_eq!(
-            con.header
-                .metadata
-                .get("chemfiles::frame_index")
-                .map(|v| v.is_null()),
-            Some(true)
-        );
+        let mut pairs: Vec<String> = con
+            .header
+            .metadata
+            .iter()
+            .map(|(k, v)| format!("{k}={v}"))
+            .collect();
+        pairs.sort();
+        let got = pairs.join("|");
+        // Output of the same call at 4b98bd4, the parent of the commit
+        // that left this path in place.
+        let old = "chemfiles::frame_index=null|chemfiles::library_version=\"0.10.4\"|chemfiles::unit_system={\"angle\":\"degree\",\"length\":\"angstrom\",\"mass\":\"amu\",\"velocity\":\"angstrom/ps\"}|chemfiles_atom_names=[\"H\"]|chemfiles_atom_types=[\"H\"]|con_spec_minor=1|frame_index=0|generator=\"readcon-core 0.18.1 chemfiles 0.10.4\"|pbc=[false,false,false]|units={\"energy\":\"eV\",\"length\":\"angstrom\",\"mass\":\"amu\",\"time\":\"ps\"}";
+        assert_eq!(got, old);
     }
 
     #[test]

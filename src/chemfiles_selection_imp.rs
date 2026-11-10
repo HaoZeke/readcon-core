@@ -118,7 +118,10 @@ pub fn chemfiles_frame_from_con_frame(frame: &ConFrame) -> Result<Frame, Chemfil
         chfl.add_atom(&ch_atom, [atom.x, atom.y, atom.z], vel);
     }
 
-    // Restore velocities explicitly if add_atom did not set them.
+    // chemfiles 0.10.4, vendored by chemfiles-sys 0.10.41: Frame::add_velocities
+    // sizes the velocity vector to the current atom count (Frame.cpp:57-60),
+    // and Frame::add_atom pushes one velocity when that vector is present
+    // (Frame.cpp:134-139). The zip is the same length as the atom list.
     if need_vel {
         if let Some(vels) = chfl.velocities_mut() {
             for (atom, slot) in frame.atom_data.iter().zip(vels.iter_mut()) {
@@ -161,6 +164,10 @@ pub fn evaluate_selection_on_chemfiles_frame(
         .map(|m| {
             let size = m.len();
             let mut atoms = [0usize; 4];
+            // chemfiles 0.10.4 Match::MAX_MATCH_SIZE is 4
+            // (include/chemfiles/Selection.hpp:31). Selection::size is
+            // 1, 2, 3, or 4 (src/Selection.cpp:100-114). take(4) keeps
+            // every index.
             for (i, idx) in m.iter().take(4).enumerate() {
                 atoms[i] = *idx;
             }
@@ -258,8 +265,10 @@ pub fn select_atom_positions_on_frames(
         });
     }
     let multi = evaluate_selection_on_frames(selection, frames)?;
-    // evaluate_selection_on_frames pushes one slice per input frame, and the
-    // empty input returned above, so the first slice is present.
+    // The loop in evaluate_selection_on_frames pushes one slice per input
+    // frame. chemfiles 0.10.4 Selection::evaluate returns the matches for
+    // the single frame it is given (src/Selection.cpp:256). The empty
+    // input returned above, so the first slice is that first frame.
     if multi.frames[0].result.context_size != 1 {
         return Err(ChemfilesImportError::InvalidFrame(format!(
             "select_atom_positions_on_frames requires atom context (size 1), got {}",
@@ -307,7 +316,8 @@ mod tests {
         let chfl = super::chemfiles_frame_from_con_frame(&frame).expect("project");
         assert!(chfl.has_velocities());
         let vels = chfl.velocities().expect("velocities");
-        assert_eq!(vels.len(), 3);
+        assert_eq!(chfl.size(), frame.atom_data.len());
+        assert_eq!(vels.len(), frame.atom_data.len());
         assert_eq!(vels[0], [0.2, 0.0, 0.0]);
         assert_eq!(vels[1], [0.0, 0.0, 0.0]);
         assert_eq!(vels[2], [0.0, 0.0, 0.0]);
@@ -408,6 +418,44 @@ mod tests {
         let frame_no_topo = water_con_frame();
         let empty = evaluate_selection_on_con_frame("bonds: all", &frame_no_topo).expect("no topo");
         assert!(empty.matches.is_empty());
+    }
+
+    #[test]
+    fn a_dihedral_match_keeps_all_four_atoms() {
+        use crate::types::Bond;
+        let mut b = ConFrameBuilder::new([12.0, 12.0, 12.0], [90.0, 90.0, 90.0]);
+        for i in 0..4 {
+            b.add_atom("C", i as f64, 0.0, 0.0, [false; 3], i, 12.0);
+        }
+        let mut frame = b.build().unwrap();
+        frame
+            .header
+            .set_bonds(&[Bond::new(0, 1), Bond::new(1, 2), Bond::new(2, 3)]);
+        let result =
+            evaluate_selection_on_con_frame("dihedrals: all", &frame).expect("dihedrals");
+        assert_eq!(result.context_size, 4);
+        assert_eq!(result.matches.len(), 1);
+        let m = &result.matches[0];
+        assert!(m.size <= 4, "a match is at most four atoms, got {}", m.size);
+        assert_eq!(m.size, 4);
+        let mut stored = m.atoms[..m.size].to_vec();
+        stored.sort_unstable();
+        assert_eq!(stored, vec![0, 1, 2, 3]);
+    }
+
+    #[test]
+    fn the_first_slice_is_the_first_frame() {
+        let first = water_con_frame();
+        let mut second = water_con_frame();
+        second.atom_data[0].x = 4.0;
+        let frames = [first, second];
+        let multi = select_atom_positions_on_frames("name O", &frames).expect("select O");
+        assert_eq!(multi.frames.len(), frames.len());
+        assert_eq!(multi.frames[0].frame_index, 0);
+        assert_eq!(multi.frames[0].atom_indices, vec![0]);
+        assert_eq!(multi.frames[0].positions, vec![[0.0, 0.0, 0.0]]);
+        assert_eq!(multi.frames[1].frame_index, 1);
+        assert_eq!(multi.frames[1].positions, vec![[4.0, 0.0, 0.0]]);
     }
 
     #[test]
