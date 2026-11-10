@@ -661,9 +661,15 @@ pub unsafe extern "C" fn read_con_file_iterator(
     let owned = match crate::compression::read_file_contents(Path::new(filename)) {
         Ok(fc) => match fc.as_str() {
             Ok(s) => s.to_owned(),
-            Err(_) => return ptr::null_mut(),
+            Err(err) => {
+                set_last_error(&err.to_string());
+                return ptr::null_mut();
+            }
         },
-        Err(_) => return ptr::null_mut(),
+        Err(err) => {
+            set_last_error(&err.to_string());
+            return ptr::null_mut();
+        }
     };
     c_iterator_from_owned_string(owned)
 }
@@ -709,7 +715,10 @@ pub unsafe extern "C" fn read_con_buffer_iterator(
     let slice = unsafe { std::slice::from_raw_parts(data, len) };
     let contents = match std::str::from_utf8(slice) {
         Ok(s) => s.to_owned(),
-        Err(_) => return ptr::null_mut(),
+        Err(_) => {
+            set_last_error(&crate::compression::invalid_utf8_message(slice));
+            return ptr::null_mut();
+        }
     };
     c_iterator_from_owned_string(contents)
 }
@@ -765,7 +774,7 @@ pub unsafe extern "C" fn con_frame_iterator_next_status(
         }
         None => -14,
         Some(Err(err)) => {
-            let text = format!("{}: {err}", err.class_name());
+            let text = err.to_string();
             holder.last_error = CString::new(text.replace('\0', ""))
                 .unwrap_or_else(|_| CString::new("error").expect("static"))
                 .into_raw();
@@ -868,7 +877,16 @@ pub unsafe extern "C" fn rkr_count_frames(filename_c: *const c_char) -> usize {
         Ok(s) => s,
         Err(_) => return usize::MAX,
     };
-    crate::iterators::count_frames(Path::new(filename)).unwrap_or(usize::MAX)
+    match crate::iterators::count_frames(Path::new(filename)) {
+        Ok(n) => {
+            clear_last_error();
+            n
+        }
+        Err(err) => {
+            set_last_error(&parse_error_text(err.as_ref()));
+            usize::MAX
+        }
+    }
 }
 
 /// Skip `index` frames on a path, then parse one. Caller frees with `free_rkr_frame`.
@@ -3975,9 +3993,19 @@ pub unsafe extern "C" fn rkr_read_all_frames_n_threads(
         Some(n_threads)
     };
     match iterators::read_all_frames_with_threads(Path::new(filename), threads) {
-        Ok(frames) => pack_frame_handles(frames, num_frames),
-        Err(_) => ptr::null_mut(),
+        Ok(frames) => {
+            clear_last_error();
+            pack_frame_handles(frames, num_frames)
+        }
+        Err(err) => {
+            set_last_error(&parse_error_text(err.as_ref()));
+            ptr::null_mut()
+        }
     }
+}
+
+fn parse_error_text(err: &dyn std::error::Error) -> String {
+    err.to_string()
 }
 
 /// Pack owned frames into a C array (`len == capacity`) and write `num_frames`.

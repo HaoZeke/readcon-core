@@ -106,6 +106,9 @@ impl<R: Read> ConFrameReader<R> {
             // not parsed in full once per read.
             if ended || !cut || {
                 let mut probe = ConFrameIterator::from_bytes(text);
+                if self.start > 0 {
+                    probe.allow_mid_file_bom();
+                }
                 probe.forward();
                 settled(text, probe.byte_pos())
             } {
@@ -114,6 +117,9 @@ impl<R: Read> ConFrameReader<R> {
                 } else {
                     ConFrameIterator::from_prefix(text)
                 };
+                if self.start > 0 {
+                    it.allow_mid_file_bom();
+                }
                 let result = op(&mut it);
                 if ended || settled(text, it.byte_pos()) {
                     match result {

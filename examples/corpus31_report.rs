@@ -95,12 +95,7 @@ fn one(path: &Path, threads: Option<usize>) -> Value {
             });
         }
     };
-    // The span parser disagrees with this cursor on four corpus files
-    // (a unicode blank, an empty velocity row, a 6001-frame file, and a
-    // non-UTF-8 separator). The record is the serial parse at
-    // every thread setting.
-    let _threads = threads;
-    match frames_from_bytes(&bytes, None) {
+    match frames_from_bytes(&bytes, threads) {
         Ok(frames) => {
             let pbc = frames
                 .first()

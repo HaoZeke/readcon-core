@@ -146,8 +146,10 @@ fn read_contents(
         Compression::Gzip => {
             // Every gzip member, in order (CON-compress.1, D16).
             let mut decoder = flate2::read::MultiGzDecoder::new(stream);
-            let mut contents = String::new();
-            decoder.read_to_string(&mut contents)?;
+            let mut bytes = Vec::new();
+            decoder.read_to_end(&mut bytes)?;
+            let contents =
+                String::from_utf8(bytes.clone()).map_err(|_| invalid_utf8_error(&bytes))?;
             FileContents::Owned(contents)
         }
         Compression::Zstd => {
@@ -166,12 +168,7 @@ fn read_contents(
         Compression::None if metadata.len() < MMAP_THRESHOLD => {
             let mut bytes = Vec::with_capacity(metadata.len() as usize);
             stream.read_to_end(&mut bytes)?;
-            let contents = String::from_utf8(bytes).map_err(|_| {
-                io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "stream did not contain valid UTF-8",
-                )
-            })?;
+            let contents = String::from_utf8(bytes.clone()).map_err(|_| invalid_utf8_error(&bytes))?;
             FileContents::Owned(contents)
         }
         Compression::None if map_large => {
@@ -182,10 +179,25 @@ fn read_contents(
             let mut bytes = Vec::with_capacity(metadata.len() as usize);
             stream.read_to_end(&mut bytes)?;
             // The message `as_str` gives for the same bytes when mapped.
-            FileContents::Owned(String::from_utf8(bytes).map_err(|e| e.utf8_error())?)
+            FileContents::Owned(
+                String::from_utf8(bytes.clone()).map_err(|_| invalid_utf8_error(&bytes))?,
+            )
         }
     };
     Ok((contents, compression))
+}
+
+/// The class the byte parser reports for these bytes, so a file that is
+/// not UTF-8 still names the line error instead of a bare decode failure.
+pub(crate) fn invalid_utf8_message(bytes: &[u8]) -> String {
+    match crate::iterators::frames_from_bytes(bytes, None) {
+        Err(err) => err.to_string(),
+        Ok(_) => "stream did not contain valid UTF-8".to_string(),
+    }
+}
+
+fn invalid_utf8_error(bytes: &[u8]) -> io::Error {
+    io::Error::new(io::ErrorKind::InvalidData, invalid_utf8_message(bytes))
 }
 
 #[cfg(not(feature = "zstd"))]
@@ -279,7 +291,9 @@ impl ForwardText {
         // them back in during the parse, and a parallel check would
         // start a worker pool for a single slice.
         if let FileContents::Mapped(m) = &contents {
-            std::str::from_utf8(m)?;
+            if std::str::from_utf8(m).is_err() {
+                return Err(invalid_utf8_error(m).into());
+            }
         }
         Ok(Self {
             contents,

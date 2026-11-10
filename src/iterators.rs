@@ -360,8 +360,63 @@ fn probe_section(after_blank: &[u8]) -> SectionProbe {
     }
 }
 
-fn blank_opens_section(after_blank: &[u8]) -> bool {
-    matches!(probe_section(after_blank), SectionProbe::Opens)
+fn label_line_names(line: &str, section: &str) -> bool {
+    let mut words = line.split_ascii_whitespace();
+    let Some(name) = words.next() else {
+        return false;
+    };
+    name.eq_ignore_ascii_case(section)
+        && words.next().is_some_and(|w| w.eq_ignore_ascii_case("of"))
+        && words
+            .next()
+            .is_some_and(|w| w.eq_ignore_ascii_case("component"))
+        && words.next().is_some_and(|index| {
+            index
+                .parse::<u32>()
+                .ok()
+                .is_some_and(|n| index == n.to_string())
+        })
+        && words.next().is_none()
+}
+
+/// A declared section opens when its label is `<name> of Component N`,
+/// including a name this reader does not implement.
+fn declared_section_opens(after_blank: &[u8], section: &str) -> bool {
+    let Some((raw1, after1)) = split_raw_line(after_blank) else {
+        return false;
+    };
+    let Some((raw2, _)) = split_raw_line(after1) else {
+        return false;
+    };
+    let Ok(label) = std::str::from_utf8(strip_cr(raw2)) else {
+        return false;
+    };
+    label_line_names(label, section)
+}
+
+/// `None` is the legacy file: line 2 does not declare `sections`.
+/// `Some` is that declaration, including an empty array.
+fn declared_sections(line2: &str) -> Option<Vec<String>> {
+    let trimmed = line2.trim_matches([' ', '\t']);
+    if !trimmed.starts_with('{') {
+        return None;
+    }
+    let value: serde_json::Value = serde_json::from_str(trimmed).ok()?;
+    let obj = value.as_object()?;
+    if !obj.contains_key("sections") {
+        return None;
+    }
+    let names = obj
+        .get("sections")
+        .and_then(|value| value.as_array())
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| item.as_str().map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default();
+    Some(names)
 }
 
 /// An iterator that lazily parses simulation frames from a `.con` or `.convel`
@@ -383,6 +438,12 @@ impl<'a> ConFrameIterator<'a> {
     /// 1-based line of the cursor after the last line this iterator consumed.
     pub fn cursor_line(&self) -> u32 {
         self.lines.line_no as u32
+    }
+
+    /// A slice that is not the start of the file may begin with U+FEFF.
+    /// That byte is text of the line, not a file-level byte-order mark.
+    pub(crate) fn allow_mid_file_bom(&mut self) {
+        self.check_bom = false;
     }
 
     /// Creates a new `ConFrameIterator` from a string slice of the entire file.
@@ -565,8 +626,18 @@ impl<'a> ConFrameIterator<'a> {
         if self.lines.pos >= self.lines.bytes.len() {
             return None;
         }
-        // Lines 1..=6 of the header are skipped wholesale.
-        if let Err(e) = self.advance_lines(6) {
+        // Line 1, then line 2. The section declaration decides whether a
+        // following blank belongs to this frame.
+        if self.read_line_str().is_none() {
+            return Some(Err(error::ParseError::IncompleteHeader));
+        }
+        let line2 = match self.read_line_str() {
+            Some(line) => line.to_string(),
+            None => return Some(Err(error::ParseError::IncompleteHeader)),
+        };
+        let mut declared = declared_sections(&line2);
+        // Lines 3..=6.
+        if let Err(e) = self.advance_lines(4) {
             return Some(Err(e));
         }
         // Line 7: natm_types.
@@ -608,7 +679,9 @@ impl<'a> ConFrameIterator<'a> {
         if let Err(e) = self.advance_lines_to(coord_block_lines, end) {
             return Some(Err(e));
         }
-        // Optional sections: blank line + same-shape block, repeated.
+        // Optional sections: a blank line then one block per declared
+        // section. A missing `sections` key is the legacy velocity block.
+        // The blank test is Unicode White_Space, the same test as `trim`.
         self.lines.clear_peek();
         loop {
             let rest = &self.lines.bytes[self.lines.pos..];
@@ -616,12 +689,27 @@ impl<'a> ConFrameIterator<'a> {
                 break;
             }
             let next_eol = memchr::memchr(b'\n', rest);
-            let line = match next_eol {
+            let raw = match next_eol {
                 Some(pos) => &rest[..pos],
                 None => rest,
             };
-            let is_blank = line.iter().all(|b| matches!(b, b' ' | b'\t' | b'\r'));
-            if !is_blank {
+            let line = strip_cr(raw);
+            let expecting = match &declared {
+                None => true,
+                Some(names) => !names.is_empty(),
+            };
+            let text = match std::str::from_utf8(line) {
+                Ok(text) => text,
+                Err(_) => {
+                    if expecting {
+                        return Some(Err(error::ParseError::ValidationError(
+                            "invalid UTF-8".into(),
+                        )));
+                    }
+                    break;
+                }
+            };
+            if !text.trim().is_empty() {
                 break;
             }
             let after = match next_eol {
@@ -634,15 +722,42 @@ impl<'a> ConFrameIterator<'a> {
                 self.lines.pos = self.lines.bytes.len();
                 break;
             }
-            // A blank that does not begin a section is line 1 of the next
-            // frame, including an empty user line (CON-frame.7, CON-header.4).
-            if !blank_opens_section(after) {
+            // An empty declaration does not take the following block.
+            // That blank is line 1 of the next frame (CON-frame.7).
+            if matches!(&declared, Some(names) if names.is_empty()) {
                 break;
+            }
+            match probe_section(after) {
+                SectionProbe::InvalidUtf8 => {
+                    return Some(Err(error::ParseError::ValidationError(
+                        "invalid UTF-8".into(),
+                    )));
+                }
+                // A blank that does not begin a section is line 1 of the
+                // next frame (CON-frame.7, CON-header.4).
+                SectionProbe::Closed => {
+                    let opens = declared
+                        .as_ref()
+                        .and_then(|names| names.first())
+                        .is_some_and(|name| declared_section_opens(after, name));
+                    if !opens {
+                        break;
+                    }
+                }
+                SectionProbe::Opens => {}
+            }
+            if let Some(names) = &mut declared {
+                names.remove(0);
             }
             // Consume the blank separator and the section block.
             self.lines.pos += next_eol.map(|p| p + 1).unwrap_or(rest.len());
             if let Err(e) = self.advance_lines_to(coord_block_lines, end) {
                 return Some(Err(e));
+            }
+            // A legacy file has one velocity block. A later blank is the
+            // next frame (CON-frame.7), not another section.
+            if declared.is_none() {
+                break;
             }
         }
         Some(Ok(()))
@@ -699,6 +814,15 @@ impl<'a> ConFrameIterator<'a> {
         &mut self,
         file_contents: &'a str,
     ) -> Option<Result<(types::ConFrame, &'a str), error::ParseError>> {
+        if self.check_bom
+            && self.lines.pos == 0
+            && self.lines.peeked.is_none()
+            && file_contents.starts_with('\u{feff}')
+        {
+            return Some(Err(error::ParseError::ValidationError(
+                "file begins with a byte-order mark".into(),
+            )));
+        }
         let base = file_contents.as_ptr() as usize;
         let start = {
             let line = self.lines.peek_line()?;
@@ -1885,18 +2009,11 @@ fn parse_bytes_timed(bytes: &[u8], num_threads: Option<usize>) -> TimedParse {
 ///
 /// Prefer this over `read_all_frames(...).len()` when only the frame count is needed.
 pub fn count_frames(path: &Path) -> Result<usize, Box<dyn std::error::Error>> {
-    let contents = crate::compression::read_file_contents(path)?;
-    let text = contents.as_str()?;
-    let mut n = 0usize;
-    let mut iter = ConFrameIterator::new(text);
-    loop {
-        match iter.forward_fast() {
-            Some(Ok(())) => n += 1,
-            Some(Err(e)) => return Err(Box::new(e)),
-            None => break,
-        }
-    }
-    Ok(n)
+    // The count is the number of frames the serial parse accepts.
+    // A skip that ignores a bad token would report a count for a file the
+    // parser rejects.
+    let bytes = crate::compression::read_file_bytes(path)?;
+    Ok(frames_from_bytes(&bytes, None)?.len())
 }
 
 /// Reads only the first frame from a file.
@@ -3409,6 +3526,56 @@ mod phased_read_tests {
         assert!(phased.phases.worker_parse_s >= 0.0);
         assert_eq!(phased.n_bytes, text.len());
         let _ = std::fs::remove_file(&path);
+    }
+
+    fn outcome(result: Result<Vec<types::ConFrame>, error::ParseError>) -> Result<usize, String> {
+        result
+            .map(|frames| frames.len())
+            .map_err(|err| err.class_name().to_string())
+    }
+
+    #[test]
+    fn span_parser_matches_the_serial_parser_on_corpus31() {
+        let dir = std::path::Path::new("paper/cpc/data/corpus31");
+        let mut names: Vec<_> = std::fs::read_dir(dir)
+            .expect("corpus31")
+            .map(|entry| entry.expect("entry").path())
+            .filter(|path| {
+                path.extension()
+                    .and_then(|ext| ext.to_str())
+                    .is_some_and(|ext| ext == "con" || ext == "convel")
+            })
+            .collect();
+        names.sort();
+        for path in names {
+            let bytes = std::fs::read(&path).expect("read");
+            let serial = outcome(frames_from_bytes(&bytes, None));
+            for threads in [2usize, 8] {
+                let parallel = outcome(frames_from_bytes(&bytes, Some(threads)));
+                assert_eq!(
+                    serial, parallel,
+                    "{} at {threads} threads",
+                    path.display()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn span_parser_matches_the_serial_parser_on_the_corpus_edges() {
+        for name in [
+            "paper/cpc/data/corpus31/v31_unicode_blank_before_section.convel",
+            "paper/cpc/data/corpus31/sections_empty_velocity.con",
+            "paper/cpc/data/corpus31/sections_empty_velocity_6001_frames.con",
+            "paper/cpc/data/corpus31/v31_utf8_separator_line.convel",
+        ] {
+            let bytes = std::fs::read(name).expect(name);
+            let serial = outcome(frames_from_bytes(&bytes, None));
+            for threads in [2usize, 8] {
+                let parallel = outcome(frames_from_bytes(&bytes, Some(threads)));
+                assert_eq!(serial, parallel, "{name} at {threads} threads");
+            }
+        }
     }
 
     #[test]

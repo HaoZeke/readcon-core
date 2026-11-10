@@ -2504,6 +2504,9 @@ impl PyConFrameIterator {
         // owns that boundary and trailing whitespace.
         let slice = &contents.as_str()[*pos..];
         let mut iter = ConFrameIterator::new(slice);
+        if *pos > 0 {
+            iter.allow_mid_file_bom();
+        }
         match iter.next_with_raw_span(slice) {
             Some(Ok((frame, span))) => {
                 let consumed =
@@ -2540,6 +2543,9 @@ impl PyConFrameIterator {
         }
         let slice = &contents.as_str()[*pos..];
         let mut iter = ConFrameIterator::new(slice);
+        if *pos > 0 {
+            iter.allow_mid_file_bom();
+        }
         match iter.forward() {
             Some(Ok(())) => {
                 *pos += iter.byte_pos();

@@ -98,7 +98,9 @@ where
     }
 }
 
-/// True when `line` has the words `of` and `Component` in that order.
+/// True when `line` is `<name> of Component N` and `N` is a canonical decimal index.
+///
+/// `01` is not the index 1, so it does not open a section (CON-count.8).
 pub(crate) fn line_has_component_label(line: &str) -> bool {
     let mut words = line.split_ascii_whitespace();
     while let Some(word) = words.next() {
@@ -107,7 +109,13 @@ pub(crate) fn line_has_component_label(line: &str) -> bool {
                 .next()
                 .is_some_and(|next| next.eq_ignore_ascii_case("component"))
         {
-            return true;
+            let Some(index) = words.next() else {
+                return false;
+            };
+            let Ok(n) = index.parse::<u32>() else {
+                return false;
+            };
+            return index == n.to_string() && words.next().is_none();
         }
     }
     false
@@ -1368,6 +1376,11 @@ pub fn parse_frame_header<'a>(
             (1_u32, BTreeMap::new(), Vec::new(), false, false)
         };
     let prebox2 = prebox2_raw.to_string();
+    let minor = metadata
+        .get(meta::CON_SPEC_MINOR)
+        .and_then(json_u64)
+        .unwrap_or(0);
+    reject_unknown_section_names(&sections, minor, &metadata)?;
 
     let boxl_vec = parse_line_of_n_f64(lines.next().ok_or(ParseError::IncompleteHeader)?, 3)?;
     let angles_vec = parse_line_of_n_f64(lines.next().ok_or(ParseError::IncompleteHeader)?, 3)?;
@@ -1428,10 +1441,58 @@ pub fn parse_frame_header<'a>(
         strict_validation: validate,
         sections_declared,
     };
-    // A declared velocities section with no units.time fails on line 2,
-    // before a later label (CON-error.4, CON-units.11).
+    // Line 2 is before the cell and the coordinate block (CON-error.4).
+    reject_unknown_sections(&header)?;
     reject_velocities_without_time(&header)?;
     Ok(header)
+}
+
+fn known_section(name: &str) -> bool {
+    matches!(
+        name,
+        SECTION_VELOCITIES
+            | SECTION_FORCES
+            | SECTION_ENERGIES
+            | SECTION_CHARGES
+            | SECTION_SPINS
+            | SECTION_MAGMOMS
+            | SECTION_DISPLACEMENTS
+            | SECTION_SPREADS
+    )
+}
+
+/// An unknown section name is rejected on line 2, unless a newer minor
+/// gives it an arity and the reader skips the block (CON-section.9).
+fn reject_unknown_section_names(
+    sections: &[String],
+    minor: u64,
+    metadata: &BTreeMap<String, Value>,
+) -> Result<(), ParseError> {
+    for name in sections {
+        if known_section(name) {
+            continue;
+        }
+        let arity = metadata
+            .get(meta::SECTION_ARITY)
+            .and_then(|value| value.as_object())
+            .and_then(|obj| obj.get(name))
+            .and_then(|value| value.as_u64())
+            .filter(|n| *n >= 1);
+        if minor > u64::from(crate::CON_SPEC_MINOR) && arity.is_some() {
+            continue;
+        }
+        return Err(ParseError::UnknownSection(name.clone()));
+    }
+    Ok(())
+}
+
+fn reject_unknown_sections(header: &FrameHeader) -> Result<(), ParseError> {
+    let minor = header
+        .metadata
+        .get(meta::CON_SPEC_MINOR)
+        .and_then(json_u64)
+        .unwrap_or(0);
+    reject_unknown_section_names(&header.sections, minor, &header.metadata)
 }
 
 /// Parses a complete frame from a `.con` file, including its header and atomic data.
