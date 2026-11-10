@@ -2032,6 +2032,10 @@ mod tests {
         let mut pos = [0.0f64; 3];
         let err = read_into(&path, &mut pos, None).unwrap_err();
         assert_has(&err, "binary32");
+        let wide = dir.path().join("f64.conbin");
+        write_known(&wide, 1, 1);
+        let err = read_columns_into::<f64>(&wide, &mut pos, None, 1, true).unwrap_err();
+        assert_has(&err, "binary64");
     }
 
     fn assert_has(err: &ParseError, needle: &str) {
