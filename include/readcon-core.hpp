@@ -280,6 +280,10 @@ class ConFrame {
 
     uint32_t spec_version() const;
     std::string metadata_json() const;
+    /// Periodicity along x, y, z. The metadata key `pbc` is a JSON array of
+    /// three booleans. A missing or unreadable key is periodic on every axis,
+    /// the same rule as `FrameHeader::pbc_effective`.
+    std::array<bool, 3> pbc() const;
 
     /// Per-frame total energy. Returns NaN if absent (legacy, prefer
     /// `energy_opt()`).
@@ -1438,6 +1442,40 @@ inline std::string ConFrame::metadata_json() const {
     std::string result(json);
     rkr_free_string(json);
     return result;
+}
+
+/// Read `pbc` from metadata JSON. Absent or unreadable means periodic.
+inline std::array<bool, 3> pbc_from_metadata_json(const std::string &json) {
+    std::array<bool, 3> flags{true, true, true};
+    const std::string key = "\"pbc\":";
+    const auto at = json.find(key);
+    if (at == std::string::npos)
+        return flags;
+    std::size_t i = at + key.size();
+    while (i < json.size() && (json[i] == ' ' || json[i] == '\n' || json[i] == '\t'))
+        ++i;
+    if (i >= json.size() || json[i] != '[')
+        return flags;
+    ++i;
+    for (int axis = 0; axis < 3; ++axis) {
+        while (i < json.size() &&
+               (json[i] == ' ' || json[i] == '\n' || json[i] == '\t' || json[i] == ','))
+            ++i;
+        if (json.compare(i, 4, "true") == 0) {
+            flags[static_cast<std::size_t>(axis)] = true;
+            i += 4;
+        } else if (json.compare(i, 5, "false") == 0) {
+            flags[static_cast<std::size_t>(axis)] = false;
+            i += 5;
+        } else {
+            return {true, true, true};
+        }
+    }
+    return flags;
+}
+
+inline std::array<bool, 3> ConFrame::pbc() const {
+    return pbc_from_metadata_json(metadata_json());
 }
 
 inline double ConFrame::energy() const {
