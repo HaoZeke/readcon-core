@@ -363,3 +363,120 @@ def test_remaining_branches(tmp_path, monkeypatch):
             log.unlink(missing_ok=True)
         else:
             log.write_bytes(saved)
+
+
+def test_exact_cover_of_the_short_scripts(tmp_path, monkeypatch):
+    """The six scripts that sit just under 98 percent, counted with branches."""
+    import runpy
+
+    dlpack = load("bench_dlpack.py")
+    monkeypatch.setattr(dlpack, "from_log", lambda: 0)
+    monkeypatch.setattr(sys, "argv", ["bench_dlpack.py", "--from-log"])
+    assert dlpack.main() == 0
+
+    provenance = load("provenance.py")
+
+    class Readelf:
+        stdout = "string dump\n  rustc version 1.88.0 (6b00bc388)\n"
+
+    monkeypatch.setattr(provenance.subprocess, "run", lambda *args, **kwargs: Readelf())
+    assert provenance._rustc_of(ROOT / "Cargo.toml") == "1.88.0 (6b00bc388)"
+
+    version_map = load("gen_version_map.py")
+    monkeypatch.setattr(version_map, "GENERATED", tmp_path)
+    (tmp_path / "branch-map.tex").write_text(
+        "% from no-such-record\n\\newcommand{\\branchMacro}{1}\n",
+        encoding="utf-8",
+    )
+    problems: list[str] = []
+    version_map.macro_sources("branch-map.tex", set(), problems)
+    assert any("not a record" in item for item in problems)
+
+    traced = load("trace_numbers.py")
+    ledger = tmp_path / "numbers.csv"
+    monkeypatch.setattr(traced, "LEDGER", ledger)
+    monkeypatch.setattr(sys, "argv", ["trace_numbers.py", "--no-write"])
+    assert traced.main() in (0, 1)
+    monkeypatch.setattr(sys, "argv", ["trace_numbers.py"])
+    traced.main()
+    assert ledger.is_file()
+
+    pdf = SCRIPTS.parent / "src" / "figures" / "generated" / "architecture.pdf"
+    saved = pdf.read_bytes() if pdf.is_file() else None
+    monkeypatch.setattr(sys, "argv", ["gen_figures.py"])
+    try:
+        runpy.run_path(str(SCRIPTS / "gen_figures.py"), run_name="__main__")
+    finally:
+        if saved is None:
+            pdf.unlink(missing_ok=True)
+        else:
+            pdf.write_bytes(saved)
+
+    monkeypatch.setattr(sys, "argv", ["worked_example.py", "--help"])
+    with pytest.raises(SystemExit) as caught:
+        runpy.run_path(str(SCRIPTS / "worked_example.py"), run_name="__main__")
+    assert caught.value.code == 0
+
+
+def test_plot_mains_write_into_a_temporary_directory(tmp_path, monkeypatch):
+    import runpy
+
+    restored = load("plot_restored.py")
+    restored.OUT = tmp_path
+    restored.main()
+    restored.architecture()
+    (tmp_path / "survey_frame.con").write_text(
+        "1\nframe\nCu 0 0 0\nCu 1 0 0\n", encoding="utf-8"
+    )
+    restored.structures()
+    assert (tmp_path / "timing.pdf").is_file()
+    assert (tmp_path / "architecture.pdf").is_file()
+
+    real_loads = restored.json.loads
+
+    def loads(text, **kwargs):
+        data = real_loads(text, **kwargs)
+        if isinstance(data, dict) and "cells" in data:
+            return {"cells": {}}
+        if isinstance(data, dict) and any(
+            isinstance(block, dict) and "mic_max_abs_A" in block
+            for block in data.values()
+        ):
+            return {"held": {"other": []}}
+        return data
+
+    restored.json.loads = loads
+    try:
+        with pytest.raises(KeyError):
+            restored.timing_and_fairness()
+        restored.anatomy_and_errors()
+    finally:
+        restored.json.loads = real_loads
+
+    structures = load("plot_structures.py")
+    structures.OUT = tmp_path / "structures"
+    structures.WORK = tmp_path / "work"
+    structures.main()
+    assert (tmp_path / "structures" / "structures.pdf").is_file()
+    with pytest.raises(SystemExit):
+        structures._isolate("<not-svg>", "p")
+
+    formats = load("plot_restart_formats.py")
+    saved_pdf = formats.pf.OUT / "restart_formats.pdf"
+    before = saved_pdf.read_bytes() if saved_pdf.is_file() else None
+    generated = SCRIPTS.parent / "src" / "figures" / "generated"
+    snapshots = {
+        path: path.read_bytes()
+        for path in generated.glob("*.pdf")
+    }
+    monkeypatch.setattr(sys, "argv", ["plot_restored.py"])
+    try:
+        formats.main()
+        runpy.run_path(str(SCRIPTS / "plot_restart_formats.py"), run_name="__main__")
+        runpy.run_path(str(SCRIPTS / "plot_structures.py"), run_name="__main__")
+        runpy.run_path(str(SCRIPTS / "plot_restored.py"), run_name="__main__")
+    finally:
+        for path, blob in snapshots.items():
+            path.write_bytes(blob)
+        if before is not None:
+            saved_pdf.write_bytes(before)
