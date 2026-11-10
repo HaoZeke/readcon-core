@@ -93,6 +93,17 @@ python -m pip install maturin pytest numpy ase zstandard -q
 maturin develop --features python,zstd
 python -m pytest tests/python -q --tb=line || echo "pytest exited $?" >&2
 
+# The report keeps an object only when its file name is the package
+# name plus an optional hex suffix. The extension's own name does not
+# match, so copy it to one that does. That is the binary pytest called.
+EXT=$(find "$VENV" -path '*/site-packages/readcon/*.so' -type f | head -n 1)
+if [ -n "$EXT" ]; then
+  mkdir -p "$PROFDIR/debug"
+  cp -a "$EXT" "$PROFDIR/debug/libreadcon_core-abcdef0.so"
+  chmod +x "$PROFDIR/debug/libreadcon_core-abcdef0.so"
+fi
+
+unset RUSTC_WRAPPER || true
 echo "==> report"
 cargo llvm-cov report --branch --summary-only | tee "$OUT/summary.txt"
 cargo llvm-cov report --branch --lcov --output-path "$OUT/coverage.lcov"
