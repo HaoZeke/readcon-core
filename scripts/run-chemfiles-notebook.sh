@@ -125,7 +125,7 @@ echo "OK — tangled, drift-checked, and ran: $ORG"
 if [[ "${READCON_NB_PAPERMILL:-0}" == "1" ]]; then
   python3 -m pip install -q 'papermill>=2.4' jupytext ipykernel
   python3 -c "import papermill, jupytext"
-  python3 -m jupytext --to ipynb -o "$OUT_DIR/chemfiles_ingress.tangled.ipynb" "$TANGLE_PY"
+  python3 -m jupytext --set-kernel python3 --to ipynb -o "$OUT_DIR/chemfiles_ingress.tangled.ipynb" "$TANGLE_PY"
   python3 -m papermill \
     "$OUT_DIR/chemfiles_ingress.tangled.ipynb" \
     "$OUT_DIR/chemfiles_ingress.papermill.ipynb" \
