@@ -695,10 +695,7 @@ mod tests {
         let pipe_fd = unsafe { libc::open(pipe_c.as_ptr(), libc::O_RDWR | libc::O_NONBLOCK) };
         assert!(pipe_fd >= 0, "the pipe has to open");
         let seek_err = read_span(&pipe, 0, 0).unwrap_err();
-        assert!(
-            seek_err.contains("29") || seek_err.to_lowercase().contains("seek"),
-            "{seek_err}"
-        );
+        assert!(seek_err.contains("29"), "{seek_err}");
         unsafe { libc::close(pipe_fd) };
         alarm_while_a_lock_is_held(&one);
 
@@ -1485,10 +1482,7 @@ mod tests {
         }
         let err = read_block(&comm, &dir.join("absent.con"), ReadMode::Scatter, None)
             .expect_err("scatter of a missing file");
-        assert!(
-            err.to_string().contains("os error 2") || err.to_string().contains("No such file"),
-            "{err}"
-        );
+        assert!(err.to_string().contains("os error 2"), "{err}");
 
         let shorter = dir.join("shorter-second.con");
         let mismatched = dir.join("mismatched-second.con");
@@ -1499,15 +1493,24 @@ mod tests {
                 let mut writer = crate::writer::ConFrameWriter::new(&mut small);
                 writer.write_frame(&frames[0]).unwrap();
             }
-            let (first, second) = if small.len() < big.len() {
-                (big.clone(), small.clone())
-            } else {
-                (small.clone(), big.clone())
-            };
-            assert!(
-                second.len() < first.len(),
-                "the second frame must be shorter than the first"
-            );
+            let mut first = Vec::new();
+            let mut second = Vec::new();
+            for (left, right) in [
+                (big.clone(), small.clone()),
+                (small.clone(), big.clone()),
+            ] {
+                let pair = if left.len() < right.len() {
+                    (right, left)
+                } else {
+                    (left, right)
+                };
+                assert!(
+                    pair.1.len() < pair.0.len(),
+                    "the second frame must be shorter than the first"
+                );
+                first = pair.0;
+                second = pair.1;
+            }
             let mut body = first.clone();
             body.extend_from_slice(&second);
             std::fs::write(&shorter, &body).unwrap();
