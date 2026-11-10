@@ -6,12 +6,14 @@
 # chemfiles feature on and compiles libchemfiles, because the prebuilt
 # archive faults on the first frame under rust-lld.
 #
-# cargo llvm-cov --remap-path-prefix rewrites the workspace root in the
-# raw JSON. This script does not edit that JSON.
+# The python feature builds an extension module, so the test binary does
+# not link libpython on its own. This script adds that link, then runs
+# pytest against an extension built with the same instrumentation. The
+# extension is copied into the llvm-cov target directory. cargo llvm-cov
+# report passes every matching object, including that extension, to
+# llvm-cov export. This script does not edit the JSON.
 #
-# pytest runs against an extension built with the same instrumentation.
-# Its profiles are written into the llvm-cov target directory. The report
-# reads every profraw file that sits directly in that directory.
+# cargo llvm-cov --remap-path-prefix rewrites the workspace root.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/../../.." && pwd)
 cd "$ROOT"
@@ -26,16 +28,21 @@ esac
 
 unset RUSTC_WRAPPER || true
 export CARGO_INCREMENTAL=0
-export RUSTFLAGS="${RUSTFLAGS:--A dangerous_implicit_autorefs}"
+export RUSTFLAGS="${RUSTFLAGS:--A dangerous_implicit_autorefs} -C link-arg=-lpython3.12"
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/coverage-features}"
 if [ -z "${LIBRARY_PATH:-}" ]; then
-  for d in /usr/lib/gcc/*/*/; do
-    if [ -e "${d}libstdc++.so" ]; then
-      export LIBRARY_PATH="$d"
-      break
-    fi
-  done
+  LIBRARY_PATH=""
 fi
+for d in /usr/lib/gcc/*/*/; do
+  if [ -e "${d}libstdc++.so" ]; then
+    LIBRARY_PATH="${LIBRARY_PATH:+$LIBRARY_PATH:}$d"
+    break
+  fi
+done
+if [ -e /usr/lib/x86_64-linux-gnu/libpython3.12.so ]; then
+  LIBRARY_PATH="${LIBRARY_PATH:+$LIBRARY_PATH:}/usr/lib/x86_64-linux-gnu"
+fi
+export LIBRARY_PATH
 # clang with a custom --target does not search the gcc C++ headers.
 if [ -z "${CPLUS_INCLUDE_PATH:-}" ]; then
   for inc in /usr/include/c++/*; do
@@ -72,12 +79,12 @@ set -e
 if [ "$RUST_STATUS" -ne 0 ]; then
   echo "workspace tests exited $RUST_STATUS" >&2
 fi
-if ! find "$CARGO_TARGET_DIR/llvm-cov-target" -maxdepth 1 -name '*.profraw' | grep -q .; then
+PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
+if ! find "$PROFDIR" -maxdepth 1 -name '*.profraw' | grep -q .; then
   echo "the feature build produced no profiles" >&2
   exit 1
 fi
 
-PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
 echo "==> python extension"
 cargo llvm-cov show-env --branch --export-prefix > "$CARGO_TARGET_DIR/py-env.sh"
 set -a
@@ -85,9 +92,15 @@ set -a
 . "$CARGO_TARGET_DIR/py-env.sh"
 set +a
 export LLVM_PROFILE_FILE="$PROFDIR/py-%p-%m.profraw"
+# Keep the instrumented test binaries. The extension builds elsewhere.
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR}/py-ext"
 case "$RUSTFLAGS" in
   *remap-path-prefix*) ;;
   *) export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=${ROOT}=." ;;
+esac
+case "$RUSTFLAGS" in
+  *link-arg=-lpython3.12*) ;;
+  *) export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=-lpython3.12" ;;
 esac
 VENV="${READCON_PY_VENV:-$ROOT/.venv-coverage-python}"
 if [ ! -x "$VENV/bin/python" ]; then
@@ -96,9 +109,30 @@ fi
 # shellcheck disable=SC1091
 . "$VENV/bin/activate"
 python -m pip install -q maturin pytest numpy
-maturin develop --features python,zstd
+maturin develop --features python,zstd,chemfiles-from-sources
 set +e
-python -m pytest tests/python -q --tb=line
+python -m pytest \
+  tests/python/test_v143_arms.py \
+  tests/python/test_extension_edges.py \
+  tests/python/test_edge_inputs.py \
+  tests/python/test_readcon.py \
+  tests/python/test_ase.py \
+  tests/python/test_ase_physical_units.py \
+  tests/python/test_chemfiles_import.py \
+  tests/python/test_chemfiles_selection.py \
+  tests/python/test_conformance_goldens.py \
+  tests/python/test_convert_migrate.py \
+  tests/python/test_empty_header_lines.py \
+  tests/python/test_index_proj.py \
+  tests/python/test_position_slab.py \
+  tests/python/test_trajectory.py \
+  tests/python/test_tutorial_core.py \
+  tests/python/test_tutorial_chemfiles.py \
+  tests/python/test_api_coverage.py \
+  tests/python/test_line_coverage.py \
+  tests/python/test_physical_coverage.py \
+  tests/python/test_helpers.py \
+  -q --tb=line
 PY_STATUS=$?
 set -e
 if [ "$PY_STATUS" -ne 0 ]; then
@@ -106,15 +140,18 @@ if [ "$PY_STATUS" -ne 0 ]; then
 fi
 
 EXT=$(find "$VENV" -path '*/site-packages/readcon/*.so' -type f | head -n 1)
-if [ -n "$EXT" ]; then
-  mkdir -p "$PROFDIR/debug"
-  cp "$EXT" "$PROFDIR/debug/libreadcon_core-abcdef0.so"
-  chmod +x "$PROFDIR/debug/libreadcon_core-abcdef0.so"
+if [ -z "$EXT" ]; then
+  echo "the python extension was not installed" >&2
+  exit 1
 fi
+mkdir -p "$PROFDIR/debug"
+cp "$EXT" "$PROFDIR/debug/libreadcon_core-abcdef0.so"
+chmod +x "$PROFDIR/debug/libreadcon_core-abcdef0.so"
 
 unset RUSTC_WRAPPER || true
 unset CARGO_LLVM_COV_TARGET_DIR || true
 unset CARGO_LLVM_COV_BUILD_DIR || true
+export CARGO_TARGET_DIR="${PROFDIR%/*}"
 echo "==> report"
 cargo llvm-cov report --branch --remap-path-prefix --json --output-path "$OUT"
 echo "wrote $OUT"
