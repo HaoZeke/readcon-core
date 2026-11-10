@@ -231,3 +231,6 @@ c78b69d5ad94ff45019bea65092dab1c3477910a	6ddf01eee7bb365d40fc9fcb4ca083ffe9c307e
 491d44df8d8dac85bf078d1c99cc29ef6acc7a31	70cd8e9cccfbdbdd59e0cda501847523c9a9ba73	2026-11-09 21:19:21 -0600	fix: build chemfiles for the C++ reader in the script
 9797a838bfeee7a6372e45589046d104e60ddf13	2904380762efabdbcc79a68f43b395c804dd6d33	2026-11-09 21:19:21 -0600	fix: report type-7 quartiles at seventeen digits
 9abc26d6c0d19f7855b9ad2203daaf115317baac	5b4fdb44f27631aee991cbbf1dd03ccf2433db38	2026-11-09 21:21:00 -0600	test: reject a bad bond entry and a breaking abi major
+69abe8c97308db2d3587b0b4e9fa0e5f3251a414	c18ec949e33cc3d28377f94103ce76a434d9b770	2026-11-09 21:21:01 -0600	docs: list the commits made after the replay
+f26d8ee5b28cc9626fcd5b1db54d9ef1b252b7f9	9f9cc7734b8c615f116a8415c0613ac812b594cd	2026-11-09 21:35:50 -0600	fix: read periodicity from frame metadata
+f8b217e7631aa497c251ea9a9b14a47521c2f33d	17cf08e3e596f2f6ab43ff436f3bcb3a52b8d8e8	2026-11-09 21:52:55 -0600	test: exercise the open branch sides
