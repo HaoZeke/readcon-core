@@ -1,0 +1,8 @@
+alone-run: cargo llvm-cov test --features python,mpi --lib a_missing_position_file_and_a_bad_forward_name_the_error
+python.rs:2277 count 1 | crate::iterators::read_positions_with_threads(Path::new(&path_owned), n_threads)
+python.rs:2550 count 1 | Some(Err(e)) => Err(PyIOError::new_err(format!("skip error: {e}"))),
+python.rs:3905 count 1 | missing.to_string().contains("No such file"),
+python.rs:2277 count 1 | crate::iterators::read_positions_with_threads(Path::new(&path_owned), n_threads)
+python.rs:2278 count 1 | .map_err(|e| e.to_string())
+python.rs:2279 count 1 | })
+python.rs:2280 count 1 | .map_err(PyIOError::new_err)?;

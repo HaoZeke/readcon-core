@@ -3897,6 +3897,25 @@ mod api_coverage {
     }
 
     #[test]
+    fn a_missing_position_file_and_a_bad_forward_name_the_error() {
+        Python::initialize();
+        Python::attach(|py| {
+            let missing = read_positions(py, "no-such-readcon-positions.con", None).unwrap_err();
+            assert!(
+                missing.to_string().contains("No such file"),
+                "{missing}"
+            );
+            let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/py-arm");
+            std::fs::create_dir_all(&dir).unwrap();
+            let path = dir.join("garbage.con");
+            std::fs::write(&path, b"this is not a con frame\n").unwrap();
+            let mut iterator = iter_con(py, path.to_str().unwrap(), false, false).unwrap();
+            let err = iterator.forward(py).unwrap_err();
+            assert!(err.to_string().contains("skip error"), "{err}");
+        });
+    }
+
+    #[test]
     fn selection_conversion_builds_the_python_dicts() {
         Python::initialize();
         Python::attach(|py| {

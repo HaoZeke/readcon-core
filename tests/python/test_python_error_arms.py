@@ -18,6 +18,20 @@ class _BadComm:
         return 2**31 - 1
 
 
+def test_read_positions_rejects_a_missing_file(tmp_path):
+    missing = tmp_path / "no-such.con"
+    with pytest.raises(OSError, match="No such file"):
+        readcon.read_positions(str(missing))
+
+
+def test_a_text_forward_on_garbage_reports_the_skip_error(tmp_path):
+    path = tmp_path / "garbage.con"
+    path.write_text("this is not a con frame\n")
+    iterator = readcon.iter_con(str(path))
+    with pytest.raises(OSError, match="skip error"):
+        iterator.forward()
+
+
 def test_a_text_iterator_yields_the_first_symbol_and_skips_one():
     path = _resource("tiny_cuh2.con")
     iterator = readcon.iter_con(path)

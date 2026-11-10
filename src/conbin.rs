@@ -3318,6 +3318,7 @@ Coordinates of Component 1
                 let profile = live.join("profile.profraw");
                 unsafe { std::env::set_var("LLVM_PROFILE_FILE", &profile) };
                 let held = hold_coverage_profile().expect("a repo-local profile is held");
+                assert!(held.0.starts_with(&live), "{}", held.0.display());
                 assert_eq!(std::fs::read(held.1.join("marker")).unwrap(), b"held");
                 let rc = unsafe { libc::umount(std::ffi::CString::new(held.1.to_str().unwrap()).unwrap().as_ptr()) };
                 assert_eq!(rc, 0, "{}", std::io::Error::last_os_error());
