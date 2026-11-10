@@ -1256,7 +1256,7 @@ eOn \texttt{loadcons} & CON & pending & pending \\
 Where readcon ties chemfiles, and what the iterator, the writer, the multi-frame read and the C, Fortran, Julia and Rust bindings add, will be quoted from that same log.
 Those sentences are not written until the medians exist.
 
-\paragraph{Regression of readcon against itself.}
+\paragraph{Regression of readcon against itself}
 This note is not Table~\ref{tab:peers}.
 On the 32-atom, 100000-frame CON file in \texttt{reader-exchange-public.log}, \texttt{read\_con} of v0.18.0 takes \rcFullOneMedian~s and the untagged 0.17.3 baseline takes \rcReleaseMedian~s, so v0.18.0 is \rcTipOverRelease{} times that baseline.
 The C++ arm, \texttt{read\_all\_frames} then \texttt{con2matter}, takes \rcApiMedian~s, which is \rcApiOverRead{} times that same \texttt{read\_con}.
