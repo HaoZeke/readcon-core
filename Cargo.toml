@@ -115,6 +115,7 @@ pest = { version = "2.8", optional = true }
 pest_derive = { version = "2.8", optional = true }
 
 [dev-dependencies]
+ndarray = "0.17"
 pest = "2.8"
 pest_derive = "2.8"
 cog = "0.1.0"
