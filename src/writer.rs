@@ -1463,6 +1463,53 @@ mod section_arity_tests {
         }
         assert!(std::fs::metadata(&zst_prec).unwrap().len() > 0);
 
+        let missing = dir.join("missing").join("x.con");
+        assert!(super::ConFrameWriter::from_path(&missing).is_err());
+        assert!(super::ConFrameWriter::from_path_with_precision(&missing, 2).is_err());
+        assert!(super::ConFrameWriter::from_path_gzip(&missing).is_err());
+        assert!(super::ConFrameWriter::from_path_gzip_with_precision(&missing, 2).is_err());
+        assert!(super::ConFrameWriter::from_path_zstd(&missing).is_err());
+        assert!(super::ConFrameWriter::from_path_zstd_with_precision(&missing, 2).is_err());
+
+        let mut odd = frame.clone();
+        odd.atom_data.clear();
+        odd.header.natm_types = 0;
+        odd.header.masses_per_type.clear();
+        assert!(!odd.header.natms_per_type.is_empty());
+        let err = write_text(&odd).unwrap_err();
+        assert!(err.to_string().contains("per-type"), "{err}");
+        let odd_path = dir.join("odd.con");
+        {
+            let mut writer = super::ConFrameWriter::from_path(&odd_path).unwrap();
+            let err = writer.write_frame(&odd).unwrap_err();
+            assert!(err.to_string().contains("per-type"), "{err}");
+        }
+        let odd_gz = dir.join("odd.con.gz");
+        {
+            let mut writer = super::ConFrameWriter::from_path_gzip(&odd_gz).unwrap();
+            let err = writer.write_frame(&odd).unwrap_err();
+            assert!(err.to_string().contains("per-type"), "{err}");
+        }
+        let odd_zst = dir.join("odd.con.zst");
+        {
+            let mut writer = super::ConFrameWriter::from_path_zstd(&odd_zst).unwrap();
+            let err = writer.write_frame(&odd).unwrap_err();
+            assert!(err.to_string().contains("per-type"), "{err}");
+        }
+        {
+            let mut writer = super::ConFrameWriter::from_path("/dev/full").unwrap();
+            let mut failed = false;
+            for _ in 0..200 {
+                if writer.write_frame(&frame).is_err() {
+                    failed = true;
+                    break;
+                }
+            }
+            assert!(failed);
+            let err = writer.extend(std::iter::once(&odd)).unwrap_err();
+            assert!(err.to_string().contains("per-type"), "{err}");
+        }
+
         let mut lattice = frame.clone();
         lattice.header.set_lattice_vectors([
             [10.0, 0.0, 0.0],
