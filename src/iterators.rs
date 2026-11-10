@@ -1143,7 +1143,9 @@ mod aos_soa_agreement_tests {
                 assert_eq!(a.force().is_some(), has_frc);
             }
         }
-        assert!(saw_velocity && saw_force && saw_plain);
+        assert!(saw_velocity);
+        assert!(saw_force);
+        assert!(saw_plain);
     }
 
     /// After SoA-primary parse, section sync must not require rewriting positions
@@ -3419,7 +3421,8 @@ mod parallel_header_scan_tests {
                 if end - line > 1 {
                     let mid = line + (end - line) / 2;
                     // mid is inside the line, so the header byte sits across two chunks.
-                    assert!(mid > line && mid < end);
+                    assert!(mid > line);
+                    assert!(mid < end);
                     out.push(vec![0, mid, bytes.len()]);
                 }
                 line = end + 1;
@@ -3756,9 +3759,9 @@ mod phased_read_tests {
             let phased = frames_from_bytes_phased(text.as_bytes(), Some(workers)).expect("phased");
             let parallel = phased.frames;
             assert_eq!(parallel.len(), serial.len(), "workers={workers}");
-            assert!(
-                phased.scan_s >= 0.0 && phased.slot_alloc_s >= 0.0 && phased.worker_parse_s >= 0.0
-            );
+            assert!(phased.scan_s >= 0.0);
+            assert!(phased.slot_alloc_s >= 0.0);
+            assert!(phased.worker_parse_s >= 0.0);
             assert_eq!(parallel[0], serial[0], "workers={workers} first");
             assert_eq!(parallel.last().unwrap(), serial.last().unwrap());
             let slab = pack_position_slab(&serial, workers).expect("slab");
@@ -3786,6 +3789,19 @@ mod phased_read_tests {
         assert!(phased.phases.worker_parse_s >= 0.0);
         assert_eq!(phased.n_bytes, text.len());
         let _ = std::fs::remove_file(&path);
+
+        let tiny = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("resources/test/tiny_cuh2.con");
+        let one = read_all_frames_phased(&tiny, Some(1)).expect("one worker");
+        assert!(!one.phases.mapped, "a tiny file stays in an owned buffer");
+        assert_eq!(one.frames.len(), 1);
+        let auto = read_all_frames_phased(&tiny, None).expect("default");
+        assert_eq!(auto.frames.len(), 1);
+        let zero = read_all_frames_phased(&tiny, Some(0)).expect("zero means one");
+        assert_eq!(
+            zero.frames[0].atom_data.len(),
+            one.frames[0].atom_data.len()
+        );
     }
 
     fn outcome(result: Result<Vec<types::ConFrame>, error::ParseError>) -> Result<usize, String> {
