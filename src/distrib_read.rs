@@ -604,11 +604,14 @@ mod tests {
         let bytes = read_span(&one, 0, 4).unwrap();
         assert_eq!(bytes.len(), 4);
         let mut broken = format!("{text}{text}");
-        let mid = text.len() + text.len() / 2;
-        broken.replace_range(mid..mid + 1, "Q");
+        let start = text.len();
+        broken.replace_range(start.., &"x".repeat(text.len()));
         let broken_path = dir.path().join("broken-tile.con");
         std::fs::write(&broken_path, &broken).unwrap();
-        assert!(tiled_span(&broken_path).is_none());
+        assert!(
+            tiled_span(&broken_path).is_none(),
+            "a same-length second block that is not a frame is not one tile"
+        );
 
         let idx = FrameIndex {
             data_len: 10,
