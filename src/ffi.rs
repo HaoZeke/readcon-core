@@ -289,10 +289,11 @@ pub unsafe extern "C" fn rkr_frame_index_projection_json(
         "charge": p.charge,
         "magmom": p.magmom,
     });
-    // serde_json escapes U+0000, so the text has no interior nul.
-    CString::new(v.to_string())
-        .expect("json text has no interior nul")
-        .into_raw()
+    // A nul in the text is an error. Unwinding across extern "C" is undefined.
+    match CString::new(v.to_string()) {
+        Ok(text) => text.into_raw(),
+        Err(_) => ptr::null_mut(),
+    }
 }
 /// Returns the potential type string from metadata as a heap-allocated
 /// null-terminated C string. The caller MUST free with `rkr_free_string`.

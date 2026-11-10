@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file. See [conven
 
 ## v0.18.1 - 2026-11-07
 
+### Breaking changes
+
+- `cell_vectors` returns `Result`. Angles that do not form a real cell
+  are a validation error instead of a cell that contains a NaN axis.
+
 ### Bugfixes
 
 - The release job checks versions before it uploads anything. It refuses
