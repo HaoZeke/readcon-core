@@ -156,6 +156,13 @@ Residual arms from that measurement:
   `hold_coverage_profile` from the suite is `run_namespace_suite`.
   The child no longer builds a profile on those prefixes.
 
+## Run 86
+
+`paper/cpc/receipts/run86-taken.txt` is the merged export after the
+shape checks and the borrowed slot were removed. python.rs is
+3332/3408 lines (97.77 percent) and 338/346 branches (97.69 percent).
+conbin.rs branches are 205/212 (96.70 percent).
+
 ## Prefix sides that left conbin.rs
 
 The run 84 export was replaced in place by the run 85 export, so the
