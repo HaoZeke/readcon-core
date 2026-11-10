@@ -1655,15 +1655,33 @@ where
             if byte_start > 0 {
                 iter.check_bom = false;
             }
+            let mut last_ok = false;
             for i in start..end {
                 let frame = match iter.next() {
                     Some(result) => result,
                     None => Err(error::ParseError::IncompleteFrame),
                 };
+                last_ok = frame.is_ok();
                 // SAFETY: this worker owns `start..end`, so `i` has one
                 // writer. `slots` outlives the join.
                 unsafe {
                     slots_ptr.write_slot(i, frame);
+                }
+            }
+            // A tail after a successful last frame is the error the serial
+            // iterator reports. An error already in that frame stays: it is
+            // earlier than the tail.
+            if last_ok {
+                if let Some(extra) = iter.next() {
+                    let err = match extra {
+                        Err(err) => err,
+                        Ok(_) => error::ParseError::ValidationError(
+                            "span contained more than one frame".into(),
+                        ),
+                    };
+                    unsafe {
+                        slots_ptr.write_slot(end - 1, Err(err));
+                    }
                 }
             }
             chunk_ns[worker].store(
@@ -1749,9 +1767,20 @@ fn parse_byte_span(
     if start > 0 {
         iter.check_bom = false;
     }
+    let frame = match iter.next() {
+        Some(result) => result?,
+        None => return Err(error::ParseError::IncompleteFrame),
+    };
+    // The scan ends a span at the next frame. Bytes after the frame in
+    // this span are a tail: whitespace is nothing, and any other line is
+    // an error the serial iterator would report. Dropping that line made
+    // a parallel read accept a file the serial read rejects.
     match iter.next() {
-        Some(result) => result,
-        None => Err(error::ParseError::IncompleteFrame),
+        None => Ok(frame),
+        Some(Err(err)) => Err(err),
+        Some(Ok(_)) => Err(error::ParseError::ValidationError(
+            "span contained more than one frame".into(),
+        )),
     }
 }
 
@@ -1765,9 +1794,16 @@ fn parse_text_span(
     if start > 0 {
         iter.check_bom = false;
     }
+    let frame = match iter.next() {
+        Some(result) => result?,
+        None => return Err(error::ParseError::IncompleteFrame),
+    };
     match iter.next() {
-        Some(result) => result,
-        None => Err(error::ParseError::IncompleteFrame),
+        None => Ok(frame),
+        Some(Err(err)) => Err(err),
+        Some(Ok(_)) => Err(error::ParseError::ValidationError(
+            "span contained more than one frame".into(),
+        )),
     }
 }
 
