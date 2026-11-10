@@ -46,6 +46,7 @@ mkdir -p "$wheel_dir/wheels" "$wheel_dir/site"
 (
   export CARGO_TARGET_DIR="$wheel_dir/target"
   export RUSTFLAGS="-C instrument-coverage"
+  export RUSTUP_TOOLCHAIN=nightly
   export LLVM_PROFILE_FILE="$wheel_dir/pytest-%p.profraw"
   "$PY" -m maturin build --features python --interpreter "$PY" -o "$wheel_dir/wheels"
   wheel="$(printf '%s\n' "$wheel_dir"/wheels/*.whl | head -n 1)"
@@ -58,18 +59,21 @@ fi
 SO="$(find "$wheel_dir/site" -name '*.so' -type f -print -quit || true)"
 head_sha="$(git -C "$ROOT" rev-parse HEAD)"
 tree_sha="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
+set +e
+PYTHONPATH="$wheel_dir/site${PYTHONPATH:+:$PYTHONPATH}" \
+  LLVM_PROFILE_FILE="$wheel_dir/pytest-%p.profraw" \
+  "$PY" -m pytest tests/python -q --tb=line --disable-warnings \
+  > "$OUT/pytest-body.txt" 2>&1
+code=$?
+set -e
 {
   printf 'HEAD %s\n' "$head_sha"
   printf 'tree %s\n' "$tree_sha"
-  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line"
-  set +e
-  PYTHONPATH="$wheel_dir/site${PYTHONPATH:+:$PYTHONPATH}" \
-    LLVM_PROFILE_FILE="$wheel_dir/pytest-%p.profraw" \
-    "$PY" -m pytest tests/python -q --tb=line
-  code=$?
-  set -e
+  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line --disable-warnings"
+  sed "s|$ROOT/||g; s|$HOME/||g" "$OUT/pytest-body.txt"
   printf 'exit %s\n' "$code"
 } > "$OUT/pytest.txt"
+rm -f "$OUT/pytest-body.txt"
 mapfile -t PYRAW < <(find "$wheel_dir" -name 'pytest-*.profraw' -type f)
 if [[ ${#PYRAW[@]} -gt 0 ]]; then
   cp -f "${PYRAW[@]}" "$CARGO_TARGET_DIR/"

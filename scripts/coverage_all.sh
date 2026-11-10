@@ -18,12 +18,15 @@ tree_sha="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
 {
   printf 'HEAD %s\n' "$head_sha"
   printf 'tree %s\n' "$tree_sha"
-  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line"
+  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line --disable-warnings"
   set +e
   PYTHONPATH="${SITE}${PYTHONPATH:+:$PYTHONPATH}" \
-    "$PY" -m pytest tests/python -q --tb=line
+    "$PY" -m pytest tests/python -q --tb=line --disable-warnings \
+    > "$OUT/pytest-body.txt" 2>&1
   code=$?
   set -e
+  sed "s|$ROOT/||g; s|$HOME/||g" "$OUT/pytest-body.txt"
+  rm -f "$OUT/pytest-body.txt"
   printf 'exit %s\n' "$code"
 } > "$OUT/pytest.txt"
 py_code="$code"
