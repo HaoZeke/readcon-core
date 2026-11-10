@@ -43,11 +43,9 @@ fn next_token(line: &[u8], mut index: usize) -> Option<(usize, usize)> {
 }
 
 fn parse_f64(bytes: &[u8]) -> Result<f64, String> {
-    let (value, consumed) =
+    let (value, _consumed) =
         fast_float2::parse_partial::<f64, _>(bytes).map_err(|_| "float".to_string())?;
-    if consumed == 0 {
-        return Err("float".to_string());
-    }
+    // fast_float2 only returns Ok after consuming at least one digit.
     Ok(value)
 }
 
@@ -118,9 +116,6 @@ fn lattice_cell(lattice: &[u8]) -> Result<[f64; 6], String> {
         rest = trim(rest);
         let (value, consumed) =
             fast_float2::parse_partial::<f64, _>(rest).map_err(|_| "lattice".to_string())?;
-        if consumed == 0 {
-            return Err("lattice".to_string());
-        }
         *slot = value;
         rest = rest.get(consumed..).unwrap_or(b"");
     }
@@ -246,6 +241,20 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_quoted_value_and_a_bare_value_both_return_the_bytes() {
+        assert_eq!(quoted_after(b"Lattice=10 0", b"Lattice="), Some(&b"10"[..]));
+        assert_eq!(
+            quoted_after(b"Lattice=\"10 0\" tail", b"Lattice="),
+            Some(&b"10 0"[..])
+        );
+        assert_eq!(quoted_after(b"no key", b"Lattice="), None);
+        assert!(column_layout(b"pos").is_err());
+        let (pos, mass) = column_layout(b"species:S:1:pos:R:3:masses:R:1").unwrap();
+        assert_eq!(pos, 1);
+        assert_eq!(mass, Some(4));
+    }
+
+    #[test]
     fn one_frame_keeps_lattice_position_and_mass() {
         let text = "\
 2
@@ -342,6 +351,20 @@ Cu 4.0 5.0 6.0 63.546
             "lattice"
         );
         assert_eq!(tables_from_extxyz_bytes(b"abc\n").unwrap_err(), "float");
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 Properties=pos:R:3\nH 0 0 0\n"
+            )
+            .unwrap_err(),
+            "lattice"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=\nH 0 0 0\n"
+            )
+            .unwrap_err(),
+            "pos"
+        );
         assert_eq!(
             tables_from_extxyz_bytes(
                 b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\n\n"

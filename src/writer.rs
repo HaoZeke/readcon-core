@@ -1246,8 +1246,18 @@ mod section_arity_tests {
 
         let mut no_types = frame.clone();
         no_types.header.natm_types = 0;
+        assert!(!no_types.atom_data.is_empty());
         let err = write_text(&no_types).unwrap_err();
         assert!(err.to_string().contains("per-type"), "{err}");
+        let mut v3_minor0 = frame.clone();
+        v3_minor0.header.spec_version = 3;
+        v3_minor0.header.metadata.remove(meta::CON_SPEC_MINOR);
+        v3_minor0.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({"length": "angstrom", "energy": "eV"}),
+        );
+        let minor0 = write_text(&v3_minor0).unwrap();
+        assert!(minor0.contains("angstrom"), "{minor0}");
 
         let mut no_atoms = frame.clone();
         no_atoms.atom_data.clear();
@@ -1300,10 +1310,13 @@ mod section_arity_tests {
         assert!(err.to_string().contains("spread"), "{err}");
         spreads.atom_data[0].set_spread(Some([f64::NAN, 0.0, 0.0]));
         let err = write_text(&spreads).unwrap_err();
-        assert!(
-            err.to_string().contains("spread") || err.to_string().contains("NonFinite"),
-            "{err}"
-        );
+        assert!(err.to_string().contains("spread"), "{err}");
+        spreads.atom_data[0].set_spread(Some([0.0, f64::NAN, 0.0]));
+        let err = write_text(&spreads).unwrap_err();
+        assert!(err.to_string().contains("spread"), "{err}");
+        spreads.atom_data[0].set_spread(Some([0.0, 0.0, f64::NAN]));
+        let err = write_text(&spreads).unwrap_err();
+        assert!(err.to_string().contains("spread"), "{err}");
     }
 
     #[test]
@@ -1311,6 +1324,36 @@ mod section_arity_tests {
         let mut meta = BTreeMap::new();
         stamp_legacy_velocity_time(&mut meta, 2, false);
         assert!(meta.is_empty());
+        meta.insert(meta::VALIDATE.into(), serde_json::json!(true));
+        let validated = {
+            let mut frame = load_frame("tiny_cuh2.con");
+            frame.header.metadata.insert(meta::VALIDATE.into(), serde_json::json!(true));
+            frame.header.sections.clear();
+            write_text(&frame).unwrap()
+        };
+        assert!(validated.contains("validate"), "{validated}");
+        let mut minor_only = load_frame("tiny_cuh2.con");
+        minor_only.header.spec_version = 3;
+        minor_only
+            .header
+            .metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(1));
+        minor_only.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({"length": "angstrom", "energy": "eV", "time": "fs"}),
+        );
+        let minor_text = write_text(&minor_only).unwrap();
+        assert!(minor_text.contains("fs"), "{minor_text}");
+        let mut legacy_minor = BTreeMap::new();
+        legacy_minor.insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(0));
+        stamp_legacy_velocity_time(&mut legacy_minor, 3, true);
+        assert_eq!(
+            legacy_minor
+                .get(meta::UNITS)
+                .and_then(|v| v.get("time"))
+                .and_then(|v| v.as_str()),
+            Some(crate::units::NATURAL_TIME_UNIT)
+        );
 
         stamp_legacy_velocity_time(&mut meta, 2, true);
         let units = meta.get(meta::UNITS).unwrap();
@@ -1344,6 +1387,12 @@ mod section_arity_tests {
         assert!(stamped.contains_key(meta::UNITS));
         let mut cursor = Cursor::new(Vec::new());
         let mut writer = super::ConFrameWriter::new(&mut cursor);
+        writer.set_canonical(false);
+        assert!(!writer.is_canonical());
+        writer.set_canonical(true);
+        assert!(writer.is_canonical());
+        writer.set_canonical(false);
+        assert!(!writer.is_canonical());
         let mut owned = frame.clone();
         writer.write_frame_binding(&mut owned).unwrap();
         assert_eq!(owned.header.spec_version, frame.header.spec_version);
@@ -1362,5 +1411,107 @@ mod section_arity_tests {
         let mut buf = Vec::new();
         push_f64(&mut buf, &mut ryu, 1.5, FloatFormat::DecimalPlaces(6));
         assert_eq!(String::from_utf8(buf).unwrap(), "1.500000");
+    }
+
+    #[test]
+    fn path_writers_lattice_and_v3_unit_failures() {
+        let dir = std::env::temp_dir().join(format!(
+            "readcon-writer-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let plain = dir.join("out.con");
+        let frame = load_frame("tiny_cuh2.con");
+        {
+            let mut writer = super::ConFrameWriter::from_path_with_precision(&plain, 6).unwrap();
+            writer.write_frame(&frame).unwrap();
+            writer.flush().unwrap();
+        }
+        assert!(std::fs::read_to_string(&plain).unwrap().contains("Cu"));
+        let gz = dir.join("out.con.gz");
+        {
+            let mut writer = super::ConFrameWriter::from_path_gzip(&gz).unwrap();
+            writer.write_frame(&frame).unwrap();
+            writer.flush().unwrap();
+        }
+        assert!(std::fs::metadata(&gz).unwrap().len() > 0);
+        let gz_prec = dir.join("prec.con.gz");
+        {
+            let mut writer =
+                super::ConFrameWriter::from_path_gzip_with_precision(&gz_prec, 4).unwrap();
+            writer.write_frame(&frame).unwrap();
+            writer.flush().unwrap();
+        }
+        assert!(std::fs::metadata(&gz_prec).unwrap().len() > 0);
+        let zst = dir.join("out.con.zst");
+        {
+            let mut writer = super::ConFrameWriter::from_path_zstd(&zst).unwrap();
+            writer.write_frame(&frame).unwrap();
+            writer.flush().unwrap();
+        }
+        assert!(std::fs::metadata(&zst).unwrap().len() > 0);
+        let zst_prec = dir.join("prec.con.zst");
+        {
+            let mut writer =
+                super::ConFrameWriter::from_path_zstd_with_precision(&zst_prec, 3).unwrap();
+            writer.write_frame(&frame).unwrap();
+            writer.flush().unwrap();
+        }
+        assert!(std::fs::metadata(&zst_prec).unwrap().len() > 0);
+
+        let mut lattice = frame.clone();
+        lattice.header.set_lattice_vectors([
+            [10.0, 0.0, 0.0],
+            [0.0, 12.0, 0.0],
+            [0.0, 0.0, 14.0],
+        ]);
+        let text = write_text(&lattice).unwrap();
+        assert!(text.contains("10"), "{text}");
+
+        let mut missing_energy = frame.clone();
+        missing_energy.header.spec_version = 3;
+        missing_energy.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({"length": "angstrom"}),
+        );
+        let err = write_text(&missing_energy).unwrap_err();
+        assert!(err.to_string().contains("energy"), "{err}");
+
+        let mut timed = load_frame("tiny_cuh2.convel");
+        timed.header.spec_version = 3;
+        timed
+            .header
+            .metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(1));
+        timed.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({"length": "angstrom", "energy": "eV"}),
+        );
+        let err = write_text(&timed).unwrap_err();
+        assert!(err.to_string().contains("units.time"), "{err}");
+
+        let mut bare = frame.clone();
+        bare.header.metadata.remove(meta::UNITS);
+        bare.header.spec_version = 2;
+        let stamped = binding_metadata(&bare);
+        assert!(stamped.contains_key(meta::UNITS));
+        let rewritten = super::binding_rewrite_frame(&bare).unwrap();
+        assert!(rewritten.header.spec_version >= 3);
+    }
+
+    #[test]
+    fn a_zero_atom_frame_cannot_declare_a_section() {
+        let mut frame = load_frame("tiny_cuh2.con");
+        frame.atom_data.clear();
+        frame.header.natm_types = 0;
+        frame.header.natms_per_type.clear();
+        frame.header.masses_per_type.clear();
+        frame.header.sections.push("forces".into());
+        let err = write_text(&frame).unwrap_err();
+        assert!(err.to_string().contains("zero-atom"), "{err}");
     }
 }
