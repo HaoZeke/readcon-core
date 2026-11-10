@@ -235,3 +235,6 @@ c78b69d5ad94ff45019bea65092dab1c3477910a	6ddf01eee7bb365d40fc9fcb4ca083ffe9c307e
 f26d8ee5b28cc9626fcd5b1db54d9ef1b252b7f9	9f9cc7734b8c615f116a8415c0613ac812b594cd	2026-11-09 21:35:50 -0600	fix: read periodicity from frame metadata
 f8b217e7631aa497c251ea9a9b14a47521c2f33d	17cf08e3e596f2f6ab43ff436f3bcb3a52b8d8e8	2026-11-09 21:52:55 -0600	test: exercise the open branch sides
 daf10bebc51923e7cf8f7a585068e7a1eceb014b	cd774757f2c971f275ad7f3014882b8f59b83773	2026-11-09 22:03:15 -0600	test: take both sides of the mass and map checks
+b99e09a94bfc336879a91a673a81a58061051aea	7e825fd373a74ec583c2653d748c526fdaa3ae10	2026-11-09 22:03:16 -0600	docs: list the mass and map test
+e306a37ad7bfb86f2074e3fd1edef0285ec8e8a9	5aa2d73ab6eac69a40b0ae4a09e1de1f51aca9e2	2026-11-09 22:06:02 -0600	fix: reject a pbc key that is not three booleans
+9fc71c0dc0d7adbcb460f6dc1002f10ceaa49dfd	9201aea4d3b984f45e217765b20e1ccc376894cc	2026-11-09 22:10:03 -0600	test: read unequal frames and a short cell
