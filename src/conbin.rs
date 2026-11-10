@@ -1899,14 +1899,38 @@ mod tests {
         );
         unsafe { libc::munmap(ptr, len) };
         let wide = dir.join("wide.conbin");
-        write_known(&wide, 1, 4000);
+        write_known(&wide, 1, 8000);
         let wide_file = File::open(&wide).unwrap();
+        wide_file.sync_all().unwrap();
         assert_eq!(
             unsafe { libc::posix_fadvise(wide_file.as_raw_fd(), 0, 0, libc::POSIX_FADV_DONTNEED) },
             0
         );
-        let streamed = sequential_resident_sum(&wide, 1, &QueueLimits::page_default(page)).unwrap();
+        let wide_len = wide_file.metadata().unwrap().len() as usize;
+        let wide_ptr = unsafe {
+            libc::mmap(
+                std::ptr::null_mut(),
+                wide_len,
+                libc::PROT_READ,
+                libc::MAP_PRIVATE,
+                wide_file.as_raw_fd(),
+                0,
+            )
+        };
+        assert_ne!(wide_ptr, libc::MAP_FAILED);
+        let wide_pages = wide_len.div_ceil(page);
+        let mut wide_vec = vec![0u8; wide_pages];
+        assert_eq!(unsafe { libc::mincore(wide_ptr, wide_len, wide_vec.as_mut_ptr()) }, 0);
+        assert!(
+            wide_vec.iter().any(|byte| byte & 1 == 0),
+            "wide file stayed resident"
+        );
+        unsafe { libc::munmap(wide_ptr, wide_len) };
+        let limits = QueueLimits::page_default(page);
+        let streamed = sequential_resident_sum(&wide, 1, &limits).unwrap();
         assert!(streamed.is_finite(), "{streamed}");
+        let split = split_stream_sum(&wide, 2, &limits).unwrap();
+        assert!(split.is_finite(), "{split}");
         let got = sum_mapped(&path, 2).unwrap();
         let mapped = map_file(&path, 1).unwrap();
         let expect = mapped.positions_f64().unwrap().iter().sum::<f64>()
@@ -2626,11 +2650,8 @@ Coordinates of Component 1
             },
         )
         ;
-        let message = unmapped.err().unwrap_or_default();
-        assert!(
-            message.is_empty() || message.contains("os error"),
-            "{message}"
-        );
+        let message = unmapped.err().expect("unmapped populate");
+        assert!(message.contains("os error"), "{message}");
     }
 
     #[cfg(target_os = "linux")]
