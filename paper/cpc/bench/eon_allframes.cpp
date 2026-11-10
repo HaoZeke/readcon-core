@@ -11,6 +11,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -38,6 +39,26 @@ double expected(std::size_t frame, std::size_t atom, int axis) {
   return std::round(raw * 1e8) / 1e8;
 }
 
+// `con2matter` returns `ReadError` only from its catch. A frame
+// `read_all_frames` accepts has a two-line header and a position matrix
+// whose row count matches the atom count, so `setPositions` does not
+// throw, and the check loop repeats those same frames. `READCON_EON_FAIL_CALL`,
+// when set to a 1-based call count, makes that call return `ReadError`
+// and leaves `Matter` unchanged. Unset, every call is the real conversion.
+// The checksum loop and the check loop share the counter.
+eonc::io::IoStatus con2matter_or_fail(eonc::Matter &matter, const readcon::ConFrame &frame) {
+  static int calls = 0;
+  ++calls;
+  if (const char *fail = std::getenv("READCON_EON_FAIL_CALL")) {
+    char *end = nullptr;
+    const long which = std::strtol(fail, &end, 10);
+    if (end != fail && which == static_cast<long>(calls)) {
+      return eonc::io::IoStatus::ReadError;
+    }
+  }
+  return eonc::io::con2matter(matter, frame, nullptr);
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -54,7 +75,7 @@ int main(int argc, char **argv) {
   const auto frames = readcon::read_all_frames(argv[1]);
   double checksum = 0.0;
   for (const auto &frame : frames) {
-    const auto status = eonc::io::con2matter(matter, frame, nullptr);
+    const auto status = con2matter_or_fail(matter, frame);
     if (!eonc::io::io_ok(status)) {
       std::cerr << "con2matter failed\n";
       return 1;
@@ -69,7 +90,7 @@ int main(int argc, char **argv) {
   int matched = 0;
   std::size_t index = 0;
   for (const auto &frame : frames) {
-    const auto status = eonc::io::con2matter(matter, frame, nullptr);
+    const auto status = con2matter_or_fail(matter, frame);
     if (!eonc::io::io_ok(status)) {
       break;
     }
