@@ -3581,23 +3581,26 @@ zero-atom frame
         parallel: Vec<Result<types::ConFrame, error::ParseError>>,
     ) {
         assert_eq!(serial.len(), parallel.len(), "{label} count");
-        for (i, (left, right)) in serial.into_iter().zip(parallel).enumerate() {
-            match (left, right) {
-                (Ok(a), Ok(b)) => {
-                    assert_eq!(written(&a), written(&b), "{label} bytes frame {i}");
-                    assert_eq!(a, b, "{label} fields frame {i}");
-                }
-                (Err(a), Err(b)) => {
-                    assert_eq!(
-                        format!("{a:?}"),
-                        format!("{b:?}"),
-                        "{label} error frame {i}"
-                    );
-                }
-                (Ok(_), Err(err)) => panic!("{label} frame {i} serial ok parallel {err:?}"),
-                (Err(err), Ok(_)) => panic!("{label} frame {i} serial {err:?} parallel ok"),
+        for (left, right) in serial.into_iter().zip(parallel) {
+            assert_eq!(left.is_ok(), right.is_ok(), "{label}");
+            if let (Ok(a), Ok(b)) = (&left, &right) {
+                assert_eq!(written(a), written(b));
+                assert_eq!(a, b);
+            }
+            if let (Err(a), Err(b)) = (&left, &right) {
+                assert_eq!(format!("{a:?}"), format!("{b:?}"));
             }
         }
+    }
+
+    #[test]
+    fn equal_errors_compare_without_a_frame() {
+        let err = error::ParseError::IncompleteFrame;
+        assert_same_results(
+            "both",
+            vec![Err(error::ParseError::IncompleteFrame)],
+            vec![Err(err)],
+        );
     }
 
     fn assert_workers(label: &str, text: &str) {
@@ -3928,13 +3931,13 @@ mod differential_entry_points {
     }
 
     fn agree(reference: &Result<Vec<ConFrame>, ParseError>, got: Result<Vec<ConFrame>, ParseError>, what: &str) {
-        match (reference, got) {
-            (Ok(left), Ok(right)) => assert_eq!(left, &right, "{what}"),
-            (Err(left), Err(right)) => {
-                assert_eq!(class(left), class(&right), "{what}: {left} vs {right}")
-            }
-            (Ok(_), Err(err)) => panic!("{what} rejected a case the string read accepted: {err}"),
-            (Err(err), Ok(_)) => panic!("{what} accepted a case the string read rejected: {err}"),
+        let _ = what;
+        assert_eq!(reference.is_ok(), got.is_ok());
+        if let (Ok(left), Ok(right)) = (reference, &got) {
+            assert_eq!(left, right);
+        }
+        if let (Err(left), Err(right)) = (reference, &got) {
+            assert_eq!(class(left), class(right));
         }
     }
 
@@ -3971,11 +3974,9 @@ mod differential_entry_points {
             }
             for size in [1usize, 61, crate::stream::DEFAULT_READ_SIZE] {
                 let streamed = stream_frames(text.as_bytes(), size);
-                match (&reference, streamed) {
-                    (Ok(left), Ok(right)) => assert_eq!(left, &right, "stream {size} case={index}"),
-                    (Err(_), Err(_)) => {}
-                    (Ok(_), Err(err)) => panic!("stream {size} rejected case {index}: {err}"),
-                    (Err(err), Ok(_)) => panic!("stream {size} accepted case {index}: {err}"),
+                assert_eq!(reference.is_ok(), streamed.is_ok());
+                if let (Ok(left), Ok(right)) = (&reference, &streamed) {
+                    assert_eq!(left, right);
                 }
             }
             let plain = dir.join(format!("case-{index}.con"));
@@ -4009,28 +4010,19 @@ mod differential_entry_points {
             if let (Ok(left), Ok(right)) = (&reference, &from_gz) {
                 assert_eq!(left, right, "gzip case={index}");
             }
-            match (&reference, ConTrajectory::open(&plain, false)) {
-                (Ok(frames), Ok(traj)) => {
-                    assert_eq!(traj.len(), frames.len(), "trajectory length case={index}");
-                    for (i, frame) in frames.iter().enumerate() {
-                        assert_eq!(
-                            traj.frame(i).expect("trajectory frame"),
-                            *frame,
-                            "trajectory frame {i} case={index}"
-                        );
-                    }
+            let opened = ConTrajectory::open(&plain, false);
+            if let (Ok(frames), Ok(traj)) = (&reference, &opened) {
+                assert_eq!(traj.len(), frames.len());
+                for (i, frame) in frames.iter().enumerate() {
+                    assert_eq!(traj.frame(i).expect("trajectory frame"), *frame);
+                    let _ = i;
                 }
-                (Err(_), Err(_)) => {}
-                (Err(err), Ok(traj)) => {
-                    if traj.is_empty() {
-                        continue;
-                    }
-                    assert!(
-                        traj.frame(0).is_err(),
-                        "trajectory opened a frame the string read rejected: {err}"
-                    );
+            } else if let (Err(_), Ok(traj)) = (&reference, &opened) {
+                if !traj.is_empty() {
+                    assert!(traj.frame(0).is_err());
                 }
-                (Ok(_), Err(err)) => panic!("trajectory rejected case {index}: {err}"),
+            } else {
+                assert_eq!(reference.is_ok(), opened.is_ok());
             }
             if index % MAPPED_STRIDE == 0 {
                 let padded = format!("{text}{}", "\n".repeat(64 * 1024));
@@ -4191,6 +4183,50 @@ mod one_thread_and_numa {
         let stride = frame.atom_data.len() * 3;
         let coords = vec![0.0; stride];
         assert!(super::touch_option_checksum(&[Some(frame.clone())], &coords[..stride - 1], 1).is_none());
+    }
+
+    #[test]
+    fn indexed_rows_spans_and_finish_report_errors() {
+        use crate::parser::LineStream;
+        let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
+        let mut peeked = super::MemchrLines::new("1.0 2.0 3.0 0 4\n");
+        assert!(peeked.peek_line().is_some());
+        let row = peeked.next_coord_row(2, 0).unwrap();
+        assert_eq!(row.2, 4);
+        let mut extra = super::MemchrLines::new("1 2 3 0 4 leftover\n");
+        assert!(extra.next_coord_row(2, 0).is_err());
+
+        let mut indexed = super::ConFrameIterator::from_bytes(text.as_bytes());
+        indexed.lines.newlines = Some(super::newline_positions(text.as_bytes(), 1));
+        indexed.advance_lines_indexed(0).unwrap();
+
+        let bom = format!("\u{feff}{text}");
+        let mut marked = super::ConFrameIterator::new(&bom);
+        let err = marked.next_with_raw_span(&bom).unwrap().unwrap_err();
+        assert!(matches!(err, error::ParseError::ValidationError(_)));
+
+        let frame = super::parse_byte_span(text.as_bytes(), 0, text.len()).unwrap();
+        assert_eq!(
+            super::finish_results(None, vec![Ok(frame.clone())])
+                .unwrap()
+                .len(),
+            1
+        );
+        let pool = super::shared_pool(2).unwrap();
+        assert!(
+            super::finish_results(
+                Some(pool.as_ref()),
+                vec![Ok(frame), Err(error::ParseError::IncompleteFrame)],
+            )
+            .is_err()
+        );
+        let doubled = text.clone() + &text;
+        let bytes = doubled.as_bytes();
+        assert!(super::parse_byte_span(bytes, 0, bytes.len()).is_err());
+        let parsed = super::parse_into_slots_timed(bytes, bytes.len(), &[0], 2, |start, end| {
+            super::parse_byte_span(bytes, start, end)
+        });
+        assert!(parsed.slots[0].is_err());
     }
 
     #[test]

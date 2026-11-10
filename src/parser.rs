@@ -2582,20 +2582,10 @@ H
 Velocities of Component 1
 0.1 0.0 0.0
 ";
-        let got = crate::iterators::frames_from_text(text, Some(1));
-        let err = match got {
-            Err(err) => err,
-            Ok(frames) => panic!("accepted {} frames", frames.len()),
-        };
-        assert!(
-            matches!(err, ParseError::InvalidNumberFormat(_)),
-            "{err}"
-        );
+        let err = crate::iterators::frames_from_text(text, Some(1)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)));
         let parallel = crate::iterators::frames_from_text(text, Some(2)).unwrap_err();
-        assert!(
-            matches!(parallel, ParseError::InvalidNumberFormat(_)),
-            "{parallel}"
-        );
+        assert!(matches!(parallel, ParseError::InvalidNumberFormat(_)));
     }
 
     fn class_at(text: &str, threads: usize) -> String {
@@ -2757,21 +2747,15 @@ Velocity of Component 1
             "12.011 1.008",
         ];
         let mut line_it = lines.iter().copied();
-        match parse_frame_header(&mut line_it) {
-            Ok(header) => {
-                assert_eq!(header.prebox_header.user, "PREBOX1");
-                assert_eq!(header.spec_version, 2);
-                assert_eq!(header.boxl, [10.0, 20.0, 30.0]);
-                assert_eq!(header.angles, [90.0, 90.0, 90.0]);
-                assert_eq!(header.postbox_header, ["POSTBOX1", "POSTBOX2"]);
-                assert_eq!(header.natm_types, 2);
-                assert_eq!(header.natms_per_type, vec![1, 1]);
-                assert_eq!(header.masses_per_type, vec![12.011, 1.008]);
-            }
-            Err(e) => {
-                panic!("Parsing failed when it should have succeeded. Error: {e:?}");
-            }
-        }
+        let header = parse_frame_header(&mut line_it).expect("header");
+        assert_eq!(header.prebox_header.user, "PREBOX1");
+        assert_eq!(header.spec_version, 2);
+        assert_eq!(header.boxl, [10.0, 20.0, 30.0]);
+        assert_eq!(header.angles, [90.0, 90.0, 90.0]);
+        assert_eq!(header.postbox_header, ["POSTBOX1", "POSTBOX2"]);
+        assert_eq!(header.natm_types, 2);
+        assert_eq!(header.natms_per_type, vec![1, 1]);
+        assert_eq!(header.masses_per_type, vec![12.011, 1.008]);
     }
 
     #[test]
@@ -3762,6 +3746,8 @@ Coordinates of Component 1
         assert!(!bare.blank_line_opens_section());
         assert!(bare.blank_opens_velocity_block());
         assert!(bare.legacy_velocity_rows_complete(&[5, 5]));
+        assert!(bare.next_line().is_none());
+        assert!(bare.peek_line().is_none());
         assert!(bare.bytes_remaining().is_none());
         assert!(matches!(
             bare.next_coord_row(2, 0),
@@ -3934,5 +3920,68 @@ Coordinates of Component 1
         let mut empty = std::iter::empty().peekable();
         assert_eq!(empty.bytes_remaining(), Some(0));
         assert!(empty.blank_opens_velocity_block());
+    }
+
+    #[test]
+    fn declared_sections_and_nonfinite_numbers_fail() {
+        use super::LineStream;
+        let mut bare = super::IterStream(std::iter::empty::<&str>());
+        assert!(bare.peek_line().is_none());
+        assert!(bare.next_line().is_none());
+        let err = super::parse_finite_at("1e999", 0).unwrap_err();
+        assert!(matches!(err, ParseError::NonFiniteValue(_)));
+        let err = super::parse_atom_id_token("18446744073709551616").unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)));
+
+        let frames = crate::iterators::frames_from_text(
+            &std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap(),
+            Some(1),
+        )
+        .unwrap();
+        let mut frame = frames.into_iter().next().unwrap();
+        frame.header.strict_validation = true;
+        for name in [
+            "forces",
+            "energies",
+            "charges",
+            "spins",
+            "magmoms",
+            "displacements",
+            "spreads",
+        ] {
+            frame.header.sections = vec![name.to_string()];
+            let mut lines = std::iter::empty().peekable();
+            let err = super::parse_declared_sections(
+                &mut lines,
+                &mut frame.header,
+                &mut frame.atom_data,
+            )
+            .unwrap_err();
+            assert!(matches!(err, ParseError::IncompleteSection(_)), "{name} {err}");
+        }
+        frame.header.sections = vec!["custom".into()];
+        let mut lines = std::iter::empty().peekable();
+        let err =
+            super::parse_declared_sections(&mut lines, &mut frame.header, &mut frame.atom_data)
+                .unwrap_err();
+        assert!(matches!(err, ParseError::UnknownSection(_)));
+
+        let body = "\nCu\nEnergies of Component 1\n1.0 0 0\n1.0 0 1\nH\nEnergies of Component 2\n0.5 0 2\n0.5 0 3\n";
+        let mut energy_lines = body.lines().peekable();
+        let _ = super::parse_energy_section(
+            &mut energy_lines,
+            &frame.header,
+            &mut frame.atom_data,
+        );
+
+        let spreads = "\nCu\nSpreads of Component 1\nnan nan nan 0 0\n0 0 0 0 1\nH\nSpreads of Component 2\n0 0 0 0 2\n0 0 0 0 3\n";
+        let mut spread_lines = spreads.lines().peekable();
+        let err = super::parse_spread_section(
+            &mut spread_lines,
+            &frame.header,
+            &mut frame.atom_data,
+        )
+        .unwrap_err();
+        assert!(matches!(err, ParseError::NonFiniteValue(_)), "{err}");
     }
 }

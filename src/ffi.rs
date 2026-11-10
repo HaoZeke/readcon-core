@@ -163,8 +163,9 @@ pub unsafe extern "C" fn rkr_frame_metadata_json(frame_handle: *const RKRConFram
         obj.insert(k.clone(), v.clone());
     }
     let json_str = serde_json::Value::Object(obj).to_string();
+    // A nul in the text is an error. Unwinding across extern "C" is undefined.
     match CString::new(json_str) {
-        Ok(cs) => cs.into_raw(),
+        Ok(text) => text.into_raw(),
         Err(_) => ptr::null_mut(),
     }
 }
@@ -288,10 +289,10 @@ pub unsafe extern "C" fn rkr_frame_index_projection_json(
         "charge": p.charge,
         "magmom": p.magmom,
     });
-    match CString::new(v.to_string()) {
-        Ok(cs) => cs.into_raw(),
-        Err(_) => ptr::null_mut(),
-    }
+    // serde_json escapes U+0000, so the text has no interior nul.
+    CString::new(v.to_string())
+        .expect("json text has no interior nul")
+        .into_raw()
 }
 /// Returns the potential type string from metadata as a heap-allocated
 /// null-terminated C string. The caller MUST free with `rkr_free_string`.
@@ -915,6 +916,9 @@ pub unsafe extern "C" fn rkr_read_nth_frame(
 /// An opaque random-access handle over one file. Free with `rkr_trajectory_free`.
 // No #[repr(C)]: cbindgen then emits an incomplete struct, which C and C++
 // accept under -pedantic. The zero-length field keeps it unconstructible.
+#[cfg(test)]
+static TRAJECTORY_FRAME_PANIC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 pub struct RKRTrajectory {
     _private: [u8; 0],
 }
@@ -1005,7 +1009,13 @@ pub unsafe extern "C" fn rkr_trajectory_read_frame(
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
     let traj = unsafe { &*(handle as *const crate::trajectory::ConTrajectory) };
-    let parsed = std::panic::catch_unwind(|| traj.frame(index));
+    let parsed = std::panic::catch_unwind(|| {
+        #[cfg(test)]
+        if TRAJECTORY_FRAME_PANIC.load(std::sync::atomic::Ordering::Relaxed) {
+            panic!("injected trajectory read panic");
+        }
+        traj.frame(index)
+    });
     let (status, msg) = match parsed {
         Ok(Ok(frame)) => {
             clear_last_error();
@@ -7813,5 +7823,201 @@ mod tests {
         std::fs::write(&raw, bytes).unwrap();
         let path = CString::new(raw.to_str().unwrap()).unwrap();
         assert!(unsafe { read_con_file_iterator(path.as_ptr()) }.is_null());
+    }
+
+    #[test]
+    fn writers_dlpack_options_and_a_panicking_read_report_status() {
+        let dir = tempfile::tempdir().unwrap();
+        let bad_utf = [0xffu8, 0];
+        assert!(unsafe { read_con_file_iterator(bad_utf.as_ptr().cast()) }.is_null());
+        assert!(unsafe { create_writer_from_path_c(bad_utf.as_ptr().cast()) }.is_null());
+        let missing = CString::new(dir.path().join("missing-dir/out.con").to_str().unwrap()).unwrap();
+        assert!(unsafe { create_writer_from_path_c(missing.as_ptr()) }.is_null());
+
+        let out = dir.path().join("frames.con");
+        let cout = CString::new(out.to_str().unwrap()).unwrap();
+        let writer = unsafe { create_writer_from_path_c(cout.as_ptr()) };
+        assert!(!writer.is_null());
+        let frame = test_frame_handle();
+        let handles = [frame];
+        assert_eq!(
+            unsafe { rkr_writer_extend_binding(writer, handles.as_ptr(), 1) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let view = [frame as *const RKRConFrame];
+        assert_eq!(
+            unsafe { rkr_writer_extend(std::ptr::null_mut(), view.as_ptr(), 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_writer_extend(writer, std::ptr::null(), 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let null_frame = [std::ptr::null()];
+        assert_eq!(
+            unsafe { rkr_writer_extend(writer, null_frame.as_ptr(), 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        unsafe { free_rkr_writer(writer) };
+        unsafe { free_rkr_frame(frame) };
+
+        let builder = test_builder_handle();
+        let sym = CString::new("Cu").unwrap();
+        assert_eq!(
+            unsafe { rkr_frame_add_atom(builder, sym.as_ptr(), 0.1, 0.2, 0.3, false, 1, 63.546) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let brace = CString::new("{").unwrap();
+        let units = CString::new(r#"{"length":1}"#).unwrap();
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_units(builder, bad_utf.as_ptr().cast()) },
+            RKRStatus::RKR_STATUS_INVALID_UTF8
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_units(builder, brace.as_ptr()) },
+            RKRStatus::RKR_STATUS_INVALID_JSON
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_units(builder, units.as_ptr()) },
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        let key = CString::new("note").unwrap();
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_set_string_metadata(builder, bad_utf.as_ptr().cast(), key.as_ptr())
+            },
+            RKRStatus::RKR_STATUS_INVALID_UTF8
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_set_string_metadata(builder, key.as_ptr(), bad_utf.as_ptr().cast())
+            },
+            RKRStatus::RKR_STATUS_INVALID_UTF8
+        );
+        assert_eq!(
+            map_builder_err(crate::error::ParseError::ValidationError("no".into())),
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        assert_eq!(
+            map_builder_err(crate::error::ParseError::IncompleteFrame),
+            RKRStatus::RKR_STATUS_INTERNAL_ERROR
+        );
+
+        let mut tensor = std::ptr::null_mut();
+        let cuda = RKRDlpackExportOptions {
+            dtype: RKRDLDataType {
+                code: rkr_dl_type_code::RKR_DL_FLOAT,
+                bits: 64,
+                lanes: 1,
+            },
+            device: RKRDLDevice {
+                device_type: rkr_dl_device_type::RKR_DL_CUDA,
+                device_id: 0,
+            },
+        };
+        let other = RKRDlpackExportOptions {
+            device: RKRDLDevice {
+                device_type: 99,
+                device_id: 0,
+            },
+            ..cuda
+        };
+        let lanes = RKRDlpackExportOptions {
+            dtype: RKRDLDataType {
+                code: rkr_dl_type_code::RKR_DL_FLOAT,
+                bits: 64,
+                lanes: 2,
+            },
+            device: RKRDLDevice {
+                device_type: rkr_dl_device_type::RKR_DL_CPU,
+                device_id: 0,
+            },
+        };
+        assert_eq!(
+            unsafe { rkr_frame_builder_positions_dlpack_ex(builder, &cuda, &mut tensor) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_positions_dlpack_ex(builder, &other, &mut tensor) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_positions_dlpack_ex(builder, &lanes, &mut tensor) },
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_forces_dlpack_ex(builder, std::ptr::null(), &mut tensor) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_spreads_dlpack_ex(builder, std::ptr::null(), &mut tensor) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_atom_energies_dlpack_ex(builder, std::ptr::null(), &mut tensor) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        let built = unsafe { rkr_frame_builder_build(builder) };
+        assert!(!built.is_null());
+        assert_eq!(
+            unsafe {
+                rkr_frame_positions_as_dlpack(
+                    built,
+                    rkr_dl_device_type::RKR_DL_CUDA,
+                    0,
+                    0,
+                    0,
+                    0,
+                    &mut tensor,
+                )
+            },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        let mut one = [0.0f64; 1];
+        assert_eq!(
+            unsafe { rkr_frame_copy_masses(built, one.as_mut_ptr(), 0) },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        let mut ids = [0u64; 1];
+        assert_eq!(
+            unsafe { rkr_frame_copy_atom_ids(built, ids.as_mut_ptr(), 0) },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        unsafe {
+            (*(built as *mut ConFrame)).atom_data[0].symbol = "Cu\u{0}".into();
+        }
+        assert!(unsafe { rkr_frame_composition_formula(built) }.is_null());
+        unsafe { free_rkr_frame(built) };
+
+        let ids = ndarray::Array1::from_vec(vec![1.0f64]);
+        assert_eq!(
+            export_f64_slice_as_dlpack(
+                ids.as_slice().unwrap(),
+                &[1],
+                RKRDLDataType {
+                    code: rkr_dl_type_code::RKR_DL_FLOAT,
+                    bits: 64,
+                    lanes: 2,
+                },
+                &mut tensor,
+            ),
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        let grid = ndarray::Array2::from_elem((1, 3), 1.0f64);
+        assert_eq!(
+            export_owned_array2_dlpack_opts(&grid.into_shared(), &cuda, &mut tensor),
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+
+        let src = CString::new("resources/test/tiny_cuh2.con").unwrap();
+        let traj = unsafe { rkr_trajectory_open(src.as_ptr(), 0) };
+        assert!(!traj.is_null());
+        TRAJECTORY_FRAME_PANIC.store(true, std::sync::atomic::Ordering::Relaxed);
+        let mut out_frame = std::ptr::null_mut();
+        let status = unsafe { rkr_trajectory_read_frame(traj, 0, &mut out_frame) };
+        TRAJECTORY_FRAME_PANIC.store(false, std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(status, RKRStatus::RKR_STATUS_INTERNAL_ERROR);
+        assert!(out_frame.is_null());
+        unsafe { rkr_trajectory_free(traj) };
     }
 }

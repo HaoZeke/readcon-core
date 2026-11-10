@@ -4038,6 +4038,102 @@ mod api_coverage {
             let traj_iter = Py::new(py, PyConTrajectory::__iter__(traj)).unwrap();
             let _ = PyConTrajectoryIter::__iter__(traj_iter.borrow(py));
 
+            let mut owned = PyConFrame::from_owned(py, frame.clone()).unwrap();
+            owned.metadata.bind(py).set_item(meta::BONDS, py.None()).unwrap();
+            assert!(owned.bonds(py).unwrap().is_empty());
+            owned.metadata.bind(py).set_item(meta::BONDS, "nope").unwrap();
+            assert!(owned.bonds(py).unwrap().is_empty());
+            let pair = PyDict::new(py);
+            pair.set_item("i", 0).unwrap();
+            pair.set_item("j", 1).unwrap();
+            let bonds = pyo3::types::PyList::new(py, [pair]).unwrap();
+            owned.metadata.bind(py).set_item(meta::BONDS, bonds).unwrap();
+            assert_eq!(owned.bonds(py).unwrap().len(), 1);
+            owned.metadata.bind(py).set_item(meta::POTENTIAL, py.None()).unwrap();
+            assert!(owned.potential_type(py).unwrap().is_none());
+            owned.metadata.bind(py).set_item(meta::POTENTIAL, "EMT").unwrap();
+            assert!(owned.potential_type(py).unwrap().is_none());
+            let pot = PyDict::new(py);
+            owned.metadata.bind(py).set_item(meta::POTENTIAL, pot).unwrap();
+            assert!(owned.potential_type(py).unwrap().is_none());
+            owned.metadata.bind(py).set_item("frame_index", "no").unwrap();
+            assert!(owned.metadata_get_u64(py, "frame_index").is_err());
+            owned.inner = None;
+            owned.atoms_ready.store(false, std::sync::atomic::Ordering::Relaxed);
+            owned.ensure_atoms(py).unwrap();
+            assert!(frame_from_arrays(&[1.0], &[1.0, 2.0], &[1.0; 6], "Cu").is_err());
+            let _ = chemfiles_err_to_py(crate::chemfiles_import::ChemfilesImportError::Io(
+                std::io::Error::other("disk"),
+            ));
+            let _ = chemfiles_err_to_py(crate::chemfiles_import::ChemfilesImportError::InvalidFrame(
+                "shape".into(),
+            ));
+            #[cfg(feature = "chemfiles")]
+            {
+                let _ = chemfiles_err_to_py(crate::chemfiles_import::ChemfilesImportError::Chemfiles(
+                    chemfiles::Error {
+                        status: chemfiles::Status::FileError,
+                        message: "disk".into(),
+                    },
+                ));
+            }
+
+            let dir = tempfile::tempdir().unwrap();
+            let mixed = dir.path().join("mixed.con");
+            let second = "note\n{\"con_spec_version\":2}\n1 1 1\n90 90 90\n0 0\n0 0 0\n1\n1\n63.5\nCu\nCoordinates of Component 1\n0 0 0 0 0\n";
+            std::fs::write(&mixed, format!("{text}\n{second}")).unwrap();
+            assert!(read_coords(py, mixed.to_str().unwrap()).is_err());
+            let gz = dir.path().join("out.con.gz");
+            let listed = pyo3::types::PyList::empty(py);
+            let one_frame = Py::new(py, PyConFrame::from_owned(py, frame.clone()).unwrap()).unwrap();
+            listed.append(one_frame).unwrap();
+            write_con(
+                py,
+                gz.to_str().unwrap(),
+                &listed,
+                Some(8),
+                Some("gzip"),
+                false,
+                None,
+                "auto",
+            )
+            .unwrap();
+            assert!(
+                write_con(
+                    py,
+                    dir.path().to_str().unwrap(),
+                    &listed,
+                    Some(8),
+                    Some("gzip"),
+                    false,
+                    None,
+                    "auto",
+                )
+                .is_err()
+            );
+
+            let phased = crate::iterators::frames_from_bytes_phased(text.as_bytes(), Some(2)).unwrap();
+            #[cfg(feature = "parallel")]
+            let pool = phased.pool;
+            #[cfg(not(feature = "parallel"))]
+            let pool = None;
+            let pooled = con_frame_list(
+                py,
+                phased.frames.into_iter().take(1).collect(),
+                crate::iterators::ReadPhaseTimes::default(),
+                text.len(),
+                Some(2),
+                "lazy",
+                phased.chunk_s,
+                phased.worker_minflt,
+                phased.share_frames,
+                phased.share_bytes,
+                scan_kind_name(phased.scan_kind),
+                pool,
+            )
+            .unwrap();
+            drop(pooled);
+
             let none = py.None();
             assert!(py_metadata_to_json_map(none.bind(py)).unwrap().is_empty());
             let big = (u64::MAX).into_pyobject(py).unwrap();

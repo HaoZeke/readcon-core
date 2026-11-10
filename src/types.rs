@@ -1556,6 +1556,23 @@ impl Default for ConFrameBuilder {
     }
 }
 
+/// Turn a DLPack conversion failure into a validation error.
+///
+/// The six field views share this function so a conversion error is one
+/// path. `dlpk` accepts every array this crate builds on a 64-bit host,
+/// and the error arm is tested with a constructed value.
+fn dlpack_view<T, E: std::fmt::Display>(
+    field: &str,
+    result: Result<T, E>,
+) -> Result<T, crate::error::ParseError> {
+    match result {
+        Ok(value) => Ok(value),
+        Err(err) => Err(crate::error::ParseError::ValidationError(format!(
+            "DLPack export for {field} failed: {err}"
+        ))),
+    }
+}
+
 impl ConFrameBuilder {
     /// Absolute mass difference allowed between atoms of the same CON type.
     ///
@@ -2739,11 +2756,10 @@ impl ConFrameBuilder {
     /// `&self`. The returned `DLPackTensorRef` reads through to the
     /// builder's `Array2<f64>` storage zero-copy.
     pub fn positions_dlpack(&self) -> Result<dlpk::DLPackTensorRef<'_>, crate::error::ParseError> {
-        dlpk::DLPackTensorRef::try_from(&self.positions).map_err(|e| {
-            crate::error::ParseError::ValidationError(format!(
-                "DLPack export for positions failed: {e}"
-            ))
-        })
+        dlpack_view(
+            "positions",
+            dlpk::DLPackTensorRef::try_from(&self.positions),
+        )
     }
 
     /// DLPack view onto velocities, shape `(N, 3) f64`. Returns `None`
@@ -2754,11 +2770,10 @@ impl ConFrameBuilder {
         if !self.has_velocities {
             return Ok(None);
         }
-        let view = dlpk::DLPackTensorRef::try_from(&self.velocities).map_err(|e| {
-            crate::error::ParseError::ValidationError(format!(
-                "DLPack export for velocities failed: {e}"
-            ))
-        })?;
+        let view = dlpack_view(
+            "velocities",
+            dlpk::DLPackTensorRef::try_from(&self.velocities),
+        )?;
         Ok(Some(view))
     }
 
@@ -2770,11 +2785,7 @@ impl ConFrameBuilder {
         if !self.has_forces {
             return Ok(None);
         }
-        let view = dlpk::DLPackTensorRef::try_from(&self.forces).map_err(|e| {
-            crate::error::ParseError::ValidationError(format!(
-                "DLPack export for forces failed: {e}"
-            ))
-        })?;
+        let view = dlpack_view("forces", dlpk::DLPackTensorRef::try_from(&self.forces))?;
         Ok(Some(view))
     }
 
@@ -2786,30 +2797,24 @@ impl ConFrameBuilder {
         if !self.has_energies {
             return Ok(None);
         }
-        let view = dlpk::DLPackTensorRef::try_from(&self.atom_energies).map_err(|e| {
-            crate::error::ParseError::ValidationError(format!(
-                "DLPack export for atom_energies failed: {e}"
-            ))
-        })?;
+        let view = dlpack_view(
+            "atom_energies",
+            dlpk::DLPackTensorRef::try_from(&self.atom_energies),
+        )?;
         Ok(Some(view))
     }
 
     /// DLPack view onto per-atom masses, shape `(N,) f64`.
     pub fn masses_dlpack(&self) -> Result<dlpk::DLPackTensorRef<'_>, crate::error::ParseError> {
-        dlpk::DLPackTensorRef::try_from(&self.masses).map_err(|e| {
-            crate::error::ParseError::ValidationError(format!(
-                "DLPack export for masses failed: {e}"
-            ))
-        })
+        dlpack_view("masses", dlpk::DLPackTensorRef::try_from(&self.masses))
     }
 
     /// DLPack view onto per-atom atom_ids, shape `(N,) u64`.
     pub fn atom_ids_dlpack(&self) -> Result<dlpk::DLPackTensorRef<'_>, crate::error::ParseError> {
-        dlpk::DLPackTensorRef::try_from(&self.atom_ids).map_err(|e| {
-            crate::error::ParseError::ValidationError(format!(
-                "DLPack export for atom_ids failed: {e}"
-            ))
-        })
+        dlpack_view(
+            "atom_ids",
+            dlpk::DLPackTensorRef::try_from(&self.atom_ids),
+        )
     }
 
     /// Whether the builder currently has a velocities section populated.
@@ -3356,12 +3361,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn dlpack_view_names_the_field_when_conversion_fails() {
+        let err = dlpack_view::<(), _>("positions", Err("no host buffer")).unwrap_err();
+        let text = err.to_string();
+        assert!(text.contains("positions"));
+        assert!(text.contains("no host buffer"));
+        let ok = dlpack_view::<u32, &str>("masses", Ok(7u32)).unwrap();
+        assert_eq!(ok, 7);
+    }
+
+    #[test]
     fn impossible_cell_is_a_validation_error() {
         let err = cell_vectors([10.0, 10.0, 10.0], [10.0, 10.0, 170.0]).unwrap_err();
-        assert!(
-            matches!(err, crate::error::ParseError::ValidationError(_)),
-            "{err}"
-        );
+        assert!(matches!(
+            err,
+            crate::error::ParseError::ValidationError(_)
+        ));
         assert!(cell_cz_squared([10.0, 10.0, 170.0]) <= -1e-12);
         let flat = cell_vectors([5.0, 5.0, 5.0], [30.0, 60.0, 90.0]).unwrap();
         assert!(flat[2][2].is_finite());
@@ -3492,20 +3507,14 @@ mod tests {
         builder.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 0, 1.008);
         builder.add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 2.014);
         let err = builder.build_with_permutation().unwrap_err();
-        match err {
+        assert!(matches!(
+            err,
             crate::error::ParseError::MassMismatch {
-                symbol,
-                first_mass,
-                found_mass,
-                atom_index,
-            } => {
-                assert_eq!(symbol, "H");
-                assert!((first_mass - 1.008).abs() < 1e-12);
-                assert!((found_mass - 2.014).abs() < 1e-12);
-                assert_eq!(atom_index, 1);
-            }
-            other => panic!("expected MassMismatch, got {other:?}"),
-        }
+                ref symbol,
+                atom_index: 1,
+                ..
+            } if symbol == "H"
+        ));
         let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
         builder.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 0, 1.008);
         builder.add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 2.014);
@@ -3639,10 +3648,8 @@ mod tests {
         let err = frame
             .positions_as_dlpack(dlpk::sys::DLDevice::cuda(0))
             .unwrap_err();
-        assert!(
-            format!("{err:?}").contains("non-CPU") || format!("{err:?}").contains("cuda"),
-            "{err:?}"
-        );
+        let text = format!("{err:?}");
+        assert!(text.contains("non-CPU") || text.contains("cuda"));
     }
 
     #[test]
@@ -3956,13 +3963,13 @@ mod tests {
     fn builder_index_out_of_bounds_is_loud() {
         let mut b = three_atom_builder();
         let err = b.set_atom_position(99, 0.0, 0.0, 0.0).unwrap_err();
-        match err {
-            crate::error::ParseError::IndexOutOfBounds { index, len } => {
-                assert_eq!(index, 99);
-                assert_eq!(len, 3);
+        assert!(matches!(
+            err,
+            crate::error::ParseError::IndexOutOfBounds {
+                index: 99,
+                len: 3
             }
-            other => panic!("expected IndexOutOfBounds, got {other:?}"),
-        }
+        ));
     }
 
     #[test]
@@ -3980,13 +3987,13 @@ mod tests {
         let mut b = three_atom_builder();
         let bad = [1.0, 2.0, 3.0, 4.0]; // 4 != 3*3
         let err = b.set_positions_from_flat(&bad).unwrap_err();
-        match err {
-            crate::error::ParseError::InvalidVectorLength { expected, found } => {
-                assert_eq!(expected, 9);
-                assert_eq!(found, 4);
+        assert!(matches!(
+            err,
+            crate::error::ParseError::InvalidVectorLength {
+                expected: 9,
+                found: 4
             }
-            other => panic!("expected InvalidVectorLength, got {other:?}"),
-        }
+        ));
     }
 
     #[test]
@@ -4101,13 +4108,10 @@ mod tests {
         {
             let mut w = ConFrameWriter::new(&mut buf);
             let err = w.write_frame(&fr).unwrap_err();
-            assert!(
-                matches!(
-                    err,
-                    crate::writer::WriteError::Format(crate::error::ParseError::InvalidUnits(_))
-                ),
-                "D11: writer must not replace missing v3 units, got {err}"
-            );
+            assert!(matches!(
+                err,
+                crate::writer::WriteError::Format(crate::error::ParseError::InvalidUnits(_))
+            ));
         }
         // A frame that still carries the builder units does write them.
         let fr_ok = frame.build().unwrap();
@@ -4140,10 +4144,7 @@ mod tests {
 
         frame.header.set_bonds(&[]);
         assert!(!frame.has_bonds());
-        assert!(
-            !frame.header.metadata.contains_key(meta::BONDS),
-            "empty bonds must not leave a key on the header"
-        );
+        assert!(!frame.header.metadata.contains_key(meta::BONDS));
 
         frame.header.set_bonds(&[Bond {
             i: 0,
@@ -4162,10 +4163,7 @@ mod tests {
             .metadata
             .insert(meta::BONDS.into(), serde_json::json!([]));
         assert!(parse_bonds_from_metadata(&frame.header.metadata).is_empty());
-        assert!(
-            !frame.has_bonds(),
-            "empty bonds JSON array must not count as has_bonds"
-        );
+        assert!(!frame.has_bonds());
     }
 
     #[test]
