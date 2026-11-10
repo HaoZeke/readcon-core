@@ -3132,10 +3132,12 @@ Coordinates of Component 1
         let raw = std::env::var("LLVM_PROFILE_FILE").ok()?;
         let literal = raw.split('%').next().unwrap_or(raw.as_str());
         let dir = std::path::Path::new(literal).parent()?.to_path_buf();
-        let tmp = format!("{}{}", "/", "tmp");
-        let var_tmp = format!("{}{}{}{}", "/", "var", "/", "tmp");
+        // Callers set the profile under target/cov-live or leave it unset.
+        // hold_coverage_profile: run_namespace_suite, the outside-profile
+        // test, and conbin_namespace_child. None of them build a profile
+        // under a temporary directory.
         let live = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/cov-live");
-        if !dir.starts_with(&tmp) && !dir.starts_with(&var_tmp) && !dir.starts_with(&live) {
+        if !dir.starts_with(&live) {
             return None;
         }
         let hold = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
@@ -3211,9 +3213,9 @@ Coordinates of Component 1
         mount_tmpfs(&tmp);
         mount_tmpfs(&var_tmp);
         if let Some((dir, hold)) = &held {
-            if !dir.starts_with(&tmp) && !dir.starts_with(&var_tmp) {
-                mount_tmpfs(dir.to_str().unwrap());
-            }
+            // The held directory is under target/cov-live, so the tmpfs
+            // just mounted on the temporary directories does not cover it.
+            mount_tmpfs(dir.to_str().unwrap());
             std::fs::create_dir_all(dir).unwrap();
             mount_bind(hold, dir);
             let marker = dir.join("marker");
