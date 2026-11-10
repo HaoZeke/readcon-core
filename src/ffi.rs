@@ -4111,9 +4111,8 @@ pub unsafe extern "C" fn rkr_frame_metatensor_positions_block(
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
     unsafe { *out_block = std::ptr::null_mut() };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         crate::metatensor_export::frame_positions_block(frame)
     })) {
@@ -4138,9 +4137,8 @@ pub unsafe extern "C" fn rkr_frame_metatensor_velocities_block(
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
     unsafe { *out_block = std::ptr::null_mut() };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         crate::metatensor_export::frame_velocities_block(frame)
     })) {
@@ -4166,9 +4164,8 @@ pub unsafe extern "C" fn rkr_frame_metatensor_forces_block(
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
     unsafe { *out_block = std::ptr::null_mut() };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         crate::metatensor_export::frame_forces_block(frame)
     })) {
@@ -4194,9 +4191,8 @@ pub unsafe extern "C" fn rkr_frame_metatensor_atom_energies_block(
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
     unsafe { *out_block = std::ptr::null_mut() };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         crate::metatensor_export::frame_energies_block(frame)
     })) {
@@ -4450,9 +4446,8 @@ pub unsafe extern "C" fn rkr_frame_atom_ids_view(
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let slice = frame.atom_ids.as_slice_memory_order();
     unsafe {
         *out = RKRArrayView {
@@ -4541,9 +4536,8 @@ fn fill_array2_view(
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let arr = get(frame);
     if section && arr.nrows() == 0 {
         unsafe { *out = RKRArrayView::empty() };
@@ -4562,9 +4556,8 @@ fn fill_array1_view(
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let arr = get(frame);
     if section && arr.is_empty() {
         unsafe { *out = RKRArrayView::empty() };
@@ -4625,9 +4618,8 @@ fn copy_array2_f64(
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let arr = get(frame);
     let n = if arr.nrows() > 0 {
         arr.nrows()
@@ -4673,9 +4665,8 @@ fn copy_array1_f64(
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let arr = get(frame);
     let n = if !arr.is_empty() {
         arr.len()
@@ -4786,9 +4777,8 @@ pub unsafe extern "C" fn rkr_frame_copy_atom_ids(
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let n = frame.atom_ids.len().max(frame.atom_data.len());
     if out_len < n {
         return RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL;
@@ -4851,9 +4841,8 @@ pub unsafe extern "C" fn rkr_frame_positions_as_dlpack(
     } else {
         return RKRStatus::RKR_STATUS_FEATURE_DISABLED;
     };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     // Opaque SoA storage → DLPack; CUDA requests H2D via storage_dtype / cuda_array.
     match frame.positions_as_dlpack(dl_device) {
         Ok(tensor) => {
@@ -4967,9 +4956,8 @@ pub unsafe extern "C" fn rkr_frame_positions_dlpack_ex(
         Ok(o) => o,
         Err(st) => return st,
     };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let arr = frame_positions_arc(frame);
     export_owned_array2_dlpack_opts(&arr, &o, out_tensor)
 }
@@ -5005,9 +4993,8 @@ pub unsafe extern "C" fn rkr_frame_velocities_dlpack_ex(
         Ok(o) => o,
         Err(st) => return st,
     };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     if !frame.has_velocities() {
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
@@ -5053,9 +5040,8 @@ pub unsafe extern "C" fn rkr_frame_forces_dlpack_ex(
         Ok(o) => o,
         Err(st) => return st,
     };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     if !frame.has_forces() {
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
@@ -5104,9 +5090,8 @@ pub unsafe extern "C" fn rkr_frame_displacements_dlpack_ex(
         Ok(o) => o,
         Err(st) => return st,
     };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     if !frame.has_displacements() {
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
@@ -5155,9 +5140,8 @@ pub unsafe extern "C" fn rkr_frame_spreads_dlpack_ex(
         Ok(o) => o,
         Err(st) => return st,
     };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     if !frame.has_spreads() {
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
@@ -5203,9 +5187,8 @@ pub unsafe extern "C" fn rkr_frame_atom_energies_dlpack_ex(
         Ok(o) => o,
         Err(st) => return st,
     };
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // `as_ref` is `None` only for null, and null already returned.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     if !frame.has_energies() {
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
