@@ -74,7 +74,7 @@ fn main() {
                     output.display()
                 );
                 #[cfg(feature = "chemfiles")]
-                if !report.native_con && !path_looks_like_con(input) {
+                if !report.native_con {
                     println!(
                         "-> tip: keep this .con as the interchange file; link C/Fortran/Python via rkr_* / readcon"
                     );

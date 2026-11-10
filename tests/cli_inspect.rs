@@ -142,6 +142,18 @@ fn convert_reads_native_con_and_refuses_xyz_without_chemfiles() {
         assert!(foreign_err.contains("Error:"), "{foreign_err}");
     }
 
+    let missing = dir.join("no-such.xyz");
+    let failed = bin()
+        .args([
+            "convert",
+            missing.to_str().unwrap(),
+            out_path.to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(failed.status.code(), Some(1));
+    assert!(output_text(&failed).1.contains("Error:"), "{:?}", output_text(&failed));
+
     let empty = dir.join("empty.con");
     std::fs::write(&empty, b"").unwrap();
     let no_frames = bin().arg(&empty).output().unwrap();

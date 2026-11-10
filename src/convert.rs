@@ -292,7 +292,9 @@ mod tests {
         let empty = dir.join("empty.con");
         fs::write(&empty, b"\n").unwrap();
         let err = read_frames_for_convert(&empty).unwrap_err();
-        assert!(matches!(err, ConvertError::Empty) || matches!(err, ConvertError::Parse(_)), "{err}");
+        assert!(matches!(err, ConvertError::Empty), "{err}");
+        let err = read_frames_for_convert(&dir).unwrap_err();
+        assert!(matches!(err, ConvertError::InputMissing(_)), "{err}");
 
         assert!(path_looks_like_con(Path::new("dir/A.CON.ZST")));
         assert!(!path_looks_like_con(Path::new("")));
