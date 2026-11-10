@@ -178,6 +178,7 @@ python -m pytest \
   tests/python/test_readcon.py \
   tests/python/test_numpy_absent.py \
   tests/python/test_python_error_arms.py \
+  tests/python/test_metatensor_absent.py \
   tests/python/test_error_results.py \
   tests/python/test_ase.py \
   tests/python/test_ase_physical_units.py \
@@ -237,6 +238,7 @@ python -m pytest \
   tests/python/test_readcon.py \
   tests/python/test_numpy_absent.py \
   tests/python/test_python_error_arms.py \
+  tests/python/test_metatensor_absent.py \
   tests/python/test_error_results.py \
   tests/python/test_ase.py \
   tests/python/test_ase_physical_units.py \
@@ -306,6 +308,8 @@ python "$ROOT/paper/cpc/scripts/merge_coverage.py" \
   --workspace "$ROOT" \
   --output "$OUT"
 echo "wrote $OUT"
+git rev-parse HEAD > "$CARGO_TARGET_DIR/measured-head.txt"
+git rev-parse 'HEAD^{tree}' > "$CARGO_TARGET_DIR/measured-tree.txt"
 if [ "$lean_pytest" -ne 0 ] || [ "$chem_pytest" -ne 0 ]; then
   echo "pytest lean=$lean_pytest chemfiles=$chem_pytest" >&2
   exit 1

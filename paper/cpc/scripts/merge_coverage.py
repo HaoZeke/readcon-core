@@ -64,6 +64,9 @@ def _sync_branch_records(record: dict, sides: dict[tuple, list[int]]) -> None:
 
 
 def _apply_summary(record: dict, before_lines: dict[int, int], _before_sides: dict) -> None:
+    # The first document's own summary, before any copy is raised.
+    # REPORT shows this next to the merged summary. It is not the bar.
+    record["summary_first_copy"] = json.loads(json.dumps(record["summary"]))
     lines = line_counts(record)
     flipped = [n for n, count in before_lines.items() if count == 0 and lines.get(n, 0) > 0]
     summary = record["summary"]["lines"]

@@ -61,6 +61,9 @@ def test_a_side_taken_by_another_copy_counts_as_taken():
     assert branches["count"] == 2
     assert branches["covered"] == 2
     assert branches["notcovered"] == 0
+    first = merged["data"][0]["files"][0]["summary_first_copy"]["branches"]
+    assert first["covered"] == 1
+    assert branches["covered"] >= first["covered"]
     stored = merged["data"][0]["files"][0]["branches"]
     assert all(item[4] == 5 and item[5] == 4 for item in stored)
 
