@@ -4452,6 +4452,67 @@ atoms = Atoms()
     }
 
     #[test]
+    fn a_frame_without_numpy_keeps_the_symbol() {
+        Python::initialize();
+        Python::attach(|py| {
+            py.run(
+                cr#"
+import sys
+saved = list(sys.path)
+sys.path = [
+    p for p in sys.path if "site-packages" not in p and "dist-packages" not in p
+]
+"#,
+                None,
+                None,
+            )
+            .unwrap();
+            assert!(py.import("numpy").is_err(), "numpy stayed importable");
+            let mut builder =
+                crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+            builder.add_atom("Cu", 0.4, 0.5, 0.6, [true; 3], 1, 63.5);
+            let frame = builder.build().unwrap();
+            let shown = PyConFrame::from_owned(py, frame.clone()).unwrap();
+            assert_eq!(shown.atom_count(py), 1);
+            let list = con_frame_list(
+                py,
+                vec![frame.clone(), frame],
+                crate::iterators::ReadPhaseTimes::default(),
+                8,
+                None,
+                "lazy",
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                "serial",
+                None,
+            )
+            .unwrap();
+            assert_eq!(list.borrow(py).len_frames(), 2);
+            let parsed = frames_from_parsed(py, {
+                let mut wide =
+                    crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+                wide.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 1, 1.0);
+                wide.add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 1.0);
+                let wide = wide.build().unwrap();
+                let mut narrow = wide.clone();
+                narrow.atom_data.pop();
+                narrow.positions = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+                vec![wide, narrow]
+            })
+            .unwrap();
+            assert_eq!(parsed[0].atom_count(py), 2);
+            assert_eq!(parsed[1].atom_count(py), 1);
+            py.run(cr#"
+import sys
+sys.path = saved
+"#, None, None)
+                .unwrap();
+        });
+    }
+
+    #[test]
     fn uneven_frames_keep_their_own_atom_counts() {
         Python::initialize();
         Python::attach(|py| {

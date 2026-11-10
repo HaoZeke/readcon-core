@@ -20,6 +20,11 @@ def test_read_without_numpy_keeps_the_symbols():
     with tempfile.TemporaryDirectory() as tmp:
         shutil.copytree(package, os.path.join(tmp, "readcon"))
         code = (
+            "try:\n"
+            "    import numpy\n"
+            "except ImportError:\n"
+            "    numpy = None\n"
+            "assert numpy is None, 'numpy is still importable'\n"
             "import readcon\n"
             f"frames = readcon.read_con({source!r})\n"
             "assert len(frames) == 1\n"
