@@ -609,21 +609,25 @@ fn every_export_accepts_a_null_argument() {
     assert_eq!(unsafe { rkr_abi_version_major() }, 1);
     unsafe { rkr_mts_block_free(ptr::null_mut()) };
     assert_eq!(unsafe { rkr_abi_version_major() }, 1);
+    #[cfg(feature = "metatensor")]
+    let mts_null = RKRStatus::RKR_STATUS_NULL_POINTER;
+    #[cfg(not(feature = "metatensor"))]
+    let mts_null = RKRStatus::RKR_STATUS_FEATURE_DISABLED;
     assert_eq!(
         unsafe { rkr_frame_metatensor_positions_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert_eq!(
         unsafe { rkr_frame_metatensor_velocities_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert_eq!(
         unsafe { rkr_frame_metatensor_forces_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert_eq!(
         unsafe { rkr_frame_metatensor_atom_energies_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert!(unsafe { create_writer_zstd_c(ptr::null()) }.is_null());
     assert!(unsafe { create_writer_zstd_with_precision_c(ptr::null(), 0u8) }.is_null());
@@ -631,19 +635,19 @@ fn every_export_accepts_a_null_argument() {
     assert_eq!(unsafe { rkr_abi_version_major() }, 1);
     assert_eq!(
         unsafe { rkr_frame_metatensor_positions_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert_eq!(
         unsafe { rkr_frame_metatensor_velocities_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert_eq!(
         unsafe { rkr_frame_metatensor_forces_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert_eq!(
         unsafe { rkr_frame_metatensor_atom_energies_block(ptr::null(), ptr::null_mut()) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        mts_null
     );
     assert_eq!(unsafe { rkr_frame_atom_count(ptr::null()) }, 0usize);
     assert_eq!(
@@ -1185,23 +1189,49 @@ fn live_frame_covers_the_export_bodies() {
     let bad = CString::new(b"not utf8 \xff".to_vec()).unwrap();
     assert!(unsafe { read_con_string_iterator(bad.as_ptr()) }.is_null());
     let mut out_block = ptr::null_mut();
-    assert_eq!(
-        unsafe { rkr_frame_metatensor_positions_block(frame, &mut out_block) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
-    );
-    assert_eq!(
-        unsafe { rkr_frame_metatensor_velocities_block(frame, &mut out_block) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
-    );
-    assert_eq!(
-        unsafe { rkr_frame_metatensor_forces_block(frame, &mut out_block) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
-    );
-    assert_eq!(
-        unsafe { rkr_frame_metatensor_atom_energies_block(frame, &mut out_block) },
-        RKRStatus::RKR_STATUS_FEATURE_DISABLED
-    );
-    assert!(out_block.is_null());
+    #[cfg(not(feature = "metatensor"))]
+    {
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_positions_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_velocities_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_forces_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_atom_energies_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert!(out_block.is_null());
+    }
+    #[cfg(feature = "metatensor")]
+    {
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_positions_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!out_block.is_null());
+        unsafe { rkr_mts_block_free(out_block) };
+        out_block = ptr::null_mut();
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_velocities_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_forces_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_atom_energies_block(frame, &mut out_block) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert!(out_block.is_null());
+    }
     unsafe { rkr_mts_block_free(out_block) };
     assert_eq!(unsafe { rkr_abi_version_major() }, 1);
     assert!(unsafe { rkr_read_chemfiles_first(path.as_ptr()) }.is_null());

@@ -10530,21 +10530,25 @@ mod tests {
         for export in frame_dlpacks {
             assert_eq!(unsafe { export(std::ptr::null(), &mut tensor) }, null_status);
         }
+        #[cfg(feature = "metatensor")]
+        let mts_null = RKRStatus::RKR_STATUS_NULL_POINTER;
+        #[cfg(not(feature = "metatensor"))]
+        let mts_null = RKRStatus::RKR_STATUS_FEATURE_DISABLED;
         assert_eq!(
             unsafe { rkr_frame_metatensor_positions_block(bare, std::ptr::null_mut()) },
-            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+            mts_null
         );
         assert_eq!(
             unsafe { rkr_frame_metatensor_velocities_block(bare, std::ptr::null_mut()) },
-            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+            mts_null
         );
         assert_eq!(
             unsafe { rkr_frame_metatensor_forces_block(bare, std::ptr::null_mut()) },
-            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+            mts_null
         );
         assert_eq!(
             unsafe { rkr_frame_metatensor_atom_energies_block(bare, std::ptr::null_mut()) },
-            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+            mts_null
         );
 
         let symbol = c_string("Cu");
