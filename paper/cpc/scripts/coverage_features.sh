@@ -90,10 +90,12 @@ FEATURES=parallel,zstd,grammar,python,chemfiles-from-sources,capi,rpc,metatensor
 
 echo "==> workspace, all targets, merged features"
 cargo llvm-cov clean --workspace
+# One thread. A trailing --test-threads flag is rejected by the
+# criterion benches, so the harness reads the variable instead.
+export RUST_TEST_THREADS=1
 cargo llvm-cov --workspace --all-targets \
   --features "$FEATURES" \
-  --branch --no-fail-fast --no-report --remap-path-prefix \
-  -- --test-threads=1
+  --branch --no-fail-fast --no-report --remap-path-prefix
 PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
 if ! find "$PROFDIR" -maxdepth 1 -name '*.profraw' | grep -q .; then
   echo "the feature build produced no profiles" >&2
