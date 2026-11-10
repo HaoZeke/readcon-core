@@ -4677,4 +4677,39 @@ mod missed_branch_tests {
         assert!(span2.contains("Coordinates of Component 1"), "{span2}");
         assert!(it.next_with_raw_span(&text).is_none());
     }
+
+    #[test]
+    fn a_bad_label_byte_and_a_short_checksum_are_rejected() {
+        assert!(matches!(
+            probe_section(b"H\n\xff\n"),
+            SectionProbe::InvalidUtf8
+        ));
+        let text = one_frame();
+        let frame = ConFrameIterator::new(&text).next().unwrap().unwrap();
+        assert_eq!(touch_frame_checksum(&[], &[], 1), Some(0));
+        assert!(touch_frame_checksum(std::slice::from_ref(&frame), &[], 1).is_none());
+        let stride = frame.atom_data.len() * 3;
+        let coords = vec![0.0; stride];
+        let one = touch_frame_checksum(std::slice::from_ref(&frame), &coords, 1).unwrap();
+        assert_ne!(one, 0);
+        let missing = [Some(frame.clone()), None];
+        assert!(touch_option_checksum(&missing, &coords, 1).is_none());
+        let pair = [Some(frame.clone()), Some(frame.clone())];
+        assert!(touch_option_checksum(&pair, &[], 1).is_none());
+        let wide = vec![0.0; stride * 2];
+        let both = touch_option_checksum(&pair, &wide, 1).unwrap();
+        assert_ne!(both, 0);
+        let mut extra = text.into_bytes();
+        extra.push(b'x');
+        assert!(equal_span_boundaries(&extra, 2).is_none());
+        let peeked_text = one_frame();
+        let mut peeked = ConFrameIterator::new(&peeked_text);
+        assert!(peeked.lines.peek_line().is_some());
+        let (got, span) = peeked
+            .next_with_raw_span(&peeked_text)
+            .unwrap()
+            .unwrap();
+        assert_eq!(&*got.atom_data[0].symbol, "H");
+        assert!(span.contains("H"));
+    }
 }

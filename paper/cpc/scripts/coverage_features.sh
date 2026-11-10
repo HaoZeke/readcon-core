@@ -113,6 +113,7 @@ maturin develop --features python,zstd,chemfiles-from-sources
 set +e
 python -m pytest \
   tests/python/test_v143_arms.py \
+  tests/python/test_v143_behaviour.py \
   tests/python/test_extension_edges.py \
   tests/python/test_edge_inputs.py \
   tests/python/test_readcon.py \
