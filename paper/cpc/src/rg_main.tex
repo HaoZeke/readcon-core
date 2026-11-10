@@ -77,7 +77,7 @@ Elsevier%
 \input{figures/generated/db_macros}
 % A value from a macro printed to a fixed number of significant figures.
 \newcommand{\sigfig}[2]{\num[round-mode=figures,round-precision=#1]{#2}}
-\newcommand{\DOIPENDING}{The version DOI for this untagged commit is not minted.}
+\newcommand{\DOIPENDING}{The version DOI for this release is not minted.}
 % Import labels from the supplement without its \\bibcite entries (same keys in both aux files).
 % The supplement's captions contain generated macros, so those macros are defined first.
 \makeatletter
@@ -1404,32 +1404,23 @@ a later minor without breaking older readers, and resume a search from
 the files of another code.
 
 \FloatBarrier \section*{Data availability}\label{sec:data} The software
-described here is readcon-core~\readconversion{}.
-The library measured here is the untagged commit
+described here is readcon-core~\readconversion{}, the \readconcommitrole{}
 \begin{center} \texttt{\readconcommit}
  \end{center}
-The public main branch is
+That commit is an ancestor of the public main branch
 \begin{center} \texttt{df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff}
  \end{center}
-The measured commit is not on that branch.
-\path{readcon-core.bundle} is a complete bundle of branch
-paper/pipeline-v13.
+\path{readcon-core.bundle} is a complete bundle of the paper history.
 \texttt{git clone readcon-core.bundle} needs no other commit.
-\path{readcon-library.bundle} contains one commit whose parent is the
-public base above.
-The library files of that commit have digest \texttt{\readcondigest}.
-That bundle does not contain the measured commit.
-The latest public release tag is \readconlatesttag{} at
-\begin{center} \texttt{\readconlatesttagcommit}
- \end{center}
+The library files of the release have digest \texttt{\readcondigest}.
 \readcontagstate{} The reader exchange in
-\path{paper/cpc/logs/reader-exchange.log} was measured on the clean
-commit \texttt{\rcHostCommit}.
+\path{paper/cpc/logs/reader-exchange-public.log} was measured by the
+harness of that release, on the clean commit \texttt{\rcHostCommit}.
 The stored campaigns in Table~\ref*{tab:versionmap}, including r0174 and
 the head-to-head records, were not rerun on that commit.
 Each of those records names the library it was measured with.
 Listing~\ref{lst:testrun} clones \texttt{readcon-core.bundle}.
-Rebuild the library from the untagged commit above with \texttt{cargo
+Rebuild the library from the release commit above with \texttt{cargo
 build -{}-release}.
 The concept record of readcon-core
 \cite{goswamiReadconcoreConConvel2026} is
@@ -1440,7 +1431,7 @@ Two commits in this repository carry parts of the reader used here:
 \texttt{\readconpbccommit} gives the Python binding one periodic flag
 per cell vector, and \texttt{\readconrcidxcommit} (pull
 request~\readconrcidxpr) adds the frame index.
-In a checkout of that untagged commit, \texttt{cargo build -{}-release}
+In a checkout of that release, \texttt{cargo build -{}-release}
 builds the Rust library, the shared and static C libraries and the
 command-line program \texttt{readcon-core}, and \texttt{-{}-features
 zstd,parallel} adds the two features.
@@ -1460,10 +1451,7 @@ The library of a commit is its files \path{src}, \path{include},
 \path{build.rs}, \path{Cargo.toml}, \path{Cargo.lock} and
 \path{pyproject.toml}.
 Its digest, the SHA-256 over their \texttt{sha256sum} lines in byte
-order of their paths, begins \texttt{\readcondigest} for this checkout.
-This checkout rejects a cell whose radicand lies outside the rounding
-window of \texttt{cell\_vectors}, and a declared atom count larger than
-the bytes that remain.
+order of their paths, begins \texttt{\readcondigest}.
 The reader exchange names the clean commit \texttt{\rcHostCommit}.
 The other timing records name the library they were measured with,
 \texttt{\readconrecorddigest}.

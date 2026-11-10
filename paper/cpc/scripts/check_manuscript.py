@@ -448,7 +448,17 @@ def check_release(imported: dict) -> str:
     A record that ``measures_release`` lists published versions is held to them for the builds of those versions.
     """
     version, commit = release()
-    digest = provenance.library_digest()
+    head = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    # The manuscript names a public release. This checkout is that release
+    # only when HEAD is the named commit. Campaigns measured on another
+    # library keep the digest they recorded.
+    own = head == commit
+    digest = provenance.library_digest() if own else (library_at(commit) or "")
     bad = printed_commits(commit, digest)
     for script in (SCRIPTS / "gen_release.py", ROOT / "packet" / "make_packet.py"):
         current = subprocess.run(
@@ -459,17 +469,18 @@ def check_release(imported: dict) -> str:
         )
         if current.returncode != 0:
             bad.append((current.stdout + current.stderr).strip().splitlines()[-1])
-    for rel, pattern in (
-        ("VERSION", r"\A(\S+)\n?\Z"),
-        ("Cargo.toml", r'^version = "([^"]+)"'),
-        ("pyproject.toml", r'^version = "([^"]+)"'),
-        ("pixi.toml", r'^version = "([^"]+)"'),
-    ):
-        found = re.search(pattern, (REPO / rel).read_text(), re.M)
-        if found is None or found.group(1) != version:
-            bad.append(
-                f"{rel} is version {found and found.group(1)}; release.tex names {version}"
-            )
+    if own:
+        for rel, pattern in (
+            ("VERSION", r"\A(\S+)\n?\Z"),
+            ("Cargo.toml", r'^version = "([^"]+)"'),
+            ("pyproject.toml", r'^version = "([^"]+)"'),
+            ("pixi.toml", r'^version = "([^"]+)"'),
+        ):
+            found = re.search(pattern, (REPO / rel).read_text(), re.M)
+            if found is None or found.group(1) != version:
+                bad.append(
+                    f"{rel} is version {found and found.group(1)}; release.tex names {version}"
+                )
     if not re.search(
         r"^\s*version: files\('VERSION'\),$", (REPO / "meson.build").read_text(), re.M
     ):
@@ -485,7 +496,7 @@ def check_release(imported: dict) -> str:
                 f"src/commit.tex names commit {commit[:12]}, whose library (digest {at[:12]}) is not this "
                 f"tree's ({digest[:12]})"
             )
-    if imported["readcon_version"] != version:
+    if own and imported["readcon_version"] != version:
         bad.append(
             f"this Python imports readcon {imported['readcon_version']}; release.tex names {version}"
         )
@@ -512,11 +523,11 @@ def check_release(imported: dict) -> str:
             if build.version in measured:
                 continue
             where = f"{rel} ({build.where})" if build.where else rel
-            if build.version is not None and build.version != version:
+            if own and build.version is not None and build.version != version:
                 bad.append(
                     f"{where}: readcon-core {build.version}, release.tex names {version}"
                 )
-            if build.digest != digest:
+            if own and build.digest != digest:
                 bad.append(
                     f"{where}: library {(build.digest or 'of an unknown commit')[:12]}, this tree "
                     f"{digest[:12]}"

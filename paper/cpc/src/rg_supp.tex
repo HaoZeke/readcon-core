@@ -124,8 +124,8 @@ We call two reads equal when their coordinates match.
 We count the frames a reader returns and the bytes it keeps.
 We draw each restored figure from a record in this directory.
 We leave a version deposit unnamed until the record exists.
-We build the library from the untagged commit named in the manuscript.
-That commit is not on the public main branch.
+We build the library from the release commit named in the manuscript.
+That commit is on the public main branch.
 We run one cell at a time on one host.
 We name the processor family and model, the model string, the clock, the core count, the memory, the kernel, the operating system and the compilers.
 
@@ -458,10 +458,9 @@ Only the second refuses a file with a legacy velocity label in capitals or separ
 On a blank symbol line and on a symbol line that starts with \texttt{\{}, the third and the fourth refuse the file and the earlier two read it, and the fourth returns the outcome of the third on every probe.
 
 \FloatBarrier \section{Reproduction}\label{sec:supp-repro} Table~\ref{tab:versionmap} names the build and host of every record from a readcon-core build.
-This checkout is readcon-core~\readconversion{}, the \readconcommitrole{} \texttt{\readconcommitshort}.
-The library of this checkout has a digest that begins \texttt{\readcondigest}.
-This checkout rejects a cell whose radicand lies outside the rounding window of \texttt{cell\_vectors}, and a declared atom count larger than the bytes that remain.
-The reader exchange in \path{paper/cpc/logs/reader-exchange.log} was measured on the clean commit \texttt{\rcHostCommit}.
+The software described here is readcon-core~\readconversion{}, the \readconcommitrole{} \texttt{\readconcommitshort}.
+The library of that release has a digest that begins \texttt{\readcondigest}.
+The reader exchange in \path{paper/cpc/logs/reader-exchange-public.log} was measured on the clean commit \texttt{\rcHostCommit}.
 The stored campaigns in Table~\ref{tab:versionmap}, including r0174 and the head-to-head records, were not rerun on that commit.
 Each of those records names the library it was measured with, and that digest begins \texttt{\readconrecorddigest}.
 Two of them also run other builds, which their headings name: the drift comparison reads the published wheels of 0.17.0, 0.17.1, 0.17.2 and 0.17.3, the earlier releases of CON 3.1, and the eOn case runs the public eOn client and the readcon-core it embeds.

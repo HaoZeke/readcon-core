@@ -4,16 +4,17 @@
 src/commit.tex holds one macro, ``\\readconcommit``, the readcon-core commit
 the paper describes; it is the one value to change when the release is
 tagged.  Everything else of release.tex follows from that commit, the
-version of Cargo.toml and the git history, and the script stops unless
+version of that commit's Cargo.toml and the git history, and the script stops unless
 
-- the repository holds the commit and HEAD has its tree, so every check that
-  reads this checkout reads the files of that commit,
-- the library files of the commit (``provenance.LIBRARY_PATHS``) are those of
-  this working tree. The timed campaign in
-  ``bench/results/r0174/provenance.json`` is reused and is not rerun, so its
-  ``library_digest`` is reported as ``\\readconrecorddigest`` and is not
-  required to equal this checkout,
-- the commit's Cargo.toml gives the version of this tree's Cargo.toml and its
+- the repository holds the commit,
+- the commit is an ancestor of the public main branch,
+- when the commit is HEAD, its library files (``provenance.LIBRARY_PATHS``)
+  are this working tree and the timed campaign in
+  ``bench/results/r0174/provenance.json`` names that same library. Other
+  library files stop here instead of printing a digest no record names.
+  When the commit is an earlier public release, that campaign was not rerun,
+  and its digest is reported as ``\\readconrecorddigest``,
+- the commit's Cargo.toml gives the version release.tex prints and its
   CHANGELOG.md has a section for that version,
 - when commit d0b7d3c7, the head of pull request ``\\readconbasepr``, is an
   ancestor of the commit, the commits ``\\readconpbccommit`` and
@@ -122,25 +123,42 @@ def identity() -> dict:
         raise SystemExit(
             f"src/commit.tex names {commit}, which this repository does not hold"
         )
-    digest = provenance.library_digest()
+    checkout = provenance.library_digest()
     held = provenance.library_digest_at(commit)
     if held is None:
         raise SystemExit(f"commit {commit[:12]} has no library files")
-    if held != digest:
-        raise SystemExit(
-            f"commit {commit[:12]} library {held[:12]} is not this tree's {digest[:12]}"
-        )
     recorded = (
         json.loads(BUILD_RECORD.read_text())["build"]["library_digest"]
         if BUILD_RECORD.is_file()
         else None
     )
-    version = provenance.library_version()
+    head = git("rev-parse", "HEAD")
+    public = ancestor(commit, "origin/main")
+    if head == commit or not public:
+        if held != checkout:
+            raise SystemExit(
+                f"commit {commit[:12]} holds library {held[:12]}; this tree holds "
+                f"{checkout[:12]}"
+            )
+        if recorded is not None and recorded != checkout:
+            raise SystemExit(
+                f"commit {commit[:12]} holds library {checkout[:12]}; "
+                f"{BUILD_RECORD.relative_to(ROOT)} names {recorded[:12]}; "
+                "other library files need a new run of every record"
+            )
+        if not public:
+            raise SystemExit(
+                f"commit {commit[:12]} is not on the public main branch"
+            )
+    digest = held
     cargo = git("show", f"{commit}:Cargo.toml") or ""
     found = re.search(r'^version = "([^"]+)"', cargo, re.M)
-    if not found or found.group(1) != version:
+    if not found:
+        raise SystemExit(f"commit {commit[:12]} Cargo.toml has no version")
+    version = found.group(1)
+    if head == commit and version != provenance.library_version():
         raise SystemExit(
-            f"commit {commit[:12]} is version {found and found.group(1)}; Cargo.toml is {version}"
+            f"commit {commit[:12]} is version {version}; Cargo.toml is {provenance.library_version()}"
         )
     if not re.search(
         rf"^## v{re.escape(version)} ",
