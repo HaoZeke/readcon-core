@@ -4169,6 +4169,28 @@ mod one_thread_and_numa {
         stored.project_storage_dtypes(&dtypes);
         let packed = super::pack_position_slab(&[stored], 1).unwrap();
         assert_eq!(packed.len(), block.n_atoms * 3);
+        assert!(super::pack_position_slab(&[], 1).is_none());
+
+        let dir = tempfile::tempdir().unwrap();
+        let empty = dir.path().join("empty.con");
+        std::fs::write(&empty, "").unwrap();
+        assert!(super::read_first_frame(&empty).is_err());
+        let bad = dir.path().join("bad.con");
+        let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
+        std::fs::write(&bad, text.replacen("0.63940000000000108", "notanumber", 1)).unwrap();
+        assert!(super::read_first_frame(&bad).is_err());
+        assert!(super::read_nth_frame_from_text("", 0).is_err());
+        assert!(super::read_nth_frame_from_text(&text, 4).is_err());
+        let doubled = text.clone() + &text;
+        assert!(super::parse_byte_span(doubled.as_bytes(), 1, doubled.len()).is_err());
+
+        assert_eq!(super::touch_frame_checksum(&[], &[], 1), Some(0));
+        assert!(super::touch_frame_checksum(&[frame.clone()], &[], 1).is_none());
+        assert_eq!(super::touch_option_checksum(&[], &[], 1), Some(0));
+        assert!(super::touch_option_checksum(&[None], &[], 1).is_none());
+        let stride = frame.atom_data.len() * 3;
+        let coords = vec![0.0; stride];
+        assert!(super::touch_option_checksum(&[Some(frame.clone())], &coords[..stride - 1], 1).is_none());
     }
 
     #[test]
