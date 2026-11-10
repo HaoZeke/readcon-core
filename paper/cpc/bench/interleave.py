@@ -15,7 +15,10 @@ The record keeps the seed, the order of every round, the samples of each cell
 in the order they ran, and the median, the first and third quartiles and the
 interquartile range of each cell (``statistics.quantiles`` with method
 ``inclusive``), with the hardware line of ``provenance.hardware`` and the load
-averages of the host before the first round and after the last.
+averages of the host before the first round and after the last. It also keeps
+the boot id, the uptime and the ``lscpu`` text at those two moments. When the
+caller passes ``artifacts``, the record keeps the SHA-256 of each binary and
+each input, taken before the first round and checked again after the last.
 
 A campaign with ``settle_ms`` runs ``settle(settle_ms)`` before every run,
 warm-up or timed, of every cell, and the record keeps ``settle_ms``.
@@ -29,13 +32,15 @@ period leaves slow take to come level with the others under that load.
 from __future__ import annotations
 
 import array
+import hashlib
 import os
 import random
 import statistics
 import struct
+import subprocess
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -125,6 +130,32 @@ def settle(ms: float, window_ms: float | None = None) -> dict[int, list[int]]:
     return counts
 
 
+def host_snapshot() -> dict[str, str]:
+    """Boot id, uptime in seconds and the full ``lscpu`` text."""
+    boot_id = Path("/proc/sys/kernel/random/boot_id").read_text(encoding="utf-8").strip()
+    uptime_s = Path("/proc/uptime").read_text(encoding="utf-8").split()[0]
+    lscpu = subprocess.check_output(["lscpu"], text=True)
+    return {"boot_id": boot_id, "uptime_s": uptime_s, "lscpu": lscpu}
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def hash_artifacts(artifacts: Mapping[str, Path]) -> dict[str, str]:
+    hashed = {}
+    for name, path in artifacts.items():
+        path = Path(path)
+        if not path.is_file():
+            raise SystemExit(f"{name}: {path} is not a file to hash")
+        hashed[name] = sha256_file(path)
+    return hashed
+
+
 def schedule(
     names: list[str], n_rounds: int, n_warmup: int, rng: random.Random
 ) -> list[list[str]]:
@@ -146,11 +177,16 @@ def campaign(
     seed_value: int | None = None,
     varying: tuple[str, ...] = (),
     settle_ms: float = 0,
+    artifacts: Mapping[str, Path] | None = None,
 ) -> dict:
     """Run ``cells`` in interleaved rounds; return the protocol, hardware and per-cell summary of the record."""
     n_rounds = rounds() if n_rounds is None else n_rounds
+    if n_rounds < 6:
+        raise SystemExit(f"a timing record takes at least 6 rounds, got {n_rounds}")
     seed_value = seed() if seed_value is None else seed_value
     order = schedule(sorted(cells), n_rounds, warmup, random.Random(seed_value))
+    host_before = host_snapshot()
+    artifact_hashes = hash_artifacts(artifacts or {})
     load_start = os.getloadavg()
     runs: dict[str, list[dict]] = {name: [] for name in cells}
     printed: dict[str, dict] = {}
@@ -178,6 +214,13 @@ def campaign(
             else f"warm-up round {index + 1}"
         )
         print(f"{label}: {time.perf_counter() - start:.0f} s", flush=True)
+    host_after = host_snapshot()
+    if host_after["boot_id"] != host_before["boot_id"]:
+        raise SystemExit("the boot id changed during the campaign")
+    if artifacts:
+        again = hash_artifacts(artifacts)
+        if again != artifact_hashes:
+            raise SystemExit("a binary or an input changed during the campaign")
     result = {}
     for name in sorted(cells):
         values = [float(out[metric]) for out in runs[name]]
@@ -208,6 +251,13 @@ def campaign(
             "warmup_order": order[:warmup],
             "load_average_before": list(load_start),
             "load_average_after": list(os.getloadavg()),
+            "boot_id_before": host_before["boot_id"],
+            "uptime_s_before": host_before["uptime_s"],
+            "lscpu_before": host_before["lscpu"],
+            "boot_id_after": host_after["boot_id"],
+            "uptime_s_after": host_after["uptime_s"],
+            "lscpu_after": host_after["lscpu"],
+            "artifact_sha256": artifact_hashes,
             "campaign_s": round(time.perf_counter() - start, 1),
             **({"settle_ms": settle_ms} if settle_ms else {}),
         },

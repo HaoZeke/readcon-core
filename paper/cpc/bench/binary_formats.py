@@ -778,9 +778,14 @@ def time_cells() -> None:
 
     checks = load("checks.json")["cells"]
     settle = load("settle.json")
+    artifacts = {}
+    for name, (driver, _mode, _threads, file) in CELLS.items():
+        artifacts[f"driver:{driver}"] = BIN / driver
+        artifacts[f"input:{file}"] = PAYLOADS / file
     record = interleave.campaign(
         {name: timed_run(*cell) for name, cell in CELLS.items()},
         settle_ms=settle["settle_ms"],
+        artifacts=artifacts,
     )
     cells = {}
     for name, (driver, mode, threads, file) in CELLS.items():

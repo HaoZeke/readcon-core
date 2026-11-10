@@ -123,7 +123,15 @@ def main() -> None:
             "warm": cell[4],
         }
 
-    record = interleave.campaign(cells)
+    artifacts = {"bench_child": HERE / "bench_child.py"}
+    module = stamp["build"].get("readcon_module")
+    if module:
+        artifacts["readcon_module"] = Path(module)
+    for program, path in cpp_reads.PROGRAMS.items():
+        artifacts[f"cpp:{program}"] = Path(path)
+    for info in meta.values():
+        artifacts[f"payload:{info['payload']}"] = readers.PAYLOADS / info["payload"]
+    record = interleave.campaign(cells, artifacts=artifacts)
     bad = []
     for name, info in meta.items():
         cell = record["cells"][name]
