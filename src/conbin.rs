@@ -1654,6 +1654,64 @@ mod tests {
         write_values(&mut file, &vel).unwrap();
     }
 
+    #[test]
+    fn a_missing_file_is_an_os_error() {
+        let path = std::env::temp_dir().join(format!("conbin-missing-{}", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let err = QueueLimits::of(&path).unwrap_err();
+        assert!(
+            err.to_string().contains("os error 2"),
+            "a missing file must be an os error: {err}"
+        );
+        match map_file(&path, 1) {
+            Err(err) => assert!(err.to_string().contains("os error 2"), "{err}"),
+            Ok(_) => panic!("a missing file mapped"),
+        }
+        match sum_split_streams(&path, 2) {
+            Err(err) => assert!(err.to_string().contains("os error 2"), "{err}"),
+            Ok(_) => panic!("a missing file summed"),
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_cached_file_sums_from_resident_pages() {
+        let dir = std::path::PathBuf::from(format!("/dev/shm/conbin-resident-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("known.conbin");
+        write_known(&path, 2, 16);
+        let cached = std::fs::read(&path).unwrap();
+        assert!(cached.len() > 8);
+        let file = File::open(&path).unwrap();
+        let ptr = unsafe {
+            libc::mmap(
+                std::ptr::null_mut(),
+                cached.len(),
+                libc::PROT_READ,
+                libc::MAP_PRIVATE,
+                file.as_raw_fd(),
+                0,
+            )
+        };
+        assert_ne!(ptr, libc::MAP_FAILED);
+        let page = page_size().unwrap();
+        let pages = cached.len().div_ceil(page);
+        let mut resident = vec![0u8; pages];
+        assert_eq!(unsafe { libc::mincore(ptr, cached.len(), resident.as_mut_ptr()) }, 0);
+        assert!(
+            resident.iter().all(|byte| byte & 1 == 1),
+            "the page cache dropped the file before the sum"
+        );
+        unsafe { libc::munmap(ptr, cached.len()) };
+        let mapped = map_file(&path, 1).unwrap();
+        let expect = mapped.positions_f64().unwrap().iter().sum::<f64>()
+            + mapped.velocities_f64().unwrap().iter().sum::<f64>();
+        let got = sum_split_streams(&path, 2).unwrap();
+        assert_eq!(got, expect, "resident sum {got} mapped sum {expect}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     #[cfg(target_os = "linux")]
     #[test]
     fn worker_span_shares_the_queue() {
