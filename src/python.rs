@@ -2009,9 +2009,11 @@ fn con_frame_list(
     };
     let slab_s = t_slab.elapsed().as_secs_f64();
     let slab_minflt = crate::iterators::process_minflt().saturating_sub(fault0);
+    // pack_position_slab returns None when frames.is_empty()
+    // (iterators.rs:2991-2993). A Some buffer has at least one frame.
     let n_atoms = match packed.as_ref() {
-        Some(values) if n_frames > 0 => values.len() / n_frames / 3,
-        _ => 0,
+        Some(values) => values.len() / n_frames / 3,
+        None => 0,
     };
     let t_release = std::time::Instant::now();
     if packed.is_some() {
