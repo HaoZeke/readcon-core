@@ -4085,6 +4085,42 @@ mod api_coverage {
             assert!(bad_positions.unwrap_err().contains("disagree"));
             let bad_cell = frame_from_arrays(&[0.1, 0.2, 0.3], &[4.0], &[1.0, 2.0, 3.0], "Cu");
             assert!(bad_cell.unwrap_err().contains("disagree"));
+            let pos = numpy.call_method1("zeros", ((1, 1, 3),)).unwrap();
+            let mass = numpy.call_method1("ones", ((1, 1),)).unwrap();
+            let short_cell = numpy.call_method1("ones", ((1, 3),)).unwrap();
+            let rejected = write_coords(
+                py,
+                dir.path().join("bad-cell.con").to_str().unwrap(),
+                pos.extract().unwrap(),
+                mass.extract().unwrap(),
+                short_cell.extract().unwrap(),
+                "Cu",
+            );
+            assert!(rejected.is_err(), "a short cell must be rejected");
+            let words = numpy.call_method1("array", (vec!["nope"],)).unwrap();
+            assert!(py_usize_values(&words).is_err());
+            let mask = pyo3::types::PyList::new(py, [true, false, true]).unwrap();
+            assert_eq!(py_bool_mask(&mask).unwrap(), [true, false, true]);
+            let mut bare = crate::types::ConFrameBuilder::new([2.0, 2.0, 2.0], [90.0, 90.0, 90.0]);
+            bare.add_atom("Cu", 0.1, 0.2, 0.3, [false; 3], 1, 63.5);
+            let bare = bare.build().unwrap();
+            let mut raw = Vec::new();
+            {
+                let mut writer = crate::writer::ConFrameWriter::new(&mut raw);
+                writer.write_frame(&bare).unwrap();
+            }
+            let plain = dir.path().join("no-vel.con");
+            std::fs::write(&plain, raw).unwrap();
+            let no_vel = dir.path().join("no-vel.conbin");
+            write_conbin(py, plain.to_str().unwrap(), no_vel.to_str().unwrap(), false).unwrap();
+            let mut header = std::fs::read(&no_vel).unwrap();
+            header[12] &= !2;
+            std::fs::write(&no_vel, header).unwrap();
+            let missing_vel = read_conbin(py, no_vel.to_str().unwrap(), 1).unwrap_err();
+            assert!(
+                missing_vel.to_string().contains("velocity"),
+                "{missing_vel}"
+            );
             let built = frame_from_arrays(
                 &[0.1, 0.2, 0.3],
                 &[4.0],

@@ -577,5 +577,22 @@ mod tests {
         }
         let err = finish(&bad_meta).unwrap_err();
         assert!(err.contains("metadataJson"), "{err}");
+
+        let mut masses_ready = Builder::new_default();
+        {
+            let mut root = masses_ready.init_root::<con_frame_data::Builder>();
+            root.reborrow().init_cell(3);
+            root.reborrow().init_angles(3);
+            let mut masses = root.reborrow().init_masses_per_type(2);
+            masses.set(0, 1.0);
+            masses.set(1, 16.0);
+            let mut atoms = root.reborrow().init_atoms(3);
+            for (i, sym) in ["H", "H", "O"].iter().enumerate() {
+                atoms.reborrow().get(i as u32).set_symbol(sym);
+            }
+        }
+        let back = finish(&masses_ready).unwrap();
+        assert_eq!(back.header.natms_per_type, vec![2, 1]);
+        assert_eq!(back.header.masses_per_type.len(), 2);
     }
 }

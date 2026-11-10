@@ -181,6 +181,32 @@ mod unix_tests {
         })
     }
 
+    fn bad_stamp_write(spec: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+        runtime.block_on(async {
+            let local = tokio::task::LocalSet::new();
+            local
+                .run_until(async {
+                    let service = connect_service(&Endpoint::parse(spec)?).await?;
+                    let mut request = service.write_frames_request();
+                    {
+                        let mut wr = request.get().init_req();
+                        let mut stamp = wr.reborrow().init_compatibility();
+                        stamp.set_abi_major(99);
+                        stamp.set_abi_minor(0);
+                        stamp.set_abi_layout_revision(0);
+                        stamp.set_con_spec_version(0);
+                        wr.init_frames(0);
+                    }
+                    request.send().promise.await?;
+                    Ok(())
+                })
+                .await
+        })
+    }
+
     const MINIMAL: &str = include_str!("../../resources/conformance/valid/v2_minimal.con");
 
     #[test]
@@ -219,6 +245,42 @@ mod unix_tests {
         assert!(rejected.is_err(), "a breaking ABI major must fail the parse");
         let rejected = short_cell_write(&spec);
         assert!(rejected.is_err(), "a short cell must fail the write");
+        let rejected = bad_stamp_write(&spec);
+        assert!(rejected.is_err(), "a breaking ABI major must fail the write");
         let _ = std::fs::remove_file(&sock);
+    }
+
+    #[test]
+    fn tcp_parse_file_and_a_missing_path() {
+        let port = 20_000 + (std::process::id() % 10_000) as u16;
+        let spec = format!("127.0.0.1:{port}");
+        let spec_server = spec.clone();
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("runtime");
+            let local = tokio::task::LocalSet::new();
+            let _ = rt.block_on(local.run_until(crate::rpc::server::start_server(&spec_server)));
+        });
+        let started = std::time::Instant::now();
+        let client = loop {
+            if let Ok(client) = RpcClient::new(&spec) {
+                if client.parse_bytes(MINIMAL.as_bytes()).is_ok() {
+                    break client;
+                }
+            }
+            assert!(
+                started.elapsed() < Duration::from_secs(5),
+                "tcp server did not accept connections"
+            );
+            std::thread::sleep(Duration::from_millis(20));
+        };
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("one.con");
+        std::fs::write(&path, MINIMAL).unwrap();
+        let frames = client.parse_file(&path).expect("parse file");
+        assert_eq!(frames.len(), 1);
+        assert!(client.parse_file(dir.path().join("missing.con").as_path()).is_err());
     }
 }

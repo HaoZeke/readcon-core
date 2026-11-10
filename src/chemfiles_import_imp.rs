@@ -681,7 +681,10 @@ pub fn con_frames_from_memory_with(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::meta;
     use chemfiles::{Atom, Frame, Property, UnitCell};
+    use serde_json::{Value, json};
+    use std::collections::BTreeMap;
     use std::io::Write;
 
     fn make_water_frame() -> Frame {
@@ -1233,5 +1236,80 @@ END
             ..ChemfilesReadOpts::default()
         };
         assert!(con_frames_from_trajectory_path_with(&path, &bad_step).is_err());
+    }
+
+    #[test]
+    fn partial_windows_odd_properties_and_a_replaced_mass() {
+        let mut meta = BTreeMap::new();
+        insert_mapped_or_extra(&mut meta, "frame_index", &Property::Double(-1.5));
+        insert_mapped_or_extra(&mut meta, "frame_index", &Property::Double(4.0));
+        insert_mapped_or_extra(&mut meta, "note", &Property::String("kept".into()));
+        assert!(meta.keys().any(|k| k.contains("frame_index")));
+        assert_eq!(meta.get(meta::FRAME_INDEX).and_then(|v| v.as_u64()), Some(4));
+        stamp_chemfiles_units(&mut meta);
+        let units = meta.get(meta::UNITS).cloned();
+        stamp_chemfiles_units(&mut meta);
+        assert_eq!(meta.get(meta::UNITS).cloned(), units);
+
+        let residues = vec![
+            Value::String("nope".into()),
+            json!({"name": "MOL"}),
+            json!({"name": "MOL", "atoms": [9, 8]}),
+            json!({"name": "MOL", "atoms": [0]}),
+        ];
+        let mapped = remap_residue_atoms(residues, &BTreeMap::from([(0, 1)]));
+        assert_eq!(mapped.len(), 2);
+        assert!(mapped.iter().any(|r| r.get("atoms").is_none()));
+
+        let mut frame = Frame::new();
+        let mut heavy = Atom::new("He");
+        heavy.set_mass(4.0);
+        let mut light = Atom::new("X");
+        light.set_mass(0.5);
+        let mut named = Atom::new("H1");
+        named.set_atomic_type("H");
+        named.set_mass(0.8);
+        let mut plain = Atom::new("H");
+        plain.set_mass(1.5);
+        frame.add_atom(&heavy, [0.0, 0.0, 0.0], None);
+        frame.add_atom(&light, [1.0, 0.0, 0.0], None);
+        frame.add_atom(&named, [2.0, 0.0, 0.0], None);
+        frame.add_atom(&plain, [3.0, 0.0, 0.0], Some([0.0, 0.1, 0.0]));
+        frame.set_cell(&UnitCell::new([8.0, 8.0, 8.0]));
+        frame.set("energy", Property::String("not-a-number".into()));
+        let con = con_frame_from_chemfiles(&frame).expect("mixed masses");
+        let masses = &con.header.masses_per_type;
+        assert!(masses.iter().any(|m| *m <= 1.0), "{masses:?}");
+        assert!(masses.iter().any(|m| *m >= 2.0), "{masses:?}");
+        assert!(masses.iter().any(|m| *m > 1.0 && *m < 2.0), "{masses:?}");
+
+        assert!(apply_guess_bonds(&mut Frame::new(), false).is_ok());
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("window.xyz");
+        std::fs::write(&path, "1\n\nH 0 0 0\n1\n\nHe 1 0 0\n1\n\nO 2 0 0\n").unwrap();
+        let window = ChemfilesReadOpts {
+            start: 1,
+            step: 2,
+            stop: Some(3),
+            format: Some(String::new()),
+            guess_bonds: true,
+            ..ChemfilesReadOpts::default()
+        };
+        let frames = con_frames_from_trajectory_path_with(&path, &window).expect("window");
+        assert_eq!(frames.len(), 1);
+        let mem = con_frames_from_memory_with(
+            "1\n\nH 0 0 0\n1\n\nHe 1 0 0\n1\n\nO 2 0 0\n",
+            "XYZ",
+            &window,
+        )
+        .expect("memory window");
+        assert_eq!(mem.len(), 1);
+        let topo = ChemfilesReadOpts {
+            topology: Some(path.clone()),
+            topology_format: Some(String::new()),
+            ..ChemfilesReadOpts::default()
+        };
+        assert!(con_frames_from_trajectory_path_with(&path, &topo).is_ok());
     }
 }

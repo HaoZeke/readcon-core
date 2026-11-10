@@ -588,9 +588,17 @@ mod tests {
         assert_eq!(tiled_span(&two).unwrap().1, 2);
         assert!(tiled_span(&extra).is_none());
         assert!(read_span(&one, 4, 1).is_err());
+        let past = read_span(&one, 0, text.len() + 8).unwrap_err();
+        assert!(past.contains("outside"), "{past}");
         assert!(read_span(&dir.path().join("missing.con"), 0, 1).is_err());
         let bytes = read_span(&one, 0, 4).unwrap();
         assert_eq!(bytes.len(), 4);
+        let mut broken = format!("{text}{text}");
+        let mid = text.len() + text.len() / 2;
+        broken.replace_range(mid..mid + 1, "\n");
+        let broken_path = dir.path().join("broken-tile.con");
+        std::fs::write(&broken_path, &broken).unwrap();
+        assert!(tiled_span(&broken_path).is_none());
 
         let idx = FrameIndex {
             data_len: 10,
@@ -807,6 +815,23 @@ mod tests {
                 .expect(name);
             assert!(n > 0, "{name}");
         }
+        let missing = dir.join("no-such-dir").join("out.con");
+        let err = crate::distrib_write::write_block(
+            &comm,
+            &missing,
+            &frames,
+            crate::distrib_write::WriteMode::Gather,
+            None,
+        );
+        assert!(err.is_err(), "a missing directory must fail the gather");
+        let err = crate::distrib_write::write_block(
+            &comm,
+            &dir,
+            &frames,
+            crate::distrib_write::WriteMode::Gather,
+            None,
+        );
+        assert!(err.is_err(), "a directory path must fail the gather");
         drop(comm);
         drop(universe);
     }

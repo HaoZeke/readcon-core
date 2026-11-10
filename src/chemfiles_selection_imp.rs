@@ -423,7 +423,9 @@ mod tests {
         assert_eq!(m.size, 3);
         assert_eq!(m.atoms[1], 0, "center should be O (index 0)");
         let ends = [m.atoms[0], m.atoms[2]];
-        assert!(ends.contains(&1) && ends.contains(&2));
+        assert!(ends.contains(&1));
+        assert!(ends.contains(&2));
+        assert!(!ends.contains(&9));
 
         let no_topo = water_con_frame();
         let empty = evaluate_selection_on_con_frame("angles: all", &no_topo).expect("empty");
@@ -887,7 +889,23 @@ mod chemfiles_selection_cpp_regression {
         frame
             .header
             .set_bonds(&[crate::types::Bond::new(0, 1)]);
+        let err = select_atom_indices("bonds: all", &frame).unwrap_err();
+        assert!(err.to_string().contains("atom context"), "{err}");
         let err = select_atom_positions_on_frames("bonds: all", &[frame]).unwrap_err();
         assert!(err.to_string().contains("atom context"), "{err}");
+
+        let mut skewed = ConFrameBuilder::new([3.0, 4.0, 5.0], [70.0, 80.0, 100.0]);
+        skewed.add_atom("Cu", 0.0, 0.0, 0.0, [false; 3], 0, 63.5);
+        skewed.with_velocity([0.2, 0.0, 0.0]);
+        skewed.add_atom("Cu", 1.0, 0.0, 0.0, [false; 3], 1, 63.5);
+        let mut skewed = skewed.build().unwrap();
+        skewed.header.set_bonds(&[
+            crate::types::Bond::new(40, 0),
+            crate::types::Bond::new(0, 0),
+            crate::types::Bond::new(0, 1),
+        ]);
+        let projected = chemfiles_frame_from_con_frame(&skewed).expect("skew");
+        assert_eq!(projected.cell().shape(), CellShape::Triclinic);
+        assert_eq!(projected.topology().bonds().len(), 1);
     }
 }
