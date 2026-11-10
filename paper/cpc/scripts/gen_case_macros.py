@@ -321,7 +321,6 @@ def main() -> None:
         ):
             if name.startswith(prefix):
                 return records
-        raise KeyError(name)
 
     lines = [
         "% Written by paper/cpc/scripts/gen_case_macros.py from the records named in its docstring."
