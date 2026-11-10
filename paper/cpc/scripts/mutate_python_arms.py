@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+from receipt_text import ROOT, clean, tool_path
 SOURCE = ROOT / "src" / "python.rs"
 OUT = ROOT / "paper" / "cpc" / "receipts" / "python"
 
@@ -74,9 +74,7 @@ MUTATIONS = [
 
 def run_test(name: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
-    env["PATH"] = (
-        "/home/ubuntu/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin"
-    )
+    env["PATH"] = tool_path()
     env["CARGO_TARGET_DIR"] = str(ROOT / "target" / "py-mpi")
     env["LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu"
     env["RUSTFLAGS"] = "-C link-arg=-lpython3.12"
@@ -124,7 +122,7 @@ def main() -> int:
             "----- test output -----\n"
             f"{result.stdout}"
         )
-        (OUT / f"{name}.txt").write_text(body)
+        (OUT / f"{name}.txt").write_text(clean(body))
         ok = result.returncode != 0 and needle in result.stdout and restored
         print(f"{name}: exit {result.returncode} restored {restored} ok {ok}", flush=True)
         if not ok:

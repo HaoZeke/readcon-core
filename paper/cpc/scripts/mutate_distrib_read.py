@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+from receipt_text import ROOT, clean, tool_path
 SOURCE = ROOT / "src" / "distrib_read.rs"
 OUT = ROOT / "paper" / "cpc" / "receipts" / "distrib_read"
 
@@ -92,11 +92,8 @@ MUTATIONS = [
 
 def run_test(name: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
-    env["PATH"] = (
-        "/home/ubuntu/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin:"
-        + env.get("PATH", "")
-    )
-    env["CARGO_TARGET_DIR"] = str(ROOT / "target" / "agent-check")
+    env["PATH"] = tool_path()
+    env["CARGO_TARGET_DIR"] = str(ROOT / "target" / "lib-tests")
     env.pop("RUSTFLAGS", None)
     env.pop("LLVM_PROFILE_FILE", None)
     env["LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu"
@@ -143,7 +140,7 @@ def main() -> int:
             "----- test output -----\n"
             f"{result.stdout}"
         )
-        (OUT / f"{name}.txt").write_text(body)
+        (OUT / f"{name}.txt").write_text(clean(body))
         ok = result.returncode != 0 and needle in result.stdout and restored
         print(f"{name}: exit {result.returncode} restored {restored} ok {ok}", flush=True)
         if not ok:
