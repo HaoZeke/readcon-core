@@ -90,3 +90,8 @@ f91e9c370f96e1ece07ff8e730ac8bc9bf8660ae	docs: describe each commit from its dif
 d551445128380d8a2cd3897b0404a9c519b733af	fix(paper): drop an unreachable iterator verdict.	edits paper/cpc/scripts/referee_probes.py drops 4 lines, including `if statuses[-1] != STATUS["RKR_STATUS_SUCCESS"]:`
 42780d74e738701ca1fd245cded3690ec0d6ccd0	fix(paper): drop an unreachable binary macro check.	edits paper/cpc/scripts/binary_formats_tables.py drops 3 lines, including `names = [n for n, _ in macros]`
 d350023be6c749b63528b6d33cedec0721a98e5b	test: check the mid-band paper scripts.	adds tests/python/test_paper_cover_g.py drops no line
+262c5806155988471b122ce40d873d4dfc3a9961	docs: describe each new commit from its diff.	edits COMMIT_CHECK.txt drops no line
+2d4cd17fc1907de221677d13a07ee26c1d083ca7	fix(paper): drop an unreachable macro source check.	edits paper/cpc/scripts/gen_case_macros.py drops 1 line, including `raise KeyError(name)`
+fd302bcc4887ca5caf7c9e3df8a98eb567474b5d	fix(paper): drop an unreachable label check.	edits paper/cpc/scripts/make_arxiv.py drops 4 lines, including `if supp_keys and not label_docs:`
+4322a02cf4cacb3802cf832d6b3f5aad5fff88d3	test: check the remaining paper script failures.	adds tests/python/test_paper_cover_h.py drops no line
+4c17599ef4547af6a59d3e73f2493b7b75294b40	test: cover an empty cpuinfo and a blank host name.	edits tests/python/test_paper_cover_h.py drops 2 lines, including `host = load("stamp_host.py")`
