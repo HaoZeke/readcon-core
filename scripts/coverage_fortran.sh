@@ -19,20 +19,22 @@ if [[ ! -f "$LIB/libreadcon_core.so" ]]; then
 fi
 
 dir_target="target"
-WORK="$ROOT/$dir_target/fortran-cov-work"
+WORK="$dir_target/fortran-cov-work"
 rm -rf "$WORK"
 mkdir -p "$WORK"
-cd "$WORK"
-gfortran -c -g -O0 --coverage -cpp \
-  "$ROOT/fortran/ReadCon/src/readcon.f90" \
-  "$ROOT/fortran/ReadCon/test/test_iterator_stream.f90"
-gfortran -o test_iterator_stream test_iterator_stream.o readcon.o \
+cd "$ROOT"
+gfortran -c -g -O0 --coverage -cpp -J "$WORK" -o "$WORK/readcon.o" \
+  fortran/ReadCon/src/readcon.f90
+gfortran -c -g -O0 --coverage -cpp -I "$WORK" -o "$WORK/test_iterator_stream.o" \
+  fortran/ReadCon/test/test_iterator_stream.f90
+gfortran -o "$WORK/test_iterator_stream" "$WORK/test_iterator_stream.o" "$WORK/readcon.o" \
   -L"$LIB" -lreadcon_core -ldl -lpthread -lm --coverage
 export LD_LIBRARY_PATH="$LIB${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export GFORTRAN_ERROR_BACKTRACE=0
-./test_iterator_stream
-gcov -b -c readcon.f90 test_iterator_stream.f90
-gcov -f -b -c readcon.f90 > gcov-functions.txt
+( cd "$WORK" && ./test_iterator_stream )
+gcov -b -c -o "$WORK" fortran/ReadCon/src/readcon.f90 fortran/ReadCon/test/test_iterator_stream.f90
+gcov -f -b -c -o "$WORK" fortran/ReadCon/src/readcon.f90 > "$WORK/gcov-functions.txt"
+cp "$WORK/gcov-functions.txt" gcov-functions.txt
 
 python3 - "$ROOT" "$HOME" "$OUT" <<'PY'
 import re
@@ -51,12 +53,6 @@ names = (
     "it_nth",
     "it_free",
 )
-
-def strip_text(text: str) -> str:
-    text = text.replace(root + "/", "")
-    if home:
-        text = text.replace(home + "/", "")
-    return text
 
 def blocks(text: str) -> dict[str, str]:
     found = {}
@@ -78,10 +74,17 @@ for match in re.finditer(
     summary[name] = (executed, total)
 
 rows = []
-for filename in ("readcon.f90.gcov", "test_iterator_stream.f90.gcov"):
-    raw = Path(filename).read_text(encoding="utf-8", errors="replace")
-    text = strip_text(raw)
-    (out / filename).write_text(text, encoding="utf-8")
+wanted = {
+    "readcon.f90.gcov": "readcon.f90.gcov",
+    "test_iterator_stream.f90.gcov": "test_iterator_stream.f90.gcov",
+}
+found_gcov = {path.name: path for path in Path(".").glob("*.gcov")}
+for filename, dest_name in wanted.items():
+    match = next((path for name, path in found_gcov.items() if name.endswith(filename)), None)
+    if match is None:
+        raise SystemExit(f"missing {filename}")
+    text = match.read_text(encoding="utf-8", errors="replace")
+    (out / dest_name).write_text(text, encoding="utf-8")
     if filename != "readcon.f90.gcov":
         continue
     parsed = blocks(text)
