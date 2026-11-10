@@ -147,6 +147,7 @@ python -m pytest \
   tests/python/test_extension_edges.py \
   tests/python/test_edge_inputs.py \
   tests/python/test_readcon.py \
+  tests/python/test_numpy_absent.py \
   tests/python/test_ase.py \
   tests/python/test_ase_physical_units.py \
   tests/python/test_chemfiles_import.py \
