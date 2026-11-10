@@ -55,10 +55,15 @@ if [[ -z "${VIRTUAL_ENV:-}" && -z "${CONDA_PREFIX:-}" ]]; then
   source "${VENV}/bin/activate"
 fi
 
+# The extension build writes only under this environment. A parent
+# CARGO_TARGET_DIR, RUSTFLAGS, or LLVM_PROFILE_FILE cannot replace a
+# coverage artifact or append to its profiles.
+TUT_TARGET="${VIRTUAL_ENV:-${ROOT}/.venv-tutorial}/target"
 if ! python3 -c "import readcon" 2>/dev/null; then
   echo "Building lean Python extension (maturin develop --features python)..." >&2
   if command -v maturin >/dev/null 2>&1; then
-    maturin develop --features python
+    env -u LLVM_PROFILE_FILE -u RUSTFLAGS CARGO_TARGET_DIR="$TUT_TARGET" \
+      maturin develop --features python
   else
     echo "maturin not on PATH; install maturin or: pixi run -e python python-build" >&2
     exit 1
