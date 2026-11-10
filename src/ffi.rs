@@ -5709,6 +5709,32 @@ mod tests {
     use super::*;
     use std::ffi::{CStr, CString};
     #[test]
+
+    #[test]
+    fn dlpack_error_mapping_covers_each_arm() {
+        use crate::error::ParseError;
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("device mismatch".into())),
+            RKRStatus::RKR_STATUS_DEVICE_MISMATCH
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("no device allocator".into())),
+            RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("allocator missing".into())),
+            RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::ValidationError("other".into())),
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        assert_eq!(
+            map_dlpack_err(ParseError::InvalidCount("no".into())),
+            RKRStatus::RKR_STATUS_INTERNAL_ERROR
+        );
+    }
+
     fn frame_copy_positions_without_cframe() {
         let handle = test_frame_handle();
         let n = unsafe { rkr_frame_atom_count(handle) };
