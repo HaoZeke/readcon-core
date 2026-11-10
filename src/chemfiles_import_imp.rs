@@ -841,9 +841,9 @@ H  1.0 0.0 0.0
                 "\
 3
 water-like
-O  0.000  0.000  0.000
 H  0.957  0.000  0.000
-H -0.240  0.927  0.000
+O  1.000  0.000  0.000
+O  0.000  0.000  0.000
 "
             )
             .expect("write xyz");
@@ -907,9 +907,10 @@ H -0.240  0.927  0.000
         // GROMACS .gro is nm; chemfiles converts lengths to Å.
         let gro = "\
 water
-    2
+    3
     1WATER  OW     1   0.000   0.000   0.000
-    1WATER  HW     2   0.100   0.000   0.000
+    1WATER  H      2   0.050   0.000   0.000
+    1WATER  HW     3   0.100   0.000   0.000
    1.00000   1.00000   1.00000
 ";
         let frames = con_frames_from_memory(gro, "GRO").expect("gro");
@@ -921,13 +922,20 @@ water
             "box={:?}",
             con.header.boxl
         );
-        let hw = con
-            .atom_data
-            .iter()
-            .find(|a| a.symbol.as_ref() == "H" || a.symbol.as_ref() == "HW")
-            .expect("H");
+        let mut saw_h = false;
+        let mut hw_x = None;
+        for atom in &con.atom_data {
+            if atom.symbol.as_ref() == "H" {
+                saw_h = true;
+            }
+            if atom.symbol.as_ref() == "HW" {
+                hw_x = Some(atom.x);
+            }
+        }
+        assert!(saw_h, "the residue names an H");
         // 0.100 nm → 1.00 Å
-        assert!((hw.x - 1.0).abs() < 1e-6, "H.x={} (expected 1 Å)", hw.x);
+        let hw_x = hw_x.expect("HW");
+        assert!((hw_x - 1.0).abs() < 1e-6, "HW.x={hw_x} (expected 1 Å)");
         let residues = con
             .header
             .metadata
@@ -1176,7 +1184,7 @@ END
         );
         let absent = dir.path().join("missing.xyz");
         let err = con_frame_from_trajectory_path(&absent).unwrap_err();
-        assert!(err.to_string().contains("chemfiles") || err.to_string().contains("I/O"), "{err}");
+        assert!(err.to_string().contains("chemfiles error"), "{err}");
     }
 
     #[test]

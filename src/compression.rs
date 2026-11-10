@@ -596,26 +596,29 @@ mod tests {
         // Each filler takes the highest gap that fits the file map. The first
         // one below the region shows that no such gap is left above it.
         let mut fillers = Vec::new();
-        // One map is placed above the region so the loop keeps a higher
-        // filler, then the next map lands below and the loop stops.
-        let above = unsafe { region.cast::<u8>().add(map_len + GUARD + page) };
-        let parked = unsafe {
-            libc::mmap(
-                above.cast(),
-                map_len,
-                libc::PROT_READ | libc::PROT_WRITE,
-                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-                -1,
-                0,
-            )
-        };
-        if parked != libc::MAP_FAILED && !mapping_is_below(parked, region) {
-            fillers.push(parked);
-        } else if parked != libc::MAP_FAILED {
-            unsafe { libc::munmap(parked, map_len) };
-        }
+        let mut use_hint = true;
         loop {
-            let filler = anonymous(map_len);
+            let filler = if use_hint {
+                use_hint = false;
+                let hint = unsafe { region.cast::<u8>().add(map_len + GUARD + page) };
+                let hinted = unsafe {
+                    libc::mmap(
+                        hint.cast(),
+                        map_len,
+                        libc::PROT_READ | libc::PROT_WRITE,
+                        libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+                        -1,
+                        0,
+                    )
+                };
+                if hinted == libc::MAP_FAILED {
+                    anonymous(map_len)
+                } else {
+                    hinted
+                }
+            } else {
+                anonymous(map_len)
+            };
             if mapping_is_below(filler, region) {
                 unsafe { libc::munmap(filler, map_len) };
                 break;
