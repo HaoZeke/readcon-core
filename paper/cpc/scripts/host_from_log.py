@@ -68,6 +68,22 @@ def num(value: str, digits: int) -> str:
     return f"{float(value):.{digits}g}"
 
 
+def tex_escape(text: str) -> str:
+    out = []
+    for ch in text:
+        if ch in "&%$#_{}":
+            out.append("\\" + ch)
+        elif ch == "\\":
+            out.append("\\textbackslash{}")
+        elif ch == "~":
+            out.append("\\textasciitilde{}")
+        elif ch == "^":
+            out.append("\\textasciicircum{}")
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
 def table(
     found: dict[str, dict[str, str]], order: tuple[str, ...], caption: str, label: str
 ) -> str:
@@ -85,7 +101,16 @@ def table(
     ]
     for name in order:
         row = found.get(name)
-        if row is None or row.get("median_s") is None:
+        if row is None:
+            lines.append(
+                f"{LABELS[name]} & \\multicolumn{{4}}{{l}}{{not run}} \\\\"
+            )
+            continue
+        if row.get("median_s") is None:
+            err = tex_escape(row.get("error") or "no sample")
+            lines.append(
+                f"{LABELS[name]} & \\multicolumn{{4}}{{l}}{{{err}}} \\\\"
+            )
             continue
         matched = f"{row['matched']}/{row['requested']}"
         lines.append(

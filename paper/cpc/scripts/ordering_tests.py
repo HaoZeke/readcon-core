@@ -268,8 +268,8 @@ def main() -> None:
         rf"% Written by paper/cpc/scripts/ordering_tests.py from bench/results/r0174 ({', '.join(SOURCES)}).",
         r"\begingroup",
         r"\scriptsize",
-        r"\setlength{\tabcolsep}{3pt}",
-        r"\begin{longtable}{@{}p{0.42\linewidth}rlll@{}}",
+        r"\setlength{\tabcolsep}{1pt}",
+        r"\begin{longtable}{@{}p{0.24\linewidth}p{0.11\linewidth}p{0.22\linewidth}ll@{}}",
         r"\caption{The exact two-sided Mann--Whitney test of every timing ratio of Section~\ref{sec:performance}, "
         r"readcon-core time over peer time, on the \ordRuns{} runs of each cell, each run a fresh process. "
         r"The ratio is of the medians, as in the table of each heading. "

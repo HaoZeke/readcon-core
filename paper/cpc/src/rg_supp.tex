@@ -627,16 +627,24 @@ python3 paper/cpc/scripts/clause_coverage.py                    # cpc-clauses
 \section{Generated records}
 The binary-format, DLPack, ordering and head-to-head tables, and the layout figures, are generated with the records they name.
 \begingroup
-\input{figures/generated/bf_ratios}
-\input{figures/generated/bf_table}
-\input{figures/generated/dlpack_table}
-\input{figures/generated/h2h_cpp}
-\input{figures/generated/h2h_python}
+\refstepcounter{table}\label{tab:binary-ratios}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/bf_ratios}}
+\refstepcounter{table}\label{tab:binary-formats}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/bf_table}}
+\refstepcounter{table}\label{tab:dlpack}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/dlpack_table}}
+\refstepcounter{table}\label{tab:h2h-cpp}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/h2h_cpp}}
+\refstepcounter{table}\label{tab:h2h-python}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/h2h_python}}
 \input{figures/generated/ordering_table}
-\input{figures/generated/r0174_cachegrind}
-\input{figures/generated/r0174_cpp}
+\refstepcounter{table}\label{tab:cachegrind}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/r0174_cachegrind}}
+\refstepcounter{table}\label{tab:cpp}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/r0174_cpp}}
 \input{figures/generated/r0174_macros}
-\input{figures/generated/r0174_table}
+\refstepcounter{table}\label{tab:perf}
+\resizebox{0.95\linewidth}{!}{\input{figures/generated/r0174_table}}
 \begin{center}
 \includegraphics[width=\linewidth]{figures/generated/layout.pdf}\\
 \includegraphics[width=\linewidth]{figures/generated/matrix.pdf}\\
