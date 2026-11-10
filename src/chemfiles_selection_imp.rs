@@ -941,4 +941,31 @@ mod chemfiles_selection_cpp_regression {
             "{text}"
         );
     }
+
+    #[test]
+    fn a_skew_cell_and_a_bond_selection_are_reported() {
+        use crate::types::ConFrameBuilder;
+        use chemfiles::CellShape;
+        let mut builder = ConFrameBuilder::new([3.0, 4.0, 5.0], [70.0, 80.0, 100.0]);
+        builder.add_atom("Cu", 0.0, 0.0, 0.0, [false; 3], 0, 63.5);
+        builder.with_velocity([0.2, 0.0, 0.0]);
+        builder.add_atom("Cu", 1.0, 0.0, 0.0, [false; 3], 1, 63.5);
+        builder.set_frame_index(4);
+        builder.set_time(1.5);
+        let mut frame = builder.build().unwrap();
+        frame.header.set_bonds(&[
+            crate::types::Bond::new(0, 1),
+            crate::types::Bond::new(40, 0),
+        ]);
+        let projected = chemfiles_frame_from_con_frame(&frame).expect("skew");
+        assert_eq!(projected.cell().shape(), CellShape::Triclinic);
+        assert_eq!(projected.step(), 4);
+        assert_eq!(projected.topology().bonds().len(), 1);
+        let err = select_atom_indices("bonds: all", &frame).expect_err("bond context");
+        assert!(err.to_string().contains("atom context"), "{err}");
+        let multi = evaluate_selection_on_frames("bonds: all", &[frame]).expect("frames");
+        assert_eq!(multi.frames.len(), 1);
+        assert_ne!(multi.frames[0].result.context_size, 1);
+        assert!(multi.frames[0].positions.is_empty());
+    }
 }
