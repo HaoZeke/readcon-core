@@ -1,0 +1,45 @@
+Checkpoint at 86c870e. Not a seal.
+
+Measurement: cargo llvm-cov test --lib --features chemfiles-from-sources,python
+on nightly, profiles under target/cov-three. 406 passed, 1 failed.
+The failure is ffi::tests::writers_dlpack_ingest_and_selection_edges:
+create_writer_zstd_with_precision_c returned null because the zstd
+feature was off. Pytest did not run.
+
+chemfiles_import_imp.rs
+lines 1160/1178 98.47
+branches 122/134 91.04
+open sides 12:
+248:13 false  let Some(res) = topo.residue(i) else
+367:8 false   generator already present, zero-atom helper
+377:8 false   frame_index already present, zero-atom helper
+380:8 true    has_pbc on the zero-atom helper
+385:12 true   lattice vectors on the zero-atom helper
+405:8 true    positions.len() != n
+489:20 false  vels.get(i) is None
+579:17 false  bond i missing from the id map
+582:17 false  bond j missing from the id map
+589:12 false  remapped bonds empty
+768:16 false  mass outside (1, 2) in a test
+912:61 false  origin test, z near zero is false
+
+conbin.rs
+lines 2534/2563 98.87
+branches 199/212 93.87
+open sides 10:
+594:16 true   worker join error
+690:12 true   split-stream error channel
+2811:20 false  unmapped populate error
+2961:20 false  sequential resident sum error
+3128:12 false  profile dir starts with target/work
+3128:38 false  profile dir starts with target/vartmp
+3203:16 true   held profile is Some
+3204:16 both   held dir is not under target/work
+3204:42 both   held dir is not under target/vartmp
+3210:16 both   marker file exists
+
+python.rs
+This run did not execute pytest, so it is not the merged figure.
+Lib tests only: lines 1549/3318 46.68, branches 145/350 41.43,
+119 open sides, 1409 cold lines. The last merged run is stale
+relative to 86c870e. A new merged run was not started.
