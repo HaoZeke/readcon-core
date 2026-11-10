@@ -31,7 +31,11 @@ unset RUSTC_WRAPPER || true
 export CARGO_INCREMENTAL=0
 # Link libpython. Do not pass a lint allow. Remap is added below.
 export RUSTFLAGS="-C link-arg=-lpython3.12"
-export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/coverage-features}"
+# Profiles live under the repository so the conbin namespace test can
+# hold that directory aside. A profile under the system temporary
+# directories is not required.
+mkdir -p "$ROOT/target/cov-live"
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/cov-live}"
 if [ -z "${LIBRARY_PATH:-}" ]; then
   LIBRARY_PATH=""
 fi

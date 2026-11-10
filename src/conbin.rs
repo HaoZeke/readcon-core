@@ -3124,7 +3124,8 @@ Coordinates of Component 1
         let dir = std::path::Path::new(literal).parent()?.to_path_buf();
         let tmp = format!("{}{}", "/", "tmp");
         let var_tmp = format!("{}{}{}{}", "/", "var", "/", "tmp");
-        if !dir.starts_with(&tmp) && !dir.starts_with(&var_tmp) {
+        let live = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/cov-live");
+        if !dir.starts_with(&tmp) && !dir.starts_with(&var_tmp) && !dir.starts_with(&live) {
             return None;
         }
         let hold = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
@@ -3200,8 +3201,15 @@ Coordinates of Component 1
         mount_tmpfs(&tmp);
         mount_tmpfs(&var_tmp);
         if let Some((dir, hold)) = &held {
+            if !dir.starts_with(&tmp) && !dir.starts_with(&var_tmp) {
+                mount_tmpfs(dir.to_str().unwrap());
+            }
             std::fs::create_dir_all(dir).unwrap();
             mount_bind(hold, dir);
+            let marker = dir.join("marker");
+            if marker.is_file() {
+                assert_eq!(std::fs::read(&marker).unwrap(), b"held");
+            }
         }
         mount_tmpfs(scratch.to_str().unwrap());
         unsafe { std::env::set_var("TMPDIR", &tmp) };
@@ -3292,9 +3300,13 @@ Coordinates of Component 1
             Ok(case) => {
                 assert_eq!(case, "namespace");
                 let saved = std::env::var("LLVM_PROFILE_FILE").ok();
-                let profile = format!("{}{}{}{}{}", "/", "var", "/", "tmp", "/cov-profile.profraw");
+                let live = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/cov-live");
+                std::fs::create_dir_all(&live).unwrap();
+                std::fs::write(live.join("marker"), b"held").unwrap();
+                let profile = live.join("profile.profraw");
                 unsafe { std::env::set_var("LLVM_PROFILE_FILE", &profile) };
-                let held = hold_coverage_profile().expect("a profile under the variable scratch dir is held");
+                let held = hold_coverage_profile().expect("a repo-local profile is held");
+                assert_eq!(std::fs::read(held.1.join("marker")).unwrap(), b"held");
                 let rc = unsafe { libc::umount(std::ffi::CString::new(held.1.to_str().unwrap()).unwrap().as_ptr()) };
                 assert_eq!(rc, 0, "{}", std::io::Error::last_os_error());
                 let _ = std::fs::remove_dir_all(&held.1);
