@@ -1978,10 +1978,9 @@ fn first_touch_f64(values: &mut [f64], workers: usize) {
     if rayon::current_thread_index().is_some() {
         // One chunk per page. The installed pool hands each page to one
         // worker, so that worker faults its own slice.
+        // `par_chunks_mut` yields a non-empty slice, and `step` is at least 1.
         values.par_chunks_mut(step).for_each(|chunk| {
-            if let Some(slot) = chunk.first_mut() {
-                *slot = 0.0;
-            }
+            chunk[0] = 0.0;
         });
         return;
     }
