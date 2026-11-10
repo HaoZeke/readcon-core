@@ -484,9 +484,8 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
         let fixed = [false, false, false];
         builder.add_atom(symbol, pos[0], pos[1], pos[2], fixed, i as u64, mass);
         if let Some(vels) = velocities {
-            if let Some(v) = vels.get(i) {
-                builder.with_velocity(*v);
-            }
+            // Frame.cpp:35-37 asserts velocities_->size() equals positions_.size().
+            builder.with_velocity(unsafe { *vels.get_unchecked(i) });
         }
 
         let mut atom_props = BTreeMap::new();
