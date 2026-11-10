@@ -41,6 +41,34 @@ MUTATIONS = [
         'PyValueError::new_err("bonds entry missing endpoint")',
         "missing endpoint",
     ),
+    (
+        "bond-index",
+        "a_bond_index_that_is_not_an_integer_is_rejected",
+        '.ok_or_else(|| PyValueError::new_err("bonds entry missing i"))?\n                    .extract()?;',
+        '.ok_or_else(|| PyValueError::new_err("bonds entry missing i"))?\n                    .extract().map_err(|_| PyValueError::new_err("bond index type"))?;',
+        "bond index type",
+    ),
+    (
+        "conbin-source",
+        "a_missing_conbin_source_names_the_write_error",
+        'crate::conbin::write_from_con(Path::new(&con_path), Path::new(&out_path), binary32)\n                .map_err(|e| e.to_string())',
+        'crate::conbin::write_from_con(Path::new(&con_path), Path::new(&out_path), binary32)\n                .map_err(|_e| "conbin write".to_string())',
+        "conbin write",
+    ),
+    (
+        "mpi-read",
+        "a_missing_mpi_path_names_the_read_and_the_write",
+        'crate::distrib_read::read_block(&c, Path::new(path), mode, n_threads)\n        .map_err(|e| PyIOError::new_err(e.to_string()))?',
+        'crate::distrib_read::read_block(&c, Path::new(path), mode, n_threads)\n        .map_err(|_e| PyIOError::new_err("mpi read"))?',
+        "mpi read",
+    ),
+    (
+        "mpi-write",
+        "a_missing_mpi_path_names_the_read_and_the_write",
+        'crate::distrib_write::write_block(&c, Path::new(path), frames, mode, precision)\n        .map(|_| ())\n        .map_err(|e| PyIOError::new_err(e.to_string()))',
+        'crate::distrib_write::write_block(&c, Path::new(path), frames, mode, precision)\n        .map(|_| ())\n        .map_err(|_e| PyIOError::new_err("mpi write"))',
+        "mpi write",
+    ),
 ]
 
 

@@ -3999,6 +3999,86 @@ mod api_coverage {
     }
 
     #[test]
+    fn a_bond_index_that_is_not_an_integer_is_rejected() {
+        Python::initialize();
+        Python::attach(|py| {
+            let mut builder = ConFrameBuilder::new([5.0, 5.0, 5.0], [90.0, 90.0, 90.0]);
+            builder.add_atom("H", 0.1, 0.2, 0.3, [false, false, false], 1, 1.008);
+            let py_frame = PyConFrame::from_owned(py, builder.build().unwrap()).unwrap();
+            let entry = PyDict::new(py);
+            entry.set_item("i", "no").unwrap();
+            entry.set_item("j", 0u32).unwrap();
+            let bonds = PyList::empty(py);
+            bonds.append(entry).unwrap();
+            py_frame.metadata.bind(py).set_item("bonds", bonds).unwrap();
+            let err = py_frame.bonds(py).unwrap_err();
+            assert!(
+                err.to_string()
+                    .contains("cannot be interpreted as an integer"),
+                "{err}"
+            );
+        });
+    }
+
+    #[test]
+    fn a_missing_conbin_source_names_the_write_error() {
+        Python::initialize();
+        Python::attach(|py| {
+            let err = write_conbin(
+                py,
+                "target/py-arm/no-such-source.con",
+                "target/py-arm/out.conbin",
+                false,
+            )
+            .unwrap_err();
+            assert!(err.to_string().contains("No such file"), "{err}");
+        });
+    }
+
+    #[cfg(feature = "mpi")]
+    #[test]
+    fn a_missing_mpi_path_names_the_read_and_the_write() {
+        let universe = crate::distrib::test_universe();
+        let fint = unsafe {
+            use ::mpi::raw::AsRaw;
+            ::mpi::ffi::RSMPI_Comm_c2f(universe.world().as_raw())
+        };
+        Python::initialize();
+        Python::attach(|py| {
+            let locals = pyo3::types::PyDict::new(py);
+            locals.set_item("fint", fint).unwrap();
+            py.run(
+                cr#"
+class C:
+    def py2f(self):
+        return fint
+comm = C()
+"#,
+                Some(&locals),
+                Some(&locals),
+            )
+            .unwrap();
+            let comm = locals.get_item("comm").unwrap().unwrap();
+            let err = read_con_mpi(py, "target/py-arm/no-such-mpi.con", None, &comm, "shared")
+                .unwrap_err();
+            assert!(err.to_string().contains("No such file"), "{err}");
+            let mut builder = ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+            builder.add_atom("H", 0.0, 0.0, 0.0, [false, false, false], 1, 1.0);
+            let frame = builder.build().unwrap();
+            let err = write_con_mpi(
+                py,
+                "target/py-arm/missing-parent/out.con",
+                &[frame],
+                None,
+                &comm,
+                "gather",
+            )
+            .unwrap_err();
+            assert!(err.to_string().contains("No such file"), "{err}");
+        });
+    }
+
+    #[test]
     fn a_missing_position_file_and_a_bad_forward_name_the_error() {
         Python::initialize();
         Python::attach(|py| {
