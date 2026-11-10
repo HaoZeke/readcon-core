@@ -159,6 +159,8 @@ def test_write_con_compression_and_mpi_stub(tmp_path):
         readcon.write_con(str(plain), frames, compression="none", comm=comm)
     with pytest.raises(ValueError):
         readcon.write_con(str(plain), frames, canonical=True, comm=comm)
+    with pytest.raises(ValueError, match="uncompressed"):
+        readcon.write_con(str(packed), frames, compression="gzip", comm=comm)
 
 
 class _Cell:
@@ -229,6 +231,8 @@ class _StubAtoms:
         raise KeyError(name)
 
     def get_tags(self):
+        if self.kw.get("tags_fail"):
+            raise RuntimeError("tags are absent")
         return _Arr(self.kw.get("tags", [0, 0]))
 
     def get_velocities(self):
@@ -265,6 +269,31 @@ def test_from_ase_branches():
     bad = _Cell([[float("nan"), 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
     with pytest.raises(ValueError):
         readcon.ConFrame.from_ase(_StubAtoms(cell=bad))
+    class Hold:
+        pass
+
+    held = readcon.ConFrame.from_ase(_StubAtoms(constraints=[Hold()]))
+    assert held.atoms[0].fixed == [False, False, False]
+    far = readcon.ConFrame.from_ase(
+        _StubAtoms(constraints=[FixCartesian(9, mask=[True, False, True])])
+    )
+    assert far.atoms[0].fixed == [False, False, False]
+    short_tags = readcon.ConFrame.from_ase(_StubAtoms(tags=[4]))
+    assert [atom.atom_id for atom in short_tags.atoms] == [0, 1]
+    no_tags = readcon.ConFrame.from_ase(_StubAtoms(tags_fail=True))
+    assert [atom.atom_id for atom in no_tags.atoms] == [0, 1]
+    flat = _Cell([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]])
+    flat_frame = readcon.ConFrame.from_ase(_StubAtoms(cell=flat))
+    assert flat_frame.angles[0] == pytest.approx(90.0)
+    assert flat_frame.angles[2] == pytest.approx(90.0)
+    short_par = _Cell([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
+    short_par.cellpar = lambda: _Arr([1.0, 2.0, 3.0])
+    shortened = readcon.ConFrame.from_ase(_StubAtoms(cell=short_par))
+    assert shortened.cell[0] == pytest.approx(10.0)
+    nan_par = _Cell([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
+    nan_par.cellpar = lambda: _Arr([10.0, 10.0, 10.0, float("nan"), 90.0, 90.0])
+    nan_frame = readcon.ConFrame.from_ase(_StubAtoms(cell=nan_par))
+    assert nan_frame.angles[0] == pytest.approx(90.0)
 
 
 def test_bonds_release_and_indexes(tmp_path):
