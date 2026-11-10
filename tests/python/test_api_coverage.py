@@ -286,6 +286,14 @@ def test_from_ase_branches():
     flat_frame = readcon.ConFrame.from_ase(_StubAtoms(cell=flat))
     assert flat_frame.angles[0] == pytest.approx(90.0)
     assert flat_frame.angles[2] == pytest.approx(90.0)
+    edge_a = _Cell([[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    edged = readcon.ConFrame.from_ase(_StubAtoms(cell=edge_a))
+    assert edged.angles[0] == pytest.approx(90.0)
+    huge = _Cell([[1e308, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    with pytest.raises(ValueError, match="lengths must be finite"):
+        readcon.ConFrame.from_ase(_StubAtoms(cell=huge))
+    dup = readcon.ConFrame.from_ase(_StubAtoms(tags=[1, 1]))
+    assert [atom.atom_id for atom in dup.atoms] == [0, 1]
     short_par = _Cell([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
     short_par.cellpar = lambda: _Arr([1.0, 2.0, 3.0])
     shortened = readcon.ConFrame.from_ase(_StubAtoms(cell=short_par))
@@ -301,6 +309,10 @@ def test_bonds_release_and_indexes(tmp_path):
     frame.metadata["bonds"] = [{"i": 0, "j": 1, "order": 1}, [2, 3]]
     assert frame.has_bonds
     assert len(frame.bonds) == 2
+    frame.metadata["bonds"] = [{"i": 0, "j": 1}, {"i": 1, "j": 0, "order": None}]
+    plain_bonds = frame.bonds
+    assert list(plain_bonds[0]) == [0, 1]
+    assert list(plain_bonds[1]) == [1, 0]
     frame.atoms[0].energy = -0.2
     assert frame.energies_array() is not None
     assert frame.atom_index_by_id(0) == 0
