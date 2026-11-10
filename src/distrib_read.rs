@@ -738,32 +738,39 @@ mod tests {
             }
             let log_out = dir.path().join("mpirun.out");
             let log_err = dir.path().join("mpirun.err");
-            let status = std::process::Command::new("mpirun")
-                .args([
-                    "--oversubscribe",
-                    "-np",
-                    "2",
-                    "-x",
-                    "LD_LIBRARY_PATH",
-                    "-x",
-                    "READCON_TWO_RANK_CHILD",
-                    "-x",
-                    "READCON_TWO_RANK_DIR",
-                    "-x",
-                    "READCON_MPI_TEST_CHUNK",
-                ])
-                .arg(&exe)
-                .args([
-                    "distrib_read::tests::two_ranks_read_and_write_every_mode",
-                    "--exact",
-                    "--test-threads=1",
-                    "--nocapture",
-                ])
-                .env(CHILD, "1")
-                .env("READCON_MPI_TEST_CHUNK", "64")
-                .env("READCON_TWO_RANK_DIR", dir.path())
-                .env("LD_LIBRARY_PATH", &library_path)
-                .env_remove("LD_PRELOAD")
+            let mut cmd = std::process::Command::new("mpirun");
+            cmd.args([
+                "--oversubscribe",
+                "-np",
+                "2",
+                "-x",
+                "LD_LIBRARY_PATH",
+                "-x",
+                "READCON_TWO_RANK_CHILD",
+                "-x",
+                "READCON_TWO_RANK_DIR",
+                "-x",
+                "READCON_MPI_TEST_CHUNK",
+            ])
+            .arg(&exe)
+            .args([
+                "distrib_read::tests::two_ranks_read_and_write_every_mode",
+                "--exact",
+                "--test-threads=1",
+                "--nocapture",
+            ])
+            .env(CHILD, "1")
+            .env("READCON_MPI_TEST_CHUNK", "64")
+            .env("READCON_TWO_RANK_DIR", dir.path())
+            .env("LD_LIBRARY_PATH", &library_path)
+            .env_remove("LD_PRELOAD");
+            for (key, _) in std::env::vars() {
+                if key.starts_with("OMPI_") || key.starts_with("PMIX_") || key.starts_with("PMI_")
+                {
+                    cmd.env_remove(key);
+                }
+            }
+            let status = cmd
                 .stdout(std::fs::File::create(&log_out).unwrap())
                 .stderr(std::fs::File::create(&log_err).unwrap())
                 .status()

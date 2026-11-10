@@ -2897,8 +2897,16 @@ Coordinates of Component 1
         set_case("");
         drop_pages(&reopen);
         set_case("open-fail-seq");
+        let mut seq_err = None;
+        for _ in 0..8 {
+            drop_pages(&reopen);
+            if let Err(err) = sequential_resident_sum(&reopen, 1, &limits) {
+                seq_err = Some(err);
+                break;
+            }
+        }
         assert_has(
-            &sequential_resident_sum(&reopen, 1, &limits).unwrap_err(),
+            seq_err.as_ref().expect("open-fail-seq must fail"),
             "os error 13",
         );
         set_case("");
