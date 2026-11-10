@@ -2015,6 +2015,25 @@ mod tests {
         assert!(err.contains("os error"), "{err}");
     }
 
+    #[test]
+    fn an_f64_read_rejects_a_binary32_header() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("f32.conbin");
+        let page = page_size().unwrap();
+        let mut file = File::create(&path).unwrap();
+        let header = ConBinHeader {
+            n_frames: 1,
+            n_atoms: 1,
+            binary32: true,
+            velocities: false,
+        };
+        write_header_page(&mut file, &header, page).unwrap();
+        drop(file);
+        let mut pos = [0.0f64; 3];
+        let err = read_into(&path, &mut pos, None).unwrap_err();
+        assert_has(&err, "binary32");
+    }
+
     fn assert_has(err: &ParseError, needle: &str) {
         let text = err.to_string();
         assert!(text.contains(needle), "needle {needle} not in {text}");
