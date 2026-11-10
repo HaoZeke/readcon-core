@@ -2677,8 +2677,7 @@ Coordinates of Component 1
         };
         assert_ne!(ptr, libc::MAP_FAILED);
         let mut message = None;
-        let mut released = false;
-        for _ in 0..8 {
+        for round in 0..2 {
             let again = unsafe {
                 libc::mmap(
                     ptr,
@@ -2691,9 +2690,10 @@ Coordinates of Component 1
             };
             if again != libc::MAP_FAILED {
                 unsafe { libc::munmap(again, page) };
-            } else if !released {
+            }
+            if round == 0 {
+                assert_eq!(again, libc::MAP_FAILED);
                 unsafe { libc::munmap(ptr, page) };
-                released = true;
             }
             let unmapped = stream_one_span(
                 &path,
@@ -2708,13 +2708,11 @@ Coordinates of Component 1
                     depth: 1,
                 },
             );
-            if let Err(err) = unmapped {
-                message = Some(err);
-                break;
+            if round == 0 {
+                let _ = unmapped;
+            } else {
+                message = Some(unmapped.expect_err("unmapped populate"));
             }
-        }
-        if !released {
-            unsafe { libc::munmap(ptr, page) };
         }
         let message = message.expect("unmapped populate");
         assert!(message.contains("os error"), "{message}");
