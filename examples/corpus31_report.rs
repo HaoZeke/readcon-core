@@ -78,6 +78,11 @@ fn line_of(bytes: &[u8], err: &ParseError) -> u32 {
     if rendered.contains("parsing frame header") && line as usize == rows.len() {
         return line + 1;
     }
+    // The cursor sits on the last line that was present. A missing
+    // coordinate row is the next line (CON-frame.4).
+    if err.class_name() == "IncompleteFrame" && line as usize == rows.len() {
+        return line + 1;
+    }
     line
 }
 

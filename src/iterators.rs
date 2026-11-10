@@ -218,9 +218,18 @@ impl<'a> LineStream<'a> for MemchrLines<'a> {
             end -= 1;
         }
         let line = &rest[..end];
+        if rest.is_empty() {
+            return Err(crate::error::ParseError::IncompleteFrame);
+        }
+        // A line that is present but holds no token is a row of the wrong
+        // length (CON-num.9). End of input, with no line, is IncompleteFrame.
         if line.iter().all(|b| *b == b' ' || *b == b'\t') {
             self.line_no += 1;
-            return Err(crate::error::ParseError::IncompleteFrame);
+            self.pos += nl.map(|i| i + 1).unwrap_or(rest.len());
+            return Err(crate::error::ParseError::InvalidVectorLength {
+                expected: 5,
+                found: 0,
+            });
         }
         let parsed =
             crate::parser::parse_coord_fields(line, 0, spec_version, Some(default_id));
@@ -293,6 +302,39 @@ impl<'a> LineStream<'a> for MemchrLines<'a> {
             _ => true,
         }
     }
+
+    fn legacy_velocity_rows_complete(&mut self, counts: &[usize]) -> bool {
+        // `peek_line` has already moved `pos` past the blank separator.
+        let mut rest = &self.bytes[self.pos..];
+        for (type_idx, &count) in counts.iter().enumerate() {
+            let Some((_, after_symbol)) = split_raw_line(rest) else {
+                return false;
+            };
+            let Some((raw_label, after_label)) = split_raw_line(after_symbol) else {
+                return false;
+            };
+            rest = after_label;
+            let Ok(label) = std::str::from_utf8(strip_cr(raw_label)) else {
+                return false;
+            };
+            if !crate::parser::line_has_component_label(label, (type_idx + 1) as u32) {
+                return false;
+            }
+            for _ in 0..count {
+                let Some((raw_row, after_row)) = split_raw_line(rest) else {
+                    return false;
+                };
+                rest = after_row;
+                let Ok(row) = std::str::from_utf8(strip_cr(raw_row)) else {
+                    return false;
+                };
+                if crate::parser::token_count(row) != 5 {
+                    return false;
+                }
+            }
+        }
+        true
+    }
 }
 
 fn split_raw_line(bytes: &[u8]) -> Option<(&[u8], &[u8])> {
@@ -335,7 +377,7 @@ fn probe_section(after_blank: &[u8]) -> SectionProbe {
         let Ok(label) = std::str::from_utf8(strip_cr(raw_label)) else {
             return SectionProbe::InvalidUtf8;
         };
-        return if crate::parser::line_has_component_label(label) {
+        return if crate::parser::line_has_component_label(label, 1) {
             SectionProbe::Opens
         } else {
             SectionProbe::Closed
@@ -353,45 +395,45 @@ fn probe_section(after_blank: &[u8]) -> SectionProbe {
     let Ok(text2) = std::str::from_utf8(strip_cr(raw2)) else {
         return SectionProbe::InvalidUtf8;
     };
-    if crate::parser::line_has_component_label(text2) {
+    if crate::parser::line_has_component_label(text2, 1) {
         SectionProbe::Opens
     } else {
         SectionProbe::Closed
     }
 }
 
-fn label_line_names(line: &str, section: &str) -> bool {
-    let mut words = line.split_ascii_whitespace();
-    let Some(name) = words.next() else {
-        return false;
-    };
-    name.eq_ignore_ascii_case(section)
-        && words.next().is_some_and(|w| w.eq_ignore_ascii_case("of"))
-        && words
-            .next()
-            .is_some_and(|w| w.eq_ignore_ascii_case("component"))
-        && words.next().is_some_and(|index| {
-            index
-                .parse::<u32>()
-                .ok()
-                .is_some_and(|n| index == n.to_string())
-        })
-        && words.next().is_none()
-}
-
-/// A declared section opens when its label is `<name> of Component N`,
-/// including a name this reader does not implement.
-fn declared_section_opens(after_blank: &[u8], section: &str) -> bool {
-    let Some((raw1, after1)) = split_raw_line(after_blank) else {
-        return false;
-    };
-    let Some((raw2, _)) = split_raw_line(after1) else {
-        return false;
-    };
-    let Ok(label) = std::str::from_utf8(strip_cr(raw2)) else {
-        return false;
-    };
-    label_line_names(label, section)
+/// Every component of a legacy velocity block has a `velocities` label and
+/// five fields on each row (CON-frame.5).
+fn legacy_rows_complete(after_blank: &[u8], counts: &[usize]) -> bool {
+    let mut rest = after_blank;
+    for (type_idx, &count) in counts.iter().enumerate() {
+        let Some((_, after_symbol)) = split_raw_line(rest) else {
+            return false;
+        };
+        let Some((raw_label, after_label)) = split_raw_line(after_symbol) else {
+            return false;
+        };
+        rest = after_label;
+        let Ok(label) = std::str::from_utf8(strip_cr(raw_label)) else {
+            return false;
+        };
+        if !crate::parser::line_has_component_label(label, (type_idx + 1) as u32) {
+            return false;
+        }
+        for _ in 0..count {
+            let Some((raw_row, after_row)) = split_raw_line(rest) else {
+                return false;
+            };
+            rest = after_row;
+            let Ok(row) = std::str::from_utf8(strip_cr(raw_row)) else {
+                return false;
+            };
+            if crate::parser::token_count(row) != 5 {
+                return false;
+            }
+        }
+    }
+    true
 }
 
 /// `None` is the legacy file: line 2 does not declare `sections`.
@@ -734,17 +776,21 @@ impl<'a> ConFrameIterator<'a> {
                     )));
                 }
                 // A blank that does not begin a section is line 1 of the
-                // next frame (CON-frame.7, CON-header.4).
+                // next frame (CON-frame.7, CON-header.4). A declared
+                // section still occupies the blank when its label is not
+                // the name the section asked for (CON-section.2).
                 SectionProbe::Closed => {
-                    let opens = declared
-                        .as_ref()
-                        .and_then(|names| names.first())
-                        .is_some_and(|name| declared_section_opens(after, name));
-                    if !opens {
+                    let declared_block = matches!(&declared, Some(names) if !names.is_empty());
+                    if !declared_block {
                         break;
                     }
                 }
                 SectionProbe::Opens => {}
+            }
+            if declared.is_none() && !legacy_rows_complete(after, &natms_per_type) {
+                // A short velocity row is not a block. The blank is line 1
+                // of the next frame (CON-frame.7).
+                break;
             }
             if let Some(names) = &mut declared {
                 names.remove(0);
