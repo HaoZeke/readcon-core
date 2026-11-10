@@ -2881,6 +2881,50 @@ Coordinates of Component 1
     }
 
     #[cfg(target_os = "linux")]
+    fn mount_bind(src: &std::path::Path, dst: &std::path::Path) {
+        std::fs::create_dir_all(dst).unwrap();
+        let from = std::ffi::CString::new(src.to_str().unwrap()).unwrap();
+        let to = std::ffi::CString::new(dst.to_str().unwrap()).unwrap();
+        let rc = unsafe {
+            libc::mount(
+                from.as_ptr(),
+                to.as_ptr(),
+                std::ptr::null(),
+                libc::MS_BIND,
+                std::ptr::null(),
+            )
+        };
+        assert_eq!(
+            rc,
+            0,
+            "bind {} -> {}: {}",
+            src.display(),
+            dst.display(),
+            std::io::Error::last_os_error()
+        );
+    }
+
+    /// A tmpfs on `/tmp` hides a coverage profile that lives there.
+    /// Bind the profile directory aside first, then put it back at the
+    /// same path so the process still writes the profile at exit.
+    #[cfg(target_os = "linux")]
+    fn hold_coverage_profile() -> Option<(std::path::PathBuf, std::path::PathBuf)> {
+        let raw = std::env::var("LLVM_PROFILE_FILE").ok()?;
+        let literal = raw.split('%').next().unwrap_or(raw.as_str());
+        let dir = std::path::Path::new(literal).parent()?.to_path_buf();
+        if !dir.starts_with("/tmp") && !dir.starts_with("/var/tmp") {
+            return None;
+        }
+        let hold = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
+            "target/cov-hold-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&hold);
+        mount_bind(&dir, &hold);
+        Some((dir, hold))
+    }
+
+    #[cfg(target_os = "linux")]
     fn write_sys(path: &str, body: &str) {
         let path = Path::new(path);
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -2897,6 +2941,7 @@ Coordinates of Component 1
 
     #[cfg(target_os = "linux")]
     fn run_namespace_suite() {
+        let held = hold_coverage_profile();
         make_rprivate();
         mount_tmpfs("/sys/dev/block");
         assert_eq!(dev_nums(mkdev(9, 1)), (9, 1));
@@ -2940,6 +2985,10 @@ Coordinates of Component 1
         std::env::set_current_dir(&scratch).unwrap();
         mount_tmpfs("/tmp");
         mount_tmpfs("/var/tmp");
+        if let Some((dir, hold)) = &held {
+            std::fs::create_dir_all(dir).unwrap();
+            mount_bind(hold, dir);
+        }
         mount_tmpfs(scratch.to_str().unwrap());
         unsafe { std::env::set_var("TMPDIR", "/tmp") };
         let caught = std::panic::catch_unwind(sum_mapped_streams_when_pages_are_not_resident);
