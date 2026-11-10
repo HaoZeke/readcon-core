@@ -255,8 +255,13 @@ def test_openers_success_and_a_missing_format(tmp_path, monkeypatch):
     assert openers.openbabel_by_name(path) == 1
 
 
-def test_referee_c_paths_and_a_stale_record(tmp_path):
+def test_referee_c_paths_and_a_stale_record(tmp_path, monkeypatch):
+    monkeypatch.delenv("READCON_LIB", raising=False)
+    monkeypatch.delenv("READCON_CLI", raising=False)
     probes = load("referee_probes.py")
+    probes.LIB = ROOT / "target" / "release" / "libreadcon_core.so"
+    probes.CLI = ROOT / "target" / "cli" / "release" / "readcon-core"
+    probes._CLIB.clear()
     text, ok = probes.c_iterator_statuses(tmp_path)
     assert "two_frames_blank.con" in text
     assert isinstance(ok, bool)
@@ -298,6 +303,61 @@ def test_mpi_macros_when_eight_ranks_are_slower(tmp_path, monkeypatch):
     assert "eight-rank median" in text
 
 
+def test_em_flat_rejects_a_missing_specification(tmp_path):
+    em = load("make_em_flat.py")
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    (stage / "rg_main.tex").write_text("\\" + "bibliography{rg_main}\n", encoding="utf-8")
+    (stage / "rg_main.bbl").write_text("\\bibitem{x}\n", encoding="utf-8")
+    missing = tmp_path / "missing-spec.org"
+    real = em.arxiv.SPEC_ORG
+    em.arxiv.SPEC_ORG = missing
+    try:
+        with pytest.raises(em.arxiv.PackError, match="missing"):
+            em.write_flat(stage, tmp_path / "flat", tmp_path / "snap", {"rewrites": [], "notes": []})
+    finally:
+        em.arxiv.SPEC_ORG = real
+
+
 def test_case_macros_print_a_zero_exponent_as_a_mantissa():
     macros = load("gen_case_macros.py")
-    assert macros.sci(1.0) == "1.00" or macros.sci(1.0).startswith("1")
+    assert macros.sci(1.0) == "1.00"
+
+
+def test_h2h_toolchain_rejects_two_compiler_versions():
+    h2h = load("h2h_tables.py")
+
+    def cell(ver: str, compiler: str = "gcc") -> dict:
+        return {
+            "compiler_version": f"{compiler} {ver}",
+            "cxx": compiler,
+            "cxx_flags": ["-O2"],
+            "chemfiles_version": "0.10.4",
+            "compiler": compiler,
+        }
+
+    rec = {
+        "cpp": {
+            "coords": {"cells": [cell("13.3.0"), cell("14.0.0")]},
+            "vel": {"cells": [cell("13.3.0"), cell("14.0.0", "clang")]},
+        }
+    }
+    with pytest.raises(SystemExit, match="values"):
+        h2h.toolchain(rec)
+    same = {
+        "cpp": {
+            "coords": {"cells": [cell("13.3.0"), cell("16.0.0", "clang")]},
+            "vel": {"cells": [cell("13.3.0"), cell("16.0.0", "clang")]},
+        }
+    }
+    rows = h2h.toolchain(same)
+    assert rows[0] == ("hhChemfilesVersion", "0.10.4")
+    assert h2h.compiler(cell("13.3.0")) == "gcc 13.3.0 -O2"
+
+
+def test_release_identity_rejects_a_missing_commit(monkeypatch):
+    release = load("gen_release.py")
+    monkeypatch.setattr(release, "named_commit", lambda: "deadbeef")
+    monkeypatch.setattr(release, "git", lambda *args: None)
+    with pytest.raises(SystemExit, match="does not hold"):
+        release.identity()
