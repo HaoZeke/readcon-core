@@ -32,6 +32,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -47,8 +48,92 @@ NATIVE = HERE / "native"
 OUT = Path(os.environ.get("BENCH_NATIVE_OUT", HERE / "work" / "native0174"))
 RESULTS = Path(os.environ.get("BENCH_RESULTS", HERE / "results" / "r0174")) / "cpp"
 PAYLOADS = Path(os.environ.get("RC_PAYLOADS", HERE / "work" / "r0174"))
-CXX = os.environ.get("CXX", str(ENV / "bin" / "x86_64-conda-linux-gnu-c++"))
 CXXFLAGS = ["-O3", "-std=c++17", "-DNDEBUG"]
+
+
+def compiler() -> str:
+    """The C++ compiler for the two reader programs.
+
+    ``CXX`` wins when it names a real file. Otherwise the conda compiler in
+    this Python environment is used, and otherwise ``g++`` or ``c++`` on
+    ``PATH``.
+    """
+    chosen = os.environ.get("CXX", "").strip()
+    if chosen and Path(chosen).is_file():
+        return chosen
+    bundled = ENV / "bin" / "x86_64-conda-linux-gnu-c++"
+    if bundled.is_file():
+        return str(bundled)
+    found = shutil.which("g++") or shutil.which("c++")
+    if not found:
+        raise SystemExit("no C++ compiler")
+    return found
+
+
+def chemfiles_source() -> Path:
+    """The chemfiles tree shipped inside the chemfiles-sys crate Cargo downloaded."""
+    cargo_home = Path(os.environ.get("CARGO_HOME", str(Path.home() / ".cargo")))
+    found = sorted(
+        cargo_home.glob("registry/src/*/chemfiles-sys-*/chemfiles/CMakeLists.txt")
+    )
+    if not found:
+        raise SystemExit(
+            "chemfiles sources are not in the cargo registry; build the chemfiles feature once"
+        )
+    return found[-1].parent
+
+
+def install_chemfiles(out: Path, log: list, env: dict) -> Path:
+    """Build chemfiles into ``out`` and return the prefix that contains chemfiles.hpp."""
+    prefix = out / "chemfiles"
+    header = prefix / "include" / "chemfiles.hpp"
+    if header.is_file() and any((prefix / "lib").glob("libchemfiles.*")):
+        return prefix
+    source_link = out / "chemfiles-src"
+    if source_link.is_symlink() or source_link.exists():
+        source_link.unlink()
+    source_link.symlink_to(chemfiles_source(), target_is_directory=True)
+    build = out / "chemfiles-build"
+    cxx = compiler()
+    run(
+        [
+            "cmake",
+            "-S",
+            str(source_link),
+            "-B",
+            str(build),
+            f"-DCMAKE_INSTALL_PREFIX={prefix}",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DBUILD_SHARED_LIBS=ON",
+            f"-DCMAKE_CXX_COMPILER={cxx}",
+            f"-DCMAKE_C_COMPILER={shutil.which('gcc') or 'gcc'}",
+        ],
+        log,
+        env=env,
+    )
+    run(
+        [
+            "cmake",
+            "--build",
+            str(build),
+            "--target",
+            "install",
+            "--parallel",
+            str(os.cpu_count() or 1),
+        ],
+        log,
+        env=env,
+    )
+    if not header.is_file():
+        raise SystemExit("the chemfiles install did not write chemfiles.hpp")
+    lib_dir = prefix / "lib"
+    if not lib_dir.is_dir():
+        alt = prefix / "lib64"
+        if alt.is_dir():
+            lib_dir.symlink_to(alt, target_is_directory=True)
+    if not any(lib_dir.glob("libchemfiles.*")):
+        raise SystemExit("the chemfiles install did not write libchemfiles")
+    return prefix
 FEATURES = ["parallel"]
 REL_TOL = 1e-12
 CHECKED = {
@@ -164,7 +249,6 @@ def check(cell: tuple, references: dict, files: dict) -> dict:
 
 def main() -> None:
     src = Path(os.environ.get("READCON_SRC", "").strip() or HERE.parents[2]).resolve()
-    prefix = Path(os.environ.get("CHEMFILES_PREFIX") or ENV).resolve()
     OUT.mkdir(parents=True, exist_ok=True)
     RESULTS.mkdir(parents=True, exist_ok=True)
     log: list[list[str]] = []
@@ -172,6 +256,11 @@ def main() -> None:
         **os.environ,
         "PATH": f"{ENV / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}",
     }
+    if os.environ.get("CHEMFILES_PREFIX", "").strip():
+        prefix = Path(os.environ["CHEMFILES_PREFIX"]).resolve()
+    else:
+        prefix = install_chemfiles(OUT, log, env)
+    cxx = compiler()
     target = OUT / "target-capi"
     run(
         [
@@ -191,7 +280,7 @@ def main() -> None:
     rpath = f"-Wl,-rpath,{ENV / 'lib'}"
     run(
         [
-            CXX,
+            cxx,
             *CXXFLAGS,
             f"-I{NATIVE}",
             f"-I{src / 'include'}",
@@ -209,7 +298,7 @@ def main() -> None:
     )
     run(
         [
-            CXX,
+            cxx,
             *CXXFLAGS,
             f"-I{NATIVE}",
             f"-I{prefix / 'include'}",
@@ -249,7 +338,7 @@ def main() -> None:
             check=True,
         ).stdout.strip(),
         "cxx": subprocess.run(
-            [CXX, "--version"], capture_output=True, text=True, check=True
+            [cxx, "--version"], capture_output=True, text=True, check=True
         ).stdout.splitlines()[0],
         "cxxflags": CXXFLAGS,
         "chemfiles_version": chemfiles_version,
