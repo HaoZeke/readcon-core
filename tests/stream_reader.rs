@@ -145,14 +145,31 @@ fn malformed_input_fails_where_the_in_memory_parse_fails() {
 
 struct FailAfter<'a> {
     data: &'a [u8],
+    interrupt: bool,
+    end_with_eof: bool,
 }
 
 impl Read for FailAfter<'_> {
     fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
+        if self.interrupt {
+            self.interrupt = false;
+            return Err(io::Error::new(io::ErrorKind::Interrupted, "again"));
+        }
         if self.data.is_empty() {
+            if self.end_with_eof {
+                return Ok(0);
+            }
             return Err(io::Error::other("device went away"));
         }
         self.data.read(out)
+    }
+}
+
+fn fail_after(data: &[u8]) -> FailAfter<'_> {
+    FailAfter {
+        data,
+        interrupt: false,
+        end_with_eof: false,
     }
 }
 
@@ -165,7 +182,7 @@ fn assert_source_error_after(name: &str, data: &[u8], read_sizes: &[usize]) {
         .map_while(Result::ok)
         .count();
     for &size in read_sizes {
-        let mut reader = ConFrameReader::with_read_size(FailAfter { data }, size);
+        let mut reader = ConFrameReader::with_read_size(fail_after(data), size);
         for (i, want) in frames.iter().enumerate() {
             let got = reader.next().unwrap();
             assert_eq!(
@@ -179,7 +196,7 @@ fn assert_source_error_after(name: &str, data: &[u8], read_sizes: &[usize]) {
         assert!(err.to_string().contains("device went away"));
         assert!(reader.next().is_none());
 
-        let mut reader = ConFrameReader::with_read_size(FailAfter { data }, size);
+        let mut reader = ConFrameReader::with_read_size(fail_after(data), size);
         for _ in 0..skips {
             assert!(
                 reader.forward().unwrap().is_ok(),
@@ -216,6 +233,24 @@ fn a_read_error_ends_the_stream_after_the_frames_before_it() {
     for cut in (0..base.len()).step_by(11) {
         assert_source_error_after(&format!("cut at {cut}"), &base[..cut], &READ_SIZES);
     }
+}
+
+#[test]
+fn an_interrupt_then_eof_returns_the_frames_and_stops() {
+    let data = std::fs::read(root().join("test/tiny_cuh2.con")).unwrap();
+    let expect: Vec<ConFrame> = in_memory(&data).into_iter().map(Result::unwrap).collect();
+    assert_eq!(expect.len(), 1);
+    let mut reader = ConFrameReader::with_read_size(
+        FailAfter {
+            data: &data,
+            interrupt: true,
+            end_with_eof: true,
+        },
+        64,
+    );
+    let got = reader.next().unwrap().unwrap();
+    assert_eq!(got, expect[0]);
+    assert!(reader.next().is_none());
 }
 
 fn assert_open_matches(path: &Path, want: &[ConFrame]) {
