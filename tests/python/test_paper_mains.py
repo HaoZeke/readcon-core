@@ -39,8 +39,9 @@ def test_figure_and_table_mains(tmp_path, monkeypatch):
     tables = load("r0174_tables.py")
     monkeypatch.setattr(tables, "OUT", tmp_path / "r0174")
     monkeypatch.setattr(tables, "LEDGER", tmp_path / "r0174.tsv")
-    with pytest.raises(SystemExit, match="Cachegrind harness"):
-        tables.main()
+    # The harness and provenance.json name one commit, so the tables write.
+    tables.main()
+    assert (tmp_path / "r0174.tsv").is_file()
 
     worked = load("worked_example.py")
     record = ROOT / "paper" / "cpc" / "data" / "branch-worked.json"

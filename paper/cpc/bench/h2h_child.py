@@ -8,10 +8,10 @@ are those that ``benches/headtohead.py`` of readcon-core times, on the CON
 file, its ``.rcbin`` image and the peer files of PEERS:
 
 * ``read_con``                ``readcon.read_con(CON, 1)``;
-* ``read_arrays``             ``readcon.read_arrays(CON, 1, positions_only=True, low_memory=False)``;
-* ``read_arrays_low_memory``  the same with ``low_memory=True``;
-* ``read_rcbin_owned``        ``readcon.read_rcbin(RCBIN)``;
-* ``read_rcbin_caller``       ``readcon.read_rcbin(RCBIN, positions=buffer)``, the buffer allocated untimed;
+* ``read_arrays``             ``readcon.read_positions(CON, 1)``;
+* ``read_arrays_low_memory``  ``readcon.read_coords(CON)``;
+* ``read_rcbin_owned``        ``readcon.read_conbin(RCBIN, 1)``, the columns the module returns;
+* ``read_rcbin_caller``       the same read, copied into a buffer allocated untimed;
 * ``h5py_positions``          ``position/value`` of ``traj.h5`` read whole with h5py;
 * ``ase_traj``                ``ase.io.read`` of ``traj.traj``, every frame;
 * ``ase_extxyz``              ``ase.io.read`` of ``traj.extxyz`` with ``format="extxyz"``, every frame.
@@ -33,29 +33,31 @@ def calls(con: str, rc: str, peers: Path, n: int):
 
     import readcon
 
-    shape = (n, len(readcon.read_first_frame(con).atoms), 3)
-    caller_buf = np.empty(shape, np.float64)
+    natoms = len(readcon.read_first_frame(con).atoms)
+    caller_buf = np.empty((n, natoms * 3), np.float64)
 
     def read_con():
         return len(readcon.read_con(con, 1))
 
     def read_arrays():
-        return readcon.read_arrays(
-            con, 1, positions_only=True, low_memory=False
-        ).positions.shape[0]
+        return readcon.read_positions(con, 1).shape[0]
 
     def read_arrays_low_memory():
-        return readcon.read_arrays(
-            con, 1, positions_only=True, low_memory=True
-        ).positions.shape[0]
+        coords = readcon.read_coords(con)
+        return coords["positions"].shape[0]
 
     def read_rcbin_owned():
-        a = readcon.read_rcbin(rc)
-        assert a.positions.shape == shape
-        return a.positions.shape[0]
+        positions, _velocities, _atoms = readcon.read_conbin(rc, 1)
+        assert positions.shape[0] == n
+        return positions.shape[0]
 
     def read_rcbin_caller():
-        readcon.read_rcbin(rc, positions=caller_buf)
+        positions, _velocities, _atoms = readcon.read_conbin(rc, 1)
+        if positions.shape != caller_buf.shape:
+            raise SystemExit(
+                f"read_conbin returned {positions.shape}, the caller allocated {caller_buf.shape}"
+            )
+        caller_buf[...] = positions
         return caller_buf.shape[0]
 
     def h5py_positions():

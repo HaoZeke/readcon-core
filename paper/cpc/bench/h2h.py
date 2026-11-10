@@ -223,13 +223,13 @@ def memray_scripts(
         "read_con": f"import readcon; assert len(readcon.read_con({con!r}, 1))=={n}\n",
         "read_arrays": (
             "import readcon\n"
-            f"a=readcon.read_arrays({con!r}, 1, positions_only=True, low_memory=False)\n"
-            f"assert a.positions.shape[0]=={n}\n"
+            f"a=readcon.read_positions({con!r}, 1)\n"
+            f"assert a.shape[0]=={n}\n"
         ),
         "read_arrays_low_memory": (
             "import readcon\n"
-            f"a=readcon.read_arrays({con!r}, 1, positions_only=True, low_memory=True)\n"
-            f"assert a.positions.shape[0]=={n}\n"
+            f"a=readcon.read_coords({con!r})\n"
+            f"assert a['positions'].shape[0]=={n}\n"
         ),
         "h5py_positions": (
             "import h5py\n"
@@ -238,8 +238,8 @@ def memray_scripts(
         ),
         "read_rcbin_owned": (
             "import readcon\n"
-            f"a=readcon.read_rcbin({rc!r})\n"
-            f"assert a.positions.shape=={shape!r}\n"
+            f"positions, _velocities, _atoms = readcon.read_conbin({rc!r}, 1)\n"
+            f"assert positions.shape[0]=={n}\n"
         ),
         "ase_traj": (
             "from ase.io import read\n"

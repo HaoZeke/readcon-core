@@ -187,7 +187,7 @@ def campaign(
     n_rounds: int | None = None,
     seed_value: int | None = None,
     varying: tuple[str, ...] = (),
-    settle_ms: float = 0,
+    settle_ms: float | None = None,
     artifacts: Mapping[str, Path] | None = None,
 ) -> dict:
     """Run ``cells`` in interleaved rounds; return the protocol, hardware and per-cell summary of the record."""
@@ -270,7 +270,7 @@ def campaign(
             "lscpu_after": host_after["lscpu"],
             "artifact_sha256": artifact_hashes,
             "campaign_s": round(time.perf_counter() - start, 1),
-            **({"settle_ms": settle_ms} if settle_ms else {}),
+            **({} if settle_ms is None else {"settle_ms": settle_ms}),
         },
         "hardware": provenance.hardware(),
         "cells": result,
