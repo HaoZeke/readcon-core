@@ -289,7 +289,20 @@ unset CARGO_LLVM_COV_TARGET_DIR || true
 unset CARGO_LLVM_COV_BUILD_DIR || true
 export CARGO_TARGET_DIR="${PROFDIR%/*}"
 echo "==> report"
-cargo llvm-cov report --branch --remap-path-prefix --json --output-path "$OUT"
+# cargo llvm-cov export keeps the first copy of a duplicated symbol.
+# An integration test sorts before the library tests and its copy of
+# rkr_mpi_write_block_f does not match the profile, so those counts
+# become 0. merge_coverage.py keeps the highest count any binary recorded.
+LLVM_BIN="${RUSTUP_HOME:-$HOME/.rustup}/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin"
+export LLVM_COV="${LLVM_COV:-$LLVM_BIN/llvm-cov}"
+PROFRAW_LIST="$PROFDIR/profraw-list"
+find "$PROFDIR" -name '*.profraw' > "$PROFRAW_LIST"
+"$LLVM_BIN/llvm-profdata" merge -sparse -f "$PROFRAW_LIST" -o "$PROFDIR/readcon-core.profdata"
+python "$ROOT/paper/cpc/scripts/merge_coverage.py" \
+  --profdata "$PROFDIR/readcon-core.profdata" \
+  --search-root "$PROFDIR" \
+  --workspace "$ROOT" \
+  --output "$OUT"
 echo "wrote $OUT"
 if [ "$lean_pytest" -ne 0 ] || [ "$chem_pytest" -ne 0 ]; then
   echo "pytest lean=$lean_pytest chemfiles=$chem_pytest" >&2
