@@ -26,6 +26,7 @@ auto/
 bench/work/
 src/figures/generated/**
 !src/figures/generated/
+!src/figures/generated/*.pdf
 src/rg_main.pdf
 src/rg_supp.pdf
 src/figures/generated/work/
