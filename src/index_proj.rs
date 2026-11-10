@@ -69,14 +69,9 @@ pub fn frame_composition_formula(frame: &ConFrame) -> String {
 
 /// Finite frame energy from header helper or metadata `"energy"`; **None** if missing or non-finite.
 pub fn finite_energy(frame: &ConFrame) -> Option<f64> {
-    frame.header.energy().filter(|e| e.is_finite()).or_else(|| {
-        frame
-            .header
-            .metadata
-            .get("energy")
-            .and_then(|v| v.as_f64())
-            .filter(|e| e.is_finite())
-    })
+    // `energy()` already reads metadata["energy"] as f64. A second lookup
+    // cannot observe a value the first call missed, and JSON numbers are finite.
+    frame.header.energy().filter(|e| e.is_finite())
 }
 
 /// Max Euclidean \(\|F_i\|\) over atoms with force data; None if no finite forces.
@@ -104,7 +99,8 @@ pub fn frame_total_mass(frame: &ConFrame) -> Option<f64> {
     for i in 0..n {
         let mi = h.masses_per_type[i];
         let ni = h.natms_per_type[i] as f64;
-        if !mi.is_finite() || !ni.is_finite() {
+        // Every `usize` converts to a finite f64, so only the mass can be non-finite.
+        if !mi.is_finite() {
             return None;
         }
         m += mi * ni;
@@ -198,19 +194,13 @@ pub fn sections_present_mask(frame: &ConFrame) -> u8 {
 }
 
 fn meta_f64(frame: &ConFrame, key: &str) -> Option<f64> {
-    let v = frame.header.metadata.get(key)?;
-    if let Some(f) = v.as_f64() {
-        return f.is_finite().then_some(f);
-    }
-    if let Some(i) = v.as_i64() {
-        let f = i as f64;
-        return f.is_finite().then_some(f);
-    }
-    if let Some(u) = v.as_u64() {
-        let f = u as f64;
-        return f.is_finite().then_some(f);
-    }
-    None
+    // `serde_json::Number::as_f64` accepts i64, u64, and f64, and JSON
+    // numbers are finite, so a later integer arm cannot run.
+    frame
+        .header
+        .metadata
+        .get(key)
+        .and_then(|v| v.as_f64())
 }
 
 /// ASE.db-competitive / CON-derivable screening projection for one frame.
@@ -289,15 +279,7 @@ impl FrameIndexProjection {
             .map(|i| i as f64)
             .filter(|t| t.is_finite())
             .or_else(|| meta_f64(frame, "neb_bead"));
-        let neb_band = meta_f64(frame, "neb_band").or_else(|| {
-            frame
-                .header
-                .metadata
-                .get("neb_band")
-                .and_then(|v| v.as_u64())
-                .map(|u| u as f64)
-                .filter(|t| t.is_finite())
-        });
+        let neb_band = meta_f64(frame, "neb_band");
         Self {
             n_atoms: frame.atom_data.len() as u32,
             symbols,
@@ -474,32 +456,17 @@ mod tests {
     }
 
     #[test]
-    fn finite_energy_rejects_nan() {
+    fn finite_energy_reads_a_finite_metadata_number() {
         let text = fixture_text();
         let mut fr = ConFrameIterator::new(&text).next().unwrap().unwrap();
+        fr.header.metadata.remove("energy");
+        assert!(finite_energy(&fr).is_none());
+        fr.header.set_energy(-2.5);
+        assert_eq!(finite_energy(&fr), Some(-2.5));
         fr.header
             .metadata
-            .insert("energy".into(), serde_json::json!(f64::NAN));
-        // header.energy() may still win if set; force only metadata path by clearing if needed
-        assert!(finite_energy(&fr).is_none() || finite_energy(&fr).unwrap().is_finite());
-        // explicit non-finite via projection energy field policy
-        let mut fr2 = fr.clone();
-        if let Some(e) = fr2.header.energy() {
-            let _ = e;
-        }
-        // inject only non-finite in metadata and ensure filter works when energy() absent
-        fr2.header
-            .metadata
-            .insert("energy".into(), serde_json::json!(f64::INFINITY));
-        let e = fr2
-            .header
-            .energy()
-            .or_else(|| fr2.header.metadata.get("energy").and_then(|v| v.as_f64()));
-        if let Some(x) = e {
-            if !x.is_finite() {
-                assert!(finite_energy(&fr2).is_none());
-            }
-        }
+            .insert("energy".into(), serde_json::json!("missing"));
+        assert!(finite_energy(&fr).is_none());
     }
 
     #[test]
@@ -571,6 +538,216 @@ mod tests {
         }
         assert_eq!(p.sections_mask, expect_mask);
         assert_eq!(p.sections_mask, sections_present_mask(&fr));
+        let mut energetic = fr.clone();
+        energetic.header.set_energy(1.0);
+        let mut expect_mask = 0u8;
+        if frame_has_forces(&energetic) {
+            expect_mask |= SECTIONS_MASK_FORCES;
+        }
+        if frame_has_velocities(&energetic) {
+            expect_mask |= SECTIONS_MASK_VELOCITIES;
+        }
+        if frame_has_energies(&energetic) {
+            expect_mask |= SECTIONS_MASK_ENERGIES;
+        }
+        assert_eq!(expect_mask & SECTIONS_MASK_ENERGIES, SECTIONS_MASK_ENERGIES);
+
+        let forces = std::fs::read_to_string(
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("resources/test/tiny_cuh2_forces.con"),
+        )
+        .unwrap();
+        let mut forced = ConFrameIterator::new(&forces).next().unwrap().unwrap();
+        forced.header.set_energy(0.25);
+        let projected = FrameIndexProjection::from_frame(&forced);
+        assert!(frame_has_forces(&forced));
+        assert!(frame_has_energies(&forced));
+        assert_eq!(
+            projected.sections_mask & SECTIONS_MASK_FORCES,
+            SECTIONS_MASK_FORCES
+        );
+        assert_eq!(
+            projected.sections_mask & SECTIONS_MASK_ENERGIES,
+            SECTIONS_MASK_ENERGIES
+        );
+        let velocities = std::fs::read_to_string(
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("resources/test/tiny_cuh2.convel"),
+        )
+        .unwrap();
+        let moving = ConFrameIterator::new(&velocities).next().unwrap().unwrap();
+        assert!(frame_has_velocities(&moving));
+        assert_eq!(
+            sections_present_mask(&moving) & SECTIONS_MASK_VELOCITIES,
+            SECTIONS_MASK_VELOCITIES
+        );
+    }
+
+    fn load_named(name: &str) -> ConFrame {
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("resources/test")
+            .join(name);
+        let text = std::fs::read_to_string(path).unwrap();
+        ConFrameIterator::new(&text).next().unwrap().unwrap()
+    }
+
+    #[test]
+    fn screening_scalars_cover_empty_degenerate_and_metadata_channels() {
+        let counts = species_counts_from_symbols(["Cu", "", "Cu", "H"].into_iter());
+        assert_eq!(counts, vec![("Cu".into(), 2u32), ("H".into(), 1)]);
+        assert_eq!(
+            composition_formula(&[("".into(), 4), ("H".into(), 0), ("Cu".into(), 1)]),
+            "Cu:1"
+        );
+
+        let mut forced = load_named("tiny_cuh2_forces.con");
+        for atom in &mut forced.atom_data {
+            atom.set_force(Some([0.0, 0.0, 0.0]));
+        }
+        forced.atom_data[0].set_force(Some([3.0, 0.0, 0.0]));
+        forced.atom_data[1].set_force(Some([0.0, 4.0, 0.0]));
+        assert_eq!(frame_fmax(&forced).unwrap(), 4.0);
+        forced.atom_data[0].set_force(Some([f64::NAN, 0.0, 0.0]));
+        assert_eq!(frame_fmax(&forced).unwrap(), 4.0);
+        for atom in &mut forced.atom_data {
+            atom.set_force(Some([f64::INFINITY, 0.0, 0.0]));
+        }
+        assert!(frame_fmax(&forced).is_none());
+
+        let mut massless = load_named("tiny_cuh2.con");
+        massless.header.masses_per_type.clear();
+        assert!(frame_total_mass(&massless).is_none());
+        massless = load_named("tiny_cuh2.con");
+        massless.header.natms_per_type.clear();
+        assert!(frame_total_mass(&massless).is_none());
+        massless = load_named("tiny_cuh2.con");
+        massless.header.masses_per_type[0] = f64::NAN;
+        assert!(frame_total_mass(&massless).is_none());
+        massless = load_named("tiny_cuh2.con");
+        massless.header.masses_per_type[0] = 1e308;
+        massless.header.natms_per_type[0] = 10;
+        assert!(frame_total_mass(&massless).is_none());
+        let finite_mass = frame_total_mass(&load_named("tiny_cuh2.con")).unwrap();
+        assert!(finite_mass.is_finite() && finite_mass > 0.0);
+
+        let mut cell = load_named("tiny_cuh2.con");
+        cell.header.set_lattice_vectors([
+            [10.0, 0.0, 0.0],
+            [0.0, 12.0, 0.0],
+            [0.0, 0.0, 14.0],
+        ]);
+        let volume = frame_cell_volume(&cell).unwrap();
+        assert!((volume - 1680.0).abs() < 1e-6, "{volume}");
+        cell.header.set_lattice_vectors([
+            [1e308, 0.0, 0.0],
+            [0.0, 1e308, 0.0],
+            [0.0, 0.0, 1e308],
+        ]);
+        assert!(frame_cell_volume(&cell).is_none());
+        cell.header.metadata.remove(crate::types::meta::LATTICE_VECTORS);
+        cell.header.boxl = [f64::NAN, 1.0, 1.0];
+        cell.header.angles = [90.0, 90.0, 90.0];
+        assert!(frame_cell_volume(&cell).is_none());
+        cell.header.boxl = [0.0, 1.0, 1.0];
+        assert!(frame_cell_volume(&cell).is_none());
+        cell.header.boxl = [1.0, 1.0, 1.0];
+        cell.header.angles = [90.0, 90.0, 1e-18];
+        assert!(frame_cell_volume(&cell).is_none());
+        cell.header.angles = [5.0, 5.0, 5.0];
+        let skewed = frame_cell_volume(&cell).unwrap();
+        assert!(skewed.is_finite() && skewed > 0.0, "{skewed}");
+
+        let mut plain = load_named("tiny_cuh2.con");
+        plain.header.sections.clear();
+        assert!(!frame_has_forces(&plain));
+        assert!(!frame_has_velocities(&plain));
+        assert!(!frame_has_energies(&plain));
+        plain.header.sections.push("Forces".into());
+        assert!(frame_has_forces(&plain));
+        plain.header.sections = vec!["Velocities".into()];
+        assert!(frame_has_velocities(&plain));
+        plain.header.sections = vec!["Energies".into()];
+        assert!(frame_has_energies(&plain));
+        plain.header.sections.clear();
+        plain.atom_data[0].set_force(Some([1.0, 0.0, 0.0]));
+        assert!(frame_has_forces(&plain));
+        plain.atom_data[0].set_force(None);
+        plain.atom_data[0].set_velocity(Some([0.0, 1.0, 0.0]));
+        assert!(frame_has_velocities(&plain));
+        plain.atom_data[0].set_velocity(None);
+        plain.header.set_energy(3.0);
+        assert!(frame_has_energies(&plain));
+        assert_eq!(finite_energy(&plain), Some(3.0));
+
+        let mut soa = load_named("tiny_cuh2_forces.con");
+        soa.header.sections.clear();
+        for atom in &mut soa.atom_data {
+            atom.set_force(None);
+        }
+        assert!(soa.has_forces());
+        assert!(frame_has_forces(&soa));
+        let mut moving = load_named("tiny_cuh2.convel");
+        moving.header.sections.clear();
+        for atom in &mut moving.atom_data {
+            atom.set_velocity(None);
+        }
+        assert!(moving.has_velocities());
+        assert!(frame_has_velocities(&moving));
+
+        plain.header.set_time(1.5);
+        plain.header.set_timestep(0.25);
+        plain.header.set_frame_index(3);
+        plain.header.set_neb_bead(2);
+        plain.header.set_neb_band(4);
+        plain.header.set_pbc([true, false, true]);
+        plain
+            .header
+            .metadata
+            .insert("charge".into(), serde_json::json!(-1.0));
+        plain
+            .header
+            .metadata
+            .insert("magmom".into(), serde_json::json!("spin"));
+        let projected = FrameIndexProjection::from_frame(&plain);
+        assert_eq!(projected.time, Some(1.5));
+        assert_eq!(projected.timestep, Some(0.25));
+        assert_eq!(projected.frame_index, Some(3.0));
+        assert_eq!(projected.neb_bead, Some(2.0));
+        assert_eq!(projected.neb_band, Some(4.0));
+        assert_eq!(projected.charge, Some(-1.0));
+        assert_eq!(projected.magmom, None);
+        assert_eq!(projected.pbc, Some([true, false, true]));
+        assert_eq!(projected.energy, Some(3.0));
+        plain
+            .header
+            .metadata
+            .insert("time".into(), serde_json::json!("later"));
+        plain.header.metadata.remove("charge");
+        let cleared = FrameIndexProjection::from_frame(&plain);
+        assert_eq!(cleared.time, None);
+        assert_eq!(cleared.charge, None);
+
+        let empty_span = FrameByteSpan { start: 2, end: 2 };
+        assert_eq!(empty_span.len(), 0);
+        assert!(empty_span.is_empty());
+        assert_eq!(empty_span.slice("abcd"), Some(""));
+        assert!(FrameByteSpan { start: 0, end: 8 }.slice("ab").is_none());
+        assert_eq!(
+            FrameByteSpan { start: 1, end: 3 }.slice("abcd"),
+            Some("bc")
+        );
+
+        assert!(spans_cover_buffer("").unwrap());
+        assert!(parse_frame_at("", 0).is_err());
+        let text = fixture_text();
+        let with_gap_check = spans_cover_buffer(&text).unwrap();
+        assert!(with_gap_check);
+        let prefixed = format!("xx\n{text}");
+        let prefixed_cover = spans_cover_buffer(&prefixed);
+        assert!(prefixed_cover.is_err() || prefixed_cover.unwrap() == false);
+        let trailing = format!("{text}\nnot-a-frame\n");
+        let trailing_cover = spans_cover_buffer(&trailing);
+        assert!(trailing_cover.is_err() || trailing_cover.unwrap() == false);
     }
 
     #[test]

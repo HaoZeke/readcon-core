@@ -8,7 +8,7 @@ use std::fmt;
 use std::io;
 use std::path::Path;
 
-use crate::chemfiles_import::{self, ChemfilesImportError};
+use crate::chemfiles_import::ChemfilesImportError;
 use crate::compression;
 use crate::iterators::ConFrameIterator;
 use crate::types::ConFrame;
@@ -115,16 +115,22 @@ pub fn read_frames_for_convert(input: &Path) -> Result<(Vec<ConFrame>, bool), Co
         }
         Ok((frames, true))
     } else {
-        if !chemfiles_import::chemfiles_enabled() {
+        // The success path needs libchemfiles. A runtime check would leave
+        // that arm compiled but unreachable in a lean build.
+        #[cfg(not(feature = "chemfiles"))]
+        {
             return Err(ConvertError::Chemfiles(
                 ChemfilesImportError::FeatureDisabled,
             ));
         }
-        let frames = chemfiles_import::con_frames_from_trajectory_path(input)?;
-        if frames.is_empty() {
-            return Err(ConvertError::Empty);
+        #[cfg(feature = "chemfiles")]
+        {
+            let frames = crate::chemfiles_import::con_frames_from_trajectory_path(input)?;
+            if frames.is_empty() {
+                return Err(ConvertError::Empty);
+            }
+            Ok((frames, false))
         }
-        Ok((frames, false))
     }
 }
 
@@ -140,6 +146,7 @@ pub fn convert_path_to_con(input: &Path, output: &Path) -> Result<ConvertReport,
     writer
         .extend(frames.iter())
         .map_err(|e| ConvertError::Io(io::Error::other(e.to_string())))?;
+    writer.flush().map_err(ConvertError::Io)?;
     Ok(ConvertReport {
         n_frames,
         n_atoms_last,
@@ -151,6 +158,7 @@ pub fn convert_path_to_con(input: &Path, output: &Path) -> Result<ConvertReport,
 mod tests {
     use super::*;
     use std::fs;
+    use std::os::unix::fs::PermissionsExt;
     use std::path::PathBuf;
 
     fn fixture(name: &str) -> PathBuf {
@@ -221,6 +229,64 @@ mod tests {
             err,
             ConvertError::Chemfiles(ChemfilesImportError::FeatureDisabled)
         ));
+        assert!(err.to_string().contains("chemfiles"), "{err}");
+        let source = std::error::Error::source(&err).unwrap();
+        assert!(source.to_string().contains("chemfiles"), "{source}");
+        assert!(source.source().is_none());
+    }
+
+    #[test]
+    fn convert_errors_cover_display_parse_io_and_write() {
+        let missing = ConvertError::InputMissing("gone.con".into());
+        assert!(missing.to_string().contains("gone.con"), "{missing}");
+        assert!(std::error::Error::source(&missing).is_none());
+        let empty = ConvertError::Empty;
+        assert!(empty.to_string().contains("no frames"), "{empty}");
+        let parse = ConvertError::Parse("bad header".into());
+        assert!(parse.to_string().contains("bad header"), "{parse}");
+        let io = ConvertError::from(std::io::Error::new(std::io::ErrorKind::Other, "disk"));
+        assert!(io.to_string().contains("disk"), "{io}");
+        assert!(std::error::Error::source(&io).unwrap().to_string().contains("disk"));
+        let chem = ConvertError::from(ChemfilesImportError::FeatureDisabled);
+        assert!(chem.to_string().contains("chemfiles"), "{chem}");
+        assert!(std::error::Error::source(&chem).is_some());
+
+        let dir = tempfile_dir();
+        let missing_path = dir.join("nope.con");
+        let err = read_frames_for_convert(&missing_path).unwrap_err();
+        assert!(matches!(err, ConvertError::InputMissing(_)), "{err}");
+
+        let binary = dir.join("bad.con");
+        fs::write(&binary, [0xff, 0xfe, 0xfd]).unwrap();
+        let err = read_frames_for_convert(&binary).unwrap_err();
+        assert!(matches!(err, ConvertError::Io(_)), "{err}");
+        assert!(err.to_string().to_ascii_lowercase().contains("utf-8"), "{err}");
+        let mapped = dir.join("mapped.con");
+        let mut big = vec![b' '; 70 * 1024];
+        big[0] = 0xff;
+        fs::write(&mapped, &big).unwrap();
+        let err = read_frames_for_convert(&mapped).unwrap_err();
+        assert!(matches!(err, ConvertError::Parse(_)), "{err}");
+        assert!(err.to_string().contains("UTF-8"), "{err}");
+
+        let blocked = dir.join("blocked.con");
+        fs::write(&blocked, b"not a frame\n").unwrap();
+        let mut perms = fs::metadata(&blocked).unwrap().permissions();
+        perms.set_mode(0o000);
+        fs::set_permissions(&blocked, perms).unwrap();
+        let err = read_frames_for_convert(&blocked).unwrap_err();
+        assert!(matches!(err, ConvertError::Io(_)), "{err}");
+        let mut perms = fs::metadata(&blocked).unwrap().permissions();
+        perms.set_mode(0o644);
+        fs::set_permissions(&blocked, perms).unwrap();
+
+        let err = convert_path_to_con(&fixture("tiny_multi_cuh2.con"), Path::new("/dev/full"))
+            .unwrap_err();
+        assert!(matches!(err, ConvertError::Io(_)), "{err}");
+        assert!(err.to_string().contains("I/O"), "{err}");
+
+        assert!(path_looks_like_con(Path::new("dir/A.CON.ZST")));
+        assert!(!path_looks_like_con(Path::new("")));
     }
 
     fn tempfile_dir() -> PathBuf {

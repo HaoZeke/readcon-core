@@ -556,41 +556,45 @@ impl Array2Storage {
             ));
         }
         match self {
-            Self::F64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::F32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
+            Self::F64(a) => dlpack_arc(a.clone()),
+            Self::F32(a) => dlpack_arc(a.clone()),
             Self::F16(_) => Err(ParseError::ValidationError(
                 "float16 as_dlpack blocked on half/dlpk version skew; storage still allocates"
                     .into(),
             )),
-            Self::I8(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::I16(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::I32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::I64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U8(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U16(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
+            Self::I8(a) => dlpack_arc(a.clone()),
+            Self::I16(a) => dlpack_arc(a.clone()),
+            Self::I32(a) => dlpack_arc(a.clone()),
+            Self::I64(a) => dlpack_arc(a.clone()),
+            Self::U8(a) => dlpack_arc(a.clone()),
+            Self::U16(a) => dlpack_arc(a.clone()),
+            Self::U32(a) => dlpack_arc(a.clone()),
+            Self::U64(a) => dlpack_arc(a.clone()),
             Self::Bool(a) => {
                 let v: Vec<bool> = a.iter().map(|&x| x != 0).collect();
-                dlpk::DLPackTensor::try_from(v)
-                    .map_err(|e| ParseError::ValidationError(format!("as_dlpack bool: {e}")))
+                dlpack_vec(v)
             }
-            Self::C64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack complex64: {e}"))),
-            Self::C128(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack complex128: {e}"))),
+            Self::C64(a) => dlpack_arc(a.clone()),
+            Self::C128(a) => dlpack_arc(a.clone()),
         }
     }
+}
+
+/// dlpk 0.1.5 builds a managed tensor from any host `ArcArray` and always returns `Ok`.
+fn dlpack_arc<T, D>(array: ndarray::ArcArray<T, D>) -> Result<dlpk::DLPackTensor, ParseError>
+where
+    D: ndarray::Dimension,
+    T: dlpk::GetDLPackDataType + Clone + 'static,
+{
+    Ok(dlpk::DLPackTensor::try_from(array).expect("dlpk ArcArray export"))
+}
+
+/// dlpk 0.1.5 builds a managed tensor from any host `Vec` and always returns `Ok`.
+fn dlpack_vec<T>(values: Vec<T>) -> Result<dlpk::DLPackTensor, ParseError>
+where
+    T: dlpk::GetDLPackDataType,
+{
+    Ok(dlpk::DLPackTensor::try_from(values).expect("dlpk Vec export"))
 }
 
 /// 1-D SoA (energies / masses / scalar fields).
@@ -793,39 +797,26 @@ impl Array1Storage {
             ));
         }
         match self {
-            Self::F64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::F32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
+            Self::F64(a) => dlpack_arc(a.clone()),
+            Self::F32(a) => dlpack_arc(a.clone()),
             Self::F16(_) => Err(ParseError::ValidationError(
                 "float16 as_dlpack blocked on half/dlpk version skew; storage still allocates"
                     .into(),
             )),
-            Self::I8(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::I16(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::I32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::I64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U8(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U16(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
-            Self::U64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack: {e}"))),
+            Self::I8(a) => dlpack_arc(a.clone()),
+            Self::I16(a) => dlpack_arc(a.clone()),
+            Self::I32(a) => dlpack_arc(a.clone()),
+            Self::I64(a) => dlpack_arc(a.clone()),
+            Self::U8(a) => dlpack_arc(a.clone()),
+            Self::U16(a) => dlpack_arc(a.clone()),
+            Self::U32(a) => dlpack_arc(a.clone()),
+            Self::U64(a) => dlpack_arc(a.clone()),
             Self::Bool(a) => {
                 let v: Vec<bool> = a.iter().map(|&x| x != 0).collect();
-                dlpk::DLPackTensor::try_from(v)
-                    .map_err(|e| ParseError::ValidationError(format!("as_dlpack bool: {e}")))
+                dlpack_vec(v)
             }
-            Self::C64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack complex64: {e}"))),
-            Self::C128(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("as_dlpack complex128: {e}"))),
+            Self::C64(a) => dlpack_arc(a.clone()),
+            Self::C128(a) => dlpack_arc(a.clone()),
         }
     }
 }
@@ -913,22 +904,14 @@ impl IdArray1 {
             ));
         }
         match self {
-            Self::U64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
-            Self::U32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
-            Self::U16(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
-            Self::U8(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
-            Self::I64(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
-            Self::I32(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
-            Self::I16(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
-            Self::I8(a) => dlpk::DLPackTensor::try_from(a.clone())
-                .map_err(|e| ParseError::ValidationError(format!("{e}"))),
+            Self::U64(a) => dlpack_arc(a.clone()),
+            Self::U32(a) => dlpack_arc(a.clone()),
+            Self::U16(a) => dlpack_arc(a.clone()),
+            Self::U8(a) => dlpack_arc(a.clone()),
+            Self::I64(a) => dlpack_arc(a.clone()),
+            Self::I32(a) => dlpack_arc(a.clone()),
+            Self::I16(a) => dlpack_arc(a.clone()),
+            Self::I8(a) => dlpack_arc(a.clone()),
         }
     }
 }
@@ -1018,5 +1001,122 @@ mod tests {
             assert_eq!(t.shape(), &[2]);
         }
         assert!(IdArray1::zeros(ElementKind::Float32, 1).is_err());
+    }
+
+    #[test]
+    fn storage_pointers_equality_and_rejected_dtypes() {
+        for &kind in ElementKind::all_hosted() {
+            let block = Array2Storage::zeros(kind, 2, 3);
+            assert!(!block.data_ptr().is_null(), "{kind:?}");
+            assert_eq!(block.nrows(), 2);
+            assert_eq!(block.ncols(), 3);
+            let column = Array1Storage::zeros(kind, 3);
+            assert!(!column.data_ptr().is_null(), "{kind:?}");
+            assert!(!column.is_empty());
+            assert_eq!(column.len(), 3);
+            let empty = Array1Storage::zeros(kind, 0);
+            assert!(empty.is_empty());
+            assert_eq!(empty.len(), 0);
+        }
+        let f64_block = Array2Storage::from_f64_row_major(1, 3, vec![1.0, 2.0, 3.0]);
+        assert_eq!(f64_block.f64_slice().unwrap(), &[1.0, 2.0, 3.0]);
+        assert!(Array2Storage::zeros(ElementKind::Float32, 1, 3)
+            .f64_slice()
+            .is_none());
+        let column = Array1Storage::from_f64_vec(vec![1.0, 2.0]);
+        assert_eq!(column.f64_slice().unwrap(), &[1.0, 2.0]);
+        assert!(Array1Storage::zeros(ElementKind::Bool, 2)
+            .f64_slice()
+            .is_none());
+
+        let same = Array2Storage::zeros(ElementKind::Float64, 1, 3);
+        let other_kind = Array2Storage::zeros(ElementKind::Float32, 1, 3);
+        let other_rows = Array2Storage::zeros(ElementKind::Float64, 2, 3);
+        let other_cols = Array2Storage::zeros(ElementKind::Float64, 1, 4);
+        assert_ne!(same, other_kind);
+        assert_ne!(same, other_rows);
+        assert_ne!(same, other_cols);
+        let mut changed = same.clone();
+        changed.set_f64_row(0, [1.0, 0.0, 0.0]);
+        assert_ne!(same, changed);
+        assert_eq!(same.clone(), same);
+
+        let ones = Array1Storage::zeros(ElementKind::Float64, 2);
+        assert_ne!(ones, Array1Storage::zeros(ElementKind::Int32, 2));
+        assert_ne!(ones, Array1Storage::zeros(ElementKind::Float64, 3));
+        let mut edited = ones.clone();
+        edited.set_f64(0, 4.0);
+        assert_ne!(ones, edited);
+        assert_eq!(ones.clone(), ones);
+
+        let mut flags = Array2Storage::zeros(ElementKind::Bool, 1, 3);
+        flags.set_f64_row(0, [0.0, 1.0, 2.0]);
+        assert_eq!(flags.as_f64_row(0), [0.0, 1.0, 1.0]);
+        let exported = flags.as_dlpack(dlpk::sys::DLDevice::cpu()).unwrap();
+        assert_eq!(exported.shape(), &[3]);
+        let mut bits = Array1Storage::zeros(ElementKind::Bool, 2);
+        bits.set_f64(0, 0.0);
+        bits.set_f64(1, 3.0);
+        assert_eq!(bits.get_f64(0), 0.0);
+        assert_eq!(bits.get_f64(1), 1.0);
+
+        let raw = ndarray::Array2::from_shape_vec((2, 6), (0..12).map(|i| i as f64).collect())
+            .unwrap();
+        let sliced = raw.slice_move(ndarray::s![.., ..;2]);
+        assert!(sliced.as_slice_memory_order().is_none());
+        let mut stepped = Array2Storage::F64(sliced.into_shared());
+        stepped.set_f64_row(1, [9.0, 8.0, 7.0]);
+        assert_eq!(stepped.as_f64_row(1), [9.0, 8.0, 7.0]);
+        assert!(stepped.data_ptr().is_null());
+
+        let cpu_err = Array1Storage::zeros(ElementKind::Float64, 2)
+            .as_dlpack(dlpk::sys::DLDevice::cuda(0))
+            .unwrap_err();
+        assert!(cpu_err.to_string().contains("CPU-resident"), "{cpu_err}");
+        let id_err = IdArray1::zeros(ElementKind::UInt32, 2)
+            .unwrap()
+            .as_dlpack(dlpk::sys::DLDevice::cuda(0))
+            .unwrap_err();
+        assert!(id_err.to_string().contains("CPU-resident"), "{id_err}");
+
+        let unknown = ElementKind::parse("nope").unwrap_err();
+        assert!(unknown.to_string().contains("unknown storage dtype"), "{unknown}");
+        let bf16 = ElementKind::parse(" bf16 ").unwrap_err();
+        assert!(bf16.to_string().contains("without an in-memory host"), "{bf16}");
+
+        let not_object = StorageDtypes::from_json(&json!([1])).unwrap_err();
+        assert!(not_object.to_string().contains("JSON object"), "{not_object}");
+        let not_string = StorageDtypes::from_json(&json!({"positions": 1})).unwrap_err();
+        assert!(not_string.to_string().contains("must be a string"), "{not_string}");
+        let defaults = StorageDtypes::from_json(&json!({})).unwrap();
+        assert_eq!(defaults, StorageDtypes::default());
+        let mut meta = std::collections::BTreeMap::new();
+        assert_eq!(
+            StorageDtypes::from_metadata(&meta).unwrap(),
+            StorageDtypes::all_f64()
+        );
+        defaults.insert_into(&mut meta);
+        assert_eq!(
+            StorageDtypes::from_metadata(&meta).unwrap().positions,
+            ElementKind::Float64
+        );
+
+        for &kind in &[
+            ElementKind::UInt64,
+            ElementKind::UInt32,
+            ElementKind::UInt16,
+            ElementKind::UInt8,
+            ElementKind::Int64,
+            ElementKind::Int32,
+            ElementKind::Int16,
+            ElementKind::Int8,
+        ] {
+            let empty = IdArray1::zeros(kind, 0).unwrap();
+            assert!(empty.is_empty());
+            assert_eq!(empty.len(), 0);
+            let ids = IdArray1::zeros(kind, 4).unwrap();
+            assert!(!ids.is_empty());
+            assert_eq!(ids.len(), 4);
+        }
     }
 }

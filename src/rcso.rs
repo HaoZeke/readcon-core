@@ -41,14 +41,23 @@ fn err(msg: impl Into<String>) -> ParseError {
     ParseError::ValidationError(msg.into())
 }
 
+fn fit_u32(len: usize, msg: &str) -> Result<u32, ParseError> {
+    u32::try_from(len).map_err(|_| err(msg))
+}
+
+fn mul_size(a: usize, b: usize) -> Result<usize, ParseError> {
+    a.checked_mul(b).ok_or_else(|| err("RCSO overflow"))
+}
+
+fn add_size(a: usize, b: usize) -> Result<usize, ParseError> {
+    a.checked_add(b).ok_or_else(|| err("RCSO overflow"))
+}
+
 impl Rcso {
     /// Pack one parsed frame. CON text stays the authority.
     pub fn encode_frame(frame: &ConFrame) -> Result<Vec<u8>, ParseError> {
         let n = frame.atom_data.len();
-        if n > u32::MAX as usize {
-            return Err(err("too many atoms for RCSO"));
-        }
-        let natoms = n as u32;
+        let natoms = fit_u32(n, "too many atoms for RCSO")?;
         let has_f = frame.atom_data.iter().any(|a| a.force().is_some());
         let has_v = frame.atom_data.iter().any(|a| a.velocity().is_some());
         let mut flags = 0u32;
@@ -112,20 +121,16 @@ impl Rcso {
             return Err(err(format!("RCSO unsupported dtype {dtype}")));
         }
         let n = natoms as usize;
-        let block = n.checked_mul(3).ok_or_else(|| err("RCSO overflow"))?;
-        let block_bytes = block.checked_mul(8).ok_or_else(|| err("RCSO overflow"))?;
-        let mut need = HEADER_LEN + block_bytes;
+        let block = mul_size(n, 3)?;
+        let block_bytes = mul_size(block, 8)?;
+        let mut need = add_size(HEADER_LEN, block_bytes)?;
         let has_f = flags & RCSO_FLAG_FORCES != 0;
         let has_v = flags & RCSO_FLAG_VELOCITIES != 0;
         if has_f {
-            need = need
-                .checked_add(block_bytes)
-                .ok_or_else(|| err("RCSO overflow"))?;
+            need = add_size(need, block_bytes)?;
         }
         if has_v {
-            need = need
-                .checked_add(block_bytes)
-                .ok_or_else(|| err("RCSO overflow"))?;
+            need = add_size(need, block_bytes)?;
         }
         if bytes.len() < need {
             return Err(err("RCSO truncated body"));
@@ -169,18 +174,14 @@ fn read_vec3_block(bytes: &[u8], n: usize) -> Result<Vec<[f64; 3]>, ParseError> 
 
 /// Pack many RCSO blobs into one RCSB envelope (one Bcast).
 pub fn encode_batch(blobs: &[Vec<u8>]) -> Result<Vec<u8>, ParseError> {
-    if blobs.len() > u32::MAX as usize {
-        return Err(err("too many frames in RCSB batch"));
-    }
+    let count = fit_u32(blobs.len(), "too many frames in RCSB batch")?;
     let mut out = Vec::new();
     out.extend_from_slice(RCSB_MAGIC);
     out.extend_from_slice(&RCSB_VERSION.to_le_bytes());
-    out.extend_from_slice(&(blobs.len() as u32).to_le_bytes());
+    out.extend_from_slice(&count.to_le_bytes());
     for b in blobs {
-        if b.len() > u32::MAX as usize {
-            return Err(err("RCSO blob exceeds u32 length"));
-        }
-        out.extend_from_slice(&(b.len() as u32).to_le_bytes());
+        let ln = fit_u32(b.len(), "RCSO blob exceeds u32 length")?;
+        out.extend_from_slice(&ln.to_le_bytes());
         out.extend_from_slice(b);
     }
     Ok(out)
@@ -309,5 +310,47 @@ mod tests {
         assert_eq!(parts.len(), 2);
         assert_eq!(parts[0], a);
         assert_eq!(parts[1], b);
+    }
+
+    #[test]
+    fn length_helpers_and_truncated_batches_fail_closed() {
+        let too_many = fit_u32(u32::MAX as usize + 1, "too many atoms for RCSO").unwrap_err();
+        assert!(too_many.to_string().contains("too many atoms"), "{too_many}");
+        assert_eq!(fit_u32(4, "too many atoms for RCSO").unwrap(), 4);
+        let overflow = mul_size(usize::MAX, 2).unwrap_err();
+        assert!(overflow.to_string().contains("overflow"), "{overflow}");
+        assert_eq!(mul_size(3, 8).unwrap(), 24);
+        let wrapped = add_size(usize::MAX, 1).unwrap_err();
+        assert!(wrapped.to_string().contains("overflow"), "{wrapped}");
+        assert_eq!(add_size(24, 8).unwrap(), 32);
+
+        let mut bad_magic = vec![0u8; 24];
+        bad_magic[..4].copy_from_slice(b"NOPE");
+        let err = Rcso::decode(&bad_magic).unwrap_err();
+        assert!(err.to_string().contains("bad magic"), "{err}");
+
+        let mut batch = encode_batch(&[vec![1, 2, 3]]).unwrap();
+        batch[0] = b'X';
+        let err = decode_batch(&batch).unwrap_err();
+        assert!(err.to_string().contains("bad magic"), "{err}");
+
+        let truncated_len = decode_batch(b"RCSB\x01\x00\x00\x00\x01\x00\x00\x00").unwrap_err();
+        assert!(truncated_len.to_string().contains("truncated length"), "{truncated_len}");
+        let truncated_blob =
+            decode_batch(b"RCSB\x01\x00\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00ab").unwrap_err();
+        assert!(truncated_blob.to_string().contains("truncated blob"), "{truncated_blob}");
+
+        let frame = first_frame(include_str!("../resources/test/tiny_cuh2.con"));
+        let mut with_force = frame.clone();
+        with_force.atom_data[0].set_force(Some([1.0, 0.0, 0.0]));
+        let blob = Rcso::encode_frame(&with_force).unwrap();
+        let got = Rcso::decode(&blob).unwrap();
+        assert_eq!(got.forces.unwrap()[0], [1.0, 0.0, 0.0]);
+        for atom in with_force.atom_data.iter_mut().skip(1) {
+            atom.set_force(None);
+        }
+        let partial = Rcso::encode_frame(&with_force).unwrap();
+        let decoded = Rcso::decode(&partial).unwrap();
+        assert_eq!(decoded.forces.unwrap()[1], [0.0, 0.0, 0.0]);
     }
 }

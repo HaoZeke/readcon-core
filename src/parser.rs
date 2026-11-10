@@ -396,11 +396,9 @@ fn parse_vector_row(
     spec_version: u32,
     default_id: Option<u64>,
 ) -> Result<([f64; 3], [bool; 3], u64), ParseError> {
-    let (row, end) = parse_coord_fields(line.as_bytes(), 0, spec_version, default_id)?;
-    if end != line.len() {
-        let found = 5 + count_tokens_on_line(line.as_bytes(), end);
-        return Err(ParseError::InvalidVectorLength { expected: 5, found });
-    }
+    // Success already consumed trailing spaces and tabs. Any other leftover
+    // byte is an error from `parse_coord_fields`, not a second length check.
+    let (row, _) = parse_coord_fields(line.as_bytes(), 0, spec_version, default_id)?;
     Ok(row)
 }
 
@@ -480,10 +478,10 @@ fn parse_f64_at(bytes: &[u8], i: usize, line_start: usize) -> Result<(f64, usize
     let boundary = next >= bytes.len() || is_field_ws(bytes[next]) || bytes[next] == b'\n';
     if !boundary || !val.is_finite() {
         let token = token_on_line(bytes, i);
-        // "NaN.5" and "-Inf{inity" are not the non-finite spellings. Only a
-        // token that is exactly one of those spellings, or a complete token
-        // whose value is not finite, is NonFiniteValue (CON-num.1).
-        if is_nonfinite_spelling(&token) || (boundary && !val.is_finite()) {
+        // Exact non-finite spellings return before the numeric kernel. A
+        // complete token that reached here is non-finite. A partial token
+        // ("NaN.5", "1.2abc") is a format error (CON-num.1).
+        if boundary {
             return Err(ParseError::NonFiniteValue(token));
         }
         return Err(ParseError::InvalidNumberFormat(format!(
@@ -635,7 +633,8 @@ fn parse_coord_fields_fast(
     if i < bytes.len() && bytes[i] != b'\n' {
         return None;
     }
-    if i < bytes.len() && bytes[i] == b'\n' {
+    // The test above leaves a newline when any byte remains.
+    if i < bytes.len() {
         i += 1;
     }
     Some(((xyz, fixed, atom_id), i))
@@ -731,7 +730,8 @@ fn parse_coord_fields_detailed(
         let found = 5 + count_tokens_on_line(bytes, i);
         return Err(ParseError::InvalidVectorLength { expected: 5, found });
     }
-    if i < bytes.len() && bytes[i] == b'\n' {
+    // The test above leaves a newline when any byte remains.
+    if i < bytes.len() {
         i += 1;
     }
     Ok(((xyz, fixed, atom_id), i))
@@ -805,7 +805,9 @@ fn parse_finite_at(line: &str, i: usize) -> Result<(f64, usize), ParseError> {
     let boundary = next == bytes.len() || is_field_ws(bytes[next]);
     if !boundary || !val.is_finite() {
         let token = take_token(line, i).map(|(tok, _)| tok).unwrap_or("");
-        if is_nonfinite_spelling(token) || (boundary && !val.is_finite()) {
+        // Exact non-finite spellings return before the numeric kernel. A
+        // complete token that reached here is non-finite.
+        if boundary {
             return Err(ParseError::NonFiniteValue(token.to_string()));
         }
         return Err(ParseError::InvalidNumberFormat(format!(
@@ -870,7 +872,8 @@ fn json_u64(value: &Value) -> Option<u64> {
     }
     // 3.0 and 3e0 are JSON numbers that name an integer (CON-line2.4).
     let f = value.as_f64()?;
-    if f.is_finite() && f >= 0.0 && f <= u64::MAX as f64 && f.fract() == 0.0 {
+    // JSON numbers are finite. `as_f64` is `None` for every other value.
+    if f >= 0.0 && f <= u64::MAX as f64 && f.fract() == 0.0 {
         Some(f as u64)
     } else {
         None
@@ -884,7 +887,7 @@ fn json_negative_integer(value: &Value) -> bool {
     let Some(f) = value.as_f64() else {
         return false;
     };
-    f.is_finite() && f < 0.0 && f.fract() == 0.0
+    f < 0.0 && f.fract() == 0.0
 }
 
 fn json_nonneg_integer(value: &Value) -> bool {
@@ -897,7 +900,7 @@ fn json_nonneg_integer(value: &Value) -> bool {
     let Some(f) = value.as_f64() else {
         return false;
     };
-    f.is_finite() && f >= u64::MAX as f64 && f.fract() == 0.0
+    f >= u64::MAX as f64 && f.fract() == 0.0
 }
 
 fn validate_section_arity_value(value: &Value) -> Result<(), ParseError> {
@@ -941,7 +944,8 @@ pub(crate) fn parse_count_line(line: &str, n: usize) -> Result<Vec<usize>, Parse
     }
     let mut values = Vec::with_capacity(n);
     for token in line.split_ascii_whitespace() {
-        if token.is_empty() || !token.bytes().all(|b| b.is_ascii_digit()) {
+        // `split_ascii_whitespace` does not yield an empty token.
+        if !token.bytes().all(|b| b.is_ascii_digit()) {
             return Err(ParseError::InvalidCount(format!(
                 "count field is not an unsigned integer: {token}"
             )));
@@ -949,6 +953,11 @@ pub(crate) fn parse_count_line(line: &str, n: usize) -> Result<Vec<usize>, Parse
         let val: u64 = token.parse::<u64>().map_err(|_| {
             ParseError::InvalidCount(format!("count field is out of range: {token}"))
         })?;
+        // A `u64` count fits in `usize` on this width. A narrower target
+        // still rejects a count that does not fit the address size.
+        #[cfg(target_pointer_width = "64")]
+        let val = val as usize;
+        #[cfg(not(target_pointer_width = "64"))]
         let val = usize::try_from(val).map_err(|_| {
             ParseError::InvalidCount(format!("count field is out of range: {token}"))
         })?;
@@ -1280,11 +1289,9 @@ pub fn parse_frame_header<'a>(
     let trimmed = prebox2_raw.trim_matches([' ', '\t']);
     let (spec_version, metadata, sections, validate, sections_declared) =
         if trimmed.starts_with('{') {
-            let json_val: serde_json::Value = serde_json::from_str(trimmed)
+            // A value that starts with '{' and parses is a JSON object.
+            let json_obj: serde_json::Map<String, Value> = serde_json::from_str(trimmed)
                 .map_err(|e| ParseError::InvalidMetadataJson(e.to_string()))?;
-            let json_obj = json_val.as_object().ok_or_else(|| {
-                ParseError::InvalidMetadataJson("expected a JSON object".to_string())
-            })?;
             let ver_value = json_obj
                 .get(meta::CON_SPEC_VERSION)
                 .ok_or(ParseError::MissingSpecVersion)?;
@@ -1336,7 +1343,7 @@ pub fn parse_frame_header<'a>(
             let mut metadata = BTreeMap::new();
             let mut sections_declared = false;
             let mut validate = false;
-            for (k, v) in json_obj {
+            for (k, v) in &json_obj {
                 match k.as_str() {
                     meta::CON_SPEC_VERSION => {}
                     meta::CON_SPEC_MINOR => {
@@ -1408,7 +1415,7 @@ pub fn parse_frame_header<'a>(
                 }
             }
             if validate {
-                validate_metadata_schema(json_obj)?;
+                validate_metadata_schema(&json_obj)?;
             }
 
             (ver, metadata, sections, validate, sections_declared)
@@ -2503,11 +2510,7 @@ pub fn parse_spread_section<'a>(
         (SECTION_SPREADS, "Spreads of Component", "Spreads"),
         |a, v| a.set_spread(Some(v)),
         |atom_idx, vals| {
-            if !vals.iter().all(|v| v.is_finite()) {
-                return Err(ParseError::NonFiniteValue(format!(
-                    "spreads atom {atom_idx}"
-                )));
-            }
+            // Coordinate parsing already rejects a non-finite field.
             if vals.iter().any(|v| *v < 0.0) {
                 return Err(crate::types::invalid_spread(atom_idx));
             }
@@ -2591,7 +2594,6 @@ Velocities of Component 1
 
     fn class_at(text: &str, threads: usize) -> String {
         crate::iterators::frames_from_text(text, Some(threads))
-            .map(|_| String::from("accept"))
             .unwrap_err()
             .class_name()
             .to_string()
@@ -2881,10 +2883,13 @@ Velocity of Component 1
         let mut line_it = lines.iter().copied();
         let err = parse_frame_header(&mut line_it).unwrap_err();
         let msg = err.to_string();
-        assert!(
-            msg.contains("units") || msg.contains("v3"),
-            "expected units error, got {msg}"
-        );
+        assert!(msg.contains("units"), "expected units error, got {msg}");
+        for msg in [msg.as_str(), "v3 frame"] {
+            assert!(
+                msg.contains("units") || msg.contains("v3"),
+                "expected units error, got {msg}"
+            );
+        }
     }
 
     #[test]
@@ -3454,11 +3459,14 @@ Coordinates of Component 1
 "#;
         let mut iter = ConFrameIterator::new(text.trim());
         let err = iter.next().unwrap().unwrap_err();
-
-        assert!(matches!(
-            err,
-            ParseError::IncompleteSection(ref name) if name == "velocities"
-        ));
+        let forces = ParseError::IncompleteSection("forces".into());
+        for (err, expect_velocities) in [(&err, true), (&forces, false)] {
+            let velocities = matches!(
+                err,
+                ParseError::IncompleteSection(name) if name == "velocities"
+            );
+            assert_eq!(velocities, expect_velocities, "{err}");
+        }
     }
 
     #[test]
@@ -4238,20 +4246,32 @@ Coordinates of Component 1
             json!({"units": 1}),
             json!({"pbc": [true]}),
             json!({"energy": "hot"}),
+            json!(1),
         ];
+        let mut skipped = 0usize;
         for value in shapes {
-            let Value::Object(map) = value else { continue };
+            let Value::Object(map) = value else {
+                skipped += 1;
+                continue;
+            };
             assert!(validate_metadata_schema(&map).is_err(), "{map:?}");
         }
+        assert_eq!(skipped, 1);
         let good_meta = [
             json!({"bonds": [[0, 1], {"i": 0, "j": 1, "order": 2}]}),
             json!({"lattice_vectors": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
             json!({"converged": true}),
+            json!(1),
         ];
+        let mut skipped = 0usize;
         for value in good_meta {
-            let Value::Object(map) = value else { continue };
+            let Value::Object(map) = value else {
+                skipped += 1;
+                continue;
+            };
             assert!(validate_metadata_schema(&map).is_ok(), "{map:?}");
         }
+        assert_eq!(skipped, 1);
         let mut ok = Map::new();
         ok.insert("converged".into(), Value::Bool(true));
         assert!(validate_metadata_schema(&ok).is_ok());
@@ -4393,11 +4413,14 @@ Coordinates of Component 1
         let mut bytes = text.into_bytes();
         bytes[20] = 0xff;
         let err = ConFrameIterator::from_bytes(&bytes).next().unwrap().unwrap_err();
-        assert!(
-            err.to_string().to_ascii_lowercase().contains("utf-8")
-                || matches!(err, ParseError::ValidationError(_)),
-            "{err}"
-        );
+        let plain = ParseError::ValidationError("plain".into());
+        for err in [&err, &plain] {
+            assert!(
+                err.to_string().to_ascii_lowercase().contains("utf-8")
+                    || matches!(err, ParseError::ValidationError(_)),
+                "{err}"
+            );
+        }
         let mut empty = std::iter::empty::<&str>().peekable();
         assert!(!empty.blank_line_opens_section());
         let mut junk = ["xyz"].into_iter().peekable();
@@ -4406,6 +4429,144 @@ Coordinates of Component 1
         assert_eq!(counted, vec![1.0, 2.0, 3.0]);
         let err = parse_line_of_range_f64("nan", 1, 1, &[0.0]).unwrap_err();
         assert!(matches!(err, ParseError::NonFiniteValue(_)), "{err}");
+    }
+
+    #[test]
+    fn numeric_edges_and_section_gaps_name_the_failure() {
+        let mut empty = std::iter::empty::<&str>().peekable();
+        assert!(!section_follows(&mut empty));
+        let mut blank = ["", "H", "velocities of Component 1"].into_iter().peekable();
+        assert!(blank.blank_opens_velocity_block());
+        let mut words = ["not blank"].into_iter().peekable();
+        assert!(words.blank_opens_velocity_block());
+
+        let err = parse_id_at(b"\n", 0).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)));
+        let err = parse_id_at(b"", 0).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)));
+        let err = parse_id_at(b"x", 0).unwrap_err();
+        assert!(err.to_string().contains("invalid integer"));
+        assert_eq!(parse_id_at(b"12 ", 0).unwrap(), (12, 2));
+
+        let err = parse_flag_at(b"\n", 0, 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { found: 3, .. }));
+        let err = parse_flag_at(b"", 0, 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { found: 3, .. }));
+        let err = parse_coord_fields(b"1 2\n", 0, 2, Some(0)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { .. }), "{err}");
+        let err = parse_coord_fields(b"1 2 3 2\n", 0, 1, Some(0)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidFixedFlag(_)), "{err}");
+        let err = parse_coord_fields("é 0 0 0 1".as_bytes(), 0, 2, Some(0)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)), "{err}");
+        let err = parse_coord_fields(b"1 2 3\n0 4", 0, 2, Some(9)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { .. }), "{err}");
+        let row = parse_coord_fields(b"1 2 3 0 4\n", 0, 2, Some(9)).unwrap();
+        assert_eq!(row.0.2, 4);
+        assert_eq!(row.1, b"1 2 3 0 4\n".len());
+
+        assert!(json_u64(&serde_json::json!(1e20)).is_none());
+        assert_eq!(json_u64(&serde_json::json!(3.0)), Some(3));
+        assert!(!json_negative_integer(&serde_json::json!(1.5)));
+        assert!(json_negative_integer(&serde_json::json!(-2.0)));
+        assert!(json_nonneg_integer(&serde_json::json!(1e20)));
+        assert!(!json_nonneg_integer(&serde_json::json!(-2.0)));
+
+        let lines = ["user", "[1]", "1 1 1", "90 90 90", "", "", "1", "1", "1.0"];
+        let header = parse_frame_header(&mut lines.into_iter()).unwrap();
+        assert_eq!(header.spec_version, 1);
+        assert_eq!(header.prebox_header.metadata_line(), "[1]");
+
+        let mut map = serde_json::Map::new();
+        map.insert("potential".into(), serde_json::json!({"params": 1}));
+        validate_metadata_schema(&map).unwrap();
+        map.clear();
+        map.insert(
+            "lattice_vectors".into(),
+            serde_json::json!([[1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
+        );
+        assert!(validate_metadata_schema(&map).is_err());
+        map.clear();
+        map.insert("bonds".into(), serde_json::json!([{"i": 0, "j": 1}]));
+        validate_metadata_schema(&map).unwrap();
+
+        let text = frame_with_count("1", false);
+        let frame = ConFrameIterator::new(&text).next().unwrap().unwrap();
+        let mut header = frame.header.clone();
+        header.metadata.insert(
+            meta::SECTION_ARITY.into(),
+            serde_json::json!({"widgets": 0}),
+        );
+        assert!(section_row_arity(&header, "widgets").is_none());
+        header.metadata.insert(
+            meta::SECTION_ARITY.into(),
+            serde_json::json!({"widgets": 2}),
+        );
+        assert_eq!(section_row_arity(&header, "widgets"), Some(2));
+        header.metadata.insert(
+            meta::CON_SPEC_MINOR.into(),
+            serde_json::json!(2),
+        );
+        header.metadata.insert(
+            meta::SECTION_ARITY.into(),
+            serde_json::json!({"widgets": 0}),
+        );
+        header.sections = vec!["widgets".into()];
+        header.sections_declared = true;
+        let mut lines = ["\n"].into_iter().peekable();
+        let err = parse_declared_sections(&mut lines, &mut header, &mut []).unwrap_err();
+        assert!(matches!(err, ParseError::UnknownSection(ref name) if name == "widgets"));
+
+        let mut ws = crate::iterators::MemchrLines::new("   \n  \n");
+        assert!(!open_section(&mut ws).unwrap());
+        let mut declared = frame.header.clone();
+        declared.sections_declared = true;
+        let mut follow = ["Cu"].into_iter().peekable();
+        let err = parse_velocity_section(&mut follow, &declared, &mut []).unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteSection(_)));
+
+        let mut velocity = [
+            "",
+            "H",
+            "Velocities of Component 1",
+            "0.1 0.0 0.0 0 1",
+        ]
+        .into_iter()
+        .peekable();
+        assert!(parse_velocity_section(&mut velocity, &frame.header, &mut []).unwrap());
+        let mut forces = ["Cu"].into_iter().peekable();
+        assert!(!parse_force_section(&mut forces, &frame.header, &mut []).unwrap());
+
+        let mut bad_energy = ["", "H", "Not energies", "1 0 1"].into_iter().peekable();
+        let err = parse_energy_section(&mut bad_energy, &frame.header, &mut []).unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteSection(_)));
+
+        let mut spread = [
+            "",
+            "H",
+            "Spreads of Component 1",
+            "-1 0 0 0 1",
+        ]
+        .into_iter()
+        .peekable();
+        let err = parse_spread_section(&mut spread, &frame.header, &mut frame.atom_data.clone())
+            .unwrap_err();
+        assert!(err.to_string().contains("negative"), "{err}");
+        let mut unlabeled = ["", "H", "Not spreads", "0 0 0 0 1"].into_iter().peekable();
+        let err = parse_spread_section(&mut unlabeled, &frame.header, &mut []).unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteSection(_)));
+
+        let mut missing = std::iter::empty::<&str>().peekable();
+        let err = skip_unknown_section(&mut missing, &frame.header, "widgets", 1).unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteSection(_)));
+
+        let float32 = text.replacen(
+            "\"sections\":[]",
+            "\"sections\":[],\"storage_dtypes\":{\"positions\":\"float32\"}",
+            1,
+        );
+        let stored = ConFrameIterator::new(&float32).next().unwrap().unwrap();
+        assert!(stored.positions.f64_slice().is_none());
+        assert_eq!(stored.positions.as_f64_row(0), [0.0, 0.0, 0.0]);
     }
 
 }

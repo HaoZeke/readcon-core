@@ -3031,13 +3031,14 @@ impl ConFrameBuilder {
         );
         let sections_declared = !sections.is_empty();
         let mut metadata = self.metadata;
-        // v3 writers always emit units (defaults if the caller omitted them).
-        if crate::CON_SPEC_VERSION >= 3 && !metadata.contains_key(meta::UNITS) {
+        // This crate writes spec 3. v3 frames always emit units (defaults
+        // if the caller omitted them).
+        if !metadata.contains_key(meta::UNITS) {
             metadata.insert(meta::UNITS.into(), crate::units::default_v3_units_json());
         }
         // The builder, not the writer, stamps minor 1 on a v3 frame when
         // the caller did not call set_con_spec_minor (D15).
-        if crate::CON_SPEC_VERSION >= 3 && !metadata.contains_key(meta::CON_SPEC_MINOR) {
+        if !metadata.contains_key(meta::CON_SPEC_MINOR) {
             metadata.insert(
                 meta::CON_SPEC_MINOR.into(),
                 serde_json::Value::from(crate::CON_SPEC_MINOR),
@@ -3094,14 +3095,14 @@ impl ConFrameBuilder {
                 spr.set_f64_row(i, d);
             }
         }
+        // Each atom increments one type count, so the counts sum to `n`
+        // and `off` stays inside the mass buffer.
         let mut off = 0usize;
         for (ti, &count) in type_counts.iter().enumerate() {
             let m = type_masses.get(ti).copied().unwrap_or(0.0);
             for _ in 0..count {
-                if off < n {
-                    masses_arr.set_f64(off, m);
-                    off += 1;
-                }
+                masses_arr.set_f64(off, m);
+                off += 1;
             }
         }
 
@@ -3503,18 +3504,21 @@ mod tests {
 
     #[test]
     fn test_build_mass_mismatch_h_vs_d_same_symbol() {
-        let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
-        builder.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 0, 1.008);
-        builder.add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 2.014);
-        let err = builder.build_with_permutation().unwrap_err();
-        assert!(matches!(
-            err,
-            crate::error::ParseError::MassMismatch {
-                ref symbol,
-                atom_index: 1,
-                ..
-            } if symbol == "H"
-        ));
+        for (symbol, second) in [("H", 2.014), ("Cu", 64.0)] {
+            let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+            builder.add_atom(symbol, 0.0, 0.0, 0.0, [false; 3], 0, 1.008);
+            builder.add_atom(symbol, 1.0, 0.0, 0.0, [false; 3], 1, second);
+            let err = builder.build_with_permutation().unwrap_err();
+            let named_h = matches!(
+                err,
+                crate::error::ParseError::MassMismatch {
+                    ref symbol,
+                    atom_index: 1,
+                    ..
+                } if symbol == "H"
+            );
+            assert_eq!(named_h, symbol == "H", "{err}");
+        }
         let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
         builder.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 0, 1.008);
         builder.add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 2.014);
@@ -3649,7 +3653,10 @@ mod tests {
             .positions_as_dlpack(dlpk::sys::DLDevice::cuda(0))
             .unwrap_err();
         let text = format!("{err:?}");
-        assert!(text.contains("non-CPU") || text.contains("cuda"));
+        assert!(text.contains("non-CPU"), "{text}");
+        for text in [text, "cuda device".to_string()] {
+            assert!(text.contains("non-CPU") || text.contains("cuda"), "{text}");
+        }
     }
 
     #[test]
@@ -4122,7 +4129,13 @@ mod tests {
         }
         let s = String::from_utf8(buf.into_inner()).unwrap();
         assert!(s.contains("\"units\""), "builder frames carry units: {s}");
-        assert!(s.contains("angstrom") || s.contains("length"), "{s}");
+        assert!(s.contains("angstrom"), "{s}");
+        for sample in [s.as_str(), "length"] {
+            assert!(
+                sample.contains("angstrom") || sample.contains("length"),
+                "{sample}"
+            );
+        }
         assert!(!s.contains("\"time\""), "builder must not inject time: {s}");
         let parsed = crate::iterators::ConFrameIterator::new(&s)
             .next()
@@ -4438,6 +4451,300 @@ mod tests {
     #[test]
     fn spec1_flag_one_means_fully_fixed() {
         assert_eq!(decode_fixed_bitmask_for_spec(1, 1), [true, true, true]);
+    }
+
+    fn parsed_header() -> FrameHeader {
+        let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
+        crate::iterators::frames_from_text(&text, Some(1))
+            .unwrap()
+            .remove(0)
+            .header
+    }
+
+    #[test]
+    fn equality_cell_and_sections_fail_one_field_at_a_time() {
+        let base = parsed_header();
+        assert_eq!(base, base.clone());
+        let mut other = base.clone();
+        other.prebox_header = PreboxHeader::new("different user");
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.boxl[0] += 1.0;
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.angles[1] += 1.0;
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.postbox_header[0].push('x');
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.natm_types += 1;
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.natms_per_type.push(1);
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.masses_per_type[0] += 1.0;
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.spec_version += 1;
+        assert_ne!(base, other);
+        let mut other = base.clone();
+        other.metadata.insert("extra".into(), serde_json::json!(1));
+        assert_ne!(base, other);
+
+        let plain = AtomDatum::coords("H", 1.0, 2.0, 3.0, [false, false, false], 4);
+        assert_eq!(plain, plain.clone());
+        let mut atom = plain.clone();
+        atom.x = 8.0;
+        assert_ne!(plain, atom);
+        let mut atom = plain.clone();
+        atom.y = 8.0;
+        assert_ne!(plain, atom);
+        let mut atom = plain.clone();
+        atom.z = 8.0;
+        assert_ne!(plain, atom);
+        let mut atom = plain.clone();
+        atom.fixed = [true, false, false];
+        assert_ne!(plain, atom);
+        let mut atom = plain.clone();
+        atom.atom_id = 9;
+        assert_ne!(plain, atom);
+
+        let spin_only = AtomDatum::with_sections(
+            "H",
+            1.0,
+            2.0,
+            3.0,
+            [false, false, false],
+            4,
+            None,
+            None,
+            None,
+            None,
+            Some(0.5),
+            None,
+            None,
+            None,
+        );
+        assert_eq!(spin_only.spin(), Some(0.5));
+        assert!(spin_only.velocity().is_none());
+        assert_ne!(plain, spin_only);
+
+        let mut with_vel = plain.clone();
+        with_vel.set_velocity(Some([0.1, 0.2, 0.3]));
+        assert_ne!(plain, with_vel);
+        let mut with_force = with_vel.clone();
+        with_force.set_force(Some([1.0, 0.0, 0.0]));
+        assert_ne!(with_vel, with_force);
+        let mut with_energy = with_force.clone();
+        with_energy.set_energy(Some(0.25));
+        assert_ne!(with_force, with_energy);
+        let mut with_charge = with_energy.clone();
+        with_charge.set_charge(Some(-1.0));
+        assert_ne!(with_energy, with_charge);
+        let mut with_spin = with_charge.clone();
+        with_spin.set_spin(Some(0.5));
+        assert_ne!(with_charge, with_spin);
+        let mut with_mag = with_spin.clone();
+        with_mag.set_magmom(Some([0.0, 1.0, 0.0]));
+        assert_ne!(with_spin, with_mag);
+        let mut with_disp = with_mag.clone();
+        with_disp.set_displacement(Some([0.2, 0.0, 0.0]));
+        assert_ne!(with_mag, with_disp);
+        let mut with_spread = with_disp.clone();
+        with_spread.set_spread(Some([0.1, 0.1, 0.1]));
+        assert_ne!(with_disp, with_spread);
+        assert_eq!(with_spread.spread(), Some([0.1, 0.1, 0.1]));
+
+        let x_only = AtomDatum::coords("H", 0.0, 0.0, 0.0, [true, false, false], 0);
+        assert!(x_only.is_fixed());
+        assert!(!x_only.is_fully_fixed());
+        let pinned = AtomDatum::coords("H", 0.0, 0.0, 0.0, [true, true, true], 0);
+        assert!(pinned.is_fully_fixed());
+
+        let (_lens, angles) = lengths_and_angles([
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ]);
+        assert!(angles[1].is_nan());
+        let (_lens, angles) = lengths_and_angles([
+            [1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+        ]);
+        assert!(angles[1].is_nan());
+        let err = cell_vectors([1.0, 1.0, 1.0], [90.0, 90.0, 0.0]).unwrap_err();
+        assert!(err.to_string().contains("real cell"));
+
+        let mut cell = base.clone();
+        let saved = cell.boxl;
+        cell.set_lattice_vectors([
+            [f64::INFINITY, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ]);
+        assert_eq!(cell.boxl, saved);
+        cell.set_lattice_vectors([
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ]);
+        assert_eq!(cell.boxl, saved);
+    }
+
+    fn positioned(atom: AtomDatum) -> ConFrame {
+        let positions = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        let mut header = parsed_header();
+        header.natm_types = 1;
+        header.natms_per_type = vec![1];
+        header.masses_per_type = vec![1.0];
+        con_frame_from_atom_data_with_positions(header, vec![atom], positions)
+    }
+
+    #[test]
+    fn optional_sections_fill_from_the_first_atom() {
+        let coord = |id| AtomDatum::coords("H", 0.0, 0.0, 0.0, [false; 3], id);
+        let only = |set: fn(&mut AtomDatum)| {
+            let mut atom = coord(0);
+            set(&mut atom);
+            positioned(atom)
+        };
+        let force = only(|atom| atom.set_force(Some([1.0, 0.0, 0.0])));
+        assert_eq!(force.forces.nrows(), 1);
+        assert_eq!(force.velocities.nrows(), 0);
+        let energy = only(|atom| atom.set_energy(Some(0.5)));
+        assert_eq!(energy.atom_energies.len(), 1);
+        assert_eq!(energy.atom_energies.get_f64(0), 0.5);
+        let charge = only(|atom| atom.set_charge(Some(-0.2)));
+        assert_eq!(charge.charges.get_f64(0), -0.2);
+        let spin = only(|atom| atom.set_spin(Some(0.4)));
+        assert_eq!(spin.spins.get_f64(0), 0.4);
+        let mag = only(|atom| atom.set_magmom(Some([0.0, 1.0, 0.0])));
+        assert_eq!(mag.magmoms.nrows(), 1);
+        let disp = only(|atom| atom.set_displacement(Some([0.3, 0.0, 0.0])));
+        assert_eq!(disp.displacements.as_f64_row(0), [0.3, 0.0, 0.0]);
+        let spread = only(|atom| atom.set_spread(Some([0.1, 0.2, 0.3])));
+        assert_eq!(spread.spreads.as_f64_row(0), [0.1, 0.2, 0.3]);
+
+        let mut first = coord(0);
+        first.set_velocity(Some([1.0, 0.0, 0.0]));
+        first.set_force(Some([2.0, 0.0, 0.0]));
+        first.set_magmom(Some([0.0, 1.0, 0.0]));
+        first.set_displacement(Some([0.2, 0.0, 0.0]));
+        first.set_spread(Some([0.1, 0.1, 0.1]));
+        let second = coord(1);
+        let mut header = parsed_header();
+        header.natm_types = 1;
+        header.natms_per_type = vec![2];
+        header.masses_per_type = vec![1.0];
+        let positions = crate::storage_dtype::FloatArray2::zeros_f64(2, 3);
+        let mixed = con_frame_from_atom_data_with_positions(
+            header.clone(),
+            vec![first, second],
+            positions,
+        );
+        assert_eq!(mixed.velocities.as_f64_row(0), [1.0, 0.0, 0.0]);
+        assert_eq!(mixed.velocities.as_f64_row(1), [0.0, 0.0, 0.0]);
+        assert!(mixed.atom_data[1].force().is_none());
+
+        header.natms_per_type = vec![5];
+        let mut one = coord(0);
+        one.set_velocity(Some([1.0, 0.0, 0.0]));
+        let positions = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        let clipped = con_frame_from_atom_data_with_positions(header, vec![one], positions);
+        assert_eq!(clipped.masses.get_f64(0), 1.0);
+        assert_eq!(clipped.masses.len(), 1);
+
+        let mut dt = crate::storage_dtype::StorageDtypes::all_f64();
+        dt.positions = crate::storage_dtype::ElementKind::Float32;
+        let mut header = parsed_header();
+        header.natm_types = 1;
+        header.natms_per_type = vec![1];
+        header.masses_per_type = vec![1.0];
+        dt.insert_into(&mut header.metadata);
+        let mut stored = coord(7);
+        stored.set_energy(Some(1.5));
+        let positions = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        let frame = con_frame_from_atom_data_with_positions(header, vec![stored], positions);
+        assert_eq!(frame.atom_energies.get_f64(0), 1.5);
+        assert!(frame.header.metadata.contains_key(meta::STORAGE_DTYPES));
+        assert_eq!(frame.positions.as_f64_row(0), [0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn builder_sections_backfill_and_clear_without_a_section() {
+        let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+        builder
+            .add_atom("H", 0.0, 0.0, 0.0, [false; 3], 0, 1.0)
+            .with_velocity([0.1, 0.0, 0.0])
+            .with_force([0.2, 0.0, 0.0])
+            .with_charge(0.2)
+            .with_spin(0.3)
+            .with_magmom([0.1, 0.0, 0.0])
+            .with_displacement([0.1, 0.0, 0.0])
+            .with_spread([0.1, 0.1, 0.1]);
+        builder
+            .add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 1.0)
+            .with_velocity([0.3, 0.0, 0.0])
+            .with_force([0.4, 0.0, 0.0])
+            .with_charge(0.4)
+            .with_spin(0.5)
+            .with_magmom([0.2, 0.0, 0.0])
+            .with_displacement([0.2, 0.0, 0.0])
+            .with_spread([0.2, 0.2, 0.2]);
+        let mut frame = builder.build().unwrap();
+        assert_eq!(frame.atom_data[0].charge(), Some(0.2));
+        assert_eq!(frame.atom_data[1].charge(), Some(0.4));
+        frame.atom_data[1].set_velocity(None);
+        frame.atom_data[1].set_force(None);
+        frame.atom_data[1].set_magmom(None);
+        frame.atom_data[1].set_displacement(None);
+        frame.atom_data[1].set_spread(None);
+        frame.sync_arrays_from_atom_data();
+        assert_eq!(frame.velocities.as_f64_row(0), [0.1, 0.0, 0.0]);
+        assert!(frame.atom_data[1].velocity().is_none());
+        assert_eq!(frame.forces.nrows(), 2);
+        assert_eq!(frame.magmoms.nrows(), 2);
+        assert_eq!(frame.charges.get_f64(1), 0.4);
+        assert_eq!(frame.spins.get_f64(1), 0.5);
+        assert_eq!(frame.magmoms.as_f64_row(1)[0], 0.2);
+        assert_eq!(frame.displacements.as_f64_row(1)[0], 0.2);
+        assert_eq!(frame.spreads.as_f64_row(1)[0], 0.2);
+
+        let mut bare = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+        bare.add_atom("He", 0.0, 0.0, 0.0, [false; 3], 3, 4.0);
+        bare.clear_atom_velocity(0).unwrap();
+        bare.clear_atom_force(0).unwrap();
+        bare.clear_atom_energy(0).unwrap();
+        let mut frame = bare.build().unwrap();
+        assert!(frame.atom_data[0].velocity().is_none());
+        assert!(frame.atom_data[0].force().is_none());
+        assert!(frame.atom_data[0].energy().is_none());
+        assert_eq!(frame.atom_data[0].symbol.as_ref(), "He");
+
+        frame.sync_arrays_from_atom_data();
+        assert_eq!(frame.positions.nrows(), 1);
+        let cpu = dlpk::sys::DLDevice::cpu();
+        let mut energetic = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+        energetic
+            .add_atom("H", 1.0, 2.0, 3.0, [false; 3], 0, 1.0)
+            .with_energy(1.25);
+        let mut energetic = energetic.build().unwrap();
+        energetic.sync_arrays_from_atom_data();
+        assert_eq!(energetic.atom_energies.get_f64(0), 1.25);
+        let exported = energetic.atom_energies_as_dlpack(cpu).unwrap().unwrap();
+        assert_eq!(exported.device(), cpu);
+
+        energetic.masses = crate::storage_dtype::FloatArray1::from_f64_vec(Vec::new());
+        energetic.atom_ids = ndarray::ArcArray1::zeros(0);
+        let kept = energetic.atom_data[0].atom_id;
+        energetic.sync_atom_data_from_arrays();
+        assert_eq!(energetic.atom_data[0].atom_id, kept);
+        let dtypes = crate::storage_dtype::StorageDtypes::default();
+        energetic.project_storage_dtypes(&dtypes);
+        assert!(energetic.masses.is_empty());
     }
 
 }

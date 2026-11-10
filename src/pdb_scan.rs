@@ -177,4 +177,83 @@ ENDMDL
         assert_eq!(tables.masses, vec![63.546, 63.546]);
         assert_eq!(tables.cell, vec![10.0, 12.0, 14.0, 90.0, 90.0, 90.0]);
     }
+
+    #[test]
+    fn records_cover_hetatm_hydrogen_crlf_and_errors() {
+        let mut hydrogen = b"HETATM    1    H MOL     1       0.000   1.000   2.000".to_vec();
+        while hydrogen.len() < 76 {
+            hydrogen.push(b' ');
+        }
+        hydrogen.extend_from_slice(b" H\r\n");
+        let mut unknown = b"ATOM      2    X MOL     1       3.000   4.000   5.000".to_vec();
+        while unknown.len() < 78 {
+            unknown.push(b' ');
+        }
+        unknown.extend_from_slice(b"\r\n");
+        let mut text = b"CRYST1   10.000   12.000   14.000  90.00  90.00  90.00\r\n".to_vec();
+        text.extend_from_slice(&hydrogen);
+        text.extend_from_slice(&unknown);
+        text.extend_from_slice(b"REMARK leftover atoms without ENDMDL\r\n");
+        let tables = tables_from_pdb_bytes(&text).unwrap();
+        assert_eq!(tables.n_frames, 1);
+        assert_eq!(tables.n_atoms, 2);
+        assert_eq!(tables.masses[0], 1.00794);
+        assert!(tables.masses[1].is_nan());
+        assert_eq!(tables.cell.len(), 6);
+
+        let no_nl = b"ATOM      1    H MOL     1       0.100   0.200   0.300";
+        let short_header = tables_from_pdb_bytes(no_nl).unwrap();
+        assert_eq!(short_header.n_atoms, 1);
+        assert_eq!(short_header.positions, vec![0.1, 0.2, 0.3]);
+        assert!(short_header.masses[0].is_nan());
+
+        assert_eq!(tables_from_pdb_bytes(b"END\n").unwrap_err(), "no atoms");
+        assert_eq!(
+            tables_from_pdb_bytes(b"ATOM short\n").unwrap_err(),
+            "atom"
+        );
+        assert_eq!(
+            tables_from_pdb_bytes(
+                b"ATOM      1  H   MOL     1       nope    0.200   0.300  1.00  0.00           H\n"
+            )
+            .unwrap_err(),
+            "float"
+        );
+        assert_eq!(
+            tables_from_pdb_bytes(b"CRYST1 1 2\nATOM      1  H   MOL     1       0.000   0.000   0.000\n")
+                .unwrap_err(),
+            "cryst"
+        );
+        assert_eq!(
+            tables_from_pdb_bytes(b"ENDMDL\n").unwrap_err(),
+            "frame size"
+        );
+        let mismatch = "\
+MODEL     1
+ATOM      1  CU MOL     1       0.000   0.000   0.000  1.00  0.00          CU
+ENDMDL
+MODEL     2
+ATOM      1  CU MOL     1       0.000   0.000   0.000  1.00  0.00          CU
+ATOM      2  H  MOL     1       1.000   0.000   0.000  1.00  0.00           H
+ENDMDL
+";
+        assert_eq!(
+            tables_from_pdb_bytes(mismatch.as_bytes()).unwrap_err(),
+            "frame size"
+        );
+        let zero = "\
+MODEL     1
+ENDMDL
+ATOM      1  H   MOL     1       0.000   0.000   0.000
+";
+        assert_eq!(tables_from_pdb_bytes(zero.as_bytes()).unwrap_err(), "frame size");
+
+        let missing = tables_from_pdb_path(std::path::Path::new("/no/such/file.pdb")).unwrap_err();
+        assert_eq!(missing, "read");
+        let path = std::env::temp_dir().join(format!("readcon-pdb-{}.pdb", std::process::id()));
+        std::fs::write(&path, no_nl).unwrap();
+        let from_path = tables_from_pdb_path(&path).unwrap();
+        assert_eq!(from_path.n_atoms, 1);
+        std::fs::remove_file(&path).unwrap();
+    }
 }

@@ -825,10 +825,7 @@ fn push_f64_prec(buf: &mut Vec<u8>, v: f64, prec: usize) {
         buf.push(b'-');
     }
     let ax = v.abs();
-    if prec == 0 {
-        push_u128(buf, ax.round() as u128);
-        return;
-    }
+    // `prec == 0` already returned through the formatter above (`0 != 6`).
     let scale = 10u128.pow(prec as u32);
     let n = (ax * scale as f64).round() as u128;
     let int_part = n / scale;
@@ -914,16 +911,17 @@ pub(crate) fn stamp_legacy_velocity_time(
         Some(_) => return,
         None => crate::units::default_v3_units_json(),
     };
-    if let Some(object) = units.as_object_mut() {
-        object.insert(
-            "time".to_string(),
-            Value::String(crate::units::NATURAL_TIME_UNIT.to_string()),
-        );
-        meta.insert(meta::UNITS.to_string(), units);
-        // The label now holds, so the frame is written as minor 1.
-        if meta.contains_key(meta::CON_SPEC_MINOR) {
-            meta.insert(meta::CON_SPEC_MINOR.to_string(), Value::from(1u64));
-        }
+    let object = units
+        .as_object_mut()
+        .expect("units value is a JSON object");
+    object.insert(
+        "time".to_string(),
+        Value::String(crate::units::NATURAL_TIME_UNIT.to_string()),
+    );
+    meta.insert(meta::UNITS.to_string(), units);
+    // The label now holds, so the frame is written as minor 1.
+    if meta.contains_key(meta::CON_SPEC_MINOR) {
+        meta.insert(meta::CON_SPEC_MINOR.to_string(), Value::from(1u64));
     }
 }
 
@@ -1054,6 +1052,10 @@ mod float_format_tests {
                 assert_eq!(got, exp, "v={v:?} prec={prec}");
             }
         }
+        let nan = formatted(f64::NAN, 6);
+        assert_eq!(nan, format!("{:.6}", f64::NAN));
+        let inf = formatted(f64::INFINITY, 0);
+        assert_eq!(inf, format!("{:.0}", f64::INFINITY));
     }
 }
 
@@ -1076,5 +1078,289 @@ mod section_arity_tests {
         let reserved = vec![json!("velocities"), json!("energies")];
         require_minor2_section_arity(2, &reserved, &serde_json::Map::new()).unwrap();
         require_minor2_section_arity(1, &widgets, &serde_json::Map::new()).unwrap();
+    }
+
+    use super::{FloatFormat, MetadataCacheEntry, binding_metadata, push_f64, stamp_legacy_velocity_time};
+    use crate::iterators::ConFrameIterator;
+    use crate::types::{ConFrame, meta};
+    use std::collections::BTreeMap;
+    use std::io::Cursor;
+
+    fn load_frame(name: &str) -> ConFrame {
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("resources/test")
+            .join(name);
+        let text = std::fs::read_to_string(path).unwrap();
+        ConFrameIterator::new(&text).next().unwrap().unwrap()
+    }
+
+    fn write_text(frame: &ConFrame) -> Result<String, super::WriteError> {
+        let mut buf = Vec::new();
+        let mut writer = super::ConFrameWriter::new(&mut buf);
+        writer.write_frame(frame)?;
+        drop(writer);
+        Ok(String::from_utf8(buf).unwrap())
+    }
+
+    fn cache_entry(
+        spec: u32,
+        flags: [bool; 8],
+        metadata: BTreeMap<String, serde_json::Value>,
+    ) -> MetadataCacheEntry {
+        MetadataCacheEntry {
+            spec_version: spec,
+            has_velocities: flags[0],
+            has_forces: flags[1],
+            has_energies: flags[2],
+            has_charges: flags[3],
+            has_spins: flags[4],
+            has_magmoms: flags[5],
+            has_displacements: flags[6],
+            has_spreads: flags[7],
+            metadata: metadata.clone(),
+            serialized: String::new(),
+        }
+    }
+
+    #[test]
+    fn write_error_display_source_and_io_conversion() {
+        let io_error = super::WriteError::from(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "disk full",
+        ));
+        assert!(io_error.to_string().contains("disk full"), "{io_error}");
+        let source = std::error::Error::source(&io_error).unwrap();
+        assert!(source.to_string().contains("disk full"), "{source}");
+        let as_io: std::io::Error = io_error.into();
+        assert_eq!(as_io.kind(), std::io::ErrorKind::Other);
+
+        let format_error = super::WriteError::Format(crate::error::ParseError::ValidationError(
+            "bad frame".into(),
+        ));
+        assert!(format_error.to_string().contains("bad frame"), "{format_error}");
+        let source = std::error::Error::source(&format_error).unwrap();
+        assert!(source.to_string().contains("bad frame"), "{source}");
+        let as_io: std::io::Error = format_error.into();
+        assert_eq!(as_io.kind(), std::io::ErrorKind::InvalidData);
+        assert!(as_io.to_string().contains("bad frame"), "{as_io}");
+    }
+
+    #[test]
+    fn metadata_cache_misses_each_field_and_nested_values() {
+        let neg = serde_json::json!(-0.0);
+        let pos = serde_json::json!(0.0);
+        assert!(!super::metadata_value_eq(&neg, &pos));
+        assert!(super::metadata_value_eq(&serde_json::json!(1.5), &serde_json::json!(1.5)));
+        assert!(!super::metadata_value_eq(&serde_json::json!(1.5), &serde_json::json!(1)));
+        assert!(super::metadata_value_eq(&serde_json::json!(1), &serde_json::json!(1)));
+        assert!(!super::metadata_value_eq(&serde_json::json!(1), &serde_json::json!(2)));
+        assert!(super::metadata_value_eq(&serde_json::json!([1, 2]), &serde_json::json!([1, 2])));
+        assert!(!super::metadata_value_eq(&serde_json::json!([1]), &serde_json::json!([1, 2])));
+        assert!(!super::metadata_value_eq(&serde_json::json!([1, 2]), &serde_json::json!([1, 3])));
+        assert!(!super::metadata_value_eq(
+            &serde_json::json!([[1.0], [2.0]]),
+            &serde_json::json!([[1.0], [3.0]])
+        ));
+        assert!(super::metadata_value_eq(
+            &serde_json::json!({"a": 1, "b": {"c": true}}),
+            &serde_json::json!({"a": 1, "b": {"c": true}})
+        ));
+        assert!(!super::metadata_value_eq(
+            &serde_json::json!({"a": 1}),
+            &serde_json::json!({"a": 1, "b": 2})
+        ));
+        assert!(!super::metadata_value_eq(
+            &serde_json::json!({"a": 1, "b": 2}),
+            &serde_json::json!({"a": 1, "c": 2})
+        ));
+        assert!(!super::metadata_value_eq(
+            &serde_json::json!({"a": {"x": 1.0}}),
+            &serde_json::json!({"a": {"x": 2.0}})
+        ));
+        assert!(super::metadata_value_eq(&serde_json::json!(null), &serde_json::json!(null)));
+        assert!(!super::metadata_value_eq(&serde_json::json!(null), &serde_json::json!(true)));
+        assert!(super::metadata_value_eq(&serde_json::json!("s"), &serde_json::json!("s")));
+        assert!(!super::metadata_value_eq(&serde_json::json!("s"), &serde_json::json!("t")));
+
+        let mut metadata = BTreeMap::new();
+        metadata.insert("k".into(), serde_json::json!(1.0));
+        let flags = [false; 8];
+        let entry = cache_entry(2, flags, metadata.clone());
+        assert!(entry.matches(2, flags, &metadata));
+        assert!(!entry.matches(3, flags, &metadata));
+        for index in 0..8 {
+            let mut flipped = flags;
+            flipped[index] = true;
+            assert!(!entry.matches(2, flipped, &metadata), "flag {index}");
+        }
+        let mut longer = metadata.clone();
+        longer.insert("z".into(), serde_json::json!(0));
+        assert!(!entry.matches(2, flags, &longer));
+        let mut renamed = BTreeMap::new();
+        renamed.insert("q".into(), serde_json::json!(1.0));
+        assert!(!entry.matches(2, flags, &renamed));
+        let mut changed = metadata.clone();
+        changed.insert("k".into(), serde_json::json!(2.0));
+        assert!(!entry.matches(2, flags, &changed));
+    }
+
+    #[test]
+    fn write_frame_rejects_bad_counts_units_and_spreads() {
+        let frame = load_frame("tiny_cuh2.con");
+        let mut tagged = frame.clone();
+        tagged
+            .header
+            .metadata
+            .insert(meta::CON_SPEC_VERSION.into(), serde_json::json!(2));
+        tagged
+            .header
+            .metadata
+            .insert(meta::SECTIONS.into(), serde_json::json!([]));
+        tagged
+            .header
+            .metadata
+            .insert("note".into(), serde_json::json!("kept"));
+        let text = write_text(&tagged).unwrap();
+        assert_eq!(text.matches("con_spec_version").count(), 1);
+        assert!(text.contains("kept"), "{text}");
+
+        let mut bad_units = frame.clone();
+        bad_units
+            .header
+            .metadata
+            .insert(meta::UNITS.into(), serde_json::json!("angstrom"));
+        let err = write_text(&bad_units).unwrap_err();
+        assert!(err.to_string().contains("units"), "{err}");
+
+        let mut zero = frame.clone();
+        zero.atom_data.clear();
+        zero.header.natm_types = 0;
+        zero.header.natms_per_type.clear();
+        zero.header.masses_per_type.clear();
+        zero.header.sections.clear();
+        let empty_text = write_text(&zero).unwrap();
+        assert!(empty_text.contains("con_spec_version"), "{empty_text}");
+        zero.header.sections.push("forces".into());
+        let err = write_text(&zero).unwrap_err();
+        assert!(err.to_string().contains("zero-atom"), "{err}");
+
+        let mut no_types = frame.clone();
+        no_types.header.natm_types = 0;
+        let err = write_text(&no_types).unwrap_err();
+        assert!(err.to_string().contains("per-type"), "{err}");
+
+        let mut no_atoms = frame.clone();
+        no_atoms.atom_data.clear();
+        let err = write_text(&no_atoms).unwrap_err();
+        assert!(err.to_string().contains("per-type"), "{err}");
+
+        let mut zero_count = frame.clone();
+        zero_count.header.natms_per_type[0] = 0;
+        let err = write_text(&zero_count).unwrap_err();
+        assert!(err.to_string().contains("per-type"), "{err}");
+
+        let mut spec1 = frame.clone();
+        spec1.header.spec_version = 1;
+        spec1.atom_data[0].fixed = [true, false, false];
+        spec1.atom_data[1].fixed = [false, false, false];
+        let legacy = write_text(&spec1).unwrap();
+        assert!(legacy.contains(" 1 "), "{legacy}");
+        assert!(legacy.contains(" 0 "), "{legacy}");
+
+        let mut non_finite = frame.clone();
+        non_finite.atom_data[0].x = f64::INFINITY;
+        let inf_text = write_text(&non_finite).unwrap();
+        assert!(inf_text.to_ascii_lowercase().contains("inf"), "{inf_text}");
+
+        let mut repeated = frame.clone();
+        repeated.atom_data[1].atom_id = repeated.atom_data[0].atom_id;
+        let err = write_text(&repeated).unwrap_err();
+        assert!(err.to_string().contains("repeated"), "{err}");
+        let mut swapped = frame.clone();
+        swapped.atom_data.swap(0, 1);
+        let swapped_text = write_text(&swapped).unwrap();
+        assert!(swapped_text.contains("Cu"), "{swapped_text}");
+
+        let mut minor = frame.clone();
+        minor.header.spec_version = 3;
+        minor
+            .header
+            .metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(1));
+        minor.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({"length": "angstrom", "energy": "eV"}),
+        );
+        let minor_text = write_text(&minor).unwrap();
+        assert!(minor_text.contains("angstrom"), "{minor_text}");
+
+        let mut spreads = load_frame("tiny_cuh2_spreads.con");
+        spreads.atom_data[0].set_spread(Some([-1.0, 0.0, 0.0]));
+        let err = write_text(&spreads).unwrap_err();
+        assert!(err.to_string().contains("spread"), "{err}");
+        spreads.atom_data[0].set_spread(Some([f64::NAN, 0.0, 0.0]));
+        let err = write_text(&spreads).unwrap_err();
+        assert!(
+            err.to_string().contains("spread") || err.to_string().contains("NonFinite"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn legacy_velocity_stamp_and_binding_metadata() {
+        let mut meta = BTreeMap::new();
+        stamp_legacy_velocity_time(&mut meta, 2, false);
+        assert!(meta.is_empty());
+
+        stamp_legacy_velocity_time(&mut meta, 2, true);
+        let units = meta.get(meta::UNITS).unwrap();
+        assert_eq!(
+            units.get("time").and_then(|v| v.as_str()),
+            Some(crate::units::NATURAL_TIME_UNIT)
+        );
+        assert!(!meta.contains_key(meta::CON_SPEC_MINOR));
+
+        meta.insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(0));
+        stamp_legacy_velocity_time(&mut meta, 2, true);
+        assert_eq!(meta.get(meta::CON_SPEC_MINOR).and_then(|v| v.as_u64()), Some(1));
+
+        let mut blocked = BTreeMap::new();
+        blocked.insert(meta::UNITS.into(), serde_json::json!("angstrom"));
+        stamp_legacy_velocity_time(&mut blocked, 2, true);
+        assert_eq!(blocked.get(meta::UNITS).unwrap(), &serde_json::json!("angstrom"));
+
+        let mut current = BTreeMap::new();
+        current.insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(1));
+        current.insert(
+            meta::UNITS.into(),
+            serde_json::json!({"length": "angstrom", "energy": "eV"}),
+        );
+        let before = current.clone();
+        stamp_legacy_velocity_time(&mut current, 3, true);
+        assert_eq!(current, before);
+
+        let frame = load_frame("tiny_cuh2.convel");
+        let stamped = binding_metadata(&frame);
+        assert!(stamped.contains_key(meta::UNITS));
+        let mut cursor = Cursor::new(Vec::new());
+        let mut writer = super::ConFrameWriter::new(&mut cursor);
+        let mut owned = frame.clone();
+        writer.write_frame_binding(&mut owned).unwrap();
+        assert_eq!(owned.header.spec_version, frame.header.spec_version);
+        drop(writer);
+        let bytes = cursor.into_inner();
+        assert!(!bytes.is_empty());
+    }
+
+    #[test]
+    fn round_trip_float_prints_non_finite_values() {
+        let mut buf = Vec::new();
+        let mut ryu = ryu::Buffer::new();
+        push_f64(&mut buf, &mut ryu, f64::INFINITY, FloatFormat::RoundTrip);
+        let text = String::from_utf8(buf).unwrap();
+        assert!(text.to_ascii_lowercase().contains("inf"), "{text}");
+        let mut buf = Vec::new();
+        push_f64(&mut buf, &mut ryu, 1.5, FloatFormat::DecimalPlaces(6));
+        assert_eq!(String::from_utf8(buf).unwrap(), "1.500000");
     }
 }

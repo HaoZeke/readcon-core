@@ -142,8 +142,8 @@ where
         // optimisation: build a custom Array impl that exposes the
         // Arc-shared storage directly via dlpk's manager_ctx).
         let owned: ArrayD<T> = lock.to_owned();
-        DLPackTensor::try_from(owned)
-            .map_err(|e| ParseError::ValidationError(format!("dlpk ArrayD conversion failed: {e}")))
+        // dlpk 0.1.5's owned-array conversion always returns Ok.
+        Ok(DLPackTensor::try_from(owned).expect("dlpk ArrayD export"))
     }
 
     fn copy(&self) -> Box<dyn Array> {
@@ -394,16 +394,11 @@ mod tests {
     #[cfg(not(feature = "cuda"))]
     #[test]
     fn allocate_non_cpu_fails_clearly() {
-        match allocate_array_on_device(&[2, 3], DLDevice::cuda(0)) {
-            Ok(_) => panic!("non-CPU allocate must fail without --features cuda"),
-            Err(err) => {
-                let msg = format!("{err:?}");
-                assert!(
-                    msg.contains("no device allocator") || msg.contains("allocator"),
-                    "{msg}"
-                );
-            }
-        }
+        let err = allocate_array_on_device(&[2, 3], DLDevice::cuda(0))
+            .err()
+            .unwrap();
+        let msg = err.to_string();
+        assert!(msg.contains("no device allocator"), "{msg}");
         let cpu = allocate_array_on_device(&[2, 3], DLDevice::cpu()).unwrap();
         assert_eq!(cpu.device(), DLDevice::cpu());
     }
@@ -467,5 +462,156 @@ mod tests {
         assert_eq!(t.device(), DLDevice::cpu());
         let back = from_dlpack_f64(&t).unwrap();
         assert_eq!(back.device(), DLDevice::cpu());
+    }
+
+    #[test]
+    fn arc_array_downcast_and_non_cpu_export() {
+        let mut values = array_from_shape::<f64>(&[2, 1]);
+        assert!(values.as_any().is::<Arc<RwLock<ArrayD<f64>>>>());
+        assert!(values.as_any_mut().is::<Arc<RwLock<ArrayD<f64>>>>());
+        let err = values
+            .as_dlpack(DLDevice::cuda(0), Some(7), DLPackVersion::current())
+            .unwrap_err();
+        assert!(err.to_string().contains("CPU-only"), "{err}");
+    }
+
+    #[test]
+    fn arc_array_reports_a_held_lock_and_a_poisoned_lock() {
+        let held = Arc::new(RwLock::new(ArrayD::<f64>::zeros(ndarray::IxDyn(&[1, 1]))));
+        let array = Arc::clone(&held);
+        let _guard = held.write().unwrap();
+        let panicked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| array.shape()));
+        let payload = panicked.expect_err("shape must panic while the lock is held");
+        let text = payload
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| payload.downcast_ref::<&str>().copied())
+            .unwrap_or("");
+        assert!(text.contains("already locked"), "{text}");
+        let err = array
+            .as_dlpack(DLDevice::cpu(), None, DLPackVersion::current())
+            .unwrap_err();
+        assert!(err.to_string().contains("already locked"), "{err}");
+        drop(_guard);
+
+        let poisoned = Arc::new(RwLock::new(ArrayD::<f64>::zeros(ndarray::IxDyn(&[1]))));
+        let worker = Arc::clone(&poisoned);
+        let joined = std::thread::spawn(move || {
+            let _guard = worker.write().unwrap();
+            panic!("poison the array lock");
+        })
+        .join();
+        assert!(joined.is_err());
+        let panicked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| poisoned.shape()));
+        let payload = panicked.expect_err("shape must panic on a poisoned lock");
+        let text = payload
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| payload.downcast_ref::<&str>().copied())
+            .unwrap_or("");
+        assert!(text.contains("poisoned"), "{text}");
+        let err = poisoned
+            .as_dlpack(DLDevice::cpu(), None, DLPackVersion::current())
+            .unwrap_err();
+        assert!(err.to_string().contains("poisoned"), "{err}");
+    }
+
+    #[test]
+    fn device_tagged_rejects_a_short_buffer_and_copies_the_tag() {
+        let err = DeviceTaggedF64Array::new(&[2, 2], vec![1.0], DLDevice::cpu())
+            .err()
+            .unwrap();
+        assert!(err.to_string().contains("expected 4"), "{err}");
+        let mut values =
+            array_from_host_f64_on_device(&[2], vec![4.0, 5.0], DLDevice::cuda(1)).unwrap();
+        assert!(values.as_any().is::<DeviceTaggedF64Array>());
+        assert!(values.as_any_mut().is::<DeviceTaggedF64Array>());
+        let copied = values.copy();
+        assert_eq!(copied.shape(), vec![2]);
+        assert_eq!(copied.device(), DLDevice::cuda(1));
+        let exported = copied
+            .as_dlpack(DLDevice::cuda(1), Some(3), DLPackVersion::current())
+            .unwrap();
+        let restored = from_dlpack_f64(&exported).unwrap();
+        let again = restored
+            .as_dlpack(DLDevice::cuda(1), None, DLPackVersion::current())
+            .unwrap();
+        let ptr = again.data_ptr::<f64>().unwrap();
+        let got = unsafe { std::slice::from_raw_parts(ptr, 2) };
+        assert_eq!(got, &[4.0, 5.0]);
+    }
+
+    #[test]
+    fn from_dlpack_rejects_other_dtypes_empty_shapes_and_misaligned_f64() {
+        let f32_values = array_from_shape::<f32>(&[2]);
+        let f32_tensor = f32_values
+            .as_dlpack(DLDevice::cpu(), None, DLPackVersion::current())
+            .unwrap();
+        let err = from_dlpack_f64(&f32_tensor).err().unwrap();
+        assert!(err.to_string().contains("expected f64"), "{err}");
+
+        let i64_values = array_from_shape::<i64>(&[2]);
+        let i64_tensor = i64_values
+            .as_dlpack(DLDevice::cpu(), None, DLPackVersion::current())
+            .unwrap();
+        let err = from_dlpack_f64(&i64_tensor).err().unwrap();
+        assert!(err.to_string().contains("expected f64"), "{err}");
+
+        let empty = array_from_shape::<f64>(&[0, 3]);
+        let empty_tensor = empty
+            .as_dlpack(DLDevice::cpu(), None, DLPackVersion::current())
+            .unwrap();
+        let back = from_dlpack_f64(&empty_tensor).unwrap();
+        assert_eq!(back.shape(), vec![0, 3]);
+        assert_eq!(back.device(), DLDevice::cpu());
+
+        let mut bytes = vec![0u8; 16];
+        let mut shape = [1i64];
+        let managed = dlpk::sys::DLManagedTensorVersioned {
+            version: dlpk::sys::DLPackVersion {
+                major: dlpk::sys::DLPACK_MAJOR_VERSION,
+                minor: dlpk::sys::DLPACK_MINOR_VERSION,
+            },
+            manager_ctx: std::ptr::null_mut(),
+            deleter: None,
+            flags: 0,
+            dl_tensor: dlpk::sys::DLTensor {
+                data: bytes.as_mut_ptr().wrapping_add(1) as *mut std::ffi::c_void,
+                device: DLDevice::cpu(),
+                ndim: 1,
+                dtype: f64::get_dlpack_data_type(),
+                shape: shape.as_mut_ptr(),
+                strides: std::ptr::null_mut(),
+                byte_offset: 0,
+            },
+        };
+        let tensor = unsafe { DLPackTensor::from_raw(managed) };
+        let err = from_dlpack_f64(&tensor).err().unwrap();
+        assert!(err.to_string().contains("data_ptr"), "{err}");
+    }
+
+    #[test]
+    fn device_tagged_deleter_ignores_null_inputs() {
+        unsafe { device_tagged_deleter(std::ptr::null_mut()) };
+        let mut managed = dlpk::sys::DLManagedTensorVersioned {
+            version: dlpk::sys::DLPackVersion {
+                major: dlpk::sys::DLPACK_MAJOR_VERSION,
+                minor: dlpk::sys::DLPACK_MINOR_VERSION,
+            },
+            manager_ctx: std::ptr::null_mut(),
+            deleter: None,
+            flags: 0,
+            dl_tensor: dlpk::sys::DLTensor {
+                data: std::ptr::null_mut(),
+                device: DLDevice::cpu(),
+                ndim: 0,
+                dtype: f64::get_dlpack_data_type(),
+                shape: std::ptr::null_mut(),
+                strides: std::ptr::null_mut(),
+                byte_offset: 0,
+            },
+        };
+        unsafe { device_tagged_deleter(&mut managed) };
+        assert!(managed.manager_ctx.is_null());
     }
 }

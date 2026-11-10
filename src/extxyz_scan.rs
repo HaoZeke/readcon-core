@@ -261,4 +261,101 @@ Cu 4.0 5.0 6.0 63.546
         assert!((tables.cell[0] - 10.0).abs() < 1e-12);
         assert!((tables.cell[3] - 90.0).abs() < 1e-8);
     }
+
+    #[test]
+    fn frames_cover_quotes_angles_blank_lines_and_errors() {
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos:R:3\nCu nope 0 0\n"
+            )
+            .unwrap_err(),
+            "float"
+        );
+        let text = "\r\n2\r\nLattice=\"10 0 0 0 12 0 0 0 14\" Properties=species:S:1:pos:R:3:masses:R:1\r\nCu 1 2 3 63.546\r\nCu 4 5 6 63.546\r\n";
+        let tables = tables_from_extxyz_bytes(text.as_bytes()).unwrap();
+        assert_eq!(tables.n_frames, 1);
+        assert_eq!(tables.n_atoms, 2);
+        assert_eq!(tables.positions.len(), 6);
+        assert_eq!(tables.masses[0], 63.546);
+        assert!((tables.cell[0] - 10.0).abs() < 1e-9);
+
+        let no_newline = b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nH 0 1 2";
+        let one = tables_from_extxyz_bytes(no_newline).unwrap();
+        assert_eq!(one.positions, vec![0.0, 1.0, 2.0]);
+        assert!(one.masses[0].is_nan());
+
+        assert_eq!(tables_from_extxyz_bytes(b"\n\n").unwrap_err(), "no frames");
+        assert_eq!(tables_from_extxyz_bytes(b"1\n").unwrap_err(), "comment");
+        assert_eq!(
+            tables_from_extxyz_bytes(b"2\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos:R:3\nH 0 0 0\n")
+                .unwrap_err(),
+            "atoms"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(b"1\nnote\nH 0 0 0\n").unwrap_err(),
+            "lattice"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(b"1\nLattice=\"1 0 0 0 1 0 0 0 1\"\nH 0 0 0\n").unwrap_err(),
+            "properties"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=masses:R:1\nH 1\n"
+            )
+            .unwrap_err(),
+            "pos"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0\" Properties=pos:R:3\nH 0 0 0\n"
+            )
+            .unwrap_err(),
+            "lattice"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos\nH 0 0 0\n"
+            )
+            .unwrap_err(),
+            "properties"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos:R:x\nH 0 0 0\n"
+            )
+            .unwrap_err(),
+            "float"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos:R:3\nH 0 nope 2\n"
+            )
+            .unwrap_err(),
+            "float"
+        );
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"nope 0 0 0 1 0 0 0 1\" Properties=pos:R:3\nH 0 0 0\n"
+            )
+            .unwrap_err(),
+            "lattice"
+        );
+        assert_eq!(tables_from_extxyz_bytes(b"abc\n").unwrap_err(), "float");
+        assert_eq!(
+            tables_from_extxyz_bytes(
+                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\n\n"
+            )
+            .unwrap_err(),
+            "atom"
+        );
+
+        let missing = tables_from_extxyz_path(std::path::Path::new("/no/such/extxyz")).unwrap_err();
+        assert_eq!(missing, "read");
+        let path = std::env::temp_dir().join(format!("readcon-extxyz-{}.xyz", std::process::id()));
+        std::fs::write(&path, no_newline).unwrap();
+        let from_path = tables_from_extxyz_path(&path).unwrap();
+        assert_eq!(from_path.n_frames, 1);
+        std::fs::remove_file(&path).unwrap();
+    }
 }

@@ -92,7 +92,7 @@ fn base_table() -> HashMap<&'static str, UnitValue> {
         si_factor: 1e-10,
         dim: Dimension::LENGTH,
     });
-    ins(&mut m, &["nm", "nanometer"], UnitValue {
+    ins(&mut m, &["nm", "nanometer", "nanometre"], UnitValue {
         si_factor: 1e-9,
         dim: Dimension::LENGTH,
     });
@@ -206,6 +206,10 @@ fn parse_expr(s: &str, table: &HashMap<&str, UnitValue>) -> Result<(f64, Dimensi
             factor *= atom_f;
             dim = dim.mul(atom_d);
         }
+    }
+    // `m/` and `m*` leave the operator for an empty atom. That is an error.
+    if pending_div || bytes.last().is_some_and(|b| *b == b'*' || *b == b'/') {
+        parse_atom("", table)?;
     }
     Ok((factor, dim))
 }
@@ -493,7 +497,9 @@ pub fn canonicalize_unit_expression(expr: &str) -> Result<String, ParseError> {
             continue;
         }
         let start = i;
-        while i < bytes.len() && (bytes[i].is_ascii_alphabetic() || bytes[i] > 127) {
+        while i < bytes.len()
+            && (bytes[i].is_ascii_alphanumeric() || bytes[i] > 127)
+        {
             i += 1;
         }
         if start == i {
@@ -628,5 +634,177 @@ mod tests {
             canonicalize_unit_expression(mixed).unwrap(),
             NATURAL_TIME_UNIT
         );
+    }
+
+    #[test]
+    fn parser_rejects_broken_expressions_and_accepts_powers() {
+        let trailing = parse_unit_expression("m/").unwrap_err();
+        assert!(trailing.to_string().contains("trailing operator"), "{trailing}");
+        let unbalanced = parse_unit_expression("(m").unwrap_err();
+        assert!(unbalanced.to_string().contains("unbalanced"), "{unbalanced}");
+        let bad_token = parse_unit_expression("m*!").unwrap_err();
+        assert!(bad_token.to_string().contains("expected unit name"), "{bad_token}");
+        let unknown = parse_unit_expression("furlong").unwrap_err();
+        assert!(unknown.to_string().contains("unknown unit"), "{unknown}");
+        let bare = parse_unit_expression("^").unwrap_err();
+        assert!(bare.to_string().contains("expected exponent") || bare.to_string().contains("expected unit"), "{bare}");
+        let missing_exp = parse_unit_expression("m^").unwrap_err();
+        assert!(missing_exp.to_string().contains("expected exponent"), "{missing_exp}");
+        let missing_neg = parse_unit_expression("m^-").unwrap_err();
+        assert!(missing_neg.to_string().contains("expected exponent"), "{missing_neg}");
+        let bad_exp = parse_unit_expression("m^1.2.3").unwrap_err();
+        assert!(bad_exp.to_string().contains("invalid unit exponent"), "{bad_exp}");
+
+        let nested = unit_conversion_factor("((m))", "m").unwrap();
+        assert!((nested - 1.0).abs() < 1e-12, "{nested}");
+        let inverse = unit_conversion_factor("m^-1", "1/m").unwrap_err();
+        assert!(inverse.to_string().contains("unknown unit"), "{inverse}");
+        let inverse_m = unit_conversion_factor("angstrom^-1", "nm^-1").unwrap();
+        assert!((inverse_m - 10.0).abs() < 1e-9, "{inverse_m}");
+        let per_length = unit_conversion_factor("1/m", "1/nm");
+        assert!(per_length.is_err());
+    }
+
+    #[test]
+    fn velocity_time_unit_and_scale_cover_minor_and_overflow() {
+        let mut meta = serde_json::Map::new();
+        assert_eq!(
+            velocity_file_time_unit(2, &meta, None).unwrap(),
+            NATURAL_TIME_UNIT
+        );
+        assert_eq!(
+            velocity_file_time_unit(3, &meta, None).unwrap(),
+            NATURAL_TIME_UNIT
+        );
+        meta.insert(crate::types::meta::CON_SPEC_MINOR.into(), serde_json::json!(1));
+        let missing = velocity_file_time_unit(3, &meta, None).unwrap_err();
+        assert!(missing.to_string().contains("units.time"), "{missing}");
+        meta.insert(
+            crate::types::meta::UNITS.into(),
+            serde_json::json!({"time": ""}),
+        );
+        let empty = velocity_file_time_unit(3, &meta, None).unwrap_err();
+        assert!(empty.to_string().contains("units.time"), "{empty}");
+        meta.insert(
+            crate::types::meta::UNITS.into(),
+            serde_json::json!({"time": 1}),
+        );
+        let not_string = velocity_file_time_unit(3, &meta, None).unwrap_err();
+        assert!(not_string.to_string().contains("units.time"), "{not_string}");
+        meta.insert(
+            crate::types::meta::UNITS.into(),
+            serde_json::json!({"time": "fs"}),
+        );
+        assert_eq!(velocity_file_time_unit(3, &meta, None).unwrap(), "fs");
+        assert_eq!(velocity_file_time_unit(3, &meta, Some("ps")).unwrap(), "ps");
+        let bad_override = velocity_file_time_unit(3, &meta, Some("eV")).unwrap_err();
+        assert!(bad_override.to_string().contains("not valid"), "{bad_override}");
+
+        let fs = velocity_scale_to_natural("fs").unwrap();
+        assert!(fs.is_finite() && fs > 0.0, "{fs}");
+        let zero = velocity_scale_to_natural("fs^400/s^399").unwrap_err();
+        assert!(zero.to_string().contains("zero scale"), "{zero}");
+        let infinite = velocity_scale_to_natural("s^400/fs^399").unwrap_err();
+        assert!(infinite.to_string().contains("zero scale"), "{infinite}");
+        let not_time = velocity_scale_to_natural("angstrom").unwrap_err();
+        assert!(not_time.to_string().contains("not valid"), "{not_time}");
+    }
+
+    #[test]
+    fn v3_metadata_and_canonical_names_cover_each_alias() {
+        let unknown = validate_unit_for_quantity("temperature", "m").unwrap_err();
+        assert!(unknown.to_string().contains("unknown quantity"), "{unknown}");
+        validate_unit_for_quantity("mass", "kg").unwrap();
+        validate_unit_for_quantity("time", "ps").unwrap();
+        validate_unit_for_quantity("velocity", "angstrom/fs").unwrap();
+        validate_unit_for_quantity("force", "eV/angstrom").unwrap();
+
+        let not_object = validate_v3_units_metadata(&serde_json::json!([1])).unwrap_err();
+        assert!(not_object.to_string().contains("JSON object"), "{not_object}");
+        let missing = validate_v3_units_metadata(&serde_json::json!({"energy": "eV"})).unwrap_err();
+        assert!(missing.to_string().contains("length"), "{missing}");
+        let number = validate_v3_units_metadata(&serde_json::json!({
+            "length": 1,
+            "energy": "eV"
+        }))
+        .unwrap_err();
+        assert!(number.to_string().contains("must be a string"), "{number}");
+        let empty = validate_v3_units_metadata(&serde_json::json!({
+            "length": "  ",
+            "energy": "eV"
+        }))
+        .unwrap_err();
+        assert!(empty.to_string().contains("non-empty"), "{empty}");
+        let bad_optional = validate_v3_units_metadata(&serde_json::json!({
+            "length": "angstrom",
+            "energy": "eV",
+            "mass": 1
+        }))
+        .unwrap_err();
+        assert!(bad_optional.to_string().contains("must be a string"), "{bad_optional}");
+        let bad_force = validate_v3_units_metadata(&serde_json::json!({
+            "length": "angstrom",
+            "energy": "eV",
+            "force": "fs"
+        }))
+        .unwrap_err();
+        assert!(bad_force.to_string().contains("not valid"), "{bad_force}");
+        validate_v3_units_metadata(&serde_json::json!({
+            "length": "nm",
+            "energy": "kcal",
+            "mass": "dalton",
+            "time": "ns",
+            "velocity": "m/s",
+            "force": "J/m"
+        }))
+        .unwrap();
+
+        assert!(canonicalize_unit_expression("   ").is_err());
+        assert_eq!(canonicalize_unit_expression("nm").unwrap(), "nm");
+        assert_eq!(canonicalize_unit_expression("nanometer").unwrap(), "nm");
+        assert_eq!(canonicalize_unit_expression("meter").unwrap(), "m");
+        assert_eq!(canonicalize_unit_expression("a0").unwrap(), "bohr");
+        assert_eq!(canonicalize_unit_expression("picosecond").unwrap(), "ps");
+        assert_eq!(canonicalize_unit_expression("nanosecond").unwrap(), "ns");
+        assert_eq!(canonicalize_unit_expression("second").unwrap(), "s");
+        assert_eq!(preferred_atom("nanometre"), Some("nm"));
+        assert_eq!(preferred_atom("picoseconds"), Some("ps"));
+        assert_eq!(preferred_atom("nanoseconds"), Some("ns"));
+        assert_eq!(preferred_atom("seconds"), Some("s"));
+        assert_eq!(preferred_atom("sec"), Some("s"));
+        assert_eq!(preferred_atom("femtoseconds"), Some("fs"));
+        assert_eq!(preferred_atom("ångstrom"), Some("angstrom"));
+        assert_eq!(preferred_atom("metre"), Some("m"));
+        assert_eq!(preferred_atom("nope"), None);
+        assert_eq!(canonicalize_unit_expression("meV").unwrap(), "meV");
+        assert_eq!(canonicalize_unit_expression("ha").unwrap(), "hartree");
+        assert_eq!(canonicalize_unit_expression("joule").unwrap(), "J");
+        assert_eq!(canonicalize_unit_expression("kJ").unwrap(), "kJ");
+        assert_eq!(canonicalize_unit_expression("kcal").unwrap(), "kcal");
+        assert_eq!(canonicalize_unit_expression("kilogram").unwrap(), "kg");
+        assert_eq!(canonicalize_unit_expression("mol").unwrap(), "mol");
+        assert_eq!(canonicalize_unit_expression("e").unwrap(), "e");
+        assert_eq!(canonicalize_unit_expression("Å").unwrap(), "angstrom");
+        assert_eq!(canonicalize_unit_expression("angstrom^-1").unwrap(), "angstrom^-1");
+        let underscore = canonicalize_unit_expression("electron_charge").unwrap_err();
+        assert!(underscore.to_string().contains("bad unit token"), "{underscore}");
+
+        let not_obj = canonicalize_units_object(&serde_json::json!("angstrom")).unwrap_err();
+        assert!(not_obj.to_string().contains("JSON object"), "{not_obj}");
+        let not_str = canonicalize_units_object(&serde_json::json!({"length": 1})).unwrap_err();
+        assert!(not_str.to_string().contains("must be a string"), "{not_str}");
+        let canon = canonicalize_units_metadata(&serde_json::json!({
+            "length": "A",
+            "energy": "ha",
+            "mass": "da",
+            "time": "picosecond",
+            "velocity": "bohr/ps",
+            "force": "kcal/mol/angstrom"
+        }))
+        .unwrap();
+        assert_eq!(canon["length"], "angstrom");
+        assert_eq!(canon["energy"], "hartree");
+        assert_eq!(canon["mass"], "amu");
+        assert_eq!(canon["time"], "ps");
     }
 }

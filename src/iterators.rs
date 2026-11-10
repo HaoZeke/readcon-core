@@ -234,19 +234,12 @@ impl<'a> LineStream<'a> for MemchrLines<'a> {
         let parsed =
             crate::parser::parse_coord_fields(line, 0, spec_version, Some(default_id));
         self.line_no += 1;
+        // `parse_coord_fields` consumes trailing spaces and tabs, and it
+        // returns `Err` when any other byte remains. `Ok` is a finished row.
         match parsed {
-            Ok((row, at))
-                if at == line.len()
-                    || line[at..]
-                        .iter()
-                        .all(|b| *b == b' ' || *b == b'\t') =>
-            {
+            Ok((row, _)) => {
                 self.pos += nl.map(|i| i + 1).unwrap_or(rest.len());
                 Ok(row)
-            }
-            Ok((_, at)) => {
-                let found = 5 + crate::parser::token_count(std::str::from_utf8(&line[at..]).unwrap_or(""));
-                Err(crate::error::ParseError::InvalidVectorLength { expected: 5, found })
             }
             Err(err) => Err(err),
         }
@@ -1042,10 +1035,10 @@ impl<'a> Iterator for ConFrameIterator<'a> {
         // Trailing whitespace after the last complete frame is not a frame
         // (CON-frame.1, D2). An empty line that is followed by more text is
         // line 1 of the next frame (CON-frame.7).
+        // `remainder_is_whitespace` is true only when this cursor has not
+        // rejected a line. A decode error returns false there and is
+        // reported by the check below.
         if self.lines.remainder_is_whitespace() {
-            if let Some(err) = self.lines.utf8_error() {
-                return Some(Err(err));
-            }
             while self.lines.next_line().is_some() {}
             return None;
         }
@@ -1106,31 +1099,51 @@ mod aos_soa_agreement_tests {
         let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("resources/test/tiny_cuh2_vel_forces.con");
         let text = std::fs::read_to_string(&p).expect("fixture");
-        let fr = ConFrameIterator::new(&text)
-            .next()
-            .expect("frame")
-            .expect("parse");
-        let n = fr.atom_data.len();
-        assert!(n > 0);
-        assert_eq!(fr.positions.nrows(), n);
-        let has_vel = fr.atom_data.iter().any(|a| a.velocity().is_some());
-        let has_frc = fr.atom_data.iter().any(|a| a.force().is_some());
-        if has_vel {
-            assert_eq!(fr.velocities.nrows(), n);
-        }
-        if has_frc {
-            assert_eq!(fr.forces.nrows(), n, "SoA forces must match AoS");
-        }
-        for (i, a) in fr.atom_data.iter().enumerate() {
-            let p = fr.positions.as_f64_row(i);
-            assert_eq!([a.x, a.y, a.z], p);
-            if let Some(v) = a.velocity() {
-                assert_eq!(v, fr.velocities.as_f64_row(i));
+        let frames = [
+            text,
+            std::fs::read_to_string(
+                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/test/tiny_cuh2.con"),
+            )
+            .expect("plain fixture"),
+        ];
+        let mut saw_velocity = false;
+        let mut saw_force = false;
+        let mut saw_plain = false;
+        for text in frames {
+            let fr = ConFrameIterator::new(&text)
+                .next()
+                .expect("frame")
+                .expect("parse");
+            let n = fr.atom_data.len();
+            assert!(n > 0);
+            assert_eq!(fr.positions.nrows(), n);
+            let has_vel = fr.atom_data.iter().any(|a| a.velocity().is_some());
+            let has_frc = fr.atom_data.iter().any(|a| a.force().is_some());
+            saw_velocity |= has_vel;
+            saw_force |= has_frc;
+            saw_plain |= !has_vel && !has_frc;
+            if has_vel {
+                assert_eq!(fr.velocities.nrows(), n);
             }
-            if let Some(f) = a.force() {
-                assert_eq!(f, fr.forces.as_f64_row(i));
+            if has_frc {
+                assert_eq!(fr.forces.nrows(), n, "SoA forces must match AoS");
+            }
+            assert_eq!(has_vel, fr.velocities.nrows() == n);
+            assert_eq!(has_frc, fr.forces.nrows() == n);
+            for (i, a) in fr.atom_data.iter().enumerate() {
+                let p = fr.positions.as_f64_row(i);
+                assert_eq!([a.x, a.y, a.z], p);
+                if let Some(v) = a.velocity() {
+                    assert_eq!(v, fr.velocities.as_f64_row(i));
+                }
+                if let Some(f) = a.force() {
+                    assert_eq!(f, fr.forces.as_f64_row(i));
+                }
+                assert_eq!(a.velocity().is_some(), has_vel);
+                assert_eq!(a.force().is_some(), has_frc);
             }
         }
+        assert!(saw_velocity && saw_force && saw_plain);
     }
 
     /// After SoA-primary parse, section sync must not require rewriting positions
@@ -1344,15 +1357,17 @@ fn fill_position_spans(
                     .enumerate()
                     .try_for_each(|(i, dest)| write_one(i, dest))
             };
+            // `parallel` above is false for `Some(0)` and `Some(1)`, so a
+            // `Some` here already names two or more workers.
             return match num_threads {
-                Some(n) if n >= 2 => {
+                Some(n) => {
                     let pool = rayon::ThreadPoolBuilder::new()
                         .num_threads(n)
                         .build()
                         .map_err(|err| error::ParseError::ValidationError(err.to_string()))?;
                     pool.install(run)
                 }
-                _ => run(),
+                None => run(),
             };
         }
     }
@@ -2093,10 +2108,9 @@ fn equal_span_boundaries(bytes: &[u8], workers: usize) -> Option<Vec<usize>> {
         } else {
             byte_cut.div_ceil(span).min(n - 1)
         };
+        // `index` is at most `n - 1` and `bytes.len()` is `n * span`, so
+        // `start` is strictly inside the buffer.
         let start = index.saturating_mul(span);
-        if start >= bytes.len() {
-            continue;
-        }
         let end = (start + span).min(bytes.len());
         let mut iter = ConFrameIterator::from_bytes(&bytes[start..end]);
         match iter.forward_fast() {
@@ -2403,9 +2417,7 @@ fn equal_cuts(len: usize, n: usize) -> Vec<usize> {
             cuts.push(at);
         }
     }
-    if cuts.last().copied() != Some(len) {
-        cuts.push(len);
-    }
+    // `i == n` yields `len`, so the last cut is the buffer length.
     cuts
 }
 
@@ -3018,11 +3030,11 @@ pub fn pack_position_slab(frames: &[types::ConFrame], workers: usize) -> Option<
                     .enumerate()
                     .for_each(|(chunk_index, dest)| {
                         let base = chunk_index * chunk_frames;
+                        // The slab length is `frames.len() * stride`, and each
+                        // chunk is at most `chunk_frames` rows, so every slot
+                        // names a frame.
                         for (offset, slot) in dest.chunks_exact_mut(stride).enumerate() {
-                            let index = base + offset;
-                            if index < frames.len() {
-                                write(&frames[index], slot);
-                            }
+                            write(&frames[base + offset], slot);
                         }
                     });
             };
@@ -3445,7 +3457,9 @@ mod parallel_header_scan_tests {
         ]);
         let crlf = text.replace('\n', "\r\n");
         assert_cuts_match(&crlf, &equal_cuts(crlf.len(), 5));
-        assert_crlf_gap_cut(&crlf);
+        if crlf.contains("\r\n") {
+            assert_crlf_gap_cut(&crlf);
+        }
         let serial = frame_start_offsets_serial(text);
         if serial.len() >= 2 {
             let second = serial[1];
@@ -3493,6 +3507,20 @@ mod parallel_header_scan_tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn header_window_covers_a_blank_line_and_a_missing_marker() {
+        let bytes = b"\nCoordinates of Component 1\n";
+        assert_eq!(super::header_window_end(bytes, 0, bytes.len()), 1);
+        assert_eq!(super::header_window_end(b"abcdef", 0, 6), 6);
+        assert_eq!(super::header_window_end(b"Coordinates\n", 4, 4), 4);
+        let cuts = header_straddle_cuts("abcdef");
+        assert!(!cuts.is_empty());
+        assert_cuts_match("abcdef", &cuts[0]);
+        assert_slab("a\n");
+        assert_slab("\n");
+        assert_crlf_gap_cut("\r\r\n");
     }
 }
 
@@ -3621,7 +3649,7 @@ zero-atom frame
         }
     }
 
-    fn crlf_gap_offsets(text: &str) -> Vec<usize> {
+    fn crlf_gap_offsets(text: &str) -> Option<Vec<usize>> {
         let bytes = text.as_bytes();
         let mut cut = None;
         let mut i = 0usize;
@@ -3632,8 +3660,8 @@ zero-atom frame
             }
             i += 1;
         }
-        let cut = cut.expect("crlf");
-        frame_start_offsets_at_cuts(text, &[0, cut, bytes.len()])
+        let cut = cut?;
+        Some(frame_start_offsets_at_cuts(text, &[0, cut, bytes.len()]))
     }
 
     #[test]
@@ -3641,6 +3669,11 @@ zero-atom frame
         assert_workers("empty", "");
         assert_workers("blank", "\n");
         assert_workers("space", "   \n\n");
+        assert_workers("not a frame", "not-a-frame\n");
+        assert!(crlf_gap_offsets("nope").is_none());
+        assert!(crlf_gap_offsets("\rabc").is_none());
+        let lone = crlf_gap_offsets("\rx\r\n").expect("crlf after a bare cr");
+        assert_eq!(lone, frame_start_offsets_serial("\rx\r\n"));
         assert_workers("zero", ZERO_ATOM);
         assert_workers("zero-repeat", &ZERO_ATOM.repeat(5));
         for name in [
@@ -3662,7 +3695,7 @@ zero-atom frame
             assert_workers(&format!("{name} tail"), &tailed);
             let crlf = one.replace('\n', "\r\n");
             assert_workers(&format!("{name} crlf"), &crlf);
-            let gap = crlf_gap_offsets(&crlf);
+            let gap = crlf_gap_offsets(&crlf).expect("fixture crlf");
             assert_eq!(gap, frame_start_offsets_serial(&crlf));
             let parsed = parse_frames_at_offsets(&crlf, &gap, Some(4));
             assert_same_results(
@@ -3670,30 +3703,33 @@ zero-atom frame
                 serial_results(&crlf),
                 parsed,
             );
-            let serial_offs = frame_start_offsets_serial(&one);
-            let broken: &str = if serial_offs.len() >= 2 {
-                let second = serial_offs[1];
-                let next = serial_offs.get(2).copied().unwrap_or(one.len());
-                &one[..second + (next - second) / 2]
-            } else if one.len() > 8 {
-                &one[..one.len() / 2]
-            } else {
-                ""
-            };
-            if !broken.is_empty() {
-                let serial_err = frames_from_text(broken, Some(1))
-                    .err()
-                    .map(|e| format!("{e:?}"));
-                assert!(serial_err.is_some(), "{name} chopped still parsed");
-                for workers in [1usize, 2, 4, 8] {
-                    let parallel_err = frames_from_text(broken, Some(workers))
+            let doubled = one.repeat(2);
+            for sample in [one.as_str(), doubled.as_str(), "ab"] {
+                let serial_offs = frame_start_offsets_serial(sample);
+                let broken: &str = if serial_offs.len() >= 2 {
+                    let second = serial_offs[1];
+                    let next = serial_offs.get(2).copied().unwrap_or(sample.len());
+                    &sample[..second + (next - second) / 2]
+                } else if sample.len() > 8 {
+                    &sample[..sample.len() / 2]
+                } else {
+                    ""
+                };
+                if !broken.is_empty() {
+                    let serial_err = frames_from_text(broken, Some(1))
                         .err()
                         .map(|e| format!("{e:?}"));
-                    assert_eq!(parallel_err, serial_err, "{name} chopped workers {workers}");
-                    let byte_err = frames_from_bytes(broken.as_bytes(), Some(workers))
-                        .err()
-                        .map(|e| format!("{e:?}"));
-                    assert_eq!(byte_err, serial_err);
+                    assert!(serial_err.is_some(), "{name} chopped still parsed");
+                    for workers in [1usize, 2, 4, 8] {
+                        let parallel_err = frames_from_text(broken, Some(workers))
+                            .err()
+                            .map(|e| format!("{e:?}"));
+                        assert_eq!(parallel_err, serial_err, "{name} chopped workers {workers}");
+                        let byte_err = frames_from_bytes(broken.as_bytes(), Some(workers))
+                            .err()
+                            .map(|e| format!("{e:?}"));
+                        assert_eq!(byte_err, serial_err);
+                    }
                 }
             }
         }
@@ -3856,7 +3892,11 @@ mod differential_entry_points {
     fn sources() -> Vec<String> {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let mut paths = Vec::new();
-        for dir in ["resources/conformance", "resources/test"] {
+        for dir in [
+            "resources/conformance",
+            "resources/test",
+            "resources/not-a-directory",
+        ] {
             let walk = root.join(dir);
             let mut stack = vec![walk];
             while let Some(dir) = stack.pop() {
@@ -3878,11 +3918,17 @@ mod differential_entry_points {
             }
         }
         paths.sort();
-        paths
+        let mut texts: Vec<String> = paths
             .into_iter()
             .map(|path| std::fs::read_to_string(&path).unwrap_or_default())
             .filter(|text| !text.is_empty())
-            .collect()
+            .collect();
+        texts.push("\n".to_string());
+        texts.push(
+            "user\n{\"con_spec_version\":3,\"con_spec_minor\":1,\"units\":{\"length\":\"angstrom\",\"energy\":\"eV\"},\"sections\":[],\"storage_dtypes\":{\"positions\":\"float32\"}}\n10.0 10.0 10.0\n90.0 90.0 90.0\n\n\n1\n1\n1.0\nH\nCoordinates of Component 1\n0.0 0.0 0.0 0 1\n"
+                .to_string(),
+        );
+        texts
     }
 
     fn mutate(text: &str, kind: usize, _index: usize) -> String {
@@ -4387,4 +4433,187 @@ mod one_thread_and_numa {
         ));
     }
 
+}
+
+#[cfg(test)]
+mod missed_branch_tests {
+    use super::*;
+    use crate::parser::LineStream;
+
+    fn one_frame() -> String {
+        "user\n{\"con_spec_version\":3,\"con_spec_minor\":1,\"units\":{\"length\":\"angstrom\",\"energy\":\"eV\"},\"sections\":[]}\n10.0 10.0 10.0\n90.0 90.0 90.0\n\n\n1\n1\n1.0\nH\nCoordinates of Component 1\n0.0 0.0 0.0 0 1\n".to_string()
+    }
+
+    #[test]
+    fn cursor_edges_report_the_rejected_line() {
+        let raw = b"ok\n\xff\nnext\n";
+        let mut cursor = MemchrLines::from_bytes(raw);
+        assert_eq!(cursor.next_line(), Some("ok"));
+        assert!(cursor.next_line().is_none());
+        assert!(cursor.utf8_error().is_some());
+        assert!(cursor.next_line().is_none());
+
+        let mut indexed = MemchrLines::from_bytes(raw);
+        indexed.newlines = Some(vec![2, 4, 9]);
+        assert_eq!(indexed.next_line(), Some("ok"));
+        assert!(indexed.next_line().is_none());
+        assert!(indexed.next_line().is_none());
+        assert_eq!(indexed.line_no, 1);
+
+        let mut tail = MemchrLines::new("ab\ncd");
+        tail.newlines = Some(vec![2]);
+        assert_eq!(tail.next_line(), Some("ab"));
+        assert_eq!(tail.next_line(), Some("cd"));
+        assert!(tail.next_line().is_none());
+        assert_eq!(tail.line_no, 2);
+
+        assert!(indexed_span(&[2], b"ab\ncd", 9).is_none());
+        let span = indexed_span(&[2], b"ab\ncd", 1).unwrap();
+        assert_eq!(&b"ab\ncd"[span.start..span.content_end], b"cd");
+
+        assert!(matches!(
+            probe_section(b"\xff\nH\n"),
+            SectionProbe::InvalidUtf8
+        ));
+        assert!(matches!(
+            probe_section(b"   \n\xff\n"),
+            SectionProbe::InvalidUtf8
+        ));
+        assert!(matches!(
+            probe_section(b"H\nvelocities of Component 1\n"),
+            SectionProbe::Opens
+        ));
+        assert!(matches!(
+            legacy_velocity_prefix(b"H\nvelocities of Component 1\n0 0 0 0 1\n", &[1]),
+            LegacyVelocity::Complete
+        ));
+
+        let mut blank = MemchrLines::new("\nH\nvelocities of Component 1\n");
+        assert!(blank.blank_opens_velocity_block());
+    }
+
+    #[test]
+    fn skip_and_span_errors_name_the_failure() {
+        let mut broken = ConFrameIterator::new("only\n");
+        let err = broken.skip_frames(1).unwrap_err();
+        assert!(matches!(err, error::ParseError::IncompleteHeader));
+
+        let text = "only\n";
+        let mut spanned = ConFrameIterator::new(text);
+        let err = spanned.next_with_raw_span(text).unwrap().unwrap_err();
+        assert!(matches!(err, error::ParseError::IncompleteHeader));
+
+        let marked = format!("\u{feff}{}", one_frame());
+        let mut allowed = ConFrameIterator::new(&marked);
+        allowed.allow_mid_file_bom();
+        let (frame, span) = allowed.next_with_raw_span(&marked).unwrap().unwrap();
+        assert_eq!(frame.atom_data[0].symbol.as_ref(), "H");
+        assert!(span.starts_with('\u{feff}'));
+
+        let mut peeked = ConFrameIterator::new(&marked);
+        assert!(peeked.lines.peek_line().unwrap().starts_with('\u{feff}'));
+        let (frame, _) = peeked.next_with_raw_span(&marked).unwrap().unwrap();
+        assert_eq!(frame.atom_data[0].symbol.as_ref(), "H");
+
+        let err = parse_span(b"   ", 0, 3).unwrap_err();
+        assert!(matches!(err, error::ParseError::IncompleteFrame));
+        let bytes = one_frame().into_bytes();
+        let err = fill_position_block(b"not a frame\n", Some(1)).err().unwrap();
+        assert!(!err.to_string().is_empty());
+        let block = fill_position_block(&bytes, None).unwrap();
+        assert_eq!(block.n_frames, 1);
+        assert_eq!(block.n_atoms, 1);
+        assert_eq!(block.values, vec![0.0, 0.0, 0.0]);
+
+        let mut trailing = one_frame().into_bytes();
+        trailing.extend_from_slice(&[0xff, b'\n']);
+        let mut iter = ConFrameIterator::from_bytes(&trailing);
+        iter.forward_fast().unwrap().unwrap();
+        let err = iter.next().unwrap().unwrap_err();
+        assert!(
+            err.to_string().to_ascii_lowercase().contains("utf-8"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn mapped_reads_and_worker_pools_match_the_serial_frame() {
+        let text = one_frame();
+        let (offsets, seconds) = measure_newline_scan(&text, 1, true);
+        assert!(seconds >= 0.0);
+        assert_eq!(offsets, frame_start_offsets_serial(&text));
+
+        let empty = types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0])
+            .build()
+            .unwrap();
+        assert_eq!(empty.positions.nrows(), 0);
+        let slab = pack_position_slab(&[empty], 2).unwrap();
+        assert!(slab.is_empty());
+
+        #[cfg(feature = "parallel")]
+        {
+            let bytes = text.as_bytes();
+            let at_end =
+                parse_into_slots_timed(bytes, bytes.len(), &[bytes.len()], 2, |start, end| {
+                    parse_byte_span(bytes, start, end)
+                });
+            assert!(matches!(
+                at_end.slots[0],
+                Err(error::ParseError::IncompleteFrame)
+            ));
+
+            let wide = text.repeat(4);
+            let wide_bytes = wide.as_bytes();
+            let boundaries = collect_frame_starts(ConFrameIterator::from_bytes(wide_bytes), true);
+            assert!(boundaries.len() >= 2);
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(4)
+                .build()
+                .unwrap();
+            pool.install(|| {
+                let parsed = parse_into_slots_timed(
+                    wide_bytes,
+                    wide_bytes.len(),
+                    &boundaries,
+                    2,
+                    |start, end| parse_byte_span(wide_bytes, start, end),
+                );
+                let frames = parsed
+                    .slots
+                    .into_iter()
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap();
+                assert_eq!(frames.len(), boundaries.len());
+                let packed = pack_position_slab(&frames, 2).unwrap();
+                let checksum = touch_frame_checksum(&frames, &packed, 2).unwrap();
+                let serial = touch_frame_checksum(&frames, &packed, 1).unwrap();
+                assert_eq!(checksum, serial);
+                assert_eq!(packed.len(), frames.len() * frames[0].positions.nrows() * 3);
+            });
+        }
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("wide.con");
+        let mapped = text.repeat(400);
+        std::fs::write(&path, &mapped).unwrap();
+        assert!(std::fs::metadata(&path).unwrap().len() > 64 * 1024);
+        let positions = read_positions_with_threads(&path, None).unwrap();
+        assert_eq!(positions.n_frames, 400);
+        assert_eq!(positions.values.len(), 400 * 3);
+        assert_eq!(positions.values[0], 0.0);
+        let indexed = read_all_frames_indexed(&path, Some(1)).unwrap();
+        assert_eq!(indexed.len(), 400);
+        assert_eq!(indexed[0].atom_data[0].x, 0.0);
+        let serial = read_all_frames_phased(&path, None).unwrap();
+        assert!(serial.phases.mapped);
+        assert_eq!(serial.frames.len(), 400);
+        let parallel = read_all_frames_phased(&path, Some(2)).unwrap();
+        assert_eq!(parallel.frames.len(), 400);
+        assert_eq!(
+            parallel.frames[399].atom_data[0].atom_id,
+            serial.frames[399].atom_data[0].atom_id
+        );
+        #[cfg(feature = "parallel")]
+        assert!(parallel.pool.is_some());
+    }
 }
