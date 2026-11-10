@@ -19,3 +19,27 @@ the Fortran driver when `fpm` is on `PATH`, against the instrumented
 static library. It builds the Python extension with
 `cargo llvm-cov show-env` and `maturin develop`, runs
 `pytest tests/python`, and writes one report.
+
+## Run after the cold-arm tests
+
+Files still under 98 percent on lines or branches:
+
+| File | Lines | Branches |
+| --- | --- | --- |
+| array.rs | 99.20 | 100.00 |
+| conbin.rs | 95.10 | 89.71 |
+| convert.rs | 98.88 | 100.00 |
+| extxyz_scan.rs | 100.00 | 95.59 |
+| ffi.rs | 96.53 | 76.20 |
+| frame_index.rs | 99.84 | 93.33 |
+| index_proj.rs | 97.83 | 75.00 |
+| iterators.rs | 98.73 | 93.71 |
+| main.rs | 96.67 | 86.67 |
+| parser.rs | 98.15 | 91.96 |
+| python.rs | 89.39 | 77.14 |
+| stream.rs | 98.66 | 92.86 |
+| types.rs | 99.70 | 97.87 |
+| units.rs | 100.00 | 96.49 |
+| writer.rs | 97.75 | 92.35 |
+
+Every other source file is at or above 98 percent on both bars.
