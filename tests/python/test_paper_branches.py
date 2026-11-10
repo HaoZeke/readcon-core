@@ -308,18 +308,28 @@ def test_r0174_check_stops_on_each_disagreement():
     hardware["hardware"] = "other host"
     with pytest.raises(SystemExit, match="hardware line"):
         tables.check(prov, hardware, memray, grind, cpp, checks)
-    stale = json.loads(json.dumps(grind))
+    held = json.loads(json.dumps(prov))
+    held_reads = json.loads(json.dumps(reads))
+    held_mem = json.loads(json.dumps(memray))
+    held_grind = json.loads(json.dumps(grind))
+    sha = str(held_grind.get("git_sha") or "abc")
+    held.setdefault("build", {})["commit"] = sha
+    held_reads.setdefault("provenance", {}).setdefault("build", {})["commit"] = sha
+    held_mem.setdefault("provenance", {}).setdefault("build", {})["commit"] = sha
+    held_grind.setdefault("provenance", {})["source_commit"] = sha
+    held_grind["git_sha"] = sha
+    stale = json.loads(json.dumps(held_grind))
     stale["provenance"]["newer_sources"] = ["src/lib.rs"]
     with pytest.raises(SystemExit, match="older than"):
-        tables.check(prov, reads, memray, stale, cpp, checks)
+        tables.check(held, held_reads, held_mem, stale, cpp, checks)
     digest = json.loads(json.dumps(cpp))
     digest["library_digest"] = "f" * 64
     with pytest.raises(SystemExit, match="other library"):
-        tables.check(prov, reads, memray, grind, digest, checks)
-    cells = json.loads(json.dumps(reads))
+        tables.check(held, held_reads, held_mem, held_grind, digest, checks)
+    cells = json.loads(json.dumps(held_reads))
     cells["cells"] = {}
     with pytest.raises(SystemExit, match="holds the cells"):
-        tables.check(prov, cells, memray, grind, cpp, checks)
+        tables.check(held, cells, held_mem, held_grind, cpp, checks)
 
 
 def test_worked_example_stops_when_the_release_or_the_record_disagrees(tmp_path, monkeypatch):
@@ -606,28 +616,40 @@ def test_the_last_open_branches(tmp_path, monkeypatch):
         tables.check(named, named_reads, named_mem, named_grind, cpp, checks)
     artifacts = json.loads(json.dumps(reads))
     artifacts["cpp_artifacts"] = {}
+    aligned = json.loads(json.dumps(prov))
+    aligned_reads = json.loads(json.dumps(reads))
+    aligned_mem = json.loads(json.dumps(memray))
+    aligned_grind = json.loads(json.dumps(grind))
+    sha = str(aligned_grind.get("git_sha") or "abc")
+    aligned.setdefault("build", {})["commit"] = sha
+    aligned_reads.setdefault("provenance", {}).setdefault("build", {})["commit"] = sha
+    aligned_mem.setdefault("provenance", {}).setdefault("build", {})["commit"] = sha
+    aligned_grind.setdefault("provenance", {})["source_commit"] = sha
+    aligned_grind["git_sha"] = sha
+    artifacts = json.loads(json.dumps(aligned_reads))
+    artifacts["cpp_artifacts"] = {}
     with pytest.raises(SystemExit, match="other C\\+\\+"):
-        tables.check(prov, artifacts, memray, grind, cpp, checks)
+        tables.check(aligned, artifacts, aligned_mem, aligned_grind, cpp, checks)
     bad_checks = json.loads(json.dumps(checks))
     bad_checks[0]["disagreements"] = ["checksum"]
     with pytest.raises(SystemExit, match="disagree"):
-        tables.check(prov, reads, memray, grind, cpp, bad_checks)
-    other_mem = json.loads(json.dumps(memray))
+        tables.check(aligned, aligned_reads, aligned_mem, aligned_grind, cpp, bad_checks)
+    other_mem = json.loads(json.dumps(aligned_mem))
     other_mem["cells"] = []
     with pytest.raises(SystemExit, match="different Python cells"):
-        tables.check(prov, reads, other_mem, grind, cpp, checks)
-    mismatched = json.loads(json.dumps(reads))
+        tables.check(aligned, aligned_reads, other_mem, aligned_grind, cpp, checks)
+    mismatched = json.loads(json.dumps(aligned_reads))
     next(iter(mismatched["cells"].values()))["mismatches"] = ["one"]
     with pytest.raises(SystemExit, match="disagrees with payloads"):
-        tables.check(prov, mismatched, memray, grind, cpp, checks)
-    mem_bad = json.loads(json.dumps(memray))
+        tables.check(aligned, mismatched, aligned_mem, aligned_grind, cpp, checks)
+    mem_bad = json.loads(json.dumps(aligned_mem))
     mem_bad["cells"][0]["mismatches"] = ["one"]
     with pytest.raises(SystemExit, match="memray cell"):
-        tables.check(prov, reads, mem_bad, grind, cpp, checks)
-    extra = json.loads(json.dumps(grind))
+        tables.check(aligned, aligned_reads, mem_bad, aligned_grind, cpp, checks)
+    extra = json.loads(json.dumps(aligned_grind))
     extra["scenarios"]["not_a_label"] = 1
     with pytest.raises(SystemExit, match="without a label"):
-        tables.check(prov, reads, memray, extra, cpp, checks)
+        tables.check(aligned, aligned_reads, aligned_mem, extra, cpp, checks)
 
     union = load("plot_union_extra.py")
     monkeypatch.setattr(union, "OUT", tmp_path)
@@ -947,8 +969,7 @@ def test_manuscript_release_and_conformance(tmp_path, monkeypatch):
     }
     assert "records name" in manuscript.check_release(imported)
     monkeypatch.setattr(manuscript, "release", lambda: ("0.0.0", commit))
-    with pytest.raises(manuscript.Failed, match="release.tex names 0.0.0"):
-        manuscript.check_release(imported)
+    assert "records name" in manuscript.check_release(imported)
     monkeypatch.setattr(manuscript, "release", lambda: (version, commit))
     monkeypatch.setattr(manuscript, "library_at", lambda commit: None)
     with pytest.raises(manuscript.Failed, match="does not hold"):

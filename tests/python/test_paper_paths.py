@@ -375,6 +375,8 @@ def test_gen_release_stops_and_checks(tmp_path, monkeypatch):
 
     def identity_git(cargo: str, changelog: str, describe_commit: str | None, tagged: str | None):
         def git(*args):
+            if args == ("rev-parse", "HEAD"):
+                return commit
             if args[0] == "cat-file":
                 return ""
             if args[0] == "show" and args[-1].endswith("Cargo.toml"):
@@ -395,7 +397,10 @@ def test_gen_release_stops_and_checks(tmp_path, monkeypatch):
 
         return git
 
-    monkeypatch.setattr(release, "ancestor", lambda older, newer: False)
+    monkeypatch.setattr(release, "BUILD_RECORD", tmp_path / "no-record.json")
+    monkeypatch.setattr(
+        release, "ancestor", lambda older, newer: newer == "origin/main"
+    )
     monkeypatch.setattr(release.provenance, "library_digest_at", lambda commit: "ab" * 32)
     monkeypatch.setattr(
         release,
@@ -415,9 +420,13 @@ def test_gen_release_stops_and_checks(tmp_path, monkeypatch):
     monkeypatch.setattr(release.provenance, "library_digest_at", lambda commit: None)
     with pytest.raises(SystemExit, match="no library files"):
         release.identity()
+    monkeypatch.setattr(release, "ancestor", lambda older, newer: False)
     monkeypatch.setattr(release.provenance, "library_digest_at", lambda commit: "cd" * 32)
-    with pytest.raises(SystemExit, match="is not this tree"):
+    with pytest.raises(SystemExit, match="this tree holds"):
         release.identity()
+    monkeypatch.setattr(
+        release, "ancestor", lambda older, newer: newer == "origin/main"
+    )
     monkeypatch.setattr(release.provenance, "library_digest_at", lambda commit: "ab" * 32)
     monkeypatch.setattr(
         release,
@@ -436,7 +445,8 @@ def test_gen_release_stops_and_checks(tmp_path, monkeypatch):
     monkeypatch.setattr(
         release,
         "ancestor",
-        lambda older, newer: older == release.BASE and newer == commit,
+        lambda older, newer: newer == "origin/main"
+        or (older == release.BASE and newer == commit),
     )
     monkeypatch.setattr(
         release,
@@ -445,7 +455,9 @@ def test_gen_release_stops_and_checks(tmp_path, monkeypatch):
     )
     with pytest.raises(SystemExit, match="is not an ancestor"):
         release.identity()
-    monkeypatch.setattr(release, "ancestor", lambda older, newer: False)
+    monkeypatch.setattr(
+        release, "ancestor", lambda older, newer: newer == "origin/main"
+    )
     monkeypatch.setattr(release, "published", lambda: (version, "e" * 40))
     with pytest.raises(SystemExit, match="needs a new version"):
         release.identity()
