@@ -44,17 +44,33 @@ TANGLE_PY="${ROOT}/docs/notebooks/chemfiles_ingress.py"
 mkdir -p "$OUT_DIR" "$WORK"
 export READCON_NB_WORK="$WORK"
 
+# maturin develop installs into the active environment. Create one when
+# the caller has not already activated a venv or a pixi env. The build
+# directory stays under that environment.
+if [[ -z "${VIRTUAL_ENV:-}" && -z "${CONDA_PREFIX:-}" ]]; then
+  VENV="${READCON_CHEMFILES_VENV:-${ROOT}/.venv-chemfiles}"
+  if [[ ! -x "${VENV}/bin/python3" ]]; then
+    python3 -m venv "$VENV"
+  fi
+  # shellcheck disable=SC1091
+  source "${VENV}/bin/activate"
+fi
+
 ensure_chemfiles_python() {
   if python3 -c "import readcon; import sys; sys.exit(0 if readcon.has_chemfiles_support() else 1)" 2>/dev/null; then
     return 0
   fi
-  echo "Building chemfiles-linked extension (maturin develop --features python,chemfiles)..." >&2
-  if command -v maturin >/dev/null 2>&1; then
-    maturin develop --features python,chemfiles
-  else
+  # The source feature builds libchemfiles in-tree. The prebuilt feature
+  # downloads a binary that is not available offline.
+  local features="${READCON_CHEMFILES_FEATURES:-python,chemfiles-from-sources}"
+  echo "Building chemfiles-linked extension (maturin develop --features ${features})..." >&2
+  if ! command -v maturin >/dev/null 2>&1; then
     echo "maturin not on PATH; install maturin or: pixi run -e python python-build-chemfiles" >&2
     exit 1
   fi
+  local target="${VIRTUAL_ENV:-${ROOT}/.venv-chemfiles}/target"
+  env -u LLVM_PROFILE_FILE -u RUSTFLAGS CARGO_TARGET_DIR="$target" \
+    maturin develop --features "$features"
   python3 -c "import readcon; assert readcon.has_chemfiles_support(), 'chemfiles still missing'"
 }
 
