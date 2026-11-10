@@ -110,17 +110,17 @@ SOURCES=(
 "$LLVM/llvm-cov" report --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" "${SOURCES[@]}" \
   > "$OUT/functions.txt" || true
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
-  "$dir_src/c_iter.rs" > "$OUT/c_iter-branches.txt"
+  --sources "$dir_src/c_iter.rs" > "$OUT/c_iter-branches.txt"
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
-  "$dir_src/ffi.rs" > "$OUT/ffi-branches.txt"
+  --sources "$dir_src/ffi.rs" > "$OUT/ffi-branches.txt"
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
-  "$dir_src/stream.rs" > "$OUT/stream-branches.txt"
+  --sources "$dir_src/stream.rs" > "$OUT/stream-branches.txt"
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
-  "$dir_src/compression.rs" > "$OUT/compression-branches.txt"
+  --sources "$dir_src/compression.rs" > "$OUT/compression-branches.txt"
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
-  "$dir_src/extxyz_scan.rs" > "$OUT/extxyz_scan-branches.txt"
+  --sources "$dir_src/extxyz_scan.rs" > "$OUT/extxyz_scan-branches.txt"
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
-  "$dir_src/python.rs" > "$OUT/python-branches.txt"
+  --sources "$dir_src/python.rs" > "$OUT/python-branches.txt"
 "$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" "${SOURCES[@]}" \
   > "$OUT/branch.json"
 
@@ -130,7 +130,7 @@ if [[ -n "${SO:-}" && ${#PYRAW[@]} -gt 0 ]]; then
   "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "${EQUIV[@]}" "$SO" \
     "$dir_src/python.rs" > "$OUT/python.json"
   "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" "${EQUIV[@]}" "$SO" \
-    "$dir_src/python.rs" > "$OUT/python-branches.txt"
+    --sources "$dir_src/python.rs" > "$OUT/python-branches.txt"
   rm -f "$pydata"
 fi
 

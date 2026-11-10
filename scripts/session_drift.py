@@ -87,6 +87,26 @@ def arm_name(arm: str) -> str:
     return names.get(arm, arm)
 
 
+def short_peer(peer: str) -> str:
+    return {
+        "readcon_extxyz": "ci",
+        "readcon_extxyz_188": "r188",
+        "readcon_extxyz_r27": "r27",
+        "readcon_pypi": "pypi",
+        "ase_extxyz": "ase",
+        "chemfiles": "chem",
+        "ovito": "ovito",
+        "pymatgen": "pymat",
+        "mdanalysis": "mda",
+        "ase_eon": "eon",
+    }.get(peer, peer)
+
+
+def short_cell(fmt: str, size: str, peer: str) -> str:
+    tag = {"extxyz": "xyz", "con": "con", "con_write": "wcon"}[fmt]
+    return f"{size} {tag} {short_peer(peer)}"
+
+
 def cell_name(fmt: str, size: str, peer: str) -> str:
     kind = {
         "extxyz": "extended XYZ format",
@@ -368,10 +388,10 @@ def main() -> None:
     paragraphs = list(opening)
     if set(slowed) == set(changed) and same_hash and slowed:
         paragraphs.append(
-            "The slower medians belong to the arms whose extension hash changed between the sessions. "
-            "Within each session those two arms load one shared hash. "
-            "The slowdown points at the rebuilt binary rather than at session drift of the host."
+            "The slower medians belong to the arms whose extension hash changed."
         )
+        paragraphs.append("Within each session those two arms load one shared hash.")
+        paragraphs.append("The slowdown points at the rebuilt binary.")
     if old_n == new_n:
         repeat_sentence = f"Both sessions use {old_n} repeats."
     else:
@@ -395,10 +415,12 @@ def main() -> None:
     )
     if same_hash and noise:
         paragraphs.append(
-            "The rustc 1.88.0 arm and the r2.7 rebuild load the same bytes in each session. "
-            f"Their median ratios differ by {min(noise):.2f} to {max(noise):.2f} times the larger IQR. "
-            "That span is the in-session noise check."
+            "The rustc 1.88.0 arm and the r2.7 rebuild load the same bytes in each session."
         )
+        paragraphs.append(
+            f"Their median ratios differ by {min(noise):.2f} to {max(noise):.2f} times the larger IQR."
+        )
+        paragraphs.append("That span is the in-session noise check.")
     if rebuild_rows:
         old_count = instruction_count(args.old_extension)
         new_count = instruction_count(args.new_extension)
@@ -423,27 +445,36 @@ def main() -> None:
             return f"{count} sizes"
 
         if len(rebuild_sizes) == 0:
-            first_arm = "Every rustc 1.88.0 ratio stays inside one interquartile range. "
+            paragraphs.append(
+                "Every rustc 1.88.0 ratio stays inside one interquartile range."
+            )
         else:
-            first_arm = (
+            paragraphs.append(
                 "The rustc 1.88.0 ratios leave one interquartile range at "
-                f"{size_phrase(len(rebuild_sizes))}. "
+                f"{size_phrase(len(rebuild_sizes))}."
             )
         paragraphs.append(
-            first_arm
-            + "The rebuilt r2.7 extension leaves that range at "
-            + f"{size_phrase(len(second_sizes))}."
-            + claim
+            "The rebuilt r2.7 extension leaves that range at "
+            f"{size_phrase(len(second_sizes))}."
+        )
+        if claim:
+            paragraphs.append(claim.strip())
+        if same_bytes:
+            paragraphs.append(
+                f"The two extension files are both {args.old_extension.stat().st_size} bytes."
+            )
+        else:
+            paragraphs.append("The two extension files differ in size.")
+        paragraphs.append(
+            f"objdump counts {old_count} instructions in the {args.baseline} file."
         )
         paragraphs.append(
-            size_note
-            + "`objdump -d --no-show-raw-insn` counts "
-            f"{old_count} instructions in the {args.baseline} file and {new_count} instructions in the {args.label} file."
+            f"It counts {new_count} instructions in the {args.label} file."
         )
     if other_rows:
         paragraphs.append("The interquartile range also flags more cells.")
         for row in other_rows:
-            paragraphs.append(f"It flags {row['size']} {row['peer']}.")
+            paragraphs.append(f"It flags {short_cell(row['format'], row['size'], row['peer'])}.")
 
     bench_names = []
     label_names = []
@@ -460,16 +491,16 @@ def main() -> None:
         if row["peer"] == "ovito" or (
             row["format"] == "con" and row["peer"] == "ase_eon"
         ):
-            bench_names.append(f"{row['size']} {row['peer']}")
+            bench_names.append(short_cell(row["format"], row["size"], row["peer"]))
         elif row["peer"] in readcon_peers:
             old_hash = old["build"]["arms"][row["peer"]]["binary_sha256"]
             new_hash = new["build"]["arms"][row["peer"]]["binary_sha256"]
             if old_hash != new_hash:
                 label_names.append(row["name"])
             else:
-                session_names.append(f"{row['size']} {row['peer']}")
+                session_names.append(short_cell(row["format"], row["size"], row["peer"]))
         else:
-            session_names.append(f"{row['size']} {row['peer']}")
+            session_names.append(short_cell(row["format"], row["size"], row["peer"]))
 
     def joined(names: list[str]) -> str:
         if not names:
@@ -477,20 +508,20 @@ def main() -> None:
         return ", ".join(names).replace("CON read", "eOn configuration (CON) read", 1)
 
     ovito_name = "OVITO" if spelled["ovito"] else "Open Visualization Tool (OVITO)"
-    paragraphs.append("Bench code accounts for " + joined(bench_names) + ".")
+    if bench_names:
+        paragraphs.append("Bench code accounts for " + joined(bench_names) + ".")
     if any(name.endswith(" ovito") for name in bench_names):
         paragraphs.append(f"{ovito_name} builds its type table once per file.")
-    if any(name.endswith(" ase_eon") for name in bench_names):
+    if any(name.endswith(" eon") for name in bench_names):
         paragraphs.append("The eOn reader maps each distinct symbol once.")
-    paragraphs.append(
-        "A changed readcon archive label accounts for " + joined(label_names) + "."
-    )
+    if label_names:
+        paragraphs.append(
+            "A changed readcon archive label accounts for " + joined(label_names) + "."
+        )
     if session_names:
         paragraphs.append("The session moved these cells.")
         for name in session_names:
             paragraphs.append(f"It moved {name}.")
-    else:
-        paragraphs.append("The session moved none.")
 
     ci_hash = new["build"]["arms"]["readcon_extxyz"]["binary_sha256"]
     ci_unchanged = ci_hash == old["build"]["arms"]["readcon_extxyz"]["binary_sha256"]
@@ -532,13 +563,18 @@ def main() -> None:
             paragraphs.append("The screen and the test disagree.")
         for row in screen_only:
             paragraphs.append(
-                f"The screen flags {row['size']} {row['peer']} at p={p_text(row['p'])}."
+                "The screen flags "
+                f"{short_cell(row['format'], row['size'], row['peer'])} "
+                f"at p={p_text(row['p'])}."
             )
         for row in test_only:
             paragraphs.append(
-                f"The test marks {row['size']} {row['peer']} at p={p_text(row['p'])}."
+                "The test marks "
+                f"{short_cell(row['format'], row['size'], row['peer'])} "
+                f"at p={p_text(row['p'])}."
             )
-            paragraphs.append("The screen leaves that cell inside one IQR.")
+        if test_only:
+            paragraphs.append("The screen leaves those cells inside one IQR.")
         cited = screen_only + test_only
         if wheel_omits_types and ci_has_types and any(
             row["peer"] == "readcon_pypi" for row in cited
@@ -562,9 +598,19 @@ def main() -> None:
         else:
             p_text = f"{row['p']:.6f}"
         body.append(
-            f"| {row['size']} {row['peer']} | {old_text} | {new_text} | {screen} | {row['factor']:.2f} | {p_text} |"
+            "| "
+            f"{short_cell(row['format'], row['size'], row['peer'])} "
+            f"| {old_text} | {new_text} | {screen} | {row['factor']:.2f} | {p_text} |"
         )
     table = "\n".join([header, rule, *body])
+    paragraphs.append("xyz is an extended XYZ format read.")
+    paragraphs.append("con is an eOn configuration (CON) read.")
+    paragraphs.append("wcon is a CON write.")
+    paragraphs.append("The table writes rustc 1.88.0 as r188.")
+    paragraphs.append("It writes the r2.7 rebuild as r27.")
+    paragraphs.append(
+        "Other peers are ci, pypi, ase, chem, ovito, pymat, mda, and eon."
+    )
     paragraphs.append("Every cell is in this table.")
     paragraphs.append("The p column is the permutation test.")
     paragraphs.append(f"run.log carries all {blocks} per-sample blocks.")
