@@ -1135,3 +1135,38 @@ def test_manuscript_meson_openers_and_corpus(tmp_path, monkeypatch):
     monkeypatch.setattr(manuscript, "mutant_prose", lambda totals: [])
     with pytest.raises(manuscript.Failed, match="corpus31-results.json"):
         manuscript.check_conformance()
+
+
+def test_hostname_key_accepts_only_bench(tmp_path, monkeypatch):
+    manuscript = load("check_manuscript.py")
+    results = tmp_path / "bench" / "results"
+    results.mkdir(parents=True)
+    generated = tmp_path / "generated"
+    generated.mkdir()
+    monkeypatch.setattr(manuscript, "ROOT", tmp_path)
+    monkeypatch.setattr(manuscript, "GENERATED", generated)
+
+    def write(name, obj):
+        (results / name).write_text(json.dumps(obj), encoding="utf-8")
+
+    write("ok.json", {"HEAD": "abc", "hostname": "bench"})
+    assert "no host" in manuscript.check_leaks()
+
+    write("missing.json", {"HEAD": "abc"})
+    with pytest.raises(manuscript.Failed, match="missing"):
+        manuscript.check_leaks()
+    (results / "missing.json").unlink()
+
+    write("cursor.json", {"HEAD": "abc", "hostname": "cursor"})
+    with pytest.raises(manuscript.Failed, match="cursor"):
+        manuscript.check_leaks()
+    (results / "cursor.json").unlink()
+
+    write("other.json", {"HEAD": "abc", "hostname": "lab-node-9"})
+    with pytest.raises(manuscript.Failed, match="lab-node-9"):
+        manuscript.check_leaks()
+    (results / "other.json").unlink()
+
+    write("nodename.json", {"HEAD": "abc", "hostname": "bench", "nodename": "bench"})
+    with pytest.raises(manuscript.Failed, match="nodename"):
+        manuscript.check_leaks()

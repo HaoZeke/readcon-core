@@ -113,3 +113,12 @@ An output is written by that command, not by hand.
 | `data/cloud-runs-2/05/bands/*.npz` | `python3 data/cloud-runs-2/cloud-run/run_05.py` |
 | `the tables and figures together` | `python3 scripts/regen_paper.py` |
 | `the same targets through Snakemake` | `snakemake -c1 all` |
+
+## Timing hostname
+
+A timing receipt keeps a hostname key.
+The value is the literal bench.
+The manuscript check accepts that value and no other.
+A missing key is a failure.
+A value other than bench is a failure.
+Any other host, hostname, or nodename value is a failure.

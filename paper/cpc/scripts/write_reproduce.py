@@ -157,7 +157,18 @@ def main() -> None:
     ]
     for output, command in ORPHANS:
         lines.append(f"| `{output}` | `{command}` |")
-    lines.append("")
+    lines += [
+        "",
+        "## Timing hostname",
+        "",
+        "A timing receipt keeps a hostname key.",
+        "The value is the literal bench.",
+        "The manuscript check accepts that value and no other.",
+        "A missing key is a failure.",
+        "A value other than bench is a failure.",
+        "Any other host, hostname, or nodename value is a failure.",
+        "",
+    ]
     OUT.write_text("\n".join(lines))
     print(f"wrote {OUT} ({len(manuscript_inputs())} inputs)")
 

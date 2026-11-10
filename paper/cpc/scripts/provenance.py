@@ -291,6 +291,9 @@ def host() -> dict:
         "kernel": platform.release(),
         "uname_m": platform.machine(),
         "nproc": os.cpu_count(),
+        # The timing namespace writes this literal. The manuscript check
+        # accepts this value and no other host, hostname, or nodename.
+        "hostname": Path("/etc/hostname").read_text(encoding="utf-8").strip(),
     }
     try:
         text = Path("/proc/cpuinfo").read_text()

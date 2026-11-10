@@ -554,13 +554,44 @@ def check_release(imported: dict) -> str:
     )
 
 
-HOST_KEY = re.compile(r'["\'](?:hostname|nodename|node)["\']\s*:', re.I)
+BENCH_HOST = "bench"
+HOST_PAIR = re.compile(
+    r'["\'](?P<key>hostname|nodename|node)["\']\s*:\s*'
+    r'(?P<val>"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[^,\]\}\s]+)',
+    re.I,
+)
 ABS_PATH = re.compile(
     r"(?:^|[\s\"'=,:\[\{(])(/(?:tmp|home|root|Users|workspace|opt|var|usr)(?:/[^\"'\s,\]\}]*)?)"
 )
 RECORD_SUFFIXES = {".json", ".csv", ".log", ".out", ".txt", ".tsv"}
 # A host path with its separators replaced by underscores, as tools that name files after a path write it.
 FLAT_PATH = re.compile(r"[\w.-]*_(?:tmp|home|root|Users|workspace)_[\w.-]*")
+
+
+def _unquote(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
+
+
+def hostname_problems(text: str, rel: str, require: bool) -> list[str]:
+    """Accept a hostname key only when its value is the literal bench.
+
+    A receipt must carry that key. Any other host, hostname, or nodename
+    value is a failure, and so is a missing key on a receipt.
+    """
+    hits = []
+    saw = False
+    for match in HOST_PAIR.finditer(text):
+        key = match.group("key").lower()
+        value = _unquote(match.group("val"))
+        if key == "hostname" and value == BENCH_HOST:
+            saw = True
+            continue
+        hits.append(f"{rel}: hostname key {key!r} value {value!r}")
+    if require and not saw:
+        hits.append(f"{rel}: hostname key is missing")
+    return hits
 
 
 def check_leaks() -> str:
@@ -572,15 +603,21 @@ def check_leaks() -> str:
         ROOT / "bench" / "records": RECORD_SUFFIXES,
         GENERATED: {".tex"},
     }
+    results = ROOT / "bench" / "results"
     for base, suffixes in bases.items():
         for path in sorted(base.rglob("*")) if base.is_dir() else ():
             if path.suffix.lower() not in suffixes:
                 continue
             text = path.read_text(errors="replace")
             rel = path.relative_to(ROOT)
-            hits += [
-                f"{rel}: hostname key {m.group(0)!r}" for m in HOST_KEY.finditer(text)
-            ]
+            receipt = base == results and path.suffix.lower() == ".json"
+            if receipt:
+                try:
+                    parsed = json.loads(text)
+                except json.JSONDecodeError:
+                    parsed = None
+                receipt = isinstance(parsed, dict)
+            hits += hostname_problems(text, rel.as_posix(), receipt)
             hits += [
                 f"{rel}: absolute path {m.group(1)}" for m in ABS_PATH.finditer(text)
             ]
