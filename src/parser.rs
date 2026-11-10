@@ -3883,6 +3883,45 @@ Coordinates of Component 1
         assert!(err.to_string().contains("lattice_vectors"));
         let err = super::validate_masses(&[-1.0]).unwrap_err();
         assert!(matches!(err, ParseError::ValidationError(_)));
+
+        let err = super::parse_f64_at(b"\n", 0, 0).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { .. }));
+        let err = super::parse_flag_at(b"0\n", 0, 1).unwrap();
+        assert_eq!(err.0, [false, false, false]);
+        let err = super::parse_flag_at(b"1\n", 0, 1).unwrap();
+        assert_eq!(err.0, [true, true, true]);
+        let mut schema = serde_json::Map::new();
+        schema.insert("validate".into(), serde_json::json!("no"));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("validate".into(), serde_json::json!(false));
+        schema.insert("sections".into(), serde_json::json!("no"));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("sections".into(), serde_json::json!([1]));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("sections".into(), serde_json::json!([]));
+        schema.insert("con_spec_minor".into(), serde_json::json!("x"));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("con_spec_minor".into(), serde_json::json!(0));
+        schema.insert("generator".into(), serde_json::json!(1));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("generator".into(), serde_json::json!("t"));
+        schema.insert("potential".into(), serde_json::json!("no"));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("potential".into(), serde_json::json!({"type": 1}));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("potential".into(), serde_json::json!({"type": "EMT"}));
+        schema.insert("converged".into(), serde_json::json!("no"));
+        assert!(super::validate_metadata_schema(&schema).is_err());
+        schema.insert("converged".into(), serde_json::json!(true));
+        assert!(super::validate_metadata_schema(&schema).is_ok());
+
+        let mut header = frame.header.clone();
+        header.spec_version = 3;
+        header.metadata.insert("con_spec_minor".into(), serde_json::json!(1));
+        header.sections = vec!["velocities".into()];
+        assert!(super::reject_velocities_without_time(&header).is_err());
+        let err = super::validate_coordinate_component(0, "Cu", "not a label").unwrap_err();
+        assert!(err.to_string().contains("coordinate label"));
     }
 
     #[test]

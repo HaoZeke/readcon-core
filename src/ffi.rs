@@ -7574,4 +7574,244 @@ mod tests {
         );
         unsafe { free_rkr_frame_builder(builder) };
     }
+
+    #[test]
+    fn null_handles_and_bad_text_are_rejected() {
+        let z = [0.0f64; 3];
+        let null_b = std::ptr::null_mut();
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_displacement(null_b, z.as_ptr()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_spread(null_b, z.as_ptr()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_energy(null_b, 1.0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_displacement(null_b, 0, z.as_ptr()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_spread(null_b, 0, z.as_ptr()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_energy(null_b, 0, 1.0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_fixed(null_b, 0, false, false, false) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_mass(null_b, 0, 1.0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_id(null_b, 0, 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_velocity(null_b, 0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_force(null_b, 0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_displacement(null_b, 0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_spread(null_b, 0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_energy(null_b, 0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_positions_from_flat(null_b, z.as_ptr(), 3) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_forces_from_flat(null_b, z.as_ptr(), 3) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_displacements_from_flat(null_b, z.as_ptr(), 3) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_spreads_from_flat(null_b, z.as_ptr(), 3) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_energies_from_flat(null_b, z.as_ptr(), 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let mut xyz = [0.0f64; 3];
+        let mut flag = false;
+        let mut mass = 0.0f64;
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_force(std::ptr::null(), 0, xyz.as_mut_ptr(), &mut flag) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_get_atom_displacement(std::ptr::null(), 0, xyz.as_mut_ptr(), &mut flag)
+            },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_spread(std::ptr::null(), 0, xyz.as_mut_ptr(), &mut flag) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_energy(std::ptr::null(), 0, &mut mass, &mut flag) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_mass(std::ptr::null(), 0, &mut mass) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let mut tensor = std::ptr::null_mut();
+        for call in [
+            rkr_frame_builder_velocities_dlpack_ex as unsafe extern "C" fn(_, _, _) -> _,
+            rkr_frame_builder_forces_dlpack_ex,
+            rkr_frame_builder_displacements_dlpack_ex,
+            rkr_frame_builder_spreads_dlpack_ex,
+            rkr_frame_builder_atom_energies_dlpack_ex,
+            rkr_frame_builder_masses_dlpack_ex,
+            rkr_frame_builder_atom_ids_dlpack_ex,
+        ] {
+            assert_eq!(
+                unsafe { call(std::ptr::null(), std::ptr::null(), &mut tensor) },
+                RKRStatus::RKR_STATUS_NULL_POINTER
+            );
+        }
+        assert!(unsafe { rkr_frame_builder_velocities_data(null_b) }.is_null());
+        assert!(unsafe { rkr_frame_builder_forces_data(null_b) }.is_null());
+        assert!(unsafe { rkr_frame_builder_displacements_data(null_b) }.is_null());
+        assert!(unsafe { rkr_frame_builder_spreads_data(null_b) }.is_null());
+        assert!(unsafe { rkr_frame_builder_atom_energies_data(null_b) }.is_null());
+        assert!(unsafe { rkr_frame_builder_masses_data(null_b) }.is_null());
+        assert!(unsafe { rkr_frame_builder_atom_ids_data(std::ptr::null()) }.is_null());
+        assert!(unsafe {
+            rkr_frame_new(
+                std::ptr::null(),
+                z.as_ptr(),
+                std::ptr::null(),
+                std::ptr::null(),
+                std::ptr::null(),
+                std::ptr::null(),
+            )
+        }
+        .is_null());
+        let bad = [0xffu8, 0];
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_metadata_json(null_b, bad.as_ptr().cast()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_units(null_b, bad.as_ptr().cast()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_con_spec_minor(null_b, 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_scalar_metadata(null_b, bad.as_ptr().cast(), 1.0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_set_string_metadata(null_b, bad.as_ptr().cast(), bad.as_ptr().cast())
+            },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_energy(null_b, 1.0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_frame_index(null_b, 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_time(null_b, 1.0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_timestep(null_b, 1.0) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_neb_bead(null_b, 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_neb_band(null_b, 1) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert!(unsafe { rkr_read_first_frame(std::ptr::null()) }.is_null());
+        let mut n = 0usize;
+        assert!(unsafe { rkr_read_all_frames(std::ptr::null(), &mut n) }.is_null());
+        assert!(unsafe { rkr_read_all_frames_n_threads(std::ptr::null(), &mut n, 2) }.is_null());
+        assert!(unsafe { create_writer_gzip_c(std::ptr::null()) }.is_null());
+        assert!(unsafe { create_writer_zstd_c(std::ptr::null()) }.is_null());
+
+        let builder = test_builder_handle();
+        let sym = CString::new("Cu").unwrap();
+        assert_eq!(
+            unsafe { rkr_frame_add_atom(builder, sym.as_ptr(), 0.0, 0.0, 0.0, false, 1, 63.546) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_energy(builder, 9, 1.0) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_id(builder, 9, 3) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_energy(builder, 9) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        let brace = CString::new("{").unwrap();
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_metadata_json(builder, brace.as_ptr()) },
+            RKRStatus::RKR_STATUS_INVALID_JSON
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_metadata_json(builder, bad.as_ptr().cast()) },
+            RKRStatus::RKR_STATUS_INVALID_UTF8
+        );
+        let frame = unsafe { rkr_frame_builder_build(builder) };
+        assert!(!frame.is_null());
+        let mut buf = [0 as c_char; 32];
+        assert_eq!(
+            unsafe { rkr_frame_get_header_line(frame, true, 1, buf.as_mut_ptr(), buf.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let meta = unsafe { rkr_frame_get_header_line_cpp(frame, true, 1) };
+        assert!(!meta.is_null());
+        unsafe { rkr_free_string(meta) };
+        unsafe { free_rkr_frame(frame) };
+
+        let dir = tempfile::tempdir().unwrap();
+        let raw = dir.path().join("wide.con");
+        let mut bytes = vec![b' '; 70_000];
+        bytes[100] = 0xff;
+        std::fs::write(&raw, bytes).unwrap();
+        let path = CString::new(raw.to_str().unwrap()).unwrap();
+        assert!(unsafe { read_con_file_iterator(path.as_ptr()) }.is_null());
+    }
 }

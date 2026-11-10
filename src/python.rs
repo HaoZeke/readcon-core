@@ -4003,7 +4003,7 @@ mod api_coverage {
             other.positions = crate::storage_dtype::FloatArray2::zeros_f64(0, 3);
             let list = con_frame_list(
                 py,
-                vec![frame, other],
+                vec![frame.clone(), other],
                 crate::iterators::ReadPhaseTimes::default(),
                 0,
                 Some(2),
@@ -4037,6 +4037,37 @@ mod api_coverage {
             let traj = Py::new(py, PyConTrajectory { inner: opened }).unwrap();
             let traj_iter = Py::new(py, PyConTrajectory::__iter__(traj)).unwrap();
             let _ = PyConTrajectoryIter::__iter__(traj_iter.borrow(py));
+
+            let none = py.None();
+            assert!(py_metadata_to_json_map(none.bind(py)).unwrap().is_empty());
+            let big = (u64::MAX).into_pyobject(py).unwrap();
+            let number = py_to_json_value(big.as_any()).unwrap();
+            assert_eq!(number.as_u64(), Some(u64::MAX));
+            let plain = PyConFrame::from_owned(py, frame.clone()).unwrap();
+            assert!(plain.vel(py).unwrap().is_none());
+            assert!(plain.frc(py).unwrap().is_none());
+            assert!(plain.potential_type(py).unwrap().is_none());
+            assert!(plain.bonds(py).unwrap().is_empty());
+            let short = pyo3::types::PyList::new(py, [true, false]).unwrap();
+            assert!(py_bool_mask(&short).is_err());
+            assert_eq!(scan_kind_name(crate::iterators::SCAN_EQUAL_SPAN), "equal-span");
+            assert_eq!(scan_kind_name(crate::iterators::SCAN_INDEXED), "indexed");
+            let one = con_frame_list(
+                py,
+                vec![frame.clone()],
+                crate::iterators::ReadPhaseTimes::default(),
+                0,
+                Some(1),
+                "lazy",
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                "serial",
+                None,
+            )
+            .unwrap();
+            drop(one);
         });
     }
 }
