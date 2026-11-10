@@ -28,20 +28,22 @@ mkdir -p "$CARGO_TARGET_DIR"
 OUT="$CARGO_TARGET_DIR/report"
 mkdir -p "$OUT"
 
+# cargo llvm-cov report merges only the profraw files that sit directly
+# in its target directory. --no-report does not delete the previous run,
+# so the doctest run and the external drivers add profiles beside the
+# workspace run. Moving those files out of that directory drops them.
 echo "==> workspace, all targets, branches"
+cargo llvm-cov clean --workspace
 cargo llvm-cov --workspace --all-targets \
   --features parallel,zstd,grammar \
   --branch --no-fail-fast --no-report
-mkdir -p "$OUT/prof"
-find "$CARGO_TARGET_DIR" -maxdepth 2 -name '*.profraw' -o -name '*.profdata' | while read -r prof; do
-  mv "$prof" "$OUT/prof/"
-done
 echo "==> doctests"
 cargo llvm-cov --workspace --doc \
   --features parallel,zstd,grammar \
   --branch --no-fail-fast --no-report \
   || echo "doctests exited $?" >&2
-find "$OUT/prof" -type f -exec mv {} "$CARGO_TARGET_DIR/" \;
+
+PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
 
 if [ -f tests/c/ffi_coverage.c ] && [ -f include/readcon-core.h ]; then
   echo "==> C driver against the instrumented static library"
@@ -49,9 +51,22 @@ if [ -f tests/c/ffi_coverage.c ] && [ -f include/readcon-core.h ]; then
   if [ -n "$STATIC" ]; then
     cc -O0 -o "$OUT/ffi_coverage" tests/c/ffi_coverage.c "$STATIC" \
       -Iinclude -lm -lpthread -ldl
-    LLVM_PROFILE_FILE="$CARGO_TARGET_DIR/ffi-%p.profraw" \
+    LLVM_PROFILE_FILE="$PROFDIR/ffi-%p.profraw" \
       "$OUT/ffi_coverage" "$ROOT" "$OUT" \
       || echo "C driver exited $?" >&2
+  fi
+fi
+
+if command -v fpm >/dev/null 2>&1 && [ -d fortran/ReadCon ]; then
+  echo "==> Fortran driver against the instrumented static library"
+  if [ -n "${STATIC:-}" ]; then
+    STATIC_DIR=$(CDPATH= cd -- "$(dirname "$STATIC")" && pwd)
+    (
+      cd fortran/ReadCon
+      LLVM_PROFILE_FILE="$PROFDIR/fortran-%p.profraw" \
+        fpm test --flag "-L$STATIC_DIR" \
+        --link-flag "-L$STATIC_DIR -lreadcon_core -ldl -lpthread -lm"
+    ) || echo "Fortran driver exited $?" >&2
   fi
 fi
 
@@ -61,15 +76,20 @@ set -a
 # shellcheck disable=SC1090
 . "$OUT/env.sh"
 set +a
+# show-env points the profile at the coverage target root. The report
+# reads profiles from the llvm-cov-target directory, so override that one
+# variable after the source.
+export LLVM_PROFILE_FILE="$PROFDIR/py-%p-%m.profraw"
 
 VENV="${READCON_PY_VENV:-$ROOT/.venv-coverage-python}"
-if [ ! -d "$VENV" ]; then
+if [ ! -x "$VENV/bin/python" ]; then
+  rm -rf "$VENV"
   python3 -m venv "$VENV"
 fi
 # shellcheck disable=SC1091
 . "$VENV/bin/activate"
 python -m pip install -U pip -q
-python -m pip install maturin pytest numpy -q
+python -m pip install maturin pytest numpy ase zstandard -q
 maturin develop --features python,zstd
 python -m pytest tests/python -q --tb=line || echo "pytest exited $?" >&2
 

@@ -12,13 +12,10 @@ of every `no_mangle` export, nothing calls it, and llvm-cov merges its
 zero counts over the copy the tests did call. The percentage moves
 even when the source and the tests do not.
 
-`scripts/coverage.sh` runs one command for the workspace:
-
-```
-cargo llvm-cov --workspace --all-targets --doc \
-  --features parallel,zstd,grammar --branch
-```
-
-It then runs the C driver against the instrumented static library,
-builds the Python extension with `cargo llvm-cov show-env` and
-`maturin develop`, runs `pytest tests/python`, and writes one report.
+`scripts/coverage.sh` runs the workspace with every target, then the
+doctests. Those two flags cannot be combined, and the script keeps
+both sets of profiles for one report. It then runs the C driver, and
+the Fortran driver when `fpm` is on `PATH`, against the instrumented
+static library. It builds the Python extension with
+`cargo llvm-cov show-env` and `maturin develop`, runs
+`pytest tests/python`, and writes one report.

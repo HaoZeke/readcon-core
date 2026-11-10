@@ -350,6 +350,7 @@ docs/notebooks/out/
 /asv.weak.conf.json
 # coverage instrumentation local venv
 .venv-coverage/
+.venv-coverage-python/
 .venv-tutorial/
 .grok/
 .venv-chemfiles/
