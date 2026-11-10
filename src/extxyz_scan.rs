@@ -396,5 +396,35 @@ Lattice=\"1 0 0 0 1 0 0 0 1\" Properties=charge:R:1:species:S:1:pos:R:3
 0.5 Cu 0 0 0
 ";
         assert!(tables_from_extxyz_bytes(with_charge).is_ok());
+        let unquoted = b"\
+1
+Lattice=1 0 0 0 1 0 0 0 1 Properties=species:S:1:pos:R:3
+Cu 0 0 0
+";
+        assert!(tables_from_extxyz_bytes(unquoted).is_err());
+        let trailing = b"\
+1
+Lattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3:
+Cu 0 0 0
+";
+        let _ = tables_from_extxyz_bytes(trailing);
+        let crlf = b"1\r\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\r\nCu 0 0 0\r\n";
+        assert!(tables_from_extxyz_bytes(crlf).is_ok());
+        let no_nl = b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nCu 0 0 0";
+        assert!(tables_from_extxyz_bytes(no_nl).is_ok());
+        let blank = b"\n1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nCu 0 0 0\n";
+        assert!(tables_from_extxyz_bytes(blank).is_ok());
+        let half = b"\
+1
+Lattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S
+Cu 0 0 0
+";
+        assert!(tables_from_extxyz_bytes(half).is_err());
+        let dir = tempfile::tempdir().expect("tempdir");
+        let missing = dir.path().join("missing.xyz");
+        assert!(tables_from_extxyz_path(&missing).is_err());
+        let present = dir.path().join("present.xyz");
+        std::fs::write(&present, crlf).expect("write");
+        assert!(tables_from_extxyz_path(&present).is_ok());
     }
 }

@@ -683,6 +683,10 @@ mod tests {
             Compression::Zstd
         );
         assert_eq!(detect_compression(&[0x28, 0xb5, 0x2f]), Compression::None);
+        assert_eq!(detect_compression(&[0x00, 0x00, 0x00, 0x00]), Compression::None);
+        assert_eq!(detect_compression(&[0x60, 0x2a, 0x4d, 0x18]), Compression::None);
+        assert_eq!(detect_compression(&[0x50, 0x00, 0x4d, 0x18]), Compression::None);
+        assert_eq!(detect_compression(&[0x50, 0x2a, 0x00, 0x18]), Compression::None);
         let dir = tempfile::tempdir().expect("tempdir");
         let small = dir.path().join("small.txt");
         std::fs::write(&small, b"abc").expect("write");
@@ -695,6 +699,22 @@ mod tests {
         advise_dontneed_parallel(&map, 0);
         advise_dontneed_parallel(&map, 1);
         advise_dontneed_parallel(&map, 4);
+        let _ = read_file_contents(&wide).expect("wide").as_bytes();
+        let _ = read_file_contents(&wide).expect("wide").as_str_sliced();
+        let owned = read_file_contents(&small).expect("small");
+        let _ = owned.as_bytes();
+        let _ = owned.as_str_sliced();
+        let tiny = dir.path().join("tiny.bin");
+        std::fs::write(&tiny, b"abcd").expect("write");
+        let tiny_file = std::fs::File::open(&tiny).expect("open");
+        let tiny_map = unsafe { memmap2::Mmap::map(&tiny_file).expect("map") };
+        advise_dontneed_parallel(&tiny_map, 16);
+        #[cfg(feature = "zstd")]
+        {
+            let zpath = dir.path().join("out.zst");
+            let mut encoder = zstd_writer(&zpath).expect("zstd");
+            encoder.write_all(b"abc").expect("write");
+        }
         let empty_path = dir.path().join("empty.bin");
         std::fs::write(&empty_path, b"").expect("write");
         if let Ok(empty_file) = std::fs::File::open(&empty_path) {
