@@ -401,13 +401,11 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
     if n == 0 {
         return zero_atom_frame_from_chemfiles(frame);
     }
+    // Frame::size returns positions_.size() after asserting that the
+    // topology, and the velocities when present, have that length
+    // (chemfiles 0.10.4 Frame.cpp:33-38). chfl_frame_positions reports
+    // the same vector (capi/frame.cpp:55-67).
     let positions = frame.positions();
-    if positions.len() != n {
-        return Err(ChemfilesImportError::InvalidFrame(format!(
-            "position count {} != atom count {n}",
-            positions.len()
-        )));
-    }
 
     let cell_ref = frame.cell();
     let (boxl, angles, has_pbc) = cell_to_box_and_angles(&cell_ref);
