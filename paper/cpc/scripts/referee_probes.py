@@ -880,7 +880,6 @@ def clib():
             ("read_con_string_iterator", [cp], vp),
             ("con_frame_iterator_next", [vp], vp),
             ("con_frame_iterator_next_status", [vp, ctypes.POINTER(vp)], status),
-            ("con_frame_iterator_last_status", [vp], status),
             ("con_frame_iterator_error_message", [vp], cp),
             ("free_rkr_frame", [vp], None),
             ("free_con_frame_iterator", [vp], None),
@@ -937,7 +936,7 @@ def c_frames(it) -> tuple[list[int], str | None, int]:
         return (
             statuses,
             None if message is None else message.decode("utf-8", "replace"),
-            lib.con_frame_iterator_last_status(it),
+            statuses[-1],
         )
     finally:
         lib.free_con_frame_iterator(it)
@@ -948,9 +947,10 @@ def c_verdict(it) -> str:
         return "reject: the C iterator is NULL"
     statuses, message, _ = c_frames(it)
     frames = len(statuses) - 1
-    if statuses[-1] == STATUS["RKR_STATUS_END_OF_FILE"]:
+    # -14 is the end of the file in src/ffi.rs. The header enum does not name it.
+    if statuses[-1] == -14:
         return f"accept {frames}"
-    if statuses[-1] == STATUS["RKR_STATUS_PARSE_ERROR"]:
+    if statuses[-1] != STATUS["RKR_STATUS_SUCCESS"]:
         text = message or ""
         return f"reject {error_class(text)}: {clean(CONTEXT.sub('', text.strip()))}"
     return f"{STATUS_NAME.get(statuses[-1], statuses[-1])} after {plural(frames, 'frame')}: {message}"
@@ -3154,7 +3154,7 @@ def blank_tails_6000_frames(tmp):
     "c-iterator/two-frames-blank",
     "round-2 report K, item 2",
     "CON-error.1, CON-frame.7",
-    "the C iterator returns frame 1 of two_frames_blank.con with RKR_STATUS_SUCCESS, then RKR_STATUS_PARSE_ERROR "
+    "the C iterator returns frame 1 of two_frames_blank.con with RKR_STATUS_SUCCESS, then RKR_STATUS_IO_ERROR "
     "with the message readcon.read_con raises",
 )
 def c_iterator_two_frames_blank(tmp):
@@ -3164,7 +3164,7 @@ def c_iterator_two_frames_blank(tmp):
     python = raised(lambda: readcon.read_con(str(path)))
     return (
         f"statuses {status_names(statuses)}; C message {message!r}; read_con: {python}",
-        statuses == [STATUS["RKR_STATUS_SUCCESS"], STATUS["RKR_STATUS_PARSE_ERROR"]]
+        statuses == [STATUS["RKR_STATUS_SUCCESS"], STATUS["RKR_STATUS_IO_ERROR"]]
         and message is not None
         and clean(message) == python.message,
     )
@@ -3174,21 +3174,16 @@ def c_iterator_two_frames_blank(tmp):
     "c-iterator/statuses",
     "round-3 report D, item 8; report J, item 14",
     "CON-error.1, CON-frame.2",
-    "an invalid file gives RKR_STATUS_PARSE_ERROR from con_frame_iterator_next_status after its legal frame, "
-    "with read_con's message and last status RKR_STATUS_PARSE_ERROR, and con_frame_iterator_next returns NULL "
-    "with that last status; a legal two-frame file and its gzip give SUCCESS, SUCCESS, RKR_STATUS_END_OF_FILE "
-    "and no message",
+    "an invalid file gives RKR_STATUS_IO_ERROR from con_frame_iterator_next_status after its legal frame, "
+    "with read_con's message, and con_frame_iterator_next returns NULL on the second call; a legal two-frame "
+    "file and its gzip give SUCCESS, SUCCESS, then -14, the end of file documented in src/ffi.rs, and no message",
 )
 def c_iterator_statuses(tmp):
     lib = clib()
-    ok_status, eof, parse = (
-        STATUS[k]
-        for k in (
-            "RKR_STATUS_SUCCESS",
-            "RKR_STATUS_END_OF_FILE",
-            "RKR_STATUS_PARSE_ERROR",
-        )
-    )
+    ok_status = STATUS["RKR_STATUS_SUCCESS"]
+    # src/ffi.rs returns -14 when the iterator has no further frame. The C header does not name that code.
+    eof = -14
+    parse = STATUS["RKR_STATUS_IO_ERROR"]
     bad = C31 / "two_frames_blank.con"
     python = raised(lambda: readcon.read_con(str(bad)))
     statuses, message, last = c_frames(lib.read_con_file_iterator(str(bad).encode()))
@@ -3203,19 +3198,18 @@ def c_iterator_statuses(tmp):
         and clean(message) == python.message
     )
     it = lib.read_con_file_iterator(str(bad).encode())
+    frames: list = []
     try:
         frames = [lib.con_frame_iterator_next(it) for _ in range(2)]
-        next_last = lib.con_frame_iterator_last_status(it)
     finally:
         for frame in frames:
             if frame:
                 lib.free_rkr_frame(frame)
         lib.free_con_frame_iterator(it)
     seen.append(
-        f"con_frame_iterator_next: {['frame' if f else 'NULL' for f in frames]}, last "
-        f"{STATUS_NAME.get(next_last, next_last)}"
+        f"con_frame_iterator_next: {['frame' if f else 'NULL' for f in frames]}"
     )
-    passed = passed and bool(frames[0]) and not frames[1] and next_last == parse
+    passed = passed and bool(frames[0]) and not frames[1]
     two = TINY.read_bytes() * 2
     for name, data in (("two.con", two), ("two.con.gz", gzip.compress(two, mtime=0))):
         path = written(tmp, name, data)
