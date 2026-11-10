@@ -96,6 +96,7 @@ def eon_build_argv() -> list[str]:
     argv += [
         "-I/usr/include/eigen3",
         f"-L{link}",
+        "-Wl,--disable-new-dtags",
         "-Wl,-rpath,$ORIGIN/peers/eon/build-h2h/subprojects/readcon-core",
         "-leonclib",
         "-lreadcon_core",
@@ -431,11 +432,12 @@ def one(arm: str, path: Path) -> dict:
         "RAYON_NUM_THREADS",
     ):
         env[key] = threads
-    if arm == "eon":
-        env["PYTHONPATH"] = str(EON_PY) + os.pathsep + env.get("PYTHONPATH", "")
+    if arm in {"eon", "readcon_eon_api"}:
         env["LD_LIBRARY_PATH"] = (
             str(EON_LIB) + os.pathsep + env.get("LD_LIBRARY_PATH", "")
         )
+    if arm == "eon":
+        env["PYTHONPATH"] = str(EON_PY) + os.pathsep + env.get("PYTHONPATH", "")
     if arm == "eon_py":
         env["EON_PKG"] = str(EON_PKG)
         env["PYTHONPATH"] = str(EON_PKG) + os.pathsep + env.get("PYTHONPATH", "")
