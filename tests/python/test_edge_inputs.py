@@ -28,3 +28,42 @@ def test_a_missing_file_and_a_truncated_buffer_fail(tmp_path):
     with pytest.raises(Exception) as truncated:
         list(readcon.iter_con(str(dest)))
     assert str(truncated.value)
+
+
+def test_bad_metadata_and_an_index_past_the_end():
+    atom = readcon.Atom(symbol="H", x=0.0, y=0.0, z=0.0, atom_id=0, mass=1.0)
+    with pytest.raises(Exception) as not_a_dict:
+        readcon.ConFrame(
+            cell=[1.0, 1.0, 1.0],
+            angles=[90.0, 90.0, 90.0],
+            atoms=[atom],
+            metadata=["nope"],
+        )
+    assert "dict" in str(not_a_dict.value)
+    with pytest.raises(Exception) as bad_key:
+        readcon.ConFrame(
+            cell=[1.0, 1.0, 1.0],
+            angles=[90.0, 90.0, 90.0],
+            atoms=[atom],
+            metadata={1: "x"},
+        )
+    assert "string" in str(bad_key.value)
+    with pytest.raises(Exception) as non_finite:
+        readcon.ConFrame(
+            cell=[1.0, 1.0, 1.0],
+            angles=[90.0, 90.0, 90.0],
+            atoms=[atom],
+            metadata={"energy": float("nan")},
+        )
+    assert "finite" in str(non_finite.value)
+    frame = readcon.ConFrame(
+        cell=[1.0, 1.0, 1.0],
+        angles=[90.0, 90.0, 90.0],
+        atoms=[atom],
+        metadata={"note": "ok", "flag": True, "count": 2},
+    )
+    assert frame[0].symbol == "H"
+    assert frame[-1].symbol == "H"
+    with pytest.raises(IndexError) as past:
+        frame[3]
+    assert "out of range" in str(past.value)
