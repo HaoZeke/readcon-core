@@ -8,7 +8,9 @@ The command is python3 paper/cpc/scripts/bench_readers.py from that tag.
 readcon_tip calls read_positions, because that module provides it.
 readcon_v0173 inserts paper/cpc/build/readcon-0.18.0 and calls read_con.
 readcon_base inserts the baseline build and calls read_con.
-The C++ arm did not load libemt.so, so it has no median.
+libemt.so sha256 begins 5088ec8e06f7.
+The C++ samples are six fresh processes on the same file after that library loaded.
+They were not interleaved with the other arms.
 
 Median seconds, six repeats, type 7.
 
@@ -16,6 +18,7 @@ arm                          seconds
 read_positions               0.191445964
 read_con of the v0.18.0 build 1.619664509
 baseline read_con            2.102760336
+C++ read_all_frames          1.710233674
 ASE get_positions            11.66434817
 eOn loadcons                 15.61954329
 readcon-db                   12.24548414
@@ -29,6 +32,7 @@ A value above 1 is a slower arm.
 
 arm                          time over time
 baseline read_con            1.29827
+C++ read_all_frames          1.05592
 ASE get_positions            7.20167
 eOn loadcons                 9.64329
 read_positions               0.11820

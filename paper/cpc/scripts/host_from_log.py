@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the host table and the ratio macros from reader-exchange.log."""
+"""Write the host table and the ratio macros from reader-exchange-public.log."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-LOG = ROOT / "logs" / "reader-exchange.log"
+LOG = ROOT / "logs" / "reader-exchange-public.log"
 GEN = ROOT / "src" / "figures" / "generated"
 
 LABELS = {
@@ -35,15 +35,12 @@ LABELS = {
 }
 
 CON_ORDER = (
-    "readcon_full_t1",
-    "readcon_full_t8",
-    "readcon_pos_t1",
-    "readcon_pos_t8",
     "readcon_v0173",
+    "readcon_tip",
     "readcon_base",
+    "readcon_eon_api",
     "ase_eon",
     "eon_py",
-    "readcon_eon_api",
     "readcon_db",
     "readcon_first",
     "eon",
@@ -94,7 +91,7 @@ def table(
     found: dict[str, dict[str, str]], order: tuple[str, ...], caption: str, label: str
 ) -> str:
     lines = [
-        "% Written by paper/cpc/scripts/host_from_log.py from logs/reader-exchange.log.",
+        "% Written by paper/cpc/scripts/host_from_log.py from logs/reader-exchange-public.log.",
         "\\begin{table}[tbp]",
         "\\centering",
         "\\footnotesize",
@@ -202,39 +199,28 @@ def main() -> int:
             return f"{version}, tag {tag}"
         return f"{version}, untagged"
 
-    LABELS["readcon_full_t1"] = (
-        f"{measured_version} \\texttt{{read\\_con}}, 1 thread"
-    )
-    LABELS["readcon_full_t8"] = (
-        f"{measured_version} \\texttt{{read\\_con}}, 8 threads"
-    )
-    LABELS["readcon_pos_t1"] = (
-        f"{measured_version} \\texttt{{read\\_positions}}, 1 thread"
-    )
-    LABELS["readcon_pos_t8"] = (
-        f"{measured_version} \\texttt{{read\\_positions}}, 8 threads"
-    )
     LABELS["readcon_v0173"] = (
-        f"{arm_label(release_commit, release_version)} \\texttt{{read\\_con}}, 1 thread"
+        f"{measured_version} \\texttt{{read\\_con}}"
+    )
+    LABELS["readcon_tip"] = (
+        f"{measured_version} \\texttt{{read\\_positions}}"
     )
     LABELS["readcon_base"] = (
-        f"{arm_label(baseline, baseline_version)} \\texttt{{read\\_con}}, 1 thread, baseline"
+        f"{arm_label(baseline, baseline_version)} \\texttt{{read\\_con}}, baseline"
     )
-    full = arm_s(found, "readcon_full_t1")
-    full8 = arm_s(found, "readcon_full_t8")
-    pos1 = arm_s(found, "readcon_pos_t1")
-    pos8 = arm_s(found, "readcon_pos_t8")
-    base = arm_s(found, "readcon_v0173")
+    full = arm_s(found, "readcon_v0173")
+    pos1 = arm_s(found, "readcon_tip")
+    base = arm_s(found, "readcon_base")
+    api = arm_s(found, "readcon_eon_api")
     h5 = arm_s(found, "h5py")
     conbin = arm_s(found, "conbin")
     ase = arm_s(found, "ase_eon")
     eon = arm_s(found, "eon_py")
     db = arm_s(found, "readcon_db")
-    ghz = float(field(text, "cpu_mhz")) / 1000
     GEN.mkdir(parents=True, exist_ok=True)
     macros = "\n".join(
         [
-            "% Written by paper/cpc/scripts/host_from_log.py from logs/reader-exchange.log.",
+            "% Written by paper/cpc/scripts/host_from_log.py from logs/reader-exchange-public.log.",
             f"\\newcommand{{\\rcHostCommit}}{{\\seqsplit{{{measured}}}}}",
             f"\\newcommand{{\\rcReleaseCommit}}{{\\seqsplit{{{release_commit}}}}}",
             f"\\newcommand{{\\rcReleaseVersion}}{{{release_version}}}",
@@ -242,41 +228,27 @@ def main() -> int:
             f"\\newcommand{{\\rcBaselineCommit}}{{\\seqsplit{{{baseline}}}}}",
             f"\\newcommand{{\\rcBaselineVersion}}{{{baseline_version}}}",
             f"\\newcommand{{\\rcFullOneMedian}}{{{full:.4g}}}",
-            f"\\newcommand{{\\rcFullEightMedian}}{{{full8:.4g}}}",
             f"\\newcommand{{\\rcPosOneMedian}}{{{pos1:.4g}}}",
-            f"\\newcommand{{\\rcPosEightMedian}}{{{pos8:.4g}}}",
             f"\\newcommand{{\\rcTipMedian}}{{{full:.4g}}}",
             f"\\newcommand{{\\rcReleaseMedian}}{{{base:.4g}}}",
             f"\\newcommand{{\\rcTipOverRelease}}{{{base / full:.3g}}}",
-            f"\\newcommand{{\\rcFullThreads}}{{{full / full8:.3g}}}",
             f"\\newcommand{{\\rcHdfMedian}}{{{h5:.4g}}}",
             f"\\newcommand{{\\rcConbinMedian}}{{{conbin:.4g}}}",
-            f"\\newcommand{{\\rcTipMib}}{{{arm_mib(found, 'readcon_full_t1'):.4g}}}",
+            f"\\newcommand{{\\rcTipMib}}{{{arm_mib(found, 'readcon_v0173'):.4g}}}",
             f"\\newcommand{{\\rcAseMedian}}{{{ase:.4g}}}",
             f"\\newcommand{{\\rcTipOverAse}}{{{ase / full:.3g}}}",
-            f"\\newcommand{{\\rcPosOverAse}}{{{ase / pos1:.3g}}}",
             f"\\newcommand{{\\rcEonMedian}}{{{eon:.4g}}}",
             f"\\newcommand{{\\rcTipOverEon}}{{{eon / full:.3g}}}",
-            f"\\newcommand{{\\rcPosOverEon}}{{{eon / pos1:.3g}}}",
-            f"\\newcommand{{\\rcApiMedian}}{{{arm_s(found, 'readcon_eon_api'):.4g}}}",
+            f"\\newcommand{{\\rcApiMedian}}{{{api:.4g}}}",
+            f"\\newcommand{{\\rcApiOverRead}}{{{api / full:.3g}}}",
             f"\\newcommand{{\\rcDbMedian}}{{{db:.4g}}}",
             f"\\newcommand{{\\rcAseMib}}{{{arm_mib(found, 'ase_eon'):.4g}}}",
             f"\\newcommand{{\\rcChemMib}}{{{arm_mib(found, 'chemfiles'):.4g}}}",
             f"\\newcommand{{\\rcOvitoMib}}{{{arm_mib(found, 'ovito'):.4g}}}",
             f"\\newcommand{{\\rcFirstMedian}}{{{arm_s(found, 'readcon_first'):.4g}}}",
             f"\\newcommand{{\\rcMatterMedian}}{{{arm_s(found, 'eon'):.4g}}}",
-            f"\\newcommand{{\\rcHostFamily}}{{{field(text, 'cpu_family')}}}",
-            f"\\newcommand{{\\rcHostModel}}{{{field(text, 'cpu_model_id')}}}",
             f"\\newcommand{{\\rcHostCpu}}{{{field(text, 'cpu_model')}}}",
-            f"\\newcommand{{\\rcHostGhz}}{{{ghz:.1f}}}",
             f"\\newcommand{{\\rcHostCores}}{{{field(text, 'nproc')}}}",
-            f"\\newcommand{{\\rcHostMem}}{{{int(round(int(field(text, 'mem_kib')) / 1024 / 1024))}}}",
-            f"\\newcommand{{\\rcHostKernel}}{{{field(text, 'kernel')}}}",
-            f"\\newcommand{{\\rcHostOs}}{{{field(text, 'os')}}}",
-            f"\\newcommand{{\\rcHostRustc}}{{{field(text, 'rustc')}}}",
-            f"\\newcommand{{\\rcHostCxx}}{{{cxx_macro(field(text, 'cxx'))}}}",
-            f"\\newcommand{{\\rcHostFs}}{{{field(text, 'filesystem')}}}",
-            f"\\newcommand{{\\rcHostCache}}{{{field(text, 'page_cache')}}}",
             "",
         ]
     )

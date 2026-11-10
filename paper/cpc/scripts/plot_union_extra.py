@@ -159,7 +159,7 @@ def _type7(samples: list[float]) -> tuple[float, float, float]:
     return med, q1, q3
 
 
-READER_LOG = ROOT / "logs" / "reader-exchange.log"
+READER_LOG = ROOT / "logs" / "reader-exchange-public.log"
 
 
 def _reader_samples() -> dict[str, list[float]]:
@@ -175,7 +175,7 @@ def _reader_samples() -> dict[str, list[float]]:
         if seconds in (None, "", "None"):
             continue
         arms.setdefault(fields["arm"], []).append(float(seconds))
-    for name in ("readcon_full_t1", "readcon_pos_t1"):
+    for name in ("readcon_v0173",):
         if name not in arms or len(arms[name]) < 6:
             raise SystemExit(f"The {name} row needs at least six samples.")
     return arms
@@ -193,24 +193,24 @@ def _summary_rows() -> list[dict[str, str]]:
 # Full-frame CON readers. The ratio uses the 1-thread read_con arm.
 # First-frame rows and the database ingest stay out of these figures.
 CON_ARMS = (
-    "readcon_full_t1",
-    "readcon_full_t8",
     "readcon_v0173",
+    "readcon_tip",
     "readcon_base",
+    "readcon_eon_api",
     "ase_eon",
     "eon_py",
 )
 CON_LABELS = {
-    "readcon_full_t1": "read_con, 1 thread",
-    "readcon_full_t8": "read_con, 8 threads",
-    "readcon_v0173": "0.17.3 read_con, 1 thread",
-    "readcon_base": "baseline read_con, 1 thread",
-    "ase_eon": "ASE get_positions, 1 thread",
-    "eon_py": "eOn loadcons, 1 thread",
+    "readcon_v0173": "v0.18.0 read_con",
+    "readcon_tip": "read_positions",
+    "readcon_base": "baseline read_con",
+    "readcon_eon_api": "C++ read_all_frames",
+    "ase_eon": "ASE get_positions",
+    "eon_py": "eOn loadcons",
 }
 FULL_RATIO = (
-    "readcon_v0173",
     "readcon_base",
+    "readcon_eon_api",
     "ase_eon",
     "eon_py",
 )
@@ -264,7 +264,7 @@ def ratios(theme) -> None:
     fig, ax = plt.subplots(figsize=(7.2, 3.2))
     _ratio_panel(
         ax,
-        arms["readcon_full_t1"],
+        arms["readcon_v0173"],
         arms,
         [name for name in FULL_RATIO if name in arms],
         CON_LABELS,

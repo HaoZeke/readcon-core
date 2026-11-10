@@ -1172,9 +1172,9 @@ six times, one fresh process per sample.
 
 \begin{figure*}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/timing.pdf} \caption{Wall time of the full-frame CON readers on one 100000-frame file, six
 interleaved repeats.
-The bar is the type 7 median.
-The medians in the text are Table~\ref{tab:host}, from
-\texttt{paper/cpc/logs/reader-exchange-public.log}.}
+The bar is the type 7 median of that arm in
+\texttt{paper/cpc/logs/reader-exchange-public.log}.
+Table~\ref{tab:host} uses the same log.}
 \label{fig:timing} \end{figure*}
 
 \begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/ratios.pdf} \caption{Full-frame readers at 1 thread, each divided by \texttt{read\_con} at 1
@@ -1224,7 +1224,9 @@ It takes \rcPosOneMedian~s.
 That is an absolute time.
 It is not a ratio against ASE or \texttt{loadcons}, which build a frame
 object per record.
-The C++ arm did not load \texttt{libemt.so}, so it has no time in the log.
+The C++ arm calls \texttt{read\_all\_frames} and then \texttt{con2matter} on every frame.
+It takes \rcApiMedian~s, which is \rcApiOverRead{} times the \texttt{read\_con} time.
+Its \texttt{libemt.so} digest begins \texttt{5088ec8e06f7}.
 readcon-db ingests the same file in \rcDbMedian~s.
 That row writes a corpus and then reads the corpus, so it is not a
 speedup against a read of the file.

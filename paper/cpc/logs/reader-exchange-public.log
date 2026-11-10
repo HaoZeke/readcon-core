@@ -35,7 +35,7 @@ sample arm=readcon_db rep=0 seconds=11.887450847003493 mib=397.6328125 matched=1
 sample arm=ase_eon rep=0 seconds=11.193046628992306 mib=383.91015625 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon rep=0 seconds=0.3363793269963935 mib=263.015625 matched=1 got=1 requested=1 exit=0 error=
 sample arm=eon_py rep=0 seconds=15.451466157988762 mib=2716.05859375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=0 seconds=None mib=0.0 matched=0 got=0 requested=100000 exit=0 error=paper/cpc/bench/work/eon_allframes: error while loading shared libraries: libemt.so: cannot open shared object file: No such file or directory 
+sample arm=readcon_eon_api rep=0 seconds=1.504000686 mib=1058.73046875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=conbin rep=0 seconds=0.008547880002879538 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=numpy rep=0 seconds=1.275795392008149 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=chemfiles rep=0 seconds=1.5107583770004567 mib=166.31640625 matched=100000 got=100000 requested=100000 exit=0 error=
@@ -52,7 +52,7 @@ sample arm=ovito rep=1 seconds=4.914596992995939 mib=171.74609375 matched=100000
 sample arm=chemfiles rep=1 seconds=1.5671698530059075 mib=166.3203125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=numpy rep=1 seconds=1.3167118300043512 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=conbin rep=1 seconds=0.01311706900014542 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=1 seconds=None mib=0.0 matched=0 got=0 requested=100000 exit=0 error=paper/cpc/bench/work/eon_allframes: error while loading shared libraries: libemt.so: cannot open shared object file: No such file or directory 
+sample arm=readcon_eon_api rep=1 seconds=1.893831982 mib=1058.78125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon_py rep=1 seconds=15.741233893000754 mib=2692.0390625 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon rep=1 seconds=0.35779635699873324 mib=263.01953125 matched=1 got=1 requested=1 exit=0 error=
 sample arm=ase_eon rep=1 seconds=11.552883031996316 mib=383.91015625 matched=100000 got=100000 requested=100000 exit=0 error=
@@ -69,7 +69,7 @@ sample arm=readcon_db rep=2 seconds=12.305928809000761 mib=398.14453125 matched=
 sample arm=ase_eon rep=2 seconds=11.544583695998881 mib=383.89453125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon rep=2 seconds=0.3288838440057589 mib=263.00390625 matched=1 got=1 requested=1 exit=0 error=
 sample arm=eon_py rep=2 seconds=15.497852683998644 mib=2692.0390625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=2 seconds=None mib=0.0 matched=0 got=0 requested=100000 exit=0 error=paper/cpc/bench/work/eon_allframes: error while loading shared libraries: libemt.so: cannot open shared object file: No such file or directory 
+sample arm=readcon_eon_api rep=2 seconds=1.845301069 mib=1058.73828125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=conbin rep=2 seconds=0.006506687990622595 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=numpy rep=2 seconds=1.2989800500072306 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=chemfiles rep=2 seconds=1.5184814089880092 mib=166.3046875 matched=100000 got=100000 requested=100000 exit=0 error=
@@ -86,7 +86,7 @@ sample arm=ovito rep=3 seconds=5.662285853002686 mib=171.7421875 matched=100000 
 sample arm=chemfiles rep=3 seconds=1.582854035004857 mib=166.7421875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=numpy rep=3 seconds=1.341022972992505 mib=390.95703125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=conbin rep=3 seconds=0.006050317999324761 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=3 seconds=None mib=0.0 matched=0 got=0 requested=100000 exit=0 error=paper/cpc/bench/work/eon_allframes: error while loading shared libraries: libemt.so: cannot open shared object file: No such file or directory 
+sample arm=readcon_eon_api rep=3 seconds=1.575166279 mib=1058.78125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon_py rep=3 seconds=16.10944191800081 mib=2692.046875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon rep=3 seconds=0.3634767000039574 mib=263.00390625 matched=1 got=1 requested=1 exit=0 error=
 sample arm=ase_eon rep=3 seconds=11.895705072005512 mib=383.8671875 matched=100000 got=100000 requested=100000 exit=0 error=
@@ -103,7 +103,7 @@ sample arm=readcon_db rep=4 seconds=12.185039470001357 mib=398.2734375 matched=1
 sample arm=ase_eon rep=4 seconds=11.775813302010647 mib=383.8828125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon rep=4 seconds=0.3290729550062679 mib=263.00390625 matched=1 got=1 requested=1 exit=0 error=
 sample arm=eon_py rep=4 seconds=15.165454551999574 mib=2691.95703125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=4 seconds=None mib=0.0 matched=0 got=0 requested=100000 exit=0 error=paper/cpc/bench/work/eon_allframes: error while loading shared libraries: libemt.so: cannot open shared object file: No such file or directory 
+sample arm=readcon_eon_api rep=4 seconds=1.990851079 mib=1058.78125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=conbin rep=4 seconds=0.01418915500107687 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=numpy rep=4 seconds=1.3198539620061638 mib=390.98828125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=chemfiles rep=4 seconds=1.5772662719973596 mib=166.31640625 matched=100000 got=100000 requested=100000 exit=0 error=
@@ -120,7 +120,7 @@ sample arm=ovito rep=5 seconds=5.289351824001642 mib=171.62109375 matched=100000
 sample arm=chemfiles rep=5 seconds=1.5737693499977468 mib=165.76171875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=numpy rep=5 seconds=1.351455158990575 mib=390.98828125 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=conbin rep=5 seconds=0.01023908999923151 mib=146.86328125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=5 seconds=None mib=0.0 matched=0 got=0 requested=100000 exit=0 error=paper/cpc/bench/work/eon_allframes: error while loading shared libraries: libemt.so: cannot open shared object file: No such file or directory 
+sample arm=readcon_eon_api rep=5 seconds=1.460437243 mib=1058.79296875 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon_py rep=5 seconds=16.484095063991845 mib=2691.93359375 matched=100000 got=100000 requested=100000 exit=0 error=
 sample arm=eon rep=5 seconds=0.3596992829989176 mib=263.03125 matched=1 got=1 requested=1 exit=0 error=
 sample arm=ase_eon rep=5 seconds=12.123917438002536 mib=383.8203125 matched=100000 got=100000 requested=100000 exit=0 error=
@@ -137,7 +137,7 @@ summary arm=readcon_db scope=all_frames n_rep=6 median_s=1.224548414e+01 iqr_s=3
 summary arm=ase_eon scope=all_frames n_rep=6 median_s=1.166434817e+01 iqr_s=3.190735995e-01 mib_median=383.888672 mib_iqr=0.035156 requested=100000 matched=100000 failed=0 exit=0
 summary arm=eon scope=first_frame n_rep=6 median_s=3.470878420e-01 iqr_s=2.832400350e-02 mib_median=263.009766 mib_iqr=0.014648 requested=1 matched=1 failed=0 exit=0
 summary arm=eon_py scope=all_frames n_rep=6 median_s=1.561954329e+01 iqr_s=5.543271223e-01 mib_median=2692.039062 mib_iqr=0.067383 requested=100000 matched=100000 failed=0 exit=0
-summary arm=readcon_eon_api error=paper/cpc/bench/work/eon_allframes: error while loading shared libraries: libemt.so: cannot open shared object file: No such file or directory  exit=1
+summary arm=readcon_eon_api scope=readcon_through_eon n_rep=6 median_s=1.710233674e+00 iqr_s=3.599071695e-01 mib_median=1058.781250 mib_iqr=0.032227 requested=100000 matched=100000 failed=0 exit=0
 summary arm=conbin scope=all_frames n_rep=6 median_s=9.393485001e-03 iqr_s=5.380588256e-03 mib_median=146.800781 mib_iqr=0.000000 requested=100000 matched=100000 failed=0 exit=0
 summary arm=numpy scope=all_frames n_rep=6 median_s=1.318282896e+00 iqr_s=3.231772524e-02 mib_median=390.980469 mib_iqr=0.005859 requested=100000 matched=100000 failed=0 exit=0
 summary arm=chemfiles scope=all_frames n_rep=6 median_s=1.570469602e+00 iqr_s=4.573852150e-02 mib_median=166.316406 mib_iqr=0.011719 requested=100000 matched=100000 failed=0 exit=0
@@ -146,4 +146,6 @@ summary arm=ase_extxyz scope=all_frames n_rep=6 median_s=8.267508049e+00 iqr_s=2
 summary arm=pymatgen scope=all_frames n_rep=6 median_s=2.660830994e+01 iqr_s=1.435286588e+00 mib_median=2118.921875 mib_iqr=0.051758 requested=100000 matched=100000 failed=0 exit=0
 summary arm=h5py scope=all_frames n_rep=6 median_s=6.484206265e-01 iqr_s=5.721791625e-02 mib_median=758.648438 mib_iqr=0.046875 requested=100000 matched=100000 failed=0 exit=0
 summary arm=mdanalysis scope=all_frames n_rep=6 median_s=3.773420419e+01 iqr_s=2.360756119e+00 mib_median=139.316406 mib_iqr=0.054688 requested=100000 matched=100000 failed=0 exit=0
+libemt_sha256 5088ec8e06f71c258b3366961b0c4a47bf48a31968096f812cca615a9fb066b5
+readcon_eon_api_note six fresh processes on the same frames.con after libemt.so loaded; not interleaved with the other arms
 exit_code 0
