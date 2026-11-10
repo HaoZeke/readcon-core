@@ -244,6 +244,8 @@ mod tests {
         assert_eq!(mine.start, block_range(10, comm.size(), comm.rank()).start);
         let blob = comm.bcast_bytes(0, b"frame");
         assert_eq!(blob, b"frame");
+        let empty = comm.bcast_bytes(0, b"");
+        assert!(empty.is_empty());
         let mut size = -1i32;
         let mut rank = -1i32;
         let raw = world.as_raw();
