@@ -719,12 +719,24 @@ mod tests {
                 .count(),
             2
         );
+        let mut hydrogen = false;
+        let mut heavier = false;
+        for mass in &con.header.masses_per_type {
+            if *mass > 1.0 && *mass < 2.0 {
+                hydrogen = true;
+            }
+            if *mass >= 2.0 {
+                heavier = true;
+            }
+        }
         assert!(
-            con.header
-                .masses_per_type
-                .iter()
-                .any(|m| *m > 1.0 && *m < 2.0),
+            hydrogen,
             "expected a hydrogen mass, got {:?}",
+            con.header.masses_per_type
+        );
+        assert!(
+            heavier,
+            "expected a heavier mass, got {:?}",
             con.header.masses_per_type
         );
     }
@@ -1340,6 +1352,8 @@ END
         frame.add_atom(&named, [0.0, 0.0, 0.0], Some([0.1, 0.0, 0.0]));
         frame.add_atom(&other, [1.0, 0.0, 0.0], None);
         frame.add_atom(&Atom::new("O"), [0.0, 0.0, 1.0], None);
+        frame.add_atom(&Atom::new("O"), [1.0, 0.0, 0.0], None);
+        frame.add_atom(&Atom::new("O"), [0.0, 1.0, 0.0], None);
         frame.add_atom(&Atom::new("O"), [0.0, 0.0, 0.0], None);
         frame.set_cell(&UnitCell::new([6.0, 6.0, 6.0]));
         frame.add_bond(0, 1);
@@ -1370,5 +1384,21 @@ END
                 && atom.z.abs() < 1e-6
         });
         assert!(origin);
+        assert!(con.atom_data.iter().any(|atom| {
+            atom.symbol.as_ref() == "O" && atom.x.abs() > 0.5 && atom.y.abs() < 1e-6
+        }));
+    }
+
+    #[test]
+    fn a_residue_atom_outside_the_frame_is_dropped() {
+        let mut frame = Frame::new();
+        frame.add_atom(&Atom::new("H"), [0.0, 0.0, 0.0], None);
+        let mut residue = chemfiles::Residue::new("WAT");
+        residue.add_atom(99);
+        frame.add_residue(&residue).expect("residue");
+        let con = con_frame_from_chemfiles(&frame).expect("convert");
+        assert_eq!(con.atom_data.len(), 1);
+        assert_eq!(con.atom_data[0].symbol.as_ref(), "H");
+        assert!(con.header.metadata.get(CHEMFILES_RESIDUES_KEY).is_none());
     }
 }
