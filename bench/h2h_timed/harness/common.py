@@ -187,7 +187,7 @@ def timed_wheel_record() -> dict[str, dict[str, str]]:
     import importlib.metadata as metadata
 
     wanted = ("numpy", "ase", "chemfiles", "ovito", "MDAnalysis", "pymatgen")
-    lock = (REPO / "requirements.lock").read_text(encoding="utf-8")
+    lock = (REPO / "bench" / "requirements.lock").read_text(encoding="utf-8")
     found: dict[str, dict[str, str]] = {}
     lines = lock.splitlines()
     index = 0
