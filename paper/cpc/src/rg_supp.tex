@@ -324,6 +324,8 @@ The Python rewrite of that block stays at version 3.0 and keeps its fs label, so
 \input{figures/generated/versionsafety_table}
 
 \FloatBarrier \section{Survey frame, grading and drift files}\label{sec:supp-failure} The survey frame of Table~\ref{tab:survey} is a Pt(100) slab of \(2\times2\times2\) atoms with 6\hspace*{.2em}\AA{} of vacuum and one Pt adatom 1.8\hspace*{.2em}\AA{} above the hollow site; Listing~\ref{lst:frame} prints it.
+In this supplement, \(1\,\text{\AA}=10^{-10}\,\mathrm{m}\) and \(1\,\mathrm{eV}=1.602176634\times10^{-19}\,\mathrm{J}\).
+A millielectronvolt is \(10^{-3}\) of that electronvolt, and a compound such as \(\mathrm{eV}/\text{\AA}\) uses the same two equivalents.
 Every coordinate carries a uniform offset of up to \(10^{-3}\,\text{\AA}\) from a fixed seed, so writing it back takes all seventeen significant digits.
 The bottom four atoms are held in every component, and the adatom is held in \(z\).
 The identifiers are 17, 3, 11, 5, 23, 2, 13, 7 and 41 in row order.
@@ -470,7 +472,9 @@ Nor does it list \texttt{data/\allowbreak spec/\allowbreak clause\_coverage.json
 
 \input{figures/generated/version_map}
 
-The git bundle \path{readcon-core.bundle} of the supplementary material is a complete history, so \texttt{git clone readcon-core.bundle} needs no other commit.
+The git bundle \path{readcon-core.bundle} is the history supplied with this submission.
+Listing~\ref{lst:testrun} records a checkout that is not an ancestor of tag v0.18.0.
+Build the release commit named above.
 Its HEAD contains \path{paper/cpc}.
 \path{paper-cpc.tar.gz} is that directory packed beside the bundle, with the scripts, the records and the TeX sources of both documents.
 Listing~\ref{lst:repro} clones that commit from the bundle without a network, unpacks \path{paper/cpc} into the checkout, installs the Python environment that ran the scripts, and rebuilds both documents.

@@ -72,13 +72,13 @@ of readcon-core. No tag names this commit. The latest release tag is v0.18.0.
 **Title:** readcon-core: a versioned geometry checkpoint for resumed saddle searches
 
 **Authors:** Rohit Goswami (corresponding), TurtleTech ehf., Fornhaga 24, 107 Reykjavík, Iceland. Email rgoswami@ieee.org. ORCID 0000-0002-2393-8056.
-The author enters the phone number in EM.
+TODO(Rohit): telephone number. Do not invent one.
 
-**Abstract:** plain text, 697 characters, 124 words (`check_manuscript.py` counts
-125 in the TeX source, limit 250). Macros expanded: `\corpusFiles` = 165, `\dlpackAtoms` = 32768, `\dlpackRatio` = 0.1236, `\eFivePrefactorRatioFree` = 36.8.
+**Abstract:** plain text, 766 characters, 134 words (`check_manuscript.py` counts
+135 in the TeX source, limit 250). Macros expanded: `\corpusFiles` = 165, `\dlpackAtoms` = 32768, `\dlpackRatio` = 0.1236, `\eFivePrefactorRatioFree` = 36.8.
 
 ```
-CON is a geometry file format used in many codes. readcon-core formalizes that text as CON 3.1 and improves the fields a restart reads back. A JSON line states the version and the units. Each coordinate row carries a mask of fixed components and an atom identifier, and a reader of a known major accepts any later minor. Two corpora of 165 files fix the verdict of a conforming reader, and every Python and C read path returns that verdict. On a platinum slab, a climbing-image band resumed from CON 3.1 repeats the uninterrupted band, and a lost hold changes the prefactor by a factor 37. A borrowed DLPack view of 32768 positions costs 0.1236 times an explicit copy, the median of eight repeats.
+CON is a geometry file format used in many codes. readcon-core formalizes that text as CON 3.1 and improves the fields a restart reads back. A JSON line states the version and the units. Each coordinate row carries a mask of fixed components and an atom identifier, and a reader of a known major accepts any later minor. Two corpora of 165 files fix the verdict of a conforming reader, and every Python and C read path returns that verdict. On a platinum slab, a climbing-image band resumed from CON 3.1 repeats the uninterrupted band, and a lost hold changes the prefactor by a factor 37. DLPack is the in-memory tensor structure that array libraries share. A borrowed DLPack view of 32768 positions costs 0.1236 times an explicit copy, the median of eight repeats.
 ```
 
 **Keywords:** geometry checkpoint; file format specification; saddle search; conformance corpus; nudged elastic band
@@ -92,7 +92,7 @@ CON is a geometry file format used in many codes. readcon-core formalizes that t
 
 **Cover letter:** upload the author's cover letter.
 
-**Suggested reviewers:** the author enters name, institution, email and reason for each.
+**Suggested reviewers:** TODO(Rohit): name, institution, email and reason for each. Do not invent reviewers.
 
 **Opposed reviewers:** none.
 
@@ -108,8 +108,8 @@ Upload the `.docx` the tool produces.
 
 **Data statement:** "The software is readcon-core 0.18.0, release commit d5e77f997438557c72c3b3e360d446310f85d6b7, which tag v0.18.0 names. The library digest of that release begins 249fd2ffe10e. The concept record of readcon-core is https://doi.org/10.5281/zenodo.18753567. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: https://doi.org/10.5281/zenodo.18753567
 
-**Preprint:** the arXiv identifier of the preprint. Decline the SSRN option, since the preprint is on arXiv.
+**Preprint:** TODO(Rohit): arXiv identifier. Do not invent one.
 
-**Open access or subscription:** subscription (non-open-access).
+**Open access or subscription:** TODO(Rohit): open-access choice. Do not guess.
 
 **Submission declaration:** not published elsewhere except as a preprint, not under consideration elsewhere.

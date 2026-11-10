@@ -123,6 +123,7 @@ reader, and every Python and C read path returns that verdict.
 On a platinum slab, a climbing-image band resumed from CON 3.1 repeats
 the uninterrupted band, and a lost hold changes the prefactor by a
 factor \sigfig{2}{\eFivePrefactorRatioFree}.
+DLPack is the in-memory tensor structure that array libraries share.
 A borrowed DLPack view of \dlpackAtoms{} positions costs \dlpackRatio{}
 times an explicit copy, the median of eight repeats.
 \end{abstract}
@@ -235,10 +236,22 @@ unit of eOn whatever time unit the file names.
 In Python, \texttt{readcon.read\_con(path)} returns the frames of a file
 (Listing~\ref{lst:py}).
 
-\textit{References:} eOn
-\cite{chillEonSoftwareLong2014,rohitgoswamiTheochemuieonV3602026};
-readcon-core releases
-\cite{goswamiReadconcoreConConvel2026,goswamiReadconcore01472026}.
+\textit{References:}
+\begin{thebibliography}{9}
+\bibitem{ps-eon} S.~T. Chill, M. Welborn, R. Terrell, L. Zhang, J.-C. Berthet, A. Pedersen, H. J\'onsson, G. Henkelman,
+EON: software for long time simulations of atomic scale systems,
+Modell. Simul. Mater. Sci. Eng. 22 (5) (2014) 055002.
+\url{https://doi.org/10.1088/0965-0393/22/5/055002}.
+\bibitem{ps-eon-zenodo} R. Goswami, S. Chill, R. Terrell, G. Henkelman, M. Welborn, L. Zhang, A. Pedersen, E. Edelmann, S.~H. Jung, S.~A. Ghasemi, T. Dijkhuis, et al.,
+TheochemUI/eOn: v3.6.0, Zenodo, software, version 3.6.0 (2026).
+\url{https://doi.org/10.5281/zenodo.23166734}.
+\bibitem{ps-readcon} R. Goswami, readcon-core: a CON/convel reader/writer with FFI bindings, Zenodo, software (2026).
+Concept record \url{https://doi.org/10.5281/zenodo.18753567}.
+The record's version field reads 0.18.0.
+% TODO(Rohit): replace ps-readcon with the version DOI when it is minted.
+% Do not cite 0.18.1 as a release while that tag is held.
+% Freeze tag v0.14.9 on this concept DOI is not the release this paper describes.
+\end{thebibliography}
 \end{small}
 
 \section{Introduction}\label{sec:introduction} Rare-event methods turn a potential energy surface into rates.
@@ -281,6 +294,10 @@ Dynamical steps read velocities, and the natural time unit of eOn is
 \((\mathrm{amu}\,\text{\AA}^2/\mathrm{eV})^{1/2}=\wkTimeFs\,\mathrm{fs}\),
 so a reader that takes the same numbers as \(\text{\AA}/\mathrm{fs}\)
 scales the kinetic energy by \(\velFactorSq\).
+Throughout this article, \(1\,\text{\AA}=10^{-10}\,\mathrm{m}\) and
+\(1\,\mathrm{eV}=1.602176634\times10^{-19}\,\mathrm{J}\).
+A millielectronvolt is \(10^{-3}\) of that electronvolt, and a compound
+such as \(\mathrm{eV}/\text{\AA}\) uses the same two equivalents.
 A restart that repeats the interrupted run to roundoff reads back
 binary64 coordinates
 \cite{ieeecomputersocietyIeeeStandardFloatingpoint2019}.
@@ -1411,8 +1428,9 @@ described here is readcon-core~\readconversion{}, the \readconcommitrole{}
 That commit is an ancestor of the public main branch
 \begin{center} \texttt{df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff}
  \end{center}
-\path{readcon-core.bundle} is a complete bundle of the paper history.
-\texttt{git clone readcon-core.bundle} needs no other commit.
+\path{readcon-core.bundle} is the git history supplied with this submission.
+The release to build is the commit above.
+% TODO(Rohit): mint the version DOI. Do not cite 0.18.1 as a release while that tag is held.
 The library files of the release have digest \texttt{\readcondigest}.
 \readcontagstate{} The reader exchange in
 \path{paper/cpc/logs/reader-exchange-public.log} was measured by the
@@ -1497,6 +1515,7 @@ Chatbots were used to refine certain turns of phrase and to speed
 through some implementation details; all the work is the author's own.
 The author reviewed and edited all tool output as needed and takes full
 responsibility for the content of the published article.
+% TODO(Rohit): name the tool, in the form ``the author used NAME in order to REASON''. Do not guess a name.
 
 \FloatBarrier \raggedright
 
