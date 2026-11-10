@@ -140,3 +140,40 @@ rule reader_figures:
         "src/figures/generated/memory.pdf",
     shell:
         "cd scripts && python3 -c 'import plot_union_extra as u; u.reader_figures()'"
+
+rule format_tables:
+    output:
+        "src/figures/generated/host_table.tex",
+        "src/figures/generated/version_map.tex",
+        "src/figures/generated/test_run.tex",
+        "src/figures/generated/survey_listing.tex",
+    shell:
+        "python3 scripts/regen_paper.py"
+
+rule numbers_tsv:
+    input:
+        "logs/reader-exchange.log",
+    output:
+        "logs/NUMBERS.tsv",
+    shell:
+        "python3 scripts/numbers_from_log.py logs/reader-exchange.log logs/NUMBERS.tsv"
+
+rule records_archive:
+    output:
+        "records.tar.xz",
+        "records.sha256",
+    shell:
+        "python3 scripts/pack_records.py --write"
+
+rule variant_pdfs:
+    output:
+        "src/rg_main.pdf",
+        "src/rg_supp.pdf",
+    shell:
+        "bash scripts/build_tex.sh"
+
+rule cloud_run_bands:
+    output:
+        "data/cloud-runs-2/05/bands/uninterrupted.npz",
+    shell:
+        "python3 data/cloud-runs-2/cloud-run/run_05.py"
