@@ -199,7 +199,8 @@ pub fn parse_line_of_range_f64_stack(
             found: found + 1,
         });
     }
-    if found < min || found > max {
+    // `found` increments only while `found < max`, so it cannot exceed `max`.
+    if found < min {
         return Err(ParseError::InvalidVectorLength {
             expected: max,
             found,
