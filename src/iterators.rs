@@ -4169,6 +4169,12 @@ mod one_thread_and_numa {
         assert_eq!(row.2, 4);
         let mut extra = super::MemchrLines::new("1 2 3 0 4 leftover\n");
         assert!(extra.next_coord_row(2, 0).is_err());
+        let mut spaced = super::MemchrLines::new("1.0 2.0 3.0 0 4   \n");
+        assert!(spaced.next_coord_row(2, 0).is_ok());
+        let mut blank = super::MemchrLines::new("Cu\n");
+        assert!(!crate::parser::LineStream::blank_line_opens_section(&mut blank));
+        blank.peek_line();
+        assert!(!blank.blank_line_opens_section());
 
         let mut indexed = super::ConFrameIterator::from_bytes(text.as_bytes());
         indexed.lines.newlines = Some(super::newline_positions(text.as_bytes(), 1));
@@ -4194,9 +4200,10 @@ mod one_thread_and_numa {
             )
             .is_err()
         );
-        let doubled = format!("{text}\n{text}");
-        let bytes = doubled.as_bytes();
-        assert!(super::parse_byte_span(bytes, 0, bytes.len()).is_err());
+        let multi = std::fs::read("resources/test/tiny_multi_cuh2.con").unwrap();
+        let span_err = super::parse_byte_span(&multi, 0, multi.len()).unwrap_err();
+        assert!(span_err.to_string().contains("more than one frame"));
+        let bytes = multi.as_slice();
         let parse = |start: usize, end: usize| super::parse_byte_span(bytes, start, end);
         let _ = parse(0, bytes.len());
         let parsed = super::parse_into_slots_timed(bytes, bytes.len(), &[0], 2, parse);

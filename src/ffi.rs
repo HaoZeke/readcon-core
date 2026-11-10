@@ -8125,6 +8125,27 @@ mod tests {
             unsafe { rkr_pack_rcso(frame, tiny.as_mut_ptr(), tiny.len(), &mut need) },
             RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
         );
+        let mut packed = vec![0u8; need];
+        assert_eq!(
+            unsafe { rkr_pack_rcso(frame, packed.as_mut_ptr(), packed.len(), &mut need) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let mut dest = [0.0f64; 12];
+        assert_eq!(
+            unsafe {
+                rkr_unpack_rcso_positions(packed.as_ptr(), packed.len(), dest.as_mut_ptr(), 99)
+            },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_forces(packed.as_ptr(), packed.len(), dest.as_mut_ptr(), 1) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        let mut nat = 0u32;
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_natoms(std::ptr::null(), 0, &mut nat) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
         let mut natoms = 0u32;
         assert_eq!(
             unsafe { rkr_unpack_rcso_natoms(tiny.as_ptr(), tiny.len(), &mut natoms) },
