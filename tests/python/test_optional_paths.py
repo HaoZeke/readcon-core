@@ -47,5 +47,8 @@ def test_write_con_none_gzip_and_a_gz_path(tmp_path: Path):
     assert suffix.is_file()
     loaded = readcon.read_con(str(plain), n_threads=2)
     assert loaded[0].has_velocities
+    assert loaded[0].vel.shape == (2, 3)
+    assert loaded[0].xyz.shape == (2, 3)
+    assert readcon.count_frames(str(plain)) == 1
     with pytest.raises(OSError):
         readcon.write_con(str(tmp_path / "bad.con"), [frame], compression="zstd")
