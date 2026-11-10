@@ -355,6 +355,12 @@ fn flock_wait(fd: std::os::fd::RawFd, op: i32) -> bool {
 /// the exclusive lock. A successful lock means `flock` did not see that
 /// holder, so the caller releases it and reports the lock as not coherent.
 fn flock_sees_exclusive(fd: std::os::fd::RawFd) -> bool {
+    // LOCK_NB does not wait, so this call does not retry EINTR.
+    // flock(2) reserves EINTR for "While waiting to acquire a lock" and
+    // uses EWOULDBLOCK when LOCK_NB is set. Linux 6.12 fs/locks.c:2172
+    // sets FL_SLEEP only when LOCK_NB is clear. flock_lock_inode returns
+    // -EAGAIN at fs/locks.c:1121 without sleeping. The interruptible wait
+    // is flock_lock_inode_wait, fs/locks.c:2087. flock_wait still retries.
     if unsafe { libc::flock(fd, libc::LOCK_SH | libc::LOCK_NB) } == 0 {
         let _ = unsafe { libc::flock(fd, libc::LOCK_UN) };
         return false;
