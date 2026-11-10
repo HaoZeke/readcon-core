@@ -1,0 +1,4 @@
+unslop scan of rg_main.tex, rg_supp.tex, CPC-FORM.md
+CRediT taxonomy dashes are the fixed names and are not hits.
+hits 0
+no hits

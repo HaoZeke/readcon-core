@@ -169,6 +169,16 @@ def version_at(commit: str) -> str:
     raise SystemExit(f"{commit}:Cargo.toml has no version")
 
 
+def cxx_macro(raw: str) -> str:
+    """``g++ 13.3.0`` from the version line recorded in the log."""
+    import re
+
+    match = re.search(r"(\d+\.\d+\.\d+)", raw)
+    if not match:
+        raise SystemExit(f"reader-exchange.log cxx line has no version: {raw}")
+    return f"g++ {match.group(1)}"
+
+
 def arm_s(found: dict[str, dict[str, str]], name: str) -> float:
     return float(found[name]["median_s"])
 
@@ -220,7 +230,6 @@ def main() -> int:
     ase = arm_s(found, "ase_eon")
     eon = arm_s(found, "eon_py")
     db = arm_s(found, "readcon_db")
-    mem_gib = int(round(int(field(text, "mem_kib")) / 1024 / 1024))
     ghz = float(field(text, "cpu_mhz")) / 1000
     GEN.mkdir(parents=True, exist_ok=True)
     macros = "\n".join(
@@ -232,10 +241,10 @@ def main() -> int:
             f"\\newcommand{{\\rcMeasuredVersion}}{{{measured_version}}}",
             f"\\newcommand{{\\rcBaselineCommit}}{{\\seqsplit{{{baseline}}}}}",
             f"\\newcommand{{\\rcBaselineVersion}}{{{baseline_version}}}",
-            f"\\newcommand{{\\rcFullT1Median}}{{{full:.4g}}}",
-            f"\\newcommand{{\\rcFullT8Median}}{{{full8:.4g}}}",
-            f"\\newcommand{{\\rcPosT1Median}}{{{pos1:.4g}}}",
-            f"\\newcommand{{\\rcPosT8Median}}{{{pos8:.4g}}}",
+            f"\\newcommand{{\\rcFullOneMedian}}{{{full:.4g}}}",
+            f"\\newcommand{{\\rcFullEightMedian}}{{{full8:.4g}}}",
+            f"\\newcommand{{\\rcPosOneMedian}}{{{pos1:.4g}}}",
+            f"\\newcommand{{\\rcPosEightMedian}}{{{pos8:.4g}}}",
             f"\\newcommand{{\\rcTipMedian}}{{{full:.4g}}}",
             f"\\newcommand{{\\rcReleaseMedian}}{{{base:.4g}}}",
             f"\\newcommand{{\\rcTipOverRelease}}{{{base / full:.3g}}}",
@@ -256,18 +265,18 @@ def main() -> int:
             f"\\newcommand{{\\rcOvitoMib}}{{{arm_mib(found, 'ovito'):.4g}}}",
             f"\\newcommand{{\\rcFirstMedian}}{{{arm_s(found, 'readcon_first'):.4g}}}",
             f"\\newcommand{{\\rcMatterMedian}}{{{arm_s(found, 'eon'):.4g}}}",
-            f"\\newcommand{{\\rcCpuFamily}}{{{field(text, 'cpu_family')}}}",
-            f"\\newcommand{{\\rcCpuModelId}}{{{field(text, 'cpu_model_id')}}}",
-            f"\\newcommand{{\\rcCpuName}}{{{field(text, 'cpu_model')}}}",
-            f"\\newcommand{{\\rcCpuGhz}}{{{ghz:.1f}}}",
-            f"\\newcommand{{\\rcCores}}{{{field(text, 'nproc')}}}",
-            f"\\newcommand{{\\rcMemGiB}}{{{mem_gib}}}",
-            f"\\newcommand{{\\rcKernel}}{{{field(text, 'kernel')}}}",
-            f"\\newcommand{{\\rcOs}}{{{field(text, 'os')}}}",
-            f"\\newcommand{{\\rcRustc}}{{{field(text, 'rustc')}}}",
-            f"\\newcommand{{\\rcCxx}}{{{field(text, 'cxx')}}}",
-            f"\\newcommand{{\\rcFs}}{{{field(text, 'filesystem')}}}",
-            f"\\newcommand{{\\rcCache}}{{{field(text, 'page_cache')}}}",
+            f"\\newcommand{{\\rcHostFamily}}{{{field(text, 'cpu_family')}}}",
+            f"\\newcommand{{\\rcHostModel}}{{{field(text, 'cpu_model_id')}}}",
+            f"\\newcommand{{\\rcHostCpu}}{{{field(text, 'cpu_model')}}}",
+            f"\\newcommand{{\\rcHostGhz}}{{{ghz:.1f}}}",
+            f"\\newcommand{{\\rcHostCores}}{{{field(text, 'nproc')}}}",
+            f"\\newcommand{{\\rcHostMem}}{{{int(round(int(field(text, 'mem_kib')) / 1024 / 1024))}}}",
+            f"\\newcommand{{\\rcHostKernel}}{{{field(text, 'kernel')}}}",
+            f"\\newcommand{{\\rcHostOs}}{{{field(text, 'os')}}}",
+            f"\\newcommand{{\\rcHostRustc}}{{{field(text, 'rustc')}}}",
+            f"\\newcommand{{\\rcHostCxx}}{{{cxx_macro(field(text, 'cxx'))}}}",
+            f"\\newcommand{{\\rcHostFs}}{{{field(text, 'filesystem')}}}",
+            f"\\newcommand{{\\rcHostCache}}{{{field(text, 'page_cache')}}}",
             "",
         ]
     )
@@ -276,7 +285,7 @@ def main() -> int:
         table(
             found,
             CON_ORDER,
-            "Coordinate reads of 100000 frames and 32 atoms, six fresh processes, type 7 median. "
+            "Coordinate reads of 100000 frames, six fresh processes, type 7 median. "
             "Each row names the call and the thread count. "
             "\\texttt{read\\_con} builds a frame per record. "
             "\\texttt{read\\_positions} returns one coordinate array. "

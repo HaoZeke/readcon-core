@@ -1,0 +1,7 @@
+snapper -w 72 --diff -f latex paper/cpc/src/rg_main.tex
+exit 0
+diff lines 0
+stderr: render check failed; left lines 1510-1510 unchanged
+snapper -w 72 --diff -f latex paper/cpc/src/rg_supp.tex
+exit 0
+diff lines 0

@@ -131,17 +131,15 @@ times an explicit copy, the median of eight repeats.
 \sep conformance corpus \sep nudged elastic band
  \end{keyword}
 
-\begin{highlights} \item CON 3.1 states the eOn saddle-search checkpoint as a versioned
-       text grammar.
-\item The format defines per-component masks, atom identifiers and
-      velocity time units.
-\item Two corpora of legal and illegal files decide what a conforming
-      reader accepts.
-\item A climbing-image band resumed from CON 3.1 repeats the
-      uninterrupted run bit for bit.
-\item Read times are measured against ASE, chemfiles, h5py and native
-      trajectory readers.
+% snapper:off
+\begin{highlights}
+\item CON 3.1 states the eOn saddle-search checkpoint as a versioned text grammar.
+\item The format defines per-component masks, atom identifiers and velocity time units.
+\item Two corpora of legal and illegal files decide what a conforming reader accepts.
+\item A climbing-image band resumed from CON 3.1 repeats the uninterrupted run bit for bit.
+\item Read times are measured against ASE, chemfiles, h5py and native trajectory readers.
 \end{highlights}
+% snapper:on
 
 \begin{graphicalabstract} \includegraphics[width=5cm]{figures/generated/toc.pdf}
  \end{graphicalabstract}
@@ -155,8 +153,9 @@ times an explicit copy, the median of eight repeats.
 
 \begin{small} \noindent\textit{Program Title:} readcon-core
 
-\noindent\textit{CPC Library link to program files:} (to be added by
-Technical Editor)
+% snapper:off
+\noindent\textit{CPC Library link to program files:} (to be added by Technical Editor)
+% snapper:on
 
 \noindent\textit{Developer's repository link:}
 \url{https://github.com/lode-org/readcon-core}
@@ -769,8 +768,8 @@ C++, Julia \cite{bezansonJuliaFreshApproach2017} and Fortran 2008 call
 its C interface, and Python calls the Rust core through PyO3 and
 receives NumPy arrays \cite{harrisArrayProgrammingNumpy2020}.
 eOn links readcon-core through the C++ wrapper, and its public release
-\eOneEonVersion{} embeds readcon-core \eOneEonReadcon, which writes CON
-3.0 \cite{rohitgoswamiTheochemuieonV3602026}.
+\eOneEonVersion{} embeds readcon-core \eOneEonReadcon, which writes
+CON~3.0 \cite{rohitgoswamiTheochemuieonV3602026}.
 That layering follows chemfiles
 \cite{frauxChemfileschemfilesVersion01042023}, one core with a binding
 for each language, and we take it over unchanged.
@@ -1182,8 +1181,8 @@ Left: a full-frame reader at 1 thread, divided by \texttt{read\_con} at
 Right: a positions path at 1 thread, divided by \texttt{read\_positions}
 at 1 thread.
 The horizontal line is 1.
-A point above the line means the readcon call on that axis is that many
-times as fast.
+A point above the line means that readcon call is that many times as
+fast.
 The 8-thread calls are not on this figure.}
 \label{fig:ratios} \end{figure}
 
@@ -1195,15 +1194,15 @@ repeats.}
 read one trajectory of 100000 frames and 32 copper atoms, six times for
 each arm, interleaved, each sample a fresh process.
 Each library is imported before the clock starts.
-The host is an \rcCpuName{}, CPU family \rcCpuFamily{} model
-\rcCpuModelId{}, at \rcCpuGhz{} GHz, with \rcCores{} cores and
-\rcMemGiB{} GiB of memory.
-It runs kernel \rcKernel{} on \rcOs{}.
-rustc \rcRustc{} builds the library, and \rcCxx{} builds the eOn C++
-arm.
-The trajectory is on an \rcFs{} filesystem.
-The page cache is \rcCache{}, because the files are written once before
-the samples.
+The host is an \rcHostCpu{}, CPU family \rcHostFamily{} model
+\rcHostModel{}, at \rcHostGhz{} GHz, with \rcHostCores{} cores and
+\rcHostMem{} GiB of memory.
+It runs kernel \rcHostKernel{} on \rcHostOs{}.
+rustc \rcHostRustc{} builds the library, and \rcHostCxx{} builds the eOn
+C++ arm.
+The trajectory is on an \rcHostFs{} filesystem.
+The page cache is \rcHostCache{}, because the files are written once
+before the samples.
 The log names measurement commit \texttt{\rcHostCommit}.
 The release arm is readcon-core \rcReleaseVersion, commit
 \texttt{\rcReleaseCommit}, \texttt{read\_con} at 1 thread.
@@ -1218,8 +1217,8 @@ Memory is the VmHWM after the read minus the VmHWM after the import.
 \texttt{MKL\_NUM\_THREADS}, \texttt{NUMEXPR\_NUM\_THREADS} and
 \texttt{RAYON\_NUM\_THREADS} are set to the thread count of the arm.
 
-\subsection{Results}\label{sec:results} On the coordinate file, \texttt{read\_con} at 1 thread takes \rcFullT1Median~s.
-The same call at 8 threads takes \rcFullT8Median~s, which is
+\subsection{Results}\label{sec:results} On the coordinate file, \texttt{read\_con} at 1 thread takes \rcFullOneMedian~s.
+The same call at 8 threads takes \rcFullEightMedian~s, which is
 \rcFullThreads{} times the 1-thread \texttt{read\_con} time.
 readcon-core \rcReleaseVersion{} \texttt{read\_con} at 1 thread takes
 \rcReleaseMedian~s.
@@ -1233,8 +1232,8 @@ eOn 3.6.0 \texttt{loadcons} reads every frame at 1 thread and takes
 \rcEonMedian~s.
 \texttt{read\_con} at 1 thread is \rcTipOverEon{} times as fast as
 \texttt{loadcons}.
-\texttt{read\_positions} at 1 thread takes \rcPosT1Median~s, and the
-same call at 8 threads takes \rcPosT8Median~s.
+\texttt{read\_positions} at 1 thread takes \rcPosOneMedian~s, and the
+same call at 8 threads takes \rcPosEightMedian~s.
 At 1 thread, \texttt{read\_positions} is \rcPosOverAse{} times as fast
 as ASE \texttt{get\_positions}, and \rcPosOverEon{} times as fast as
 \texttt{loadcons}.
@@ -1425,7 +1424,7 @@ commit \texttt{\rcHostCommit}.
 The stored campaigns in Table~\ref*{tab:versionmap}, including r0174 and
 the head-to-head records, were not rerun on that commit.
 Each of those records names the library it was measured with.
-Listing~\ref{lst:testrun} checks out \texttt{readcon-core.bundle}.
+Listing~\ref{lst:testrun} clones \texttt{readcon-core.bundle}.
 Rebuild the library from the untagged commit above with \texttt{cargo
 build -{}-release}.
 The concept record of readcon-core
@@ -1483,13 +1482,16 @@ release, the commit, the compiler and the host it was measured on.
 Rohit Goswami: Conceptualization, Methodology, Software, Visualization,
 Writing -- original draft, Writing -- review and editing.
 
+% snapper:off
 \section*{Funding}
-\label{sec:funding} This research did not receive any specific grant
-from funding agencies in the public, commercial, or not-for-profit
-sectors.
+\label{sec:funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
 
 \section*{Declaration of competing interest}
-\label{sec:competing} The author declares no competing interests.
+\label{sec:competing}
+The author declares no competing interests.
+
+% snapper:on
 
 \section*{Acknowledgements}\label{sec:acknowledgements} The author thanks his family, Amrita Goswami, Ruhila Goswami, Sonaly Goswami, Debabrata Goswami, Moritz Sallermann, and Nagaselvamani and Sankaranarayan, for their love and patience.
 Ruhila Goswami designed the colour palette used for every figure.
@@ -1498,12 +1500,12 @@ their company, and TuiTui and Snoopy in memoriam.
 Dedicated, with love, to the memory of Cosmo, a baby bird.
 He also thanks Ami the cactus.
 
+% snapper:off
 % Elsevier prescribes this heading word for word.
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}\label{sec:ai-declaration}
-Chatbots were used to refine certain turns of phrase and to speed
-through some implementation details; all the work is the author's own.
-The author reviewed and edited all tool output as needed and takes full
-responsibility for the content of the published article.
+Chatbots were used to refine certain turns of phrase and to speed through some implementation details; all the work is the author's own.
+The author reviewed and edited all tool output as needed and takes full responsibility for the content of the published article.
+% snapper:on
 
 \FloatBarrier % A digital object identifier in the reference list stays on one line.
 \DeclareUrlCommand\path{\def\UrlFont{\footnotesize\ttfamily}\mathchardef\UrlBreakPenalty=10000

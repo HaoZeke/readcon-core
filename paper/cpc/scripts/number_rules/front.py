@@ -282,7 +282,7 @@ RULES: list[Rule] = [
         param("alpha_A2_eV") * param("fmax_eV_A"),
         RESTART,
         "parameters.alpha_A2_eV times parameters.fmax_eV_A: one step at the band tolerance, in angstrom",
-        (f"{DOC}~moves an atom by",),
+        (f"{DOC}~moves an atom by", f"{DOC}~under that step"),
     ),
     Rule(
         "1.6605\\times 10^{-27}",

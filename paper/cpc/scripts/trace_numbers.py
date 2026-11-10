@@ -206,6 +206,8 @@ def scan_lines(
     skip_env = None
     for number, raw in lines:
         line = _strip_comment(raw)
+        if re.search(r"\\(?:mathchardef|DeclareUrlCommand)", line):
+            continue
         if skip_env:
             if re.search(r"\\end\{" + skip_env + r"\}", line):
                 skip_env = None

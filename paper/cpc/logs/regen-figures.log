@@ -1,5 +1,5 @@
-rev_parse 82214148729bf7b77922c7e7a148925b013c2cac
-tree e8695d5dcfd963ba8cccc8e33bbf0fdc85711c34
+rev_parse 6def1c462fe5b4b8f3c892f20a7dd619072a4d77
+tree 5b672ab957b3de59ffe6d83f65eecc23d8280ef5
 command python3 paper/cpc/scripts/regen_figures.py
 regen figures
 ok gen_figures
