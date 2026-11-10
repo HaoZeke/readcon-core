@@ -4382,4 +4382,30 @@ Coordinates of Component 1
         assert!(bare.blank_opens_velocity_block());
     }
 
+    #[test]
+    fn truncated_and_illegal_text_is_an_error() {
+        assert!(ConFrameIterator::new("").next().is_none());
+        let err = ConFrameIterator::new("only\n").next().unwrap().unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteHeader), "{err}");
+        let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
+        let err = ConFrameIterator::new(&text[..40]).next().unwrap().unwrap_err();
+        assert!(!err.to_string().is_empty(), "{err}");
+        let mut bytes = text.into_bytes();
+        bytes[20] = 0xff;
+        let err = ConFrameIterator::from_bytes(&bytes).next().unwrap().unwrap_err();
+        assert!(
+            err.to_string().to_ascii_lowercase().contains("utf-8")
+                || matches!(err, ParseError::ValidationError(_)),
+            "{err}"
+        );
+        let mut empty = std::iter::empty::<&str>().peekable();
+        assert!(!empty.blank_line_opens_section());
+        let mut junk = ["xyz"].into_iter().peekable();
+        assert!(!junk.blank_line_opens_section());
+        let counted = parse_line_of_range_f64("1 2 3", 3, 3, &[0.0, 0.0, 0.0]).unwrap();
+        assert_eq!(counted, vec![1.0, 2.0, 3.0]);
+        let err = parse_line_of_range_f64("nan", 1, 1, &[0.0]).unwrap_err();
+        assert!(matches!(err, ParseError::NonFiniteValue(_)), "{err}");
+    }
+
 }
