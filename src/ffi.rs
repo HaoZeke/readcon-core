@@ -924,7 +924,9 @@ pub unsafe extern "C" fn rkr_read_nth_frame(
 #[cfg(test)]
 static TRAJECTORY_FRAME_PANIC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 #[cfg(test)]
-static TRAJECTORY_OPEN_PANIC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+thread_local! {
+    static TRAJECTORY_OPEN_PANIC: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
 
 pub struct RKRTrajectory {
     _private: [u8; 0],
@@ -957,7 +959,7 @@ pub unsafe extern "C" fn rkr_trajectory_open(
     };
     let opened = std::panic::catch_unwind(|| {
         #[cfg(test)]
-        if TRAJECTORY_OPEN_PANIC.load(std::sync::atomic::Ordering::Relaxed) {
+        if TRAJECTORY_OPEN_PANIC.with(std::cell::Cell::get) {
             panic!("injected trajectory open panic");
         }
         crate::trajectory::ConTrajectory::open(Path::new(filename), write_index != 0)
@@ -9355,12 +9357,12 @@ mod tests {
         std::mem::forget(slots);
         unsafe { free_rkr_frame_array(packed, packed_len) };
 
-        TRAJECTORY_OPEN_PANIC.store(true, std::sync::atomic::Ordering::Relaxed);
+        TRAJECTORY_OPEN_PANIC.with(|flag| flag.set(true));
         let hook = std::panic::take_hook();
         std::panic::set_hook(Box::new(|_| {}));
         let opened = unsafe { rkr_trajectory_open(path.as_ptr(), 0) };
         std::panic::set_hook(hook);
-        TRAJECTORY_OPEN_PANIC.store(false, std::sync::atomic::Ordering::Relaxed);
+        TRAJECTORY_OPEN_PANIC.with(|flag| flag.set(false));
         assert!(opened.is_null());
         let panic_msg = unsafe { CStr::from_ptr(rkr_last_error_message()) };
         assert_eq!(
