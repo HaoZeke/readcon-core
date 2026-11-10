@@ -270,13 +270,20 @@ mod unix_tests {
             let _ = rt.block_on(local.run_until(crate::rpc::server::start_server(&spec_server)));
         });
         let started = std::time::Instant::now();
-        let mut tried_bad_spec = false;
+        // An empty spec fails in the parser, a closed port builds a client
+        // whose parse fails, and the live port then parses.
+        let mut phase = 0u8;
         let client = loop {
-            let attempt = if tried_bad_spec {
-                spec.as_str()
-            } else {
-                tried_bad_spec = true;
-                ""
+            let attempt = match phase {
+                0 => {
+                    phase = 1;
+                    ""
+                }
+                1 => {
+                    phase = 2;
+                    "127.0.0.1:1"
+                }
+                _ => spec.as_str(),
             };
             if let Ok(client) = RpcClient::new(attempt) {
                 if client.parse_bytes(MINIMAL.as_bytes()).is_ok() {
@@ -296,11 +303,15 @@ mod unix_tests {
         assert_eq!(frames.len(), 1);
         assert!(client.parse_file(dir.path().join("missing.con").as_path()).is_err());
         let refused = RpcClient::new("127.0.0.1:1").expect("endpoint");
-        let err = refused.parse_bytes(MINIMAL.as_bytes()).unwrap_err();
+        let refused_err = refused.parse_bytes(MINIMAL.as_bytes()).unwrap_err();
         assert!(
-            err.to_string().to_lowercase().contains("refused")
-                || err.to_string().to_lowercase().contains("connect"),
-            "{err}"
+            refused_err.to_string().to_lowercase().contains("refused"),
+            "{refused_err}"
+        );
+        let bad = client.parse_bytes(&[0xff, 0xfe]).unwrap_err();
+        assert!(
+            !bad.to_string().to_lowercase().contains("refused"),
+            "{bad}"
         );
     }
 }
