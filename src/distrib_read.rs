@@ -292,19 +292,11 @@ fn read_tiled(
     let Some((span, n)) = decided else {
         return Ok(None);
     };
-    if !agree(comm, local == Some((span, n))) {
-        return Ok(None);
-    }
     let r = comm.my_frames(n);
     let lo = r.start.saturating_mul(span);
     let hi = r.end.saturating_mul(span);
-    let opened = read_span(path, lo, hi);
-    let ok = agree(comm, opened.is_ok());
-    let bytes = match (opened, ok) {
-        (Ok(bytes), true) => bytes,
-        (Err(e), _) => return Err(format!("rank {}: {e}", comm.rank()).into()),
-        (Ok(_), false) => return Err("file open failed on another rank".into()),
-    };
+    let bytes = read_span(path, lo, hi)
+        .map_err(|e| -> BoxErr { format!("rank {}: {e}", comm.rank()).into() })?;
     let offs: Vec<usize> = (0..r.len()).map(|i| i * span).collect();
     let frames = parse_local(comm, &bytes, &offs, threads)?;
     Ok(Some(RankFrames {
@@ -338,12 +330,8 @@ fn read_shared(comm: &Comm, path: &Path, threads: Option<usize>) -> Result<RankF
     } else {
         Err("file differs from rank 0's copy; use ReadMode::Scatter".to_string())
     };
-    let ok = agree(comm, opened.is_ok());
-    let bytes = match (opened, ok) {
-        (Ok(bytes), true) => bytes,
-        (Err(e), _) => return Err(format!("rank {}: {e}", comm.rank()).into()),
-        (Ok(_), false) => return Err("file open failed on another rank".into()),
-    };
+    let bytes = opened
+        .map_err(|e| -> BoxErr { format!("rank {}: {e}", comm.rank()).into() })?;
     let frames = parse_local(comm, &bytes, &offs, threads)?;
     Ok(RankFrames {
         first: r.start,
@@ -367,61 +355,33 @@ fn flock_wait(fd: std::os::fd::RawFd, op: i32) -> bool {
 /// the exclusive lock. A successful lock means `flock` did not see that
 /// holder, so the caller releases it and reports the lock as not coherent.
 fn flock_sees_exclusive(fd: std::os::fd::RawFd) -> bool {
-    loop {
-        if unsafe { libc::flock(fd, libc::LOCK_SH | libc::LOCK_NB) } == 0 {
-            let _ = unsafe { libc::flock(fd, libc::LOCK_UN) };
-            return false;
-        }
-        let err = std::io::Error::last_os_error();
-        if err.kind() == std::io::ErrorKind::Interrupted {
-            continue;
-        }
-        return err.kind() == std::io::ErrorKind::WouldBlock;
+    if unsafe { libc::flock(fd, libc::LOCK_SH | libc::LOCK_NB) } == 0 {
+        let _ = unsafe { libc::flock(fd, libc::LOCK_UN) };
+        return false;
     }
+    std::io::Error::last_os_error().kind() == std::io::ErrorKind::WouldBlock
 }
 
 /// Block in the kernel until rank 0 has finished the file scan.
 ///
-/// The other ranks sleep on a shared file lock while rank 0 holds the
-/// exclusive lock. That lock has to be coherent across the ranks. Where
-/// it is not, rank 0 still scans and every rank then uses the blocking
-/// broadcast.
+/// Rank 0 holds an exclusive lock across the scan. The other ranks take
+/// a shared lock, which waits until that exclusive lock is released.
 fn wait_until_root_scanned(comm: &Comm, path: &Path, scan: impl FnOnce()) {
-    let visible = std::fs::File::open(path).is_ok();
-    if !agree(comm, visible) {
+    let opened = std::fs::File::open(path);
+    if !agree(comm, opened.is_ok()) {
         if comm.rank() == 0 {
             scan();
         }
         return;
     }
-    let file = match std::fs::File::open(path) {
-        Ok(file) => file,
-        Err(_) => {
-            if comm.rank() == 0 {
-                scan();
-            }
-            return;
-        }
+    let Ok(file) = opened else {
+        return;
     };
     let fd = std::os::fd::AsRawFd::as_raw_fd(&file);
-    let root_holds = if comm.rank() == 0 {
-        flock_wait(fd, libc::LOCK_EX)
-    } else {
-        false
-    };
-    comm.raw().barrier();
-    let sees = if comm.rank() == 0 {
-        root_holds
-    } else {
-        flock_sees_exclusive(fd)
-    };
-    if !agree(comm, sees) {
-        if comm.rank() == 0 {
-            let _ = unsafe { libc::flock(fd, libc::LOCK_UN) };
-            scan();
-        }
-        return;
+    if comm.rank() == 0 {
+        flock_wait(fd, libc::LOCK_EX);
     }
+    comm.raw().barrier();
     if comm.rank() == 0 {
         scan();
         let _ = unsafe { libc::flock(fd, libc::LOCK_UN) };
@@ -902,6 +862,7 @@ mod tests {
             let mut saw_missing_maps = false;
             let mut saw_colon = false;
             let mut saw_empty_seed = false;
+            let mut saw_bare_library = false;
             for (seed, keep) in [
                 (env_library.clone(), true),
                 ("already-set".to_string(), false),
@@ -910,9 +871,10 @@ mod tests {
                 let mut built = seed;
                 for maps_path in ["/proc/self/maps", maps_missing.to_str().unwrap()] {
                     if let Ok(maps) = std::fs::read_to_string(maps_path) {
-                        let mut lines = vec![String::new()];
+                        let mut lines = vec![String::new(), "libmetatensor.so".to_string()];
                         lines.extend(maps.lines().map(str::to_string));
                         lines.push(injected.clone());
+                        let mut dir = None;
                         for line in &lines {
                             let Some(path) = line.split_whitespace().last() else {
                                 assert!(
@@ -923,17 +885,24 @@ mod tests {
                                 continue;
                             };
                             if path.ends_with("libmetatensor.so") {
-                                if let Some(parent) = std::path::Path::new(path).parent() {
-                                    if !built.is_empty() {
-                                        built.push(':');
-                                        saw_colon = true;
-                                    } else {
-                                        saw_empty_seed = true;
+                                match path.rfind('/') {
+                                    Some(cut) => {
+                                        if dir.is_none() {
+                                            dir = Some(path[..cut].to_string());
+                                        }
                                     }
-                                    built.push_str(&parent.display().to_string());
+                                    None => saw_bare_library = true,
                                 }
-                                break;
                             }
+                        }
+                        if let Some(dir) = dir {
+                            if !built.is_empty() {
+                                built.push(':');
+                                saw_colon = true;
+                            } else {
+                                saw_empty_seed = true;
+                            }
+                            built.push_str(&dir);
                         }
                     } else {
                         saw_missing_maps = true;
@@ -953,6 +922,10 @@ mod tests {
             assert!(
                 saw_empty_seed,
                 "an empty library path does not grow a leading colon"
+            );
+            assert!(
+                saw_bare_library,
+                "a library name with no slash adds no directory"
             );
             assert!(!library_path.starts_with(':'));
             unsafe {
