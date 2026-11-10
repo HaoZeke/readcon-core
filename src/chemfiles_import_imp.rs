@@ -752,9 +752,12 @@ mod tests {
         frame.add_atom(&Atom::new("O"), [1.0, 2.0, 3.0], None);
         frame.add_atom(&Atom::new("O"), [2.0, 3.0, 4.0], None);
         frame.add_atom(&Atom::new("H"), [3.0, 4.0, 5.0], None);
+        let mut light_atom = Atom::new("X");
+        light_atom.set_mass(0.5);
+        frame.add_atom(&light_atom, [4.0, 5.0, 6.0], None);
         frame.set_cell(&UnitCell::new([10.0, 10.0, 10.0]));
         let con = con_frame_from_chemfiles(&frame).expect("H1 and H share CON type H");
-        assert_eq!(con.header.natm_types, 2);
+        assert_eq!(con.header.natm_types, 3);
         assert_eq!(
             con.atom_data
                 .iter()
@@ -764,9 +767,12 @@ mod tests {
         );
         let mut hydrogen = false;
         let mut heavier = false;
+        let mut light = false;
         for mass in &con.header.masses_per_type {
             if *mass > 1.0 && *mass < 2.0 {
                 hydrogen = true;
+            } else {
+                light = *mass <= 1.0 || light;
             }
             if *mass >= 2.0 {
                 heavier = true;
@@ -780,6 +786,11 @@ mod tests {
         assert!(
             heavier,
             "expected a heavier mass, got {:?}",
+            con.header.masses_per_type
+        );
+        assert!(
+            light,
+            "expected a mass at or below 1, got {:?}",
             con.header.masses_per_type
         );
     }
@@ -924,6 +935,29 @@ O  0.000  0.000  0.000
         assert!(con.header.natms_per_type.is_empty());
         assert!(con.header.masses_per_type.is_empty());
         assert_eq!(con.header.frame_index(), Some(4));
+    }
+
+    #[test]
+    fn an_empty_frame_keeps_a_cell_and_a_supplied_index() {
+        let mut frame = Frame::new();
+        frame.set_cell(&UnitCell::new([3.0, 4.0, 5.0]));
+        frame.set("generator", Property::String("caller".into()));
+        frame.set("frame_index", Property::Double(6.0));
+        let con = con_frame_from_chemfiles(&frame).expect("empty frame with a cell");
+        assert_eq!(con.header.natm_types, 0);
+        assert_eq!(
+            con.header.metadata.get(meta::GENERATOR).and_then(|v| v.as_str()),
+            Some("caller")
+        );
+        assert_eq!(con.header.frame_index(), Some(6));
+        assert_eq!(con.header.pbc(), Some([true, true, true]));
+        let vectors = con
+            .header
+            .metadata
+            .get(meta::LATTICE_VECTORS)
+            .and_then(|v| v.as_array())
+            .expect("an orthorhombic cell stores lattice vectors");
+        assert_eq!(vectors.len(), 3);
     }
 
     #[test]
