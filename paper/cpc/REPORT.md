@@ -99,6 +99,16 @@ Sixteen source files are at or above 98 percent on both bars.
 conbin.rs is at 99.65 percent lines and 99.46 percent branches.
 types.rs is at 99.79 percent lines and 98.61 percent branches.
 
+## Run 85
+
+`paper/cpc/receipts/run85-taken.txt` is the summary
+`coverage_features.sh` wrote at this tip. python.rs is 3308/3427
+lines (96.53 percent) and 338/346 branches (97.69 percent).
+The eager read without numpy and the public error tests are in that
+run. Both pytest lists finished 7 failed, 345 passed, 0 skipped.
+conbin.rs branches are 204/212 (96.23 percent) after the profile
+directory moved off the temporary prefixes.
+
 ## Run 84 checkpoint
 
 `paper/cpc/receipts/run84-taken.txt` is the summary

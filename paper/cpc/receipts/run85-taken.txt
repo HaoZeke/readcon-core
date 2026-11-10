@@ -1,0 +1,9 @@
+producer: paper/cpc/scripts/coverage_features.sh
+json: target/cov-live/coverage.json
+tip: af42ffe135c72a5ad5809e11863bd726fb30edba
+src/chemfiles_import_imp.rs lines 1261/1266 99.6051
+src/chemfiles_import_imp.rs branches 129/130 99.2308
+src/conbin.rs lines 2561/2580 99.2636
+src/conbin.rs branches 204/212 96.2264
+src/python.rs lines 3308/3427 96.5276
+src/python.rs branches 338/346 97.6879
