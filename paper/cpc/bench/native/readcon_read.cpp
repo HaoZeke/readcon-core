@@ -1,8 +1,11 @@
 // readcon-core through its C++ header: read_all_frames(path, n_threads),
 // then one record per frame of the output contract. Positions, velocities and
 // ids stay in the frame's binary64 and u64 columns. Periodicity is the
-// metadata key pbc, three booleans. A missing key is periodic on every axis,
-// the same rule as FrameHeader::pbc_effective (CON-cell.3).
+// metadata key pbc. A missing key is periodic in all three directions
+// (docs/source/spec.rst:698, CON-cell.3 at
+// paper/cpc/src/figures/generated/spec_normative.tex:184). A present key
+// that is not three booleans is an error (CON-cell.4,
+// spec_normative.tex:186, src/parser.rs:1108).
 // The header has no column accessor for the atomic
 // numbers or the fixed flags, so both come from ConFrame::atoms(), the
 // per-atom list, and none for the cell matrix, so the frame's JSON metadata is

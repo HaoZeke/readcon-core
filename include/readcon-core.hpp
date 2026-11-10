@@ -280,9 +280,14 @@ class ConFrame {
 
     uint32_t spec_version() const;
     std::string metadata_json() const;
-    /// Periodicity along x, y, z. The metadata key `pbc` is a JSON array of
-    /// three booleans. A missing or unreadable key is periodic on every axis,
-    /// the same rule as `FrameHeader::pbc_effective`.
+    /// Periodicity along x, y, z.
+    ///
+    /// A missing `pbc` key is periodic in all three directions
+    /// (`docs/source/spec.rst:698`, CON-cell.3 at
+    /// `paper/cpc/src/figures/generated/spec_normative.tex:184`).
+    /// A present key that is not three booleans throws, matching CON-cell.4
+    /// (`spec_normative.tex:186`) and `validate_pbc_metadata`
+    /// (`src/parser.rs:1108`).
     std::array<bool, 3> pbc() const;
 
     /// Per-frame total energy. Returns NaN if absent (legacy, prefer
@@ -1444,7 +1449,14 @@ inline std::string ConFrame::metadata_json() const {
     return result;
 }
 
-/// Read `pbc` from metadata JSON. Absent or unreadable means periodic.
+/// Read `pbc` from metadata JSON.
+///
+/// A missing key is periodic in all three directions
+/// (`docs/source/spec.rst:698`, CON-cell.3 at
+/// `paper/cpc/src/figures/generated/spec_normative.tex:184`).
+/// A present key that is not three booleans throws. CON-cell.4
+/// (`spec_normative.tex:186`) requires that shape, and
+/// `validate_pbc_metadata` (`src/parser.rs:1108`) rejects it.
 inline std::array<bool, 3> pbc_from_metadata_json(const std::string &json) {
     std::array<bool, 3> flags{true, true, true};
     const std::string key = "\"pbc\":";
@@ -1455,7 +1467,7 @@ inline std::array<bool, 3> pbc_from_metadata_json(const std::string &json) {
     while (i < json.size() && (json[i] == ' ' || json[i] == '\n' || json[i] == '\t'))
         ++i;
     if (i >= json.size() || json[i] != '[')
-        return flags;
+        throw std::runtime_error("pbc must be a length-3 boolean array");
     ++i;
     for (int axis = 0; axis < 3; ++axis) {
         while (i < json.size() &&
@@ -1468,7 +1480,7 @@ inline std::array<bool, 3> pbc_from_metadata_json(const std::string &json) {
             flags[static_cast<std::size_t>(axis)] = false;
             i += 5;
         } else {
-            return {true, true, true};
+            throw std::runtime_error("pbc must be a length-3 boolean array");
         }
     }
     return flags;
