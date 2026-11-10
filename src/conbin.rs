@@ -1898,6 +1898,15 @@ mod tests {
             "every page stayed resident"
         );
         unsafe { libc::munmap(ptr, len) };
+        let wide = dir.join("wide.conbin");
+        write_known(&wide, 1, 4000);
+        let wide_file = File::open(&wide).unwrap();
+        assert_eq!(
+            unsafe { libc::posix_fadvise(wide_file.as_raw_fd(), 0, 0, libc::POSIX_FADV_DONTNEED) },
+            0
+        );
+        let streamed = sequential_resident_sum(&wide, 1, &QueueLimits::page_default(page)).unwrap();
+        assert!(streamed.is_finite(), "{streamed}");
         let got = sum_mapped(&path, 2).unwrap();
         let mapped = map_file(&path, 1).unwrap();
         let expect = mapped.positions_f64().unwrap().iter().sum::<f64>()
@@ -2717,10 +2726,8 @@ Coordinates of Component 1
         assert!(page_size().unwrap().is_power_of_two());
 
         assert_has(&QueueLimits::of(&stat_path).unwrap_err(), "os error 5");
-        match open_map(&stat_path) {
-            Err(err) => assert_has(&err, "os error 5"),
-            Ok(_) => panic!("open_map should fail when metadata fails"),
-        }
+        let err = open_map(&stat_path).err().unwrap();
+        assert_has(&err, "os error 5");
         let mut pos = vec![0.0; 3];
         let mut vel = vec![0.0; 3];
         assert_has(
@@ -2779,6 +2786,17 @@ Coordinates of Component 1
             &sequential_resident_sum(&reopen, 1, &limits).unwrap_err(),
             "os error 5",
         );
+        let advise_file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&reopen)
+            .unwrap();
+        let mut advise_map = unsafe { memmap2::MmapMut::map_mut(&advise_file) }.unwrap();
+        let one = advise_spans(&advise_map, memmap2::Advice::WillNeed, 1, page).unwrap_err();
+        assert!(one.to_string().contains("os error"), "{one}");
+        let many = advise_spans(&advise_map, memmap2::Advice::WillNeed, 8, page).unwrap_err();
+        assert!(many.to_string().contains("os error"), "{many}");
+        drop(advise_map);
         assert!(injected("madvise-eio"));
         set_case("");
 
