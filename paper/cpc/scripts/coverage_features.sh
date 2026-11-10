@@ -118,6 +118,13 @@ cargo llvm-cov --workspace --all-targets \
   --features "$LEAN_FEATURES" \
   --branch --no-fail-fast --no-report --remap-path-prefix
 
+echo "==> library tests without metatensor"
+# The extension and this library build export the typed stubs.
+# The merged feature build does not compile them.
+cargo llvm-cov --lib \
+  --features parallel,zstd,grammar,python,capi,rpc \
+  --branch --no-fail-fast --no-report --remap-path-prefix
+
 echo "==> python extension"
 cargo llvm-cov show-env --branch --export-prefix > "$CARGO_TARGET_DIR/py-env.sh"
 set -a

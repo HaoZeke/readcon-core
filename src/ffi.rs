@@ -4306,6 +4306,28 @@ pub unsafe extern "C" fn rkr_frame_metatensor_atom_energies_block(
     }
     RKRStatus::RKR_STATUS_FEATURE_DISABLED
 }
+
+#[cfg(all(test, not(feature = "metatensor")))]
+mod metatensor_absent {
+    use super::*;
+
+    fn disabled(export: unsafe extern "C" fn(*const RKRConFrame, *mut *mut mts_block_t) -> RKRStatus) {
+        let mut slot = 1 as *mut mts_block_t;
+        let status = unsafe { export(std::ptr::null(), &mut slot) };
+        assert_eq!(status, RKRStatus::RKR_STATUS_FEATURE_DISABLED);
+        assert!(slot.is_null());
+        let status = unsafe { export(std::ptr::null(), std::ptr::null_mut()) };
+        assert_eq!(status, RKRStatus::RKR_STATUS_FEATURE_DISABLED);
+    }
+
+    #[test]
+    fn a_missing_metatensor_block_is_a_typed_status() {
+        disabled(rkr_frame_metatensor_positions_block);
+        disabled(rkr_frame_metatensor_velocities_block);
+        disabled(rkr_frame_metatensor_forces_block);
+        disabled(rkr_frame_metatensor_atom_energies_block);
+    }
+}
 // ----- Frame section buffers (no CFrame AoS required) -------------------------
 /// Number of atoms on the frame (atom_data order).
 /// # Safety
