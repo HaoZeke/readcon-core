@@ -37,6 +37,13 @@ pub trait LineStream<'a> {
         true
     }
 
+    /// Bytes not yet consumed, including a peeked line. `None` when the
+    /// stream has no byte cursor. A declared atom count larger than this
+    /// cannot appear in the file.
+    fn bytes_remaining(&mut self) -> Option<usize> {
+        None
+    }
+
     /// One coordinate row, fused with the line scan when the stream can do it.
     ///
     /// The default pulls a `&str` line. [`crate::iterators::MemchrLines`]
@@ -73,6 +80,14 @@ where
             return false;
         }
         section_follows(&mut probe)
+    }
+
+    fn bytes_remaining(&mut self) -> Option<usize> {
+        let mut n = 0usize;
+        for line in self.clone() {
+            n = n.saturating_add(line.len().saturating_add(1));
+        }
+        Some(n)
     }
 
     fn blank_opens_velocity_block(&mut self) -> bool {
@@ -865,6 +880,15 @@ fn validate_section_arity_value(value: &Value) -> Result<(), ParseError> {
 /// is `InvalidCount` (CON-error.3). Zero is a legal token here. The caller
 /// rejects a per-type count of 0 when the type count is 1 or more (D4).
 pub(crate) fn parse_count_line(line: &str, n: usize) -> Result<Vec<usize>, ParseError> {
+    // One token needs at least one byte. Allocating `n` slots before reading
+    // the line is what turns a declared count of 2^64 into a multi-terabyte
+    // buffer.
+    if n > line.len() {
+        return Err(ParseError::InvalidCount(format!(
+            "declared {n} counts but the line has {} bytes",
+            line.len()
+        )));
+    }
     let mut values = Vec::with_capacity(n);
     for token in line.split_ascii_whitespace() {
         if token.is_empty() || !token.bytes().all(|b| b.is_ascii_digit()) {
@@ -1342,6 +1366,10 @@ pub fn parse_frame_header<'a>(
         )?;
         (natms_per_type, masses_per_type)
     };
+    let boxl_arr: [f64; 3] = boxl_vec.as_slice().try_into().unwrap();
+    let angles_arr: [f64; 3] = angles_vec.as_slice().try_into().unwrap();
+    // A radicand at or below -1e-12 is not a cell, with or without validate.
+    crate::types::cell_vectors(boxl_arr, angles_arr)?;
     if validate {
         validate_header_geometry(&boxl_vec, &angles_vec)?;
         validate_masses(&masses_per_type)?;
@@ -1461,6 +1489,13 @@ where
     let header = parse_frame_header(lines)?;
     let validate = header.strict_validation;
     let total_atoms: usize = header.natms_per_type.iter().sum();
+    if let Some(left) = lines.bytes_remaining()
+        && total_atoms > left
+    {
+        return Err(ParseError::InvalidCount(format!(
+            "declared {total_atoms} atoms but only {left} bytes remain"
+        )));
+    }
     use crate::storage_dtype::{ElementKind, FloatArray2, StorageDtypes};
     let dt = StorageDtypes::from_metadata(&header.metadata).unwrap_or_default();
     let f64_positions = dt.positions == ElementKind::Float64;
@@ -2279,6 +2314,42 @@ pub fn parse_spread_section<'a>(
 mod tests {
     use super::*;
     use crate::iterators::ConFrameIterator;
+
+    fn frame_with_count(count: &str, validate: bool) -> String {
+        let validate = if validate { r#","validate":true"# } else { "" };
+        format!(
+            "user\n{{\"con_spec_version\":3,\"con_spec_minor\":1,\"units\":{{\"length\":\"angstrom\",\"energy\":\"eV\"}},\"sections\":[]{validate}}}\n10.0 10.0 10.0\n90.0 90.0 90.0\n\n\n1\n{count}\n1.0\nH\nCoordinates of Component 1\n0.0 0.0 0.0 0 1\n"
+        )
+    }
+
+    #[test]
+    fn impossible_angles_are_rejected_with_and_without_validate() {
+        for angles in ["10.0 10.0 170.0", "170.0 170.0 170.0"] {
+            for validate in [false, true] {
+                let text = frame_with_count("1", validate).replacen("90.0 90.0 90.0", angles, 1);
+                let err = ConFrameIterator::new(&text).next().unwrap().unwrap_err();
+                assert!(
+                    matches!(err, ParseError::ValidationError(_)),
+                    "{angles} validate={validate}: {err}"
+                );
+                assert!(err.to_string().contains("real cell"), "{err}");
+            }
+        }
+    }
+
+    #[test]
+    fn a_declared_type_count_past_the_line_is_invalid_count() {
+        let text = frame_with_count("1", false).replacen("\n1\n1\n1.0\n", "\n184467441616\n2\n195.084\n", 1);
+        let err = ConFrameIterator::new(&text).next().unwrap().unwrap_err();
+        assert!(matches!(err, ParseError::InvalidCount(_)), "{err}");
+    }
+
+    #[test]
+    fn a_declared_count_past_the_file_is_invalid_count() {
+        let text = frame_with_count("1000000000000", false);
+        let err = ConFrameIterator::new(&text).next().unwrap().unwrap_err();
+        assert!(matches!(err, ParseError::InvalidCount(_)), "{err}");
+    }
 
     #[test]
     fn test_parse_line_of_n_success() {

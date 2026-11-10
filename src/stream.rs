@@ -109,7 +109,11 @@ impl<R: Read> ConFrameReader<R> {
                 probe.forward();
                 settled(text, probe.byte_pos())
             } {
-                let mut it = ConFrameIterator::from_bytes(text);
+                let mut it = if ended {
+                    ConFrameIterator::from_bytes(text)
+                } else {
+                    ConFrameIterator::from_prefix(text)
+                };
                 let result = op(&mut it);
                 if ended || settled(text, it.byte_pos()) {
                     match result {

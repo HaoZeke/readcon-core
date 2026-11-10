@@ -20,6 +20,8 @@ pub struct MemchrLines<'a> {
     /// as they are tokenized. Coordinate rows stay on the byte parser.
     check_utf8: bool,
     utf8_bad: bool,
+    /// False while a stream may still append bytes after this buffer.
+    input_complete: bool,
     /// Absolute offsets of every `\n`. Set only for a frame-start scan.
     /// `None` keeps the per-line `memchr` path used by a full parse.
     newlines: Option<Vec<usize>>,
@@ -48,6 +50,7 @@ impl<'a> MemchrLines<'a> {
             peeked: None,
             check_utf8,
             utf8_bad: false,
+            input_complete: true,
             newlines: None,
             line_no: 0,
         }
@@ -205,6 +208,13 @@ impl<'a> LineStream<'a> for MemchrLines<'a> {
         self.pos = pos;
         Ok(row)
     }
+    fn bytes_remaining(&mut self) -> Option<usize> {
+        if !self.input_complete {
+            return None;
+        }
+        let peeked = self.peeked.as_ref().map(|line| line.len()).unwrap_or(0);
+        Some(self.bytes.len().saturating_sub(self.pos).saturating_add(peeked))
+    }
     fn remainder_is_whitespace(&mut self) -> bool {
         if self.utf8_bad {
             return false;
@@ -354,6 +364,14 @@ impl<'a> ConFrameIterator<'a> {
         ConFrameIterator {
             lines: MemchrLines::from_bytes(bytes),
         }
+    }
+
+    /// A buffer that is only a prefix of the input. Atom-count checks wait
+    /// until the stream has ended, so a short read is not `InvalidCount`.
+    pub fn from_prefix(bytes: &'a [u8]) -> Self {
+        let mut lines = MemchrLines::from_bytes(bytes);
+        lines.input_complete = false;
+        ConFrameIterator { lines }
     }
 
     /// Bulk-skips `n` lines from the shared memchr cursor.
@@ -525,6 +543,12 @@ impl<'a> ConFrameIterator<'a> {
             return Some(Err(e));
         }
         let total_atoms: usize = natms_per_type.iter().sum();
+        let left = self.lines.bytes.len().saturating_sub(self.lines.pos);
+        if self.lines.input_complete && total_atoms > left {
+            return Some(Err(error::ParseError::InvalidCount(format!(
+                "declared {total_atoms} atoms but only {left} bytes remain"
+            ))));
+        }
         let coord_block_lines = total_atoms + natm_types * 2;
         if let Err(e) = self.advance_lines_to(coord_block_lines, end) {
             return Some(Err(e));
@@ -3343,5 +3367,198 @@ mod phased_read_tests {
         let right = touch_frame_checksum(&parallel.frames, &slab_p, 4).expect("touch");
         assert_eq!(left, right);
         assert_ne!(left, 0);
+    }
+}
+
+
+/// Seeded mutations of the conformance corpus and the test files.
+///
+/// Each source file is paired with each mutation. The case count is that
+/// product. Every entry point must agree with a one-thread string read.
+#[cfg(test)]
+mod differential_entry_points {
+    use super::{
+        frames_from_bytes, frames_from_text, read_all_frames, read_all_frames_with_threads,
+        read_positions_with_threads,
+    };
+    use crate::error::ParseError;
+    use crate::stream::ConFrameReader;
+    use crate::trajectory::ConTrajectory;
+    use crate::types::ConFrame;
+    use std::io::{Cursor, Write};
+    use std::path::PathBuf;
+
+    const MUTATIONS: usize = 4;
+    const MAPPED_STRIDE: usize = 305;
+
+    fn sources() -> Vec<String> {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let mut paths = Vec::new();
+        for dir in ["resources/conformance", "resources/test"] {
+            let walk = root.join(dir);
+            let mut stack = vec![walk];
+            while let Some(dir) = stack.pop() {
+                let entries = match std::fs::read_dir(&dir) {
+                    Ok(entries) => entries,
+                    Err(_) => continue,
+                };
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        stack.push(path);
+                        continue;
+                    }
+                    let ext = path.extension().and_then(|ext| ext.to_str());
+                    if ext == Some("con") || ext == Some("convel") {
+                        paths.push(path);
+                    }
+                }
+            }
+        }
+        paths.sort();
+        paths
+            .into_iter()
+            .map(|path| std::fs::read_to_string(&path).unwrap_or_default())
+            .filter(|text| !text.is_empty())
+            .collect()
+    }
+
+    fn mutate(text: &str, kind: usize, _index: usize) -> String {
+        match kind {
+            0 => format!("{text}\n\u{000c}\n"),
+            1 => format!("{text}\n\u{00a0}\n"),
+            2 => format!("{text}\n\n"),
+            _ => format!("{text}\n\nEnergies of Component 1\n"),
+        }
+    }
+
+    fn class(err: &ParseError) -> String {
+        let rendered = format!("{err:?}");
+        rendered
+            .split(['(', '{', ' '])
+            .next()
+            .unwrap_or("")
+            .to_string()
+    }
+
+    fn agree(reference: &Result<Vec<ConFrame>, ParseError>, got: Result<Vec<ConFrame>, ParseError>, what: &str) {
+        match (reference, got) {
+            (Ok(left), Ok(right)) => assert_eq!(left, &right, "{what}"),
+            (Err(left), Err(right)) => {
+                assert_eq!(class(left), class(&right), "{what}: {left} vs {right}")
+            }
+            (Ok(_), Err(err)) => panic!("{what} rejected a case the string read accepted: {err}"),
+            (Err(err), Ok(_)) => panic!("{what} accepted a case the string read rejected: {err}"),
+        }
+    }
+
+    fn stream_frames(bytes: &[u8], size: usize) -> Result<Vec<ConFrame>, ParseError> {
+        let mut reader = ConFrameReader::with_read_size(Cursor::new(bytes), size);
+        let mut frames = Vec::new();
+        for item in &mut reader {
+            frames.push(item.map_err(|err| ParseError::ValidationError(err.to_string()))?);
+        }
+        Ok(frames)
+    }
+
+    #[test]
+    fn differential_corpus_mutations_agree_across_entry_points() {
+        let sources = sources();
+        let n_cases = sources.len() * MUTATIONS;
+        assert!(n_cases > 0, "the differential has no source files");
+        let dir = std::env::temp_dir().join("readcon-differential");
+        let _ = std::fs::create_dir_all(&dir);
+        for index in 0..n_cases {
+            let text = mutate(&sources[index / MUTATIONS], index % MUTATIONS, index);
+            let reference = frames_from_text(&text, Some(1));
+            for threads in 1..=16 {
+                agree(
+                    &reference,
+                    frames_from_text(&text, Some(threads)),
+                    &format!("string threads={threads} case={index}"),
+                );
+                agree(
+                    &reference,
+                    frames_from_bytes(text.as_bytes(), Some(threads)),
+                    &format!("bytes threads={threads} case={index}"),
+                );
+            }
+            for size in [1usize, 61, crate::stream::DEFAULT_READ_SIZE] {
+                let streamed = stream_frames(text.as_bytes(), size);
+                match (&reference, streamed) {
+                    (Ok(left), Ok(right)) => assert_eq!(left, &right, "stream {size} case={index}"),
+                    (Err(_), Err(_)) => {}
+                    (Ok(_), Err(err)) => panic!("stream {size} rejected case {index}: {err}"),
+                    (Err(err), Ok(_)) => panic!("stream {size} accepted case {index}: {err}"),
+                }
+            }
+            let plain = dir.join(format!("case-{index}.con"));
+            std::fs::write(&plain, text.as_bytes()).unwrap();
+            let from_file = read_all_frames(&plain).map_err(|err| err.to_string());
+            assert_eq!(from_file.is_ok(), reference.is_ok(), "plain file case={index}");
+            if let (Ok(left), Ok(right)) = (&reference, &from_file) {
+                assert_eq!(left, right, "plain file case={index}");
+            }
+            let positions = read_positions_with_threads(&plain, Some(1));
+            assert_eq!(positions.is_ok(), reference.is_ok(), "positions case={index}");
+            if let (Ok(frames), Ok(block)) = (&reference, &positions) {
+                if let Some(frame) = frames.first() {
+                    let coords = frame.positions.f64_slice().map(|row| row.to_vec());
+                    if frames.len() == 1 {
+                        if let Some(coords) = coords {
+                            assert_eq!(block.values, coords, "positions case={index}");
+                        }
+                    }
+                }
+            }
+            let gz_path = dir.join(format!("case-{index}.con.gz"));
+            {
+                let file = std::fs::File::create(&gz_path).unwrap();
+                let mut enc = flate2::write::GzEncoder::new(file, flate2::Compression::default());
+                enc.write_all(text.as_bytes()).unwrap();
+                enc.finish().unwrap();
+            }
+            let from_gz = read_all_frames(&gz_path).map_err(|err| err.to_string());
+            assert_eq!(from_gz.is_ok(), reference.is_ok(), "gzip case={index}");
+            if let (Ok(left), Ok(right)) = (&reference, &from_gz) {
+                assert_eq!(left, right, "gzip case={index}");
+            }
+            match (&reference, ConTrajectory::open(&plain, false)) {
+                (Ok(frames), Ok(traj)) => {
+                    assert_eq!(traj.len(), frames.len(), "trajectory length case={index}");
+                    for (i, frame) in frames.iter().enumerate() {
+                        assert_eq!(
+                            traj.frame(i).expect("trajectory frame"),
+                            *frame,
+                            "trajectory frame {i} case={index}"
+                        );
+                    }
+                }
+                (Err(_), Err(_)) => {}
+                (Err(err), Ok(traj)) => {
+                    if traj.is_empty() {
+                        continue;
+                    }
+                    assert!(
+                        traj.frame(0).is_err(),
+                        "trajectory opened a frame the string read rejected: {err}"
+                    );
+                }
+                (Ok(_), Err(err)) => panic!("trajectory rejected case {index}: {err}"),
+            }
+            if index % MAPPED_STRIDE == 0 {
+                let padded = format!("{text}{}", "\n".repeat(64 * 1024));
+                let mapped_path = dir.join(format!("mapped-{index}.con"));
+                std::fs::write(&mapped_path, padded.as_bytes()).unwrap();
+                let serial = frames_from_text(&padded, Some(1));
+                for threads in 1..=16 {
+                    let mapped = read_all_frames_with_threads(&mapped_path, Some(threads))
+                        .map_err(|err| err.to_string());
+                    assert_eq!(mapped.is_ok(), serial.is_ok(), "mapped threads={threads}");
+                }
+            }
+            let _ = std::fs::remove_file(&plain);
+            let _ = std::fs::remove_file(&gz_path);
+        }
     }
 }

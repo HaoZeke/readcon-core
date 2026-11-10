@@ -456,8 +456,10 @@ impl FrameHeader {
     /// Cell matrix. A present `lattice_vectors` wins over lines 3-4 (CON-cell.1).
     /// Otherwise the matrix is built from those lines (CON-cell.6).
     pub fn cell_matrix(&self) -> [[f64; 3]; 3] {
-        self.lattice_vectors()
-            .unwrap_or_else(|| cell_vectors(self.boxl, self.angles))
+        self.lattice_vectors().unwrap_or_else(|| {
+            cell_vectors(self.boxl, self.angles)
+                .expect("a parsed cell has a non-negative radicand")
+        })
     }
 
     /// Periodic boundary conditions. A missing `pbc` key is fully periodic
@@ -931,8 +933,11 @@ pub fn lengths_and_angles(vecs: [[f64; 3]; 3]) -> ([f64; 3], [f64; 3]) {
 /// `b = (|b| cos gamma, |b| sin gamma, 0)`,
 /// `c = (|c| cos beta, |c| (cos alpha - cos beta cos gamma) / sin gamma,
 /// |c| sqrt(1 - cos^2 beta - cy^2))` where `cy` is that middle term.
-pub fn cell_vectors(lengths: [f64; 3], angles_deg: [f64; 3]) -> [[f64; 3]; 3] {
-    let [a_len, b_len, c_len] = lengths;
+/// Radicand of \(c_z\) for angles in degrees (CON-cell.6).
+///
+/// A value at or below `-1e-12` is not a rounding crumb. `sqrt` of that
+/// value is NaN, and a reader must reject the cell instead of storing it.
+pub fn cell_cz_squared(angles_deg: [f64; 3]) -> f64 {
     let alpha = angles_deg[0].to_radians();
     let beta = angles_deg[1].to_radians();
     let gamma = angles_deg[2].to_radians();
@@ -941,18 +946,34 @@ pub fn cell_vectors(lengths: [f64; 3], angles_deg: [f64; 3]) -> [[f64; 3]; 3] {
     let cos_gamma = gamma.cos();
     let sin_gamma = gamma.sin();
     let cy = (cos_alpha - cos_beta * cos_gamma) / sin_gamma;
-    let cz_sq = 1.0 - cos_beta * cos_beta - cy * cy;
+    1.0 - cos_beta * cos_beta - cy * cy
+}
+
+pub fn cell_vectors(
+    lengths: [f64; 3],
+    angles_deg: [f64; 3],
+) -> Result<[[f64; 3]; 3], crate::error::ParseError> {
+    let [a_len, b_len, c_len] = lengths;
+    let alpha = angles_deg[0].to_radians();
+    let beta = angles_deg[1].to_radians();
+    let gamma = angles_deg[2].to_radians();
+    let cos_beta = beta.cos();
+    let cos_gamma = gamma.cos();
+    let sin_gamma = gamma.sin();
+    let cy = (alpha.cos() - cos_beta * cos_gamma) / sin_gamma;
+    let cz_sq = cell_cz_squared(angles_deg);
+    if !cz_sq.is_finite() || cz_sq <= -1e-12 {
+        return Err(crate::error::ParseError::ValidationError(
+            "cell angles do not form a real cell on line 4".into(),
+        ));
+    }
     // Orthogonal angles leave a rounding crumb below zero.
-    let cz = if cz_sq < 0.0 && cz_sq > -1e-12 {
-        0.0
-    } else {
-        cz_sq.sqrt()
-    };
-    [
+    let cz = if cz_sq < 0.0 { 0.0 } else { cz_sq.sqrt() };
+    Ok([
         [a_len, 0.0, 0.0],
         [b_len * cos_gamma, b_len * sin_gamma, 0.0],
         [c_len * cos_beta, c_len * cy, c_len * cz],
-    ]
+    ])
 }
 
 /// Decode a column-4 bitmask as a spec-2 value.
@@ -3333,6 +3354,20 @@ impl ConFrame {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn impossible_cell_is_a_validation_error() {
+        let err = cell_vectors([10.0, 10.0, 10.0], [10.0, 10.0, 170.0]).unwrap_err();
+        assert!(
+            matches!(err, crate::error::ParseError::ValidationError(_)),
+            "{err}"
+        );
+        assert!(cell_cz_squared([10.0, 10.0, 170.0]) <= -1e-12);
+        let flat = cell_vectors([5.0, 5.0, 5.0], [30.0, 60.0, 90.0]).unwrap();
+        assert!(flat[2][2].is_finite());
+        let orthogonal = cell_vectors([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]).unwrap();
+        assert!((orthogonal[2][2] - 10.0).abs() < 1e-9);
+    }
 
     #[test]
     fn test_x_only_is_one_under_spec_2() {
