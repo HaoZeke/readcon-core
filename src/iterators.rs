@@ -4840,5 +4840,39 @@ H";
         super::recycle_slot_buf(Vec::new());
         super::slot_cache().clear_poison();
         assert!(super::slot_cache().lock().is_ok());
+
+        let marked = one_frame();
+        let mut held = ConFrameIterator::new(&marked);
+        assert!(held.lines.peek_line().is_some());
+        held.lines.pos = 0;
+        assert!(held.lines.peeked.is_some());
+        let held_err = held.next_with_raw_span(&marked).unwrap().unwrap_err();
+        let held_text = format!("{held_err:?}");
+        assert!(
+            held_text.contains("InvalidNumberFormat"),
+            "{held_text}"
+        );
+    }
+
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn a_later_equal_span_stops_before_the_slice_ends() {
+        let first = one_frame();
+        let mut probe = ConFrameIterator::new(&first);
+        assert!(probe.forward_fast().unwrap().is_ok());
+        let span = probe.byte_pos();
+        assert_eq!(span, first.len());
+        let mut second = String::from(
+            "user\n{\"con_spec_version\":2,\"sections\":[]}\n10.0 10.0 10.0\n90.0 90.0 90.0\n\n\n1\n1\n1.0\nH\nCoordinates of Component 1\n0.0 0.0 0.0 0 1\n\nZ\n",
+        );
+        let mut early = ConFrameIterator::new(&second);
+        assert!(early.forward_fast().unwrap().is_ok());
+        let stopped = early.byte_pos();
+        assert!(stopped < second.len());
+        assert!(second.len() <= span);
+        second.push_str(&"x".repeat(span - second.len()));
+        let buffer = format!("{first}{second}");
+        assert_eq!(buffer.len() % span, 0);
+        assert!(super::equal_span_boundaries(buffer.as_bytes(), 2).is_none());
     }
 }
