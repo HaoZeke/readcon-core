@@ -4632,4 +4632,17 @@ mod missed_branch_tests {
         #[cfg(feature = "parallel")]
         assert!(parallel.pool.is_some());
     }
+
+    #[test]
+    fn the_second_span_is_not_at_the_start_of_the_buffer() {
+        let text = one_frame() + &one_frame();
+        let mut it = ConFrameIterator::new(&text);
+        let (first, span) = it.next_with_raw_span(&text).unwrap().unwrap();
+        assert_eq!(first.atom_data.len(), 1);
+        assert!(span.starts_with("user\n"), "{span}");
+        let (second, span2) = it.next_with_raw_span(&text).unwrap().unwrap();
+        assert_eq!(&*second.atom_data[0].symbol, "H");
+        assert!(span2.contains("Coordinates of Component 1"), "{span2}");
+        assert!(it.next_with_raw_span(&text).is_none());
+    }
 }

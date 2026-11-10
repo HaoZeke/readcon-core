@@ -4574,12 +4574,12 @@ Coordinates of Component 1
         for (text, needle) in [
             (
                 "user\n{\"con_spec_version\":4294967296}\n",
-                "UnsupportedVersion",
+                "unsupported con_spec_version",
             ),
-            ("user\n{\"con_spec_version\":0}\n", "UnsupportedVersion"),
-            ("user\n{\"con_spec_version\":1}\n", "UnsupportedVersion"),
-            ("user\n{\"con_spec_version\":9}\n", "UnsupportedVersion"),
-            ("user\n{\"con_spec_version\":-3}\n", "UnsupportedVersion"),
+            ("user\n{\"con_spec_version\":0}\n", "unsupported con_spec_version"),
+            ("user\n{\"con_spec_version\":1}\n", "unsupported con_spec_version"),
+            ("user\n{\"con_spec_version\":9}\n", "unsupported con_spec_version"),
+            ("user\n{\"con_spec_version\":-3}\n", "unsupported con_spec_version"),
             (
                 "user\n{\"con_spec_version\":2,\"section_arity\":{\"widgets\":0}}\n",
                 ">= 1",
