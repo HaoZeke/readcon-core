@@ -22,6 +22,64 @@ def load(name: str):
     return module
 
 
+def test_logged_cmd_keeps_a_plain_line_and_drops_a_temp_path(tmp_path, monkeypatch):
+    logged = load("logged_cmd.py")
+    monkeypatch.setattr(sys, "argv", ["logged_cmd.py"])
+    assert logged.main() == 2
+    out = tmp_path / "run.txt"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["logged_cmd.py", str(out), "bash", "-c", "echo hello; echo /tmp/hidden"],
+    )
+    assert logged.main() == 0
+    text = out.read_text(encoding="utf-8")
+    body = [line for line in text.splitlines() if not line.startswith("command ")]
+    assert "hello" in body
+    assert not any("/tmp" in line or "hidden" in line for line in body)
+    assert "exit_code 0" in text
+
+
+def test_mpi_main_rejects_a_short_sample_and_states_the_slower_rank(tmp_path, monkeypatch):
+    mpi = load("mpi_from_log.py")
+    short = tmp_path / "short.log"
+    short.write_text("repeats 1\nrepeat 0 run shared pad pad 1 ns 1000000000\n", encoding="utf-8")
+    monkeypatch.setattr(mpi, "LOG", short)
+    monkeypatch.setattr(mpi, "GEN", tmp_path)
+    assert mpi.main() == 1
+    lines = ["repeats 6"]
+    for mode, slow in (("shared", False), ("scatter", True)):
+        for ranks in (1, 2, 4, 8):
+            base = 2.0 if ranks == 8 and slow else 1.0 / ranks
+            for i in range(6):
+                ns = int((base + i * 0.01) * 1e9)
+                lines.append(f"repeat {i} run {mode} pad pad {ranks} ns {ns}")
+    slow_log = tmp_path / "slow.log"
+    slow_log.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    monkeypatch.setattr(mpi, "LOG", slow_log)
+    assert mpi.main() == 0
+    written = (tmp_path / "mpi_macros.tex").read_text(encoding="utf-8")
+    assert "eight-rank median" in written
+
+
+def test_eon_build_log_keeps_a_line_without_a_local_path(monkeypatch, tmp_path):
+    eon = load("eon_build_log.py")
+
+    class Proc:
+        stdout = "ninja: no work to do\n"
+        stderr = ""
+        returncode = 0
+
+    monkeypatch.setattr(eon.subprocess, "run", lambda *args, **kwargs: Proc())
+    monkeypatch.setattr(eon.subprocess, "check_output", lambda *args, **kwargs: "abc\n")
+    monkeypatch.setattr(eon, "LOG", tmp_path / "eon-build.log")
+    monkeypatch.setattr(eon, "EON", tmp_path)
+    assert eon.main() == 0
+    text = (tmp_path / "eon-build.log").read_text(encoding="utf-8")
+    assert "ninja: no work to do" in text
+    assert "exit_code 0" in text
+
+
 def test_logged_cmd_redacts_the_checkout_and_the_home():
     logged = load("logged_cmd.py")
     home = str(Path.home())
