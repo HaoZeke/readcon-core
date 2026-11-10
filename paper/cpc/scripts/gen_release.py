@@ -122,16 +122,14 @@ def identity() -> dict:
         raise SystemExit(
             f"src/commit.tex names {commit}, which this repository does not hold"
         )
-    tree, head = git("rev-parse", f"{commit}^{{tree}}"), git("rev-parse", "HEAD^{tree}")
-    if tree != head:
-        raise SystemExit(
-            f"HEAD has tree {(head or 'none')[:12]} and commit {commit[:12]} tree {tree[:12]}; "
-            f"build the paper in a checkout of {commit[:12]}"
-        )
     digest = provenance.library_digest()
     held = provenance.library_digest_at(commit)
     if held is None:
         raise SystemExit(f"commit {commit[:12]} has no library files")
+    if held != digest:
+        raise SystemExit(
+            f"commit {commit[:12]} library {held[:12]} is not this tree's {digest[:12]}"
+        )
     recorded = (
         json.loads(BUILD_RECORD.read_text())["build"]["library_digest"]
         if BUILD_RECORD.is_file()

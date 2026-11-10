@@ -45,11 +45,9 @@ start = '^\s*pub fn open\(path: &Path, write_index: bool\)'
 end = "block"
 
 [header_line_two]
-file = "src/parser.rs"
-fn = "parse_frame_header"
+file = "src/iterators.rs"
 parts = [
-  { start = 'if prebox1\.starts_with', end = "block" },
-  { start = 'if trimmed\.starts_with' },
+  { start = 'self\.lines\.bytes\.starts_with\("\\u\{feff\}"\.as_bytes\(\)\)' },
 ]
 
 [header_check]
