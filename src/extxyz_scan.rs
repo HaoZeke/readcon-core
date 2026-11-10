@@ -266,6 +266,7 @@ pub fn tables_from_extxyz_path(path: &Path) -> Result<XyzTables, String> {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::*;
 
@@ -368,5 +369,32 @@ Lattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3
 
 ";
         assert!(tables_from_extxyz_bytes(blank).is_err());
+    }
+
+    #[test]
+    fn malformed_frames_fail() {
+        let cases: &[&[u8]] = &[
+            b"",
+            b"1\n",
+            b"2\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nCu 0 0 0\n",
+            b"1\nLattice=\"1 0 0\" Properties=species:S:1:pos:R:3\nCu 0 0 0\n",
+            b"1\nLattice=\"1 0 Properties=species:S:1:pos:R:3\nCu 0 0 0\n",
+            b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species\nCu 0 0 0\n",
+            b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3:masses:R:x\nCu 0 0 0 1\n",
+            b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nCu\n",
+            b"not-a-count\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nCu 0 0 0\n",
+        ];
+        for (index, case) in cases.iter().enumerate() {
+            assert!(
+                tables_from_extxyz_bytes(case).is_err(),
+                "case {index} parsed"
+            );
+        }
+        let with_charge = b"\
+1
+Lattice=\"1 0 0 0 1 0 0 0 1\" Properties=charge:R:1:species:S:1:pos:R:3
+0.5 Cu 0 0 0
+";
+        assert!(tables_from_extxyz_bytes(with_charge).is_ok());
     }
 }

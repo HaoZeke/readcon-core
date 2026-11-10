@@ -1,3 +1,5 @@
+#![cfg_attr(coverage_nightly, feature(coverage_attribute))]
+
 pub mod array;
 pub mod c_iter;
 pub mod compression;
