@@ -3952,6 +3952,9 @@ mod api_coverage {
             dtypes.forces = crate::storage_dtype::ElementKind::Float32;
             wide.velocities = crate::storage_dtype::FloatArray2::zeros_f64(wide.atom_data.len(), 3);
             wide.forces = crate::storage_dtype::FloatArray2::zeros_f64(wide.atom_data.len(), 3);
+            let f64_frame = PyConFrame::from_owned(py, wide.clone()).unwrap();
+            assert!(f64_frame.vel(py).unwrap().is_some());
+            assert!(f64_frame.frc(py).unwrap().is_some());
             wide.project_storage_dtypes(&dtypes);
             wide.header.metadata.insert(
                 crate::types::meta::BONDS.into(),
@@ -3960,6 +3963,25 @@ mod api_coverage {
             let py_frame = PyConFrame::from_owned(py, wide).unwrap();
             assert!(py_frame.vel(py).unwrap().is_some());
             assert!(py_frame.frc(py).unwrap().is_some());
+            let mut missing = frame.clone();
+            missing.header.metadata.insert(
+                crate::types::meta::BONDS.into(),
+                serde_json::json!([{"j": 1}]),
+            );
+            let mut missing = PyConFrame::from_owned(py, missing).unwrap();
+            assert!(missing.bonds(py).is_err());
+            let mut mixed = frame.clone();
+            mixed.header.metadata.insert(
+                crate::types::meta::BONDS.into(),
+                serde_json::json!([
+                    {"i": 0, "j": 1, "order": null},
+                    {"i": 1, "j": 2},
+                    [0, 1],
+                    "nope"
+                ]),
+            );
+            let mut mixed = PyConFrame::from_owned(py, mixed).unwrap();
+            assert!(mixed.bonds(py).unwrap().len() >= 2);
             assert!(py_frame.__getitem__(py, 99).is_err());
             assert_eq!(py_frame.bonds(py).unwrap().len(), 1);
 

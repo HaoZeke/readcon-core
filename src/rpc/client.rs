@@ -131,6 +131,56 @@ mod unix_tests {
     use super::*;
     use std::time::Duration;
 
+    fn bad_stamp_parse(spec: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+        runtime.block_on(async {
+            let local = tokio::task::LocalSet::new();
+            local
+                .run_until(async {
+                    let service = connect_service(&Endpoint::parse(spec)?).await?;
+                    let mut request = service.parse_frames_request();
+                    {
+                        let mut parse_request = request.get().init_req();
+                        let mut stamp = parse_request.reborrow().init_compatibility();
+                        stamp.set_abi_major(99);
+                        stamp.set_abi_minor(0);
+                        stamp.set_abi_layout_revision(0);
+                        stamp.set_con_spec_version(0);
+                        parse_request.set_file_contents(b"not used");
+                    }
+                    request.send().promise.await?;
+                    Ok(())
+                })
+                .await
+        })
+    }
+
+    fn short_cell_write(spec: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+        runtime.block_on(async {
+            let local = tokio::task::LocalSet::new();
+            local
+                .run_until(async {
+                    let service = connect_service(&Endpoint::parse(spec)?).await?;
+                    let mut request = service.write_frames_request();
+                    {
+                        let mut wr = request.get().init_req();
+                        set_compatibility_stamp(wr.reborrow().init_compatibility());
+                        let mut frame = wr.reborrow().init_frames(1).get(0);
+                        frame.reborrow().init_cell(1).set(0, 1.0);
+                        frame.init_angles(3);
+                    }
+                    request.send().promise.await?;
+                    Ok(())
+                })
+                .await
+        })
+    }
+
     const MINIMAL: &str = include_str!("../../resources/conformance/valid/v2_minimal.con");
 
     #[test]
@@ -165,6 +215,10 @@ mod unix_tests {
         assert_eq!(again[0].atom_data.len(), 1);
         assert!(client.parse_bytes(&[0xff, 0xfe]).is_err());
         assert!(client.parse_bytes(b"not a con frame").is_err());
+        let rejected = bad_stamp_parse(&spec);
+        assert!(rejected.is_err(), "a breaking ABI major must fail the parse");
+        let rejected = short_cell_write(&spec);
+        assert!(rejected.is_err(), "a short cell must fail the write");
         let _ = std::fs::remove_file(&sock);
     }
 }
