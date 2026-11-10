@@ -27,6 +27,7 @@ export LD_LIBRARY_PATH="$LIB${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export GFORTRAN_ERROR_BACKTRACE=0
 ./test_iterator_stream
 gcov -b -c readcon.f90 test_iterator_stream.f90
+gcov -f -b -c readcon.f90 > gcov-functions.txt
 
 python3 - "$ROOT" "$HOME" "$OUT" <<'PY'
 import re
@@ -61,6 +62,16 @@ def blocks(text: str) -> dict[str, str]:
             found[match.group(1)] = part
     return found
 
+summary = {}
+function_text = Path("gcov-functions.txt").read_text(encoding="utf-8", errors="replace")
+for match in re.finditer(
+    r"Function '__readcon_MOD_(\w+)'\nLines executed:([0-9.]+)% of (\d+)",
+    function_text,
+):
+    name, percent, total = match.group(1), float(match.group(2)), int(match.group(3))
+    executed = int(round(percent / 100.0 * total))
+    summary[name] = (executed, total)
+
 rows = []
 for filename in ("readcon.f90.gcov", "test_iterator_stream.f90.gcov"):
     raw = Path(filename).read_text(encoding="utf-8", errors="replace")
@@ -71,14 +82,7 @@ for filename in ("readcon.f90.gcov", "test_iterator_stream.f90.gcov"):
     parsed = blocks(text)
     for name in names:
         body = parsed[name]
-        executable = 0
-        executed = 0
-        for line in body.splitlines():
-            head = line[:16]
-            if re.match(r"\s*(#####|\d+):\s+\d+:", line):
-                executable += 1
-                if not head.lstrip().startswith("#####"):
-                    executed += 1
+        executed, executable = summary[name]
         branches = re.findall(r"^branch\s+\d+\s+(taken \d+|never executed)", body, re.M)
         taken = 0
         for item in branches:
