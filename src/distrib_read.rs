@@ -1038,6 +1038,297 @@ mod tests {
             )
         };
         assert_eq!(rc, 0, "an empty ABI write should succeed");
+        assert_eq!(total_bytes, 0, "no frames means an empty file");
+        assert!(
+            !frame_index::sidecar_path(&abi).is_file(),
+            "an empty write removes the sidecar"
+        );
+
+        let held = &frames[0] as *const crate::types::ConFrame as *const crate::ffi::RKRConFrame;
+        let slots = [held];
+        let disagree = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                abi_c.as_ptr(),
+                if comm.rank() == 0 {
+                    std::ptr::null()
+                } else {
+                    slots.as_ptr()
+                },
+                1,
+                2,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(disagree, -1, "a null frame pointer must fail every rank");
+        let disagree = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                if comm.rank() == 0 {
+                    std::ptr::null()
+                } else {
+                    abi_c.as_ptr()
+                },
+                std::ptr::null(),
+                0,
+                2,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(disagree, -1, "a null path must fail every rank");
+        let null_slot: *const crate::ffi::RKRConFrame = std::ptr::null();
+        let bad_slots = [null_slot];
+        let good_slots = [held];
+        let list = if comm.rank() == 0 {
+            bad_slots.as_ptr()
+        } else {
+            good_slots.as_ptr()
+        };
+        let disagree = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                abi_c.as_ptr(),
+                list,
+                1,
+                2,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(disagree, -1, "a null frame in the list must fail every rank");
+        let dir_c = std::ffi::CString::new(dir.to_str().unwrap()).unwrap();
+        let rejected = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                dir_c.as_ptr(),
+                slots.as_ptr(),
+                1,
+                2,
+                6,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(rejected, -1, "the C writer rejects a directory");
+        let ok_path = dir.join("abi-ok.con");
+        let ok_c = std::ffi::CString::new(ok_path.to_str().unwrap()).unwrap();
+        let wrote = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                ok_c.as_ptr(),
+                slots.as_ptr(),
+                1,
+                2,
+                6,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(wrote, 0, "the C writer stores one frame from each rank");
+        assert!(total_bytes > 16, "{total_bytes}");
+        let stored = std::fs::read_to_string(&ok_path).unwrap();
+        assert!(stored.contains("H") || stored.contains("Cu"), "{stored}");
+
+        unsafe {
+            mpi::ffi::MPI_Comm_set_errhandler(
+                mpi::ffi::RSMPI_COMM_WORLD,
+                mpi::ffi::RSMPI_ERRORS_RETURN,
+            );
+        }
+        let null_comm = unsafe { mpi::ffi::RSMPI_Comm_c2f(mpi::ffi::RSMPI_COMM_NULL) };
+        let rc = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                null_comm,
+                ok_c.as_ptr(),
+                std::ptr::null(),
+                0,
+                2,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(rc, -1, "a null communicator must fail the C writer");
+        let mut n = 0usize;
+        let mut first = 0u64;
+        let mut total_frames = 0u64;
+        let ptr = unsafe {
+            rkr_mpi_read_block_f(
+                null_comm,
+                ok_c.as_ptr(),
+                1,
+                0,
+                &mut n,
+                &mut first,
+                &mut total_frames,
+            )
+        };
+        assert!(ptr.is_null(), "a null communicator must fail the C reader");
+        unsafe {
+            mpi::ffi::MPI_Comm_set_errhandler(
+                mpi::ffi::RSMPI_COMM_WORLD,
+                mpi::ffi::RSMPI_ERRORS_ARE_FATAL,
+            );
+        }
+
+        let err = crate::distrib_write::write_block(
+            &comm,
+            std::path::Path::new("/dev/null"),
+            &frames,
+            crate::distrib_write::WriteMode::Gather,
+            None,
+        )
+        .expect_err("sync on the null device must fail");
+        assert!(
+            err.to_string().contains("22") || err.to_string().to_lowercase().contains("invalid"),
+            "{err}"
+        );
+        unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "8") };
+        let err = crate::distrib_write::write_block(
+            &comm,
+            std::path::Path::new("/dev/full"),
+            &frames,
+            crate::distrib_write::WriteMode::MpiIo,
+            None,
+        )
+        .expect_err("MPI-IO to a full device must fail");
+        assert!(err.to_string().contains("set_size"), "{err}");
+
+        unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "1048576") };
+        let mine = if comm.rank() == 0 {
+            frames.clone()
+        } else {
+            Vec::new()
+        };
+        let partial_gather = dir.join("one-rank-gather.con");
+        let n = crate::distrib_write::write_block(
+            &comm,
+            &partial_gather,
+            &mine,
+            crate::distrib_write::WriteMode::Gather,
+            None,
+        )
+        .expect("one rank gathers");
+        assert!(n > 16, "{n}");
+        let gathered = std::fs::read_to_string(&partial_gather).unwrap();
+        assert!(gathered.contains("H") || gathered.contains("Cu"), "{gathered}");
+
+        let one = dir.join("one-frame.con");
+        let uneven = dir.join("uneven.con");
+        let tiny = dir.join("one-byte.con");
+        let gz = dir.join("two.con.gz");
+        if comm.rank() == 0 {
+            let text = std::fs::read(&path).unwrap();
+            let half = text.len() / 2;
+            std::fs::write(&one, &text[..half]).unwrap();
+            let mut second = Vec::new();
+            {
+                let mut writer = crate::writer::ConFrameWriter::new(&mut second);
+                writer.write_frame(&frames[0]).unwrap();
+            }
+            assert_ne!(second.len(), half, "the added frame must not tile the first");
+            let mut body = text[..half].to_vec();
+            body.extend_from_slice(&second);
+            std::fs::write(&uneven, body).unwrap();
+            std::fs::write(&tiny, b"x").unwrap();
+            let mut enc = flate2::write::GzEncoder::new(
+                std::fs::File::create(&gz).unwrap(),
+                flate2::Compression::default(),
+            );
+            use std::io::Write;
+            enc.write_all(&text).unwrap();
+            enc.finish().unwrap();
+        }
+        comm.raw().barrier();
+
+        let got = read_block(&comm, &one, ReadMode::Scatter, None).expect("one frame");
+        assert_eq!(got.n_total, 1, "rank {}", comm.rank());
+        assert_eq!(got.frames.len(), usize::from(comm.rank() == 0));
+        let got = read_block(&comm, &uneven, ReadMode::Shared, None).expect("uneven");
+        assert_eq!(got.n_total, 2, "rank {}", comm.rank());
+        let err = read_block(&comm, &tiny, ReadMode::Shared, None).expect_err("one byte");
+        assert!(!err.to_string().is_empty(), "{err}");
+        let err = read_block(&comm, &gz, ReadMode::Shared, None).expect_err("gzip length");
+        assert!(err.to_string().contains("differs"), "{err}");
+        let got = read_block(&comm, &gz, ReadMode::Auto, None).expect("gzip scatters");
+        assert_eq!(got.n_total, 2, "rank {}", comm.rank());
+        let broken = dir.join("broken.con");
+        if comm.rank() == 0 {
+            let one_bytes = std::fs::read(&one).unwrap();
+            let mut quad = one_bytes.repeat(4);
+            let at = one_bytes.len() * 2 + one_bytes.len() / 2;
+            quad[at] ^= 0x5f;
+            std::fs::write(&broken, quad).unwrap();
+        }
+        comm.raw().barrier();
+        let err = read_block(&comm, &broken, ReadMode::Shared, None)
+            .expect_err("a corrupt later frame");
+        let msg = err.to_string();
+        if comm.rank() == 0 {
+            assert!(msg.contains("another rank"), "{msg}");
+        } else {
+            assert!(msg.contains("rank 1"), "{msg}");
+        }
+        let err = read_block(&comm, &dir.join("absent.con"), ReadMode::Scatter, None)
+            .expect_err("scatter of a missing file");
+        assert!(!err.to_string().is_empty(), "{err}");
+
+        // A round longer than a signed 32-bit count is rejected, and the
+        // following round still runs.
+        let wide = (i32::MAX as usize) + 1;
+        let mut big = frames[0].clone();
+        big.header
+            .metadata
+            .insert("pad".into(), serde_json::Value::String("x".repeat(wide)));
+        let mine = if comm.rank() == 0 {
+            vec![big]
+        } else {
+            Vec::new()
+        };
+        unsafe {
+            std::env::set_var("READCON_MPI_TEST_CHUNK", wide.to_string());
+        }
+        let err = crate::distrib_write::write_block(
+            &comm,
+            &dir.join("wide.con"),
+            &mine,
+            crate::distrib_write::WriteMode::MpiIo,
+            None,
+        )
+        .expect_err("a round past i32::MAX must fail");
+        assert!(
+            err.to_string().contains("write_at_all"),
+            "{err}"
+        );
+
+        let missing = std::ffi::CString::new(dir.join("absent.con").to_str().unwrap()).unwrap();
+        let mut count = 0usize;
+        let ptr = unsafe {
+            rkr_mpi_read_block_f(
+                fint,
+                missing.as_ptr(),
+                1,
+                0,
+                &mut count,
+                &mut first,
+                &mut total_frames,
+            )
+        };
+        assert!(ptr.is_null(), "a missing file must fail the C reader");
+        let ptr = unsafe {
+            rkr_mpi_read_block_f(
+                fint,
+                ok_c.as_ptr(),
+                1,
+                0,
+                &mut count,
+                &mut first,
+                &mut total_frames,
+            )
+        };
+        assert!(!ptr.is_null(), "the C reader returns the frames it stored");
+        assert_eq!(total_frames, 2);
+        unsafe { crate::ffi::free_rkr_frame_array(ptr, count) };
+
         flush_coverage_profile();
         drop(comm);
         drop(universe);
