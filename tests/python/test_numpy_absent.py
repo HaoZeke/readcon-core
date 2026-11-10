@@ -31,6 +31,11 @@ def test_read_without_numpy_keeps_the_symbols():
             "assert len(frames[0]) == 4\n"
             "assert frames[0].atoms[0].symbol == 'Cu'\n"
             "assert frames[0].atoms[2].symbol == 'H'\n"
+            f"eager, phases = readcon.read_con_phases({source!r}, build='eager')\n"
+            "assert phases['build'] == 'eager'\n"
+            "assert len(eager) == 1\n"
+            "assert eager[0].atoms[0].symbol == 'Cu'\n"
+            "assert eager[0].atoms[2].symbol == 'H'\n"
             "print('symbols-ok')\n"
         )
         env = os.environ.copy()
