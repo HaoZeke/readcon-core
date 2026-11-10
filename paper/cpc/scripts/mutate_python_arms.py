@@ -27,6 +27,20 @@ MUTATIONS = [
         'Some(Err(e)) => Err(PyIOError::new_err(format!("other: {e}"))),',
         "OSError: other:",
     ),
+    (
+        "velocity-row",
+        "every_stored_row_matches_the_shape_that_names_it",
+        "            data.push(atom.vx.unwrap_or(0.0));\n            data.push(atom.vy.unwrap_or(0.0));\n            data.push(atom.vz.unwrap_or(0.0));",
+        "            data.push(0.0);\n            data.push(atom.vy.unwrap_or(0.0));\n            data.push(atom.vz.unwrap_or(0.0));",
+        "0.4",
+    ),
+    (
+        "missing-j",
+        "every_stored_row_matches_the_shape_that_names_it",
+        'PyValueError::new_err("bonds entry missing j")',
+        'PyValueError::new_err("bonds entry missing endpoint")',
+        "missing endpoint",
+    ),
 ]
 
 

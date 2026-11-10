@@ -3897,6 +3897,108 @@ mod api_coverage {
     }
 
     #[test]
+    fn every_stored_row_matches_the_shape_that_names_it() {
+        Python::initialize();
+        Python::attach(|py| {
+            let mut builder = ConFrameBuilder::new([5.0, 5.0, 5.0], [90.0, 90.0, 90.0]);
+            builder.add_atom("H", 0.1, 0.2, 0.3, [false, false, false], 1, 1.008);
+            builder.with_velocity([0.4, 0.5, 0.6]);
+            builder.with_force([0.7, 0.8, 0.9]);
+            builder.with_displacement([0.01, 0.02, 0.03]);
+            builder.with_spread([0.11, 0.12, 0.13]);
+            let frame = builder.build().unwrap();
+            let py_frame = PyConFrame::from_owned(py, frame).unwrap();
+            let atoms = py_frame.py_atoms(py).unwrap();
+            assert!(atoms[0].has_velocity());
+            assert!(atoms[0].has_forces());
+            assert!(atoms[0].has_displacement());
+            assert!(atoms[0].has_spread());
+            let row = |array: &Bound<'_, PyArray2<f64>>| -> Vec<f64> {
+                array.readonly().as_slice().unwrap().to_vec()
+            };
+            let vel = py_frame.velocities_array(py).unwrap().unwrap();
+            assert_eq!(row(&vel), vec![0.4, 0.5, 0.6]);
+            let force = py_frame.forces_array(py).unwrap().unwrap();
+            assert_eq!(row(&force), vec![0.7, 0.8, 0.9]);
+            let disp = py_frame.displacements_array(py).unwrap().unwrap();
+            assert_eq!(row(&disp), vec![0.01, 0.02, 0.03]);
+            let spread = py_frame.spreads_array(py).unwrap().unwrap();
+            assert_eq!(row(&spread), vec![0.11, 0.12, 0.13]);
+            let built = py_frame.to_con_frame(py).unwrap();
+            assert_eq!(built.atom_data[0].velocity(), Some([0.4, 0.5, 0.6]));
+            assert_eq!(built.atom_data[0].force(), Some([0.7, 0.8, 0.9]));
+            assert_eq!(
+                built.atom_data[0].displacement(),
+                Some([0.01, 0.02, 0.03])
+            );
+            assert_eq!(built.atom_data[0].spread(), Some([0.11, 0.12, 0.13]));
+
+            let con = concat!(env!("CARGO_MANIFEST_DIR"), "/resources/test/tiny_cuh2.con");
+            let coords = read_coords(py, con).unwrap();
+            let coords = coords.bind(py);
+            let positions = coords.get_item("positions").unwrap().unwrap();
+            let n_atoms: usize = coords.get_item("n_atoms").unwrap().unwrap().extract().unwrap();
+            assert_eq!(n_atoms, 4);
+            let flat: Vec<f64> = positions
+                .cast::<PyArray3<f64>>()
+                .unwrap()
+                .readonly()
+                .as_slice()
+                .unwrap()
+                .to_vec();
+            assert_eq!(flat.len(), n_atoms * 3);
+
+            let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/py-arm");
+            std::fs::create_dir_all(&dir).unwrap();
+            let xyz = dir.join("two.extxyz");
+            std::fs::write(
+                &xyz,
+                "2\nLattice=\"5.0 0.0 0.0 0.0 5.0 0.0 0.0 0.0 5.0\" Properties=species:S:1:pos:R:3\nH 0.0 0.0 0.0\nH 0.0 0.0 0.7\n",
+            )
+            .unwrap();
+            let (pos, masses, cell) = read_extxyz(py, xyz.to_str().unwrap()).unwrap();
+            assert_eq!(pos.readonly().as_slice().unwrap().len(), 6);
+            assert_eq!(masses.readonly().as_slice().unwrap().len(), 2);
+            assert_eq!(cell.readonly().as_slice().unwrap().len(), 6);
+            let pdb = dir.join("one.pdb");
+            std::fs::write(
+                &pdb,
+                "CRYST1    5.000    5.000    5.000  90.00  90.00  90.00 P 1\nATOM      1  H   HOH     1       0.000   0.000   0.000  1.00  0.00           H\nEND\n",
+            )
+            .unwrap();
+            let (pos, masses, cell) = read_pdb(py, pdb.to_str().unwrap()).unwrap();
+            assert_eq!(pos.readonly().as_slice().unwrap().len() % 3, 0);
+            assert_eq!(masses.readonly().as_slice().unwrap().len() * 3, pos.readonly().as_slice().unwrap().len());
+            assert_eq!(cell.readonly().as_slice().unwrap().len(), 6);
+
+            let entry = PyDict::new(py);
+            entry.set_item("i", 0u32).unwrap();
+            let bonds = PyList::empty(py);
+            bonds.append(entry).unwrap();
+            py_frame.metadata.bind(py).set_item("bonds", bonds).unwrap();
+            let err = py_frame.bonds(py).unwrap_err();
+            assert!(err.to_string().contains("missing j"), "{err}");
+
+            let out = dir.join("rows.con");
+            let positions = ndarray::Array3::from_shape_vec((1, 1, 3), vec![0.1, 0.2, 0.3]).unwrap();
+            let mass = ndarray::Array2::from_shape_vec((1, 1), vec![1.008]).unwrap();
+            let cell_arr = ndarray::Array2::from_shape_vec((1, 6), vec![5.0, 5.0, 5.0, 90.0, 90.0, 90.0]).unwrap();
+            let wrote = write_coords(
+                py,
+                out.to_str().unwrap(),
+                positions.into_pyarray(py).readonly(),
+                mass.into_pyarray(py).readonly(),
+                cell_arr.into_pyarray(py).readonly(),
+                "H",
+            )
+            .unwrap();
+            let wrote = wrote.bind(py);
+            let write_s: f64 = wrote.get_item("write_s").unwrap().unwrap().extract().unwrap();
+            assert!(write_s >= 0.0, "{write_s}");
+        });
+    }
+
+    #[test]
     fn a_missing_position_file_and_a_bad_forward_name_the_error() {
         Python::initialize();
         Python::attach(|py| {

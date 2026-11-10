@@ -1,0 +1,22 @@
+alone-run: cargo llvm-cov test --features python,mpi --lib every_stored_row_matches_the_shape_that_names_it
+python.rs:150 count 4 | fn has_velocity(&self) -> bool {
+python.rs:155 count 3 | fn has_forces(&self) -> bool {
+python.rs:165 count 3 | fn has_displacement(&self) -> bool {
+python.rs:170 count 3 | fn has_spread(&self) -> bool {
+python.rs:451 count 0 | fn has_forces(&self, py: Python<'_>) -> PyResult<bool> {
+python.rs:459 count 0 | fn has_displacements(&self, py: Python<'_>) -> PyResult<bool> {
+python.rs:467 count 0 | fn has_spreads(&self, py: Python<'_>) -> PyResult<bool> {
+python.rs:605 count 1 | data.push(atom.vx.unwrap_or(0.0));
+python.rs:623 count 1 | data.push(atom.fx.unwrap_or(0.0));
+python.rs:644 count 1 | data.push(atom.dx.unwrap_or(0.0));
+python.rs:669 count 1 | data.push(atom.sx.unwrap_or(0.0));
+python.rs:920 count 1 | .ok_or_else(|| PyValueError::new_err("bonds entry missing j"))?
+python.rs:1095 count 1 | let xyz = Array2::from_shape_vec((n_atoms, 3), data).unwrap()
+python.rs:1444 count 1 | fn read_coords(py: Python<'_>, path: &str) -> PyResult<Py<PyDict>> {
+python.rs:1477 count 1 | let pos = ndarray::Array3::from_shape_vec((n_frames, n_atoms, 3), positions).unwrap();
+python.rs:2281 count 0 | let array = Array3::from_shape_vec((block.n_frames, block.n_atoms, 3), block.values).unwrap();
+python.rs:2311 count 0 | let slab = Array3::from_shape_vec((frames.len(), n_atoms, 3), values).unwrap()
+python.rs:3624 count 1 | fn read_extxyz<'py>(
+python.rs:3635 count 1 | ndarray::Array3::from_shape_vec((tables.n_frames, tables.n_atoms, 3), tables.positions).unwrap();
+python.rs:3651 count 1 | fn read_pdb<'py>(
+python.rs:3662 count 1 | ndarray::Array3::from_shape_vec((tables.n_frames, tables.n_atoms, 3), tables.positions).unwrap();
