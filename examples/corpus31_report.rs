@@ -147,3 +147,61 @@ fn main() {
         .collect();
     println!("{}", json!({"files": entries}));
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use readcon_core::error::ParseError;
+
+    #[test]
+    fn line_of_reports_the_class_and_the_bytes() {
+        assert_eq!(line_of(b"a\n", &ParseError::MissingSpecVersion), 2);
+        assert_eq!(line_of(b"a\n", &ParseError::UnknownSection("q".into())), 2);
+        let bad = b"ab\xff";
+        assert_eq!(line_of(bad, &ParseError::IncompleteHeader), 1);
+        let units = b"header\nvelocities stay\n";
+        assert_eq!(
+            line_of(units, &ParseError::InvalidUnits("unknown unit furlong".into())),
+            2
+        );
+        let timed = b"h\nvelocities stay\n\n";
+        assert_eq!(
+            line_of(timed, &ParseError::ValidationError("need units.time".into())),
+            2
+        );
+        let blank = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n\nrest\n";
+        let at = line_of(
+            blank.as_bytes(),
+            &ParseError::ValidationError("missing units.time".into()),
+        );
+        assert!(at >= 11);
+        let section = b"\n\nbody\n";
+        assert_eq!(
+            line_of(section, &ParseError::IncompleteSection("forces".into())),
+            3
+        );
+        let ended = b"only\n";
+        assert_eq!(line_of(ended, &ParseError::IncompleteHeader), 2);
+        assert_eq!(line_of(b"only", &ParseError::IncompleteFrame), 2);
+        let walked = b"not a frame\nstill not\n";
+        let at = line_of(walked, &ParseError::ValidationError("later".into()));
+        assert!(at >= 1);
+        let text = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+        let counted = line_of(&text, &ParseError::ValidationError("later".into()));
+        assert!(counted >= 1);
+        let blanks = b"row\n\n\n";
+        let section = line_of(blanks, &ParseError::IncompleteSection("forces".into()));
+        assert!(section >= 1);
+    }
+
+    #[test]
+    fn one_rejects_a_missing_file_and_accepts_a_fixture() {
+        let missing = one(Path::new("resources/test/no-such-file.con"), None);
+        assert_eq!(missing["outcome"], "reject");
+        assert_eq!(missing["class"], "IoError");
+        let path = Path::new("resources/test/tiny_cuh2.con");
+        let accepted = one(path, Some(1));
+        assert_eq!(accepted["outcome"], "accept");
+        assert!(accepted["frames"].as_u64().unwrap() >= 1);
+    }
+}

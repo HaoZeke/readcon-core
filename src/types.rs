@@ -4362,14 +4362,14 @@ mod tests {
 
         let mut empty = ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
         assert!(empty.symbols.is_empty());
-        let _ = empty.with_velocity([1.0, 0.0, 0.0]);
-        let _ = empty.with_force([0.0, 1.0, 0.0]);
-        let _ = empty.with_energy(1.0);
-        let _ = empty.with_charge(0.1);
-        let _ = empty.with_spin(0.5);
-        let _ = empty.with_magmom([0.0, 0.0, 1.0]);
-        let _ = empty.with_displacement([0.1, 0.0, 0.0]);
-        let _ = empty.with_spread([0.2, 0.0, 0.0]);
+        assert!(empty.with_velocity([1.0, 0.0, 0.0]).symbols.is_empty());
+        assert!(empty.with_force([0.0, 1.0, 0.0]).symbols.is_empty());
+        assert!(empty.with_energy(1.0).symbols.is_empty());
+        assert!(empty.with_charge(0.1).symbols.is_empty());
+        assert!(empty.with_spin(0.5).symbols.is_empty());
+        assert!(empty.with_magmom([0.0, 0.0, 1.0]).symbols.is_empty());
+        assert!(empty.with_displacement([0.1, 0.0, 0.0]).symbols.is_empty());
+        assert!(empty.with_spread([0.2, 0.0, 0.0]).symbols.is_empty());
         assert!(empty.symbols.is_empty());
         assert!(empty.set_atom_spread(3, [0.0, 0.0, 0.0]).is_err());
         assert!(empty.set_atom_energy(3, 1.0).is_err());

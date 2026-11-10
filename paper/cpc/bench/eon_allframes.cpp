@@ -22,7 +22,12 @@
 namespace {
 
 int hwm_kib() {
+#ifdef READCON_EON_TEST_SEAM
+  const char *over = std::getenv("READCON_EON_STATUS");
+  std::ifstream status(over ? over : "/proc/self/status");
+#else
   std::ifstream status("/proc/self/status");
+#endif
   std::string line;
   while (std::getline(status, line)) {
     if (line.rfind("VmHWM:", 0) == 0) {

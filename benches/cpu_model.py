@@ -7,27 +7,51 @@ from pathlib import Path
 
 
 def normalize_cpu(raw: str) -> str:
-    """The hardware string the records write.
-
-    The kernel prints trademark marks. The records use one plain name.
-    """
+    """Drop trademark marks. The model name itself stays."""
     cleaned = " ".join(raw.replace("(R)", "").replace("(TM)", "").replace("®", "").split())
-    if "Xeon" in cleaned:
-        return "Intel Xeon Processor"
     return cleaned or "unknown"
 
 
+def cpu_record(model: str, family: str, model_id: str, stepping: str) -> str:
+    """Model name plus family, model, and stepping when the kernel printed them."""
+    name = normalize_cpu(model) if model else "unknown"
+    parts = []
+    if family:
+        parts.append(f"family {family}")
+    if model_id:
+        parts.append(f"model {model_id}")
+    if stepping:
+        parts.append(f"stepping {stepping}")
+    if not parts:
+        return name
+    if name == "unknown":
+        return " ".join(parts)
+    return f"{name} {' '.join(parts)}"
+
+
+def _field(text: str, key: str) -> str:
+    for line in text.splitlines():
+        if ":" not in line:
+            continue
+        left, value = line.split(":", 1)
+        if left.strip().lower() == key:
+            return value.strip()
+    return ""
+
+
 def cpu_model() -> str:
-    """Return the normalized model name from ``/proc/cpuinfo``, or ``unknown``."""
+    """Model name, family, model, and stepping from ``/proc/cpuinfo``."""
     try:
-        for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
-            if line.lower().startswith("model name"):
-                value = line.split(":", 1)[1].strip()
-                if value:
-                    return normalize_cpu(value)
+        text = Path("/proc/cpuinfo").read_text(encoding="utf-8")
     except OSError:
-        pass
-    return "unknown"
+        return "unknown"
+    model = _field(text, "model name")
+    family = _field(text, "cpu family")
+    model_id = _field(text, "model")
+    stepping = _field(text, "stepping")
+    if not any((model, family, model_id, stepping)):
+        return "unknown"
+    return cpu_record(model, family, model_id, stepping)
 
 
 def strip_host_token(label: str, node: str) -> str:

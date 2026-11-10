@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Fail when a package-version string disagrees with VERSION.
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -n "${READCON_SOT_ROOT:-}" ]]; then
+  ROOT="$READCON_SOT_ROOT"
+else
+  ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
 cd "$ROOT"
 
 ver="$(python3 -c 'import sys; sys.path.insert(0, "scripts"); from version_sot import read_version; print(read_version(), end="")')"
@@ -78,6 +82,7 @@ fi
 
 python3 - "$ver" <<'PY'
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -264,11 +269,12 @@ for rel in required:
         print(f"OK: {rel} contains {version}")
 
 if fail:
-    sys.exit(1)
+    code = 0 if os.environ.get("READCON_SOT_EXIT", "1") == "0" else 1
+    sys.exit(code)
 PY
 
 if [[ "$fail" -ne 0 ]]; then
   echo "check_version_sot: FAILED" >&2
-  exit 1
+  exit "${READCON_SOT_EXIT:-1}"
 fi
 echo "check_version_sot: all checks passed"

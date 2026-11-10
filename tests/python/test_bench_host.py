@@ -10,7 +10,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "benches"))
 
-from cpu_model import cpu_model, platform_label, strip_host_token  # noqa: E402
+from cpu_model import (  # noqa: E402
+    _field,
+    cpu_model,
+    cpu_record,
+    platform_label,
+    strip_host_token,
+)
 
 OUTPUT_DIRS = (ROOT / "benches" / "results", ROOT / "examples")
 SOURCE_GLOBS = (
@@ -50,6 +56,91 @@ def _text_files(path: Path):
     for child in path.rglob("*"):
         if child.is_file() and ".git" not in child.parts:
             yield child
+
+
+def test_cpu_record_keeps_the_model_name_and_the_ids(monkeypatch):
+    assert (
+        cpu_record("Intel(R) Xeon(R) Platinum 8480+", "6", "143", "8")
+        == "Intel Xeon Platinum 8480+ family 6 model 143 stepping 8"
+    )
+    assert cpu_record("", "6", "", "") == "family 6"
+    assert cpu_record("EPYC", "", "", "") == "EPYC"
+    assert _field("no-colon\nmodel : 7\n", "model") == "7"
+    assert _field("model name : Xeon\n", "model") == ""
+    def read(self, *args, **kwargs):
+        assert str(self) == "/proc/cpuinfo"
+        return (
+            "model name : Intel Xeon Platinum 8480+\n"
+            "cpu family : 6\nmodel : 143\nstepping : 8\n"
+        )
+
+    monkeypatch.setattr(Path, "read_text", read)
+    assert cpu_model() == "Intel Xeon Platinum 8480+ family 6 model 143 stepping 8"
+
+    def missing(self, *args, **kwargs):
+        assert str(self) == "/proc/cpuinfo"
+        raise OSError("absent")
+
+    monkeypatch.setattr(Path, "read_text", missing)
+    assert cpu_model() == "unknown"
+
+    def blank(self, *args, **kwargs):
+        assert str(self) == "/proc/cpuinfo"
+        return "processor : 0\n"
+
+    monkeypatch.setattr(Path, "read_text", blank)
+    assert cpu_model() == "unknown"
+
+
+def test_platform_label_uses_unknown_when_the_names_are_blank(monkeypatch):
+    monkeypatch.setattr(platform, "system", lambda: "  ")
+    monkeypatch.setattr(platform, "machine", lambda: "")
+    monkeypatch.setattr(platform, "platform", lambda: "Linux")
+    monkeypatch.setattr(platform, "node", lambda: "workstation")
+    label = platform_label()
+    assert label.startswith("unknown-unknown")
+    assert "workstation" not in label.split("-")
+
+
+def test_localhost_is_not_recorded(monkeypatch):
+    monkeypatch.setattr(platform, "node", lambda: "localhost")
+
+    def read(self, *args, **kwargs):
+        assert self == Path("/etc/hostname")
+        return "localhost\n"
+
+    monkeypatch.setattr(Path, "read_text", read)
+    assert _machine_names() == set()
+
+
+def test_hostname_and_binary_files(monkeypatch, tmp_path):
+    def read(self, *args, **kwargs):
+        assert self == Path("/etc/hostname")
+        raise OSError("absent")
+
+    monkeypatch.setattr(Path, "read_text", read)
+    assert _read_hostname_file() == ""
+    monkeypatch.undo()
+    folder = tmp_path / "out"
+    folder.mkdir()
+    plain = folder / "note.txt"
+    plain.write_text("plain", encoding="utf-8")
+    binary = folder / "raw.bin"
+    binary.write_bytes(b"\xff")
+    hidden = tmp_path / ".git" / "config"
+    hidden.parent.mkdir()
+    hidden.write_text("x", encoding="utf-8")
+    assert list(_text_files(plain)) == [plain]
+    assert list(_text_files(tmp_path / "missing")) == []
+    assert plain in list(_text_files(tmp_path))
+    assert hidden not in list(_text_files(tmp_path))
+    seen = []
+    for path in _text_files(folder):
+        try:
+            seen.append(path.read_text(encoding="utf-8"))
+        except UnicodeDecodeError:
+            continue
+    assert seen == ["plain"]
 
 
 def test_strip_host_token_removes_only_a_whole_component():
@@ -94,6 +185,15 @@ def test_python_and_rust_cpu_model_agree():
 
 def test_bench_and_example_output_has_no_hostname():
     names = _machine_names()
+    junk = ROOT / "examples" / "_binary_skip.bin"
+    junk.write_bytes(b"\xff")
+    try:
+        _scan_outputs(names)
+    finally:
+        junk.unlink()
+
+
+def _scan_outputs(names):
     for directory in OUTPUT_DIRS:
         for path in _text_files(directory):
             try:

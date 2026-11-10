@@ -28,7 +28,7 @@ fn class_of(text: &str) -> String {
 fn parse_one(text: &str) -> Result<ConFrame, ParseError> {
     match ConFrameIterator::new(text).next() {
         Some(result) => result,
-        None => panic!("no frame"),
+        None => Err(ParseError::IncompleteFrame),
     }
 }
 
@@ -60,6 +60,8 @@ fn m1_non_finite_rejected_without_validate() {
     }
     let coord = v2_frame(r#"{"con_spec_version":2}"#, "1.0 nan 0.0 0 0");
     assert_eq!(class_of(&coord), "NonFiniteValue");
+    assert_eq!(class_of(""), "empty");
+    assert!(parse_one("").is_err());
 }
 
 /// CON-mask.1, CON-mask.2, CON-mask.3, CON-mask.4, CON-mask.5, CON-error.3.
@@ -244,10 +246,10 @@ fn m7_writer_rejects_invalid_units() {
     let err = ConFrameWriter::new(&mut buf)
         .write_frame(&frame)
         .unwrap_err();
-    match err {
-        readcon_core::writer::WriteError::Format(ParseError::InvalidUnits(_)) => {}
-        other => panic!("expected InvalidUnits, got {other}"),
-    }
+    assert!(
+        matches!(err, readcon_core::writer::WriteError::Format(ParseError::InvalidUnits(_))),
+        "{err}"
+    );
 }
 
 /// CON-compress.1.
@@ -549,12 +551,12 @@ fn writer_rejects_a_repeated_atom_id() {
     let err = ConFrameWriter::new(&mut buf)
         .write_frame(&frame)
         .unwrap_err();
-    match err {
-        readcon_core::writer::WriteError::Format(ParseError::ValidationError(msg)) => {
-            assert!(msg.contains("repeated"), "{msg}");
-        }
-        other => panic!("{other}"),
-    }
+    let shown = format!("{err:?}");
+    assert!(
+        matches!(err, readcon_core::writer::WriteError::Format(ParseError::ValidationError(_))),
+        "{shown}"
+    );
+    assert!(shown.contains("repeated"), "{shown}");
 }
 
 /// CON-units.3, CON-units.4, CON-units.12.
@@ -569,10 +571,10 @@ fn v31_writer_requires_time_when_velocities_are_present() {
     let err = ConFrameWriter::new(&mut buf)
         .write_frame(&frame)
         .unwrap_err();
-    match err {
-        readcon_core::writer::WriteError::Format(ParseError::InvalidUnits(_)) => {}
-        other => panic!("{other}"),
-    }
+    assert!(
+        matches!(err, readcon_core::writer::WriteError::Format(ParseError::InvalidUnits(_))),
+        "{err}"
+    );
     let mut units = frame.header.units().cloned().unwrap();
     units["time"] = serde_json::json!(NATURAL_TIME_UNIT);
     let mut stamped = frame;

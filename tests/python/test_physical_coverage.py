@@ -24,6 +24,32 @@ def _export(name, segments):
     return {"data": [{"files": [{"filename": name, "segments": segments}]}]}
 
 
+def test_display_uses_a_suffix_past_the_table_when_the_count_is_huge():
+    assert display_count(10**18) == "1.00E"
+    assert display_count(10**21) == "1000E"
+
+
+def test_a_segment_that_spans_lines_keeps_the_higher_count():
+    export = _export(
+        "src/ffi.rs",
+        [
+            [1, 1, 2, True, True, False],
+            [4, 1, 9, True, True, False],
+            [4, 2, 1, True, True, False],
+        ],
+    )
+    hits = line_hits(export, "src/ffi.rs")
+    assert hits[1] == 2
+    assert hits[3] == 2
+    assert hits[4] == 9
+    second = _export(
+        "src/ffi.rs",
+        [[1, 1, 1, True, True, False], [2, 1, 0, False, False, False]],
+    )
+    both = {"data": export["data"] + second["data"]}
+    assert line_hits(both, "src/ffi.rs")[1] == 2
+
+
 def test_display_matches_the_observed_rounding():
     assert display_count(0) == "0"
     assert display_count(999) == "999"

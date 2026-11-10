@@ -55,10 +55,8 @@ fn con_file_6_writer_does_not_insert_a_blank_line_between_frames() {
         writer.write_frame(&frame).unwrap();
     }
     let text = String::from_utf8(buffer).unwrap();
-    assert!(
-        !text.contains("\n\nframe\n"),
-        "an extra blank line precedes the second frame:\n{text}"
-    );
+    let detail = format!("an extra blank line precedes the second frame:\n{text}");
+    assert!(!text.contains("\n\nframe\n"), "{detail}");
     let frames = parse(&text).unwrap();
     assert_eq!(frames.len(), 2);
 }
@@ -147,10 +145,8 @@ fn con_section_3_5_and_6_energies_section_has_no_blank_between_components() {
     assert!(!text.contains("atom_energies"), "{text}");
     let energies = text.split("Energies of Component 1").nth(1).unwrap();
     let between = energies.split("Energies of Component 2").next().unwrap();
-    assert!(
-        !between.contains("\n\n"),
-        "blank line inside the energies section:\n{text}"
-    );
+    let detail = format!("blank line inside the energies section:\n{text}");
+    assert!(!between.contains("\n\n"), "{detail}");
 }
 
 /// CON-section.19: a frame energy that is not the sum of the energies rows is still read.
@@ -178,10 +174,8 @@ fn con_validate_2_does_not_relax_a_check_that_already_applies() {
     assert_ne!(broken, text, "replacen left the coordinate unchanged");
     assert!(broken.contains("NaN"), "{broken}");
     let err = parse(&broken).unwrap_err();
-    assert!(
-        matches!(err, ParseError::NonFiniteValue(_)),
-        "validate is absent and NaN is still rejected: {err}"
-    );
+    let detail = format!("validate is absent and NaN is still rejected: {err}");
+    assert!(matches!(err, ParseError::NonFiniteValue(_)), "{detail}");
     let strict = text.replacen(
         r#""con_spec_version":3"#,
         r#""con_spec_version":3,"validate":true,"sections":[]"#,
@@ -191,10 +185,8 @@ fn con_validate_2_does_not_relax_a_check_that_already_applies() {
     assert!(strict.contains("\"validate\":true"), "{strict}");
     let strict = strict.replacen("1.0", "NaN", 1);
     let err = parse(&strict).unwrap_err();
-    assert!(
-        matches!(err, ParseError::NonFiniteValue(_)),
-        "validate true still rejects NaN: {err}"
-    );
+    let detail = format!("validate true still rejects NaN: {err}");
+    assert!(matches!(err, ParseError::NonFiniteValue(_)), "{detail}");
 }
 
 /// CON-bonds.2: validate true rejects a malformed bonds entry.
@@ -264,10 +256,8 @@ fn con_num_4_absent_abi_nan_is_not_written() {
     let broken = text.replacen("1.0", "NaN", 1);
     assert_ne!(broken, text);
     let err = parse(&broken).unwrap_err();
-    assert!(
-        matches!(err, ParseError::NonFiniteValue(_)),
-        "a non-finite token was not rejected: {err}"
-    );
+    let detail = format!("a non-finite token was not rejected: {err}");
+    assert!(matches!(err, ParseError::NonFiniteValue(_)), "{detail}");
     let mut builder = builder("");
     builder
         .add_atom("H", 0.0, 0.0, 0.0, [false, false, false], 4, 1.0)
@@ -279,14 +269,11 @@ fn con_num_4_absent_abi_nan_is_not_written() {
         let mut writer = ConFrameWriter::with_float_format(&mut buffer, FloatFormat::RoundTrip);
         writer.write_frame(&poisoned).unwrap_err()
     };
-    assert!(
-        matches!(err, WriteError::Format(ParseError::NonFiniteValue(_))),
-        "{err}"
-    );
-    assert!(
-        !String::from_utf8_lossy(&buffer).to_ascii_lowercase().contains("nan"),
-        "a rejected non-finite spread was written"
-    );
+    let detail = format!("{err}");
+    assert!(matches!(err, WriteError::Format(ParseError::NonFiniteValue(_))), "{detail}");
+    let written = String::from_utf8_lossy(&buffer).to_ascii_lowercase();
+    let note = format!("a rejected non-finite spread was written: {written}");
+    assert!(!written.contains("nan"), "{note}");
 }
 
 /// CON-token.1: an integer token is digits only. A sign is not an id.

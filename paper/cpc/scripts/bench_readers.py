@@ -176,15 +176,33 @@ def _hardware_lines() -> list[str]:
 
 
 def cpu_model() -> str:
-    raw = platform.processor()
-    for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
-        if line.startswith("model name"):
-            raw = line.split(":", 1)[1].strip()
-            break
-    cleaned = " ".join(raw.replace("(R)", "").replace("(TM)", "").split())
-    if "Xeon" in cleaned:
-        return "Intel Xeon Processor"
-    return cleaned
+    text = Path("/proc/cpuinfo").read_text(encoding="utf-8")
+
+    def field(key: str) -> str:
+        for line in text.splitlines():
+            if ":" not in line:
+                continue
+            left, value = line.split(":", 1)
+            if left.strip().lower() == key:
+                return value.strip()
+        return ""
+
+    model = " ".join(
+        field("model name").replace("(R)", "").replace("(TM)", "").replace("®", "").split()
+    )
+    parts = []
+    if field("cpu family"):
+        parts.append(f"family {field('cpu family')}")
+    if field("model"):
+        parts.append(f"model {field('model')}")
+    if field("stepping"):
+        parts.append(f"stepping {field('stepping')}")
+    name = model or "unknown"
+    if not parts:
+        return name
+    if name == "unknown":
+        return " ".join(parts)
+    return f"{name} {' '.join(parts)}"
 
 
 def reference(n_frames: int, n_atoms: int) -> np.ndarray:
@@ -270,14 +288,21 @@ def module_identity(mod):
         shown = path[len(root) + 1 :]
     elif "site-packages/" in path:
         shown = path[path.index("site-packages/") :]
-    so = path
+    hashed = path
     if os.path.isdir(folder):
         found = [name for name in os.listdir(folder) if name.endswith(".so")]
         if found:
-            so = os.path.join(folder, sorted(found)[0])
+            hashed = os.path.join(folder, sorted(found)[0])
+    if hashed != path:
+        if root and hashed.startswith(root + os.sep):
+            shown = hashed[len(root) + 1 :]
+        elif "site-packages/" in hashed:
+            shown = hashed[hashed.index("site-packages/") :]
+        else:
+            shown = hashed
     digest = ""
-    if os.path.isfile(so):
-        digest = hashlib.sha256(open(so, "rb").read()).hexdigest()
+    if os.path.isfile(hashed):
+        digest = hashlib.sha256(open(hashed, "rb").read()).hexdigest()
     version = getattr(mod, "__version__", "") or ""
     if os.path.isdir(parent):
         for name in os.listdir(parent):
@@ -555,6 +580,8 @@ def main() -> int:
         status or "(clean)",
         "git_status_end",
         "command python3 paper/cpc/scripts/bench_readers.py",
+        "readcon_build " + os.environ.get("READCON_BUILD", ""),
+        "bench_start_local " + time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "eon_build " + " ".join(eon_build_argv()),
         f"frames {N_FRAMES}",
         f"atoms {N_ATOMS}",

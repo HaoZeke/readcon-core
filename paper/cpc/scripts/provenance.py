@@ -262,16 +262,28 @@ def hardware_tex(line: dict) -> str:
 
 
 def normalize_cpu(raw: str) -> str:
-    """Plain processor name written into every record.
-
-    A Xeon model becomes ``Intel Xeon Processor``.
-    """
+    """Drop trademark marks. The model name itself stays."""
     cleaned = " ".join(
         raw.replace("(R)", "").replace("(TM)", "").replace("®", "").split()
     )
-    if "Xeon" in cleaned:
-        return "Intel Xeon Processor"
     return cleaned or "unknown"
+
+
+def cpu_record(model: str, family: str, model_id: str, stepping: str) -> str:
+    """Model name plus family, model, and stepping."""
+    name = normalize_cpu(model) if model else "unknown"
+    parts = []
+    if family:
+        parts.append(f"family {family}")
+    if model_id:
+        parts.append(f"model {model_id}")
+    if stepping:
+        parts.append(f"stepping {stepping}")
+    if not parts:
+        return name
+    if name == "unknown":
+        return " ".join(parts)
+    return f"{name} {' '.join(parts)}"
 
 
 def host() -> dict:
@@ -287,12 +299,14 @@ def host() -> dict:
     for line in text.splitlines():
         key, _, value = line.partition(":")
         key = key.strip()
-        if key == "model name" and "cpu_model" not in info:
-            info["cpu_model"] = normalize_cpu(value.strip())
+        if key == "model name" and "model_name" not in info:
+            info["model_name"] = value.strip()
         elif key == "cpu family" and "family" not in info:
             info["family"] = value.strip()
         elif key == "model" and "model" not in info:
             info["model"] = value.strip()
+        elif key == "stepping" and "stepping" not in info:
+            info["stepping"] = value.strip()
         elif key == "cpu MHz" and "mhz" not in info:
             info["mhz"] = float(value)
     try:
@@ -301,6 +315,12 @@ def host() -> dict:
                 info["mem_kb"] = int(line.split()[1])
     except OSError:
         pass
+    info["cpu_model"] = cpu_record(
+        info.get("model_name", ""),
+        info.get("family", ""),
+        info.get("model", ""),
+        info.get("stepping", ""),
+    )
     return info
 
 

@@ -3968,11 +3968,13 @@ Coordinates of Component 1
 
         let body = "\nCu\nEnergies of Component 1\n1.0 0 0\n1.0 0 1\nH\nEnergies of Component 2\n0.5 0 2\n0.5 0 3\n";
         let mut energy_lines = body.lines().peekable();
-        let _ = super::parse_energy_section(
+        let energy = super::parse_energy_section(
             &mut energy_lines,
             &frame.header,
             &mut frame.atom_data,
         );
+        let shown = format!("{energy:?}");
+        assert!(energy.is_err(), "{shown}");
 
         let spreads = "\nCu\nSpreads of Component 1\nnan nan nan 0 0\n0 0 0 0 1\nH\nSpreads of Component 2\n0 0 0 0 2\n0 0 0 0 3\n";
         let mut spread_lines = spreads.lines().peekable();

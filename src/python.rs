@@ -4018,7 +4018,7 @@ mod api_coverage {
             .unwrap();
             assert!(list.borrow(py).touch_checksum(py).is_err());
             let iter = Py::new(py, ConFrameList::__iter__(list.clone_ref(py))).unwrap();
-            let _ = ConFrameListIter::__iter__(iter.borrow(py));
+            assert_eq!(ConFrameListIter::__iter__(iter.borrow(py)).pos, 0);
 
             let dir = tempfile::tempdir().unwrap();
             let empty = dir.path().join("empty.con");
@@ -4036,7 +4036,7 @@ mod api_coverage {
             let opened = crate::trajectory::ConTrajectory::open(tiny.as_path(), false).unwrap();
             let traj = Py::new(py, PyConTrajectory { inner: opened }).unwrap();
             let traj_iter = Py::new(py, PyConTrajectory::__iter__(traj)).unwrap();
-            let _ = PyConTrajectoryIter::__iter__(traj_iter.borrow(py));
+            assert_eq!(PyConTrajectoryIter::__iter__(traj_iter.borrow(py)).pos, 0);
 
             let mut owned = PyConFrame::from_owned(py, frame.clone()).unwrap();
             owned.metadata.bind(py).set_item(meta::BONDS, py.None()).unwrap();
@@ -4062,20 +4062,26 @@ mod api_coverage {
             owned.atoms_ready.store(false, std::sync::atomic::Ordering::Relaxed);
             owned.ensure_atoms(py).unwrap();
             assert!(frame_from_arrays(&[1.0], &[1.0, 2.0], &[1.0; 6], "Cu").is_err());
-            let _ = chemfiles_err_to_py(crate::chemfiles_import::ChemfilesImportError::Io(
+            let io_err = chemfiles_err_to_py(crate::chemfiles_import::ChemfilesImportError::Io(
                 std::io::Error::other("disk"),
             ));
-            let _ = chemfiles_err_to_py(crate::chemfiles_import::ChemfilesImportError::InvalidFrame(
-                "shape".into(),
-            ));
+            assert!(io_err.is_instance_of::<pyo3::exceptions::PyIOError>(py));
+            assert!(io_err.to_string().contains("disk"));
+            let frame_err = chemfiles_err_to_py(
+                crate::chemfiles_import::ChemfilesImportError::InvalidFrame("shape".into()),
+            );
+            assert!(frame_err.is_instance_of::<PyValueError>(py));
+            assert!(frame_err.to_string().contains("shape"));
             #[cfg(feature = "chemfiles")]
             {
-                let _ = chemfiles_err_to_py(crate::chemfiles_import::ChemfilesImportError::Chemfiles(
-                    chemfiles::Error {
+                let chem_err = chemfiles_err_to_py(
+                    crate::chemfiles_import::ChemfilesImportError::Chemfiles(chemfiles::Error {
                         status: chemfiles::Status::FileError,
                         message: "disk".into(),
-                    },
-                ));
+                    }),
+                );
+                assert!(chem_err.is_instance_of::<PyValueError>(py));
+                assert!(chem_err.to_string().contains("disk"));
             }
 
             let dir = tempfile::tempdir().unwrap();
