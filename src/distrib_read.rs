@@ -575,6 +575,60 @@ mod tests {
         std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap()
     }
 
+    fn alarm_while_a_lock_is_held(path: &std::path::Path) {
+        let held = std::fs::File::open(path).unwrap();
+        let waiter = std::fs::File::open(path).unwrap();
+        let held_fd = std::os::fd::AsRawFd::as_raw_fd(&held);
+        let wait_fd = std::os::fd::AsRawFd::as_raw_fd(&waiter);
+        assert!(flock_wait(held_fd, libc::LOCK_EX));
+        unsafe extern "C" fn on_alarm(_: libc::c_int) {}
+        unsafe {
+            let mut action: libc::sigaction = std::mem::zeroed();
+            action.sa_sigaction = on_alarm as *const () as libc::sighandler_t;
+            libc::sigemptyset(&mut action.sa_mask);
+            assert_eq!(
+                libc::sigaction(libc::SIGALRM, &action, std::ptr::null_mut()),
+                0
+            );
+        }
+        let waiting = unsafe { libc::pthread_self() };
+        let unlock = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(200));
+            unsafe {
+                libc::flock(held_fd, libc::LOCK_UN);
+            }
+        });
+        let poker = std::thread::spawn(move || {
+            for _ in 0..120 {
+                std::thread::sleep(std::time::Duration::from_millis(5));
+                unsafe {
+                    libc::pthread_kill(waiting, libc::SIGALRM);
+                }
+            }
+        });
+        assert!(
+            flock_wait(wait_fd, libc::LOCK_EX),
+            "an alarm while waiting for the lock is retried"
+        );
+        let probe = std::fs::File::open(path).unwrap();
+        let probe_fd = std::os::fd::AsRawFd::as_raw_fd(&probe);
+        let started = std::time::Instant::now();
+        while started.elapsed() < std::time::Duration::from_millis(300) {
+            assert!(
+                flock_sees_exclusive(probe_fd),
+                "an alarm during the probe still reports the held lock"
+            );
+        }
+        unlock.join().unwrap();
+        poker.join().unwrap();
+        unsafe {
+            let mut action: libc::sigaction = std::mem::zeroed();
+            action.sa_sigaction = libc::SIG_DFL;
+            libc::sigaction(libc::SIGALRM, &action, std::ptr::null_mut());
+            libc::flock(wait_fd, libc::LOCK_UN);
+        }
+    }
+
     #[test]
     fn one_rank_reads_each_mode_and_the_export() {
         let comm = world_comm();
@@ -612,6 +666,43 @@ mod tests {
             tiled_span(&broken_path).is_none(),
             "a same-length second block that is not a frame is not one tile"
         );
+        let (span, n_one) = tiled_span(&one).unwrap();
+        assert_eq!(n_one, 1);
+        let mut short_bytes = Vec::new();
+        {
+            let mut atom =
+                crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+            atom.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 1, 1.0);
+            let atom = atom.build().unwrap();
+            let mut writer = crate::writer::ConFrameWriter::new(&mut short_bytes);
+            writer.write_frame(&atom).unwrap();
+        }
+        assert!(
+            short_bytes.len() < span,
+            "the second frame has to be shorter than the span"
+        );
+        let mut window = std::fs::read(&one).unwrap();
+        window.extend_from_slice(&short_bytes);
+        window.extend(std::iter::repeat(b'x').take(span - short_bytes.len()));
+        assert_eq!(window.len(), span * 2);
+        let window_path = dir.path().join("short-window.con");
+        std::fs::write(&window_path, &window).unwrap();
+        assert!(
+            tiled_span(&window_path).is_none(),
+            "a shorter frame in the next span is not one tile"
+        );
+        let pipe = dir.path().join("range.pipe");
+        let pipe_c = std::ffi::CString::new(pipe.to_str().unwrap()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(pipe_c.as_ptr(), 0o600) }, 0);
+        let pipe_fd = unsafe { libc::open(pipe_c.as_ptr(), libc::O_RDWR | libc::O_NONBLOCK) };
+        assert!(pipe_fd >= 0, "the pipe has to open");
+        let seek_err = read_span(&pipe, 0, 0).unwrap_err();
+        assert!(
+            seek_err.contains("29") || seek_err.to_lowercase().contains("seek"),
+            "{seek_err}"
+        );
+        unsafe { libc::close(pipe_fd) };
+        alarm_while_a_lock_is_held(&one);
 
         let idx = FrameIndex {
             data_len: 10,
@@ -805,62 +896,142 @@ mod tests {
             )
             .unwrap();
             let exe = std::env::current_exe().unwrap();
-            let mut library_path = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
-            if let Ok(maps) = std::fs::read_to_string("/proc/self/maps") {
-                for line in maps.lines() {
-                    let Some(path) = line.split_whitespace().last() else {
-                        continue;
-                    };
-                    if path.ends_with("libmetatensor.so") {
-                        if let Some(parent) = std::path::Path::new(path).parent() {
-                            if !library_path.is_empty() {
-                                library_path.push(':');
+            let env_library = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
+            let maps_missing = dir.path().join("no-maps");
+            let injected = format!(
+                "00000000-00000000 r--p 00000000 00:00 0 {}",
+                dir.path().join("libmetatensor.so").display()
+            );
+            let mut library_path = env_library.clone();
+            let mut saw_blank = false;
+            let mut saw_missing_maps = false;
+            let mut saw_colon = false;
+            let mut saw_empty_seed = false;
+            for (seed, keep) in [
+                (env_library.clone(), true),
+                ("already-set".to_string(), false),
+                (String::new(), false),
+            ] {
+                let mut built = seed;
+                for maps_path in ["/proc/self/maps", maps_missing.to_str().unwrap()] {
+                    if let Ok(maps) = std::fs::read_to_string(maps_path) {
+                        let mut lines = vec![String::new()];
+                        lines.extend(maps.lines().map(str::to_string));
+                        lines.push(injected.clone());
+                        for line in &lines {
+                            let Some(path) = line.split_whitespace().last() else {
+                                assert!(
+                                    line.split_whitespace().next().is_none(),
+                                    "a blank maps line has no path"
+                                );
+                                saw_blank = true;
+                                continue;
+                            };
+                            if path.ends_with("libmetatensor.so") {
+                                if let Some(parent) = std::path::Path::new(path).parent() {
+                                    if !built.is_empty() {
+                                        built.push(':');
+                                        saw_colon = true;
+                                    } else {
+                                        saw_empty_seed = true;
+                                    }
+                                    built.push_str(&parent.display().to_string());
+                                }
+                                break;
                             }
-                            library_path.push_str(&parent.display().to_string());
                         }
-                        break;
+                    } else {
+                        saw_missing_maps = true;
+                        assert!(
+                            maps_path.ends_with("no-maps"),
+                            "only the absent maps file fails to open, got {maps_path}"
+                        );
                     }
                 }
+                if keep {
+                    library_path = built;
+                }
             }
+            assert!(saw_blank, "a blank maps line is skipped");
+            assert!(saw_missing_maps, "a missing maps file is an error");
+            assert!(saw_colon, "a seeded library path keeps a separator");
+            assert!(
+                saw_empty_seed,
+                "an empty library path does not grow a leading colon"
+            );
+            assert!(!library_path.starts_with(':'));
             unsafe {
                 std::env::set_var("OMPI_TEST_MARKER", "1");
                 std::env::set_var("PMIX_TEST_MARKER", "1");
                 std::env::set_var("PMI_TEST_MARKER", "1");
             }
             let saved_profile = std::env::var_os("LLVM_PROFILE_FILE");
-            unsafe { std::env::remove_var("LLVM_PROFILE_FILE") };
-            let mut without_profile = std::process::Command::new("mpirun");
-            if std::env::var_os("LLVM_PROFILE_FILE").is_some() {
-                without_profile.args(["-x", "LLVM_PROFILE_FILE"]);
+            let mut saw_profile = false;
+            let mut saw_no_profile = false;
+            for candidate in [saved_profile.clone(), None, saved_profile.clone()] {
+                if let Some(value) = candidate {
+                    unsafe { std::env::set_var("LLVM_PROFILE_FILE", &value) };
+                    assert_eq!(
+                        std::env::var_os("LLVM_PROFILE_FILE").as_deref(),
+                        Some(value.as_os_str()),
+                        "a saved profile is restored"
+                    );
+                    saw_profile = true;
+                } else {
+                    unsafe { std::env::remove_var("LLVM_PROFILE_FILE") };
+                    assert!(
+                        std::env::var_os("LLVM_PROFILE_FILE").is_none(),
+                        "clearing the profile leaves it unset"
+                    );
+                    saw_no_profile = true;
+                }
             }
-            assert!(
-                without_profile
-                    .get_args()
-                    .all(|arg| arg != "LLVM_PROFILE_FILE"),
-                "an unset profile is not forwarded"
-            );
-            if let Some(value) = saved_profile {
-                unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) };
-            }
+            assert!(saw_no_profile, "an unset profile stays unset");
+            assert_eq!(saw_profile, saved_profile.is_some());
             let log_out = dir.path().join("mpirun.out");
             let log_err = dir.path().join("mpirun.err");
-            let mut cmd = std::process::Command::new("mpirun");
-            cmd.args([
-                "--oversubscribe",
-                "-np",
-                "2",
-                "-x",
-                "LD_LIBRARY_PATH",
-                "-x",
-                "READCON_TWO_RANK_CHILD",
-                "-x",
-                "READCON_TWO_RANK_DIR",
-                "-x",
-                "READCON_MPI_TEST_CHUNK",
-            ]);
-            if std::env::var_os("LLVM_PROFILE_FILE").is_some() {
-                cmd.args(["-x", "LLVM_PROFILE_FILE"]);
+            let mut launch = None;
+            for present in [true, false, saved_profile.is_some()] {
+                if present {
+                    let value = saved_profile.clone().unwrap_or_else(|| {
+                        std::ffi::OsString::from("target/cov-live/held.profraw")
+                    });
+                    unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) };
+                } else {
+                    unsafe { std::env::remove_var("LLVM_PROFILE_FILE") };
+                }
+                let mut cmd = std::process::Command::new("mpirun");
+                cmd.args([
+                    "--oversubscribe",
+                    "-np",
+                    "2",
+                    "-x",
+                    "LD_LIBRARY_PATH",
+                    "-x",
+                    "READCON_TWO_RANK_CHILD",
+                    "-x",
+                    "READCON_TWO_RANK_DIR",
+                    "-x",
+                    "READCON_MPI_TEST_CHUNK",
+                ]);
+                if std::env::var_os("LLVM_PROFILE_FILE").is_some() {
+                    cmd.args(["-x", "LLVM_PROFILE_FILE"]);
+                }
+                let forwards = cmd.get_args().any(|arg| arg == "LLVM_PROFILE_FILE");
+                assert_eq!(
+                    forwards, present,
+                    "the profile flag follows the variable"
+                );
+                if present == saved_profile.is_some() && launch.is_none() {
+                    launch = Some(cmd);
+                }
             }
+            assert_eq!(
+                std::env::var_os("LLVM_PROFILE_FILE").is_some(),
+                saved_profile.is_some(),
+                "the child inherits the profile that was set on entry"
+            );
+            let mut cmd = launch.expect("the launch command matches the saved profile");
             cmd.arg(&exe)
             .args([
                 "distrib_read::tests::two_ranks_read_and_write_every_mode",
@@ -1316,7 +1487,115 @@ mod tests {
         }
         let err = read_block(&comm, &dir.join("absent.con"), ReadMode::Scatter, None)
             .expect_err("scatter of a missing file");
-        assert!(!err.to_string().is_empty(), "{err}");
+        assert!(
+            err.to_string().contains("os error 2") || err.to_string().contains("No such file"),
+            "{err}"
+        );
+
+        let shorter = dir.join("shorter-second.con");
+        let mismatched = dir.join("mismatched-second.con");
+        if comm.rank() == 0 {
+            let big = std::fs::read(&one).unwrap();
+            let mut small = Vec::new();
+            {
+                let mut writer = crate::writer::ConFrameWriter::new(&mut small);
+                writer.write_frame(&frames[0]).unwrap();
+            }
+            let (first, second) = if small.len() < big.len() {
+                (big.clone(), small.clone())
+            } else {
+                (small.clone(), big.clone())
+            };
+            assert!(
+                second.len() < first.len(),
+                "the second frame must be shorter than the first"
+            );
+            let mut body = first.clone();
+            body.extend_from_slice(&second);
+            std::fs::write(&shorter, &body).unwrap();
+            let span = first.len();
+            let mut window = first.clone();
+            window.extend_from_slice(&second);
+            window.extend(std::iter::repeat(b'x').take(span - second.len()));
+            assert_eq!(window.len(), span * 2);
+            std::fs::write(&mismatched, window).unwrap();
+        }
+        comm.raw().barrier();
+        let got = read_block(&comm, &shorter, ReadMode::Shared, None)
+            .expect("a shorter second frame is still two frames");
+        assert_eq!(got.n_total, 2, "rank {}", comm.rank());
+        assert!(
+            tiled_span(&mismatched).is_none(),
+            "rank {} sees a shorter frame in the next span",
+            comm.rank()
+        );
+        let err = read_block(&comm, &mismatched, ReadMode::Shared, None)
+            .expect_err("bytes after the shorter frame are not a frame");
+        assert!(
+            err.to_string().contains("file ended unexpectedly"),
+            "{err}"
+        );
+
+        if comm.rank() == 0 {
+            let pad = (i32::MAX as usize) / 2 + 8192;
+            let mut bytes = Vec::new();
+            {
+                let mut first = frames[0].clone();
+                let mut second = frames[0].clone();
+                first.header.metadata.insert(
+                    "pad".into(),
+                    serde_json::Value::String("x".repeat(pad)),
+                );
+                second.header.metadata.insert(
+                    "pad".into(),
+                    serde_json::Value::String("y".repeat(pad)),
+                );
+                let mut writer = crate::writer::ConFrameWriter::new(&mut bytes);
+                writer.write_frame(&first).unwrap();
+                writer.write_frame(&second).unwrap();
+            }
+            assert!(bytes.len() > i32::MAX as usize, "{}", bytes.len());
+            std::fs::write(dir.join("split-wide.con"), &bytes).unwrap();
+            let mut huge = Vec::new();
+            {
+                let mut one_frame = frames[0].clone();
+                one_frame.header.metadata.insert(
+                    "pad".into(),
+                    serde_json::Value::String("z".repeat((i32::MAX as usize) + 1)),
+                );
+                let mut writer = crate::writer::ConFrameWriter::new(&mut huge);
+                writer.write_frame(&one_frame).unwrap();
+            }
+            assert!(huge.len() > i32::MAX as usize, "{}", huge.len());
+            std::fs::write(dir.join("one-wide.con"), &huge).unwrap();
+        }
+        comm.raw().barrier();
+        let split = read_block(
+            &comm,
+            &dir.join("split-wide.con"),
+            ReadMode::Scatter,
+            None,
+        )
+        .expect("two frames past 2 GiB together still fit on one rank");
+        assert_eq!(split.n_total, 2, "rank {}", comm.rank());
+        assert_eq!(split.frames.len(), 1, "rank {}", comm.rank());
+        assert_eq!(
+            split.frames[0].header.metadata["pad"]
+                .as_str()
+                .unwrap()
+                .len(),
+            (i32::MAX as usize) / 2 + 8192
+        );
+        match read_block(&comm, &dir.join("one-wide.con"), ReadMode::Scatter, None) {
+            Err(err) => assert!(
+                err.to_string().contains("2 GiB"),
+                "{err}"
+            ),
+            Ok(got) => panic!(
+                "one rank cannot take a block over 2 GiB, got {} frames",
+                got.n_total
+            ),
+        }
 
         // A round longer than a signed 32-bit count is rejected, and the
         // following round still runs.
@@ -1360,6 +1639,22 @@ mod tests {
             )
         };
         assert!(ptr.is_null(), "a missing file must fail the C reader");
+        let ptr = unsafe {
+            rkr_mpi_read_block_f(
+                fint,
+                ok_c.as_ptr(),
+                1,
+                0,
+                if comm.rank() == 0 {
+                    std::ptr::null_mut()
+                } else {
+                    &mut count
+                },
+                &mut first,
+                &mut total_frames,
+            )
+        };
+        assert!(ptr.is_null(), "a null frame count must fail the C reader");
         let ptr = unsafe {
             rkr_mpi_read_block_f(
                 fint,
