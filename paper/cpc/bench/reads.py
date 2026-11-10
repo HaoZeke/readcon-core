@@ -126,7 +126,10 @@ def main() -> None:
     artifacts = {"bench_child": HERE / "bench_child.py"}
     module = stamp["build"].get("readcon_module")
     if module:
-        artifacts["readcon_module"] = Path(module)
+        module_path = Path(module)
+        if not module_path.is_file():
+            module_path = HERE.parents[2] / module
+        artifacts["readcon_module"] = module_path
     for program, path in cpp_reads.PROGRAMS.items():
         artifacts[f"cpp:{program}"] = Path(path)
     for info in meta.values():
