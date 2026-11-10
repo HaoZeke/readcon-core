@@ -295,5 +295,12 @@ mod unix_tests {
         let frames = client.parse_file(&path).expect("parse file");
         assert_eq!(frames.len(), 1);
         assert!(client.parse_file(dir.path().join("missing.con").as_path()).is_err());
+        let refused = RpcClient::new("127.0.0.1:1").expect("endpoint");
+        let err = refused.parse_bytes(MINIMAL.as_bytes()).unwrap_err();
+        assert!(
+            err.to_string().to_lowercase().contains("refused")
+                || err.to_string().to_lowercase().contains("connect"),
+            "{err}"
+        );
     }
 }

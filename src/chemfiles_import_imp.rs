@@ -1320,4 +1320,55 @@ END
         };
         assert!(con_frames_from_trajectory_path_with(&path, &topo).is_ok());
     }
+
+    #[test]
+    fn a_fractional_index_keeps_the_extra_and_bonds_stay() {
+        let mut meta = BTreeMap::new();
+        insert_mapped_or_extra(&mut meta, "frame_index", &Property::Double(1.5));
+        insert_mapped_or_extra(&mut meta, "neb_bead", &Property::Double(-2.0));
+        assert!(meta.get(meta::FRAME_INDEX).is_none());
+        assert!(meta.keys().any(|key| key.contains("frame_index")));
+        assert!(meta.keys().any(|key| key.contains("neb_bead")));
+
+        let mut frame = Frame::new();
+        let mut named = Atom::new("H1");
+        named.set_atomic_type("H");
+        named.set_mass(1.2);
+        let mut other = Atom::new("H2");
+        other.set_atomic_type("H");
+        other.set_mass(1.4);
+        frame.add_atom(&named, [0.0, 0.0, 0.0], Some([0.1, 0.0, 0.0]));
+        frame.add_atom(&other, [1.0, 0.0, 0.0], None);
+        frame.add_atom(&Atom::new("O"), [0.0, 0.0, 1.0], None);
+        frame.add_atom(&Atom::new("O"), [0.0, 0.0, 0.0], None);
+        frame.set_cell(&UnitCell::new([6.0, 6.0, 6.0]));
+        frame.add_bond(0, 1);
+        assert!(apply_guess_bonds(&mut frame, true).is_ok());
+        assert!(!frame.topology().bonds().is_empty());
+        let con = con_frame_from_chemfiles(&frame).expect("convert");
+        assert!(con.header.bonds().len() >= 1);
+        assert!(
+            con.header
+                .masses_per_type
+                .iter()
+                .any(|mass| (*mass - 1.2).abs() < 1e-8),
+            "{:?}",
+            con.header.masses_per_type
+        );
+        assert!(
+            !con.header
+                .masses_per_type
+                .iter()
+                .any(|mass| (*mass - 1.4).abs() < 1e-8),
+            "{:?}",
+            con.header.masses_per_type
+        );
+        let origin = con.atom_data.iter().any(|atom| {
+            atom.symbol.as_ref() == "O"
+                && atom.x.abs() < 1e-6
+                && atom.y.abs() < 1e-6
+                && atom.z.abs() < 1e-6
+        });
+        assert!(origin);
+    }
 }

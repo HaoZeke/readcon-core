@@ -605,7 +605,7 @@ mod tests {
         assert_eq!(bytes.len(), 4);
         let mut broken = format!("{text}{text}");
         let mid = text.len() + text.len() / 2;
-        broken.replace_range(mid..mid + 1, "\n");
+        broken.replace_range(mid..mid + 1, "Q");
         let broken_path = dir.path().join("broken-tile.con");
         std::fs::write(&broken_path, &broken).unwrap();
         assert!(tiled_span(&broken_path).is_none());
@@ -787,6 +787,20 @@ mod tests {
             let dir = tempfile::tempdir().unwrap();
             let text = fixture();
             std::fs::write(dir.path().join("two.con"), format!("{text}{text}")).unwrap();
+            let mut one_atom =
+                crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+            one_atom.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 1, 1.0);
+            let one_atom = one_atom.build().unwrap();
+            let mut raw = Vec::new();
+            {
+                let mut writer = crate::writer::ConFrameWriter::new(&mut raw);
+                writer.write_frame(&one_atom).unwrap();
+            }
+            std::fs::write(
+                dir.path().join("mixed.con"),
+                format!("{text}{}", String::from_utf8(raw).unwrap()),
+            )
+            .unwrap();
             let exe = std::env::current_exe().unwrap();
             let mut library_path = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
             if let Ok(maps) = std::fs::read_to_string("/proc/self/maps") {
@@ -861,10 +875,16 @@ mod tests {
         assert_eq!(comm.size(), 2, "the child must be launched with two ranks");
         let dir = std::path::PathBuf::from(std::env::var("READCON_TWO_RANK_DIR").unwrap());
         let path = dir.join("two.con");
+        let mixed = dir.join("mixed.con");
         for mode in [ReadMode::Shared, ReadMode::Scatter, ReadMode::Auto] {
             let got = read_block(&comm, &path, mode, None).expect("collective read");
             assert_eq!(got.n_total, 2);
             assert_eq!(got.frames.len(), 1);
+        }
+        for mode in [ReadMode::Shared, ReadMode::Scatter] {
+            let got = read_block(&comm, &mixed, mode, None).expect("unequal frames");
+            assert_eq!(got.n_total, 2, "{mode:?}");
+            assert_eq!(got.frames.len(), 1, "{mode:?}");
         }
         let frames = read_block(&comm, &path, ReadMode::Shared, None)
             .unwrap()

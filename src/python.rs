@@ -4374,6 +4374,14 @@ comm = C()
             builder.add_atom("Cu", 0.1, 0.2, 0.3, [false; 3], 1, 63.5);
             let mut frame = PyConFrame::from_owned(py, builder.build().unwrap()).unwrap();
             assert!(frame.set_metadata_json(py, "{").is_err());
+            let err = frame
+                .set_scalar_metadata(py, "energy", f64::NAN)
+                .unwrap_err();
+            assert!(err.to_string().contains("finite"), "{err}");
+            let err = frame
+                .set_metadata_json(py, r#"{"pbc":[1,2,3]}"#)
+                .unwrap_err();
+            assert!(err.to_string().contains("pbc"), "{err}");
 
             let locals = pyo3::types::PyDict::new(py);
             py.run(
