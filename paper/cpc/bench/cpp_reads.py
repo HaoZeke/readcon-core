@@ -43,7 +43,7 @@ sys.path.insert(0, str(HERE))
 import portable  # noqa: E402
 from provenance import library_digest  # noqa: E402
 
-ENV = Path(sys.prefix).resolve()
+ENV = Path(sys.prefix)
 NATIVE = HERE / "native"
 OUT = Path(os.environ.get("BENCH_NATIVE_OUT", HERE / "work" / "native0174"))
 RESULTS = Path(os.environ.get("BENCH_RESULTS", HERE / "results" / "r0174")) / "cpp"
