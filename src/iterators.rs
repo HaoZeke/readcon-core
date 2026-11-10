@@ -4482,6 +4482,12 @@ mod missed_branch_tests {
         indexed_peek.clear_peek();
         assert_eq!(indexed_peek.pos, 0);
         assert_eq!(indexed_peek.peek_line(), Some("ab"));
+        let mut plain_peek = MemchrLines::new("ab\ncd\n");
+        assert!(plain_peek.newlines.is_none());
+        assert_eq!(plain_peek.peek_line(), Some("ab"));
+        plain_peek.clear_peek();
+        assert_eq!(plain_peek.pos, 0);
+        assert_eq!(plain_peek.peek_line(), Some("ab"));
 
         let mut tail = MemchrLines::new("ab\ncd");
         tail.newlines = Some(vec![2]);
