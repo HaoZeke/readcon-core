@@ -4448,6 +4448,12 @@ atoms = Atoms()
             assert_eq!(digest, again, "a second walk changed the checksum");
             let stored = borrowed.frames.lock().expect("frames");
             assert_eq!(stored[0].as_ref().unwrap().atom_data[0].symbol.as_ref(), "H");
+            let shown = PyConFrame::from_owned(py, stored[0].as_ref().unwrap().clone()).unwrap();
+            let last = shown.__getitem__(py, -1).unwrap();
+            let symbol: String = last.getattr("symbol").unwrap().extract().unwrap();
+            assert_eq!(symbol, "H");
+            let err = shown.__getitem__(py, -2).unwrap_err();
+            assert!(err.to_string().contains("out of range"), "{err}");
         });
     }
 
