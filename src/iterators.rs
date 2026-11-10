@@ -844,7 +844,8 @@ impl<'a> ConFrameIterator<'a> {
                 // section still occupies the blank when its label is not
                 // the name the section asked for (CON-section.2).
                 SectionProbe::Closed => {
-                    let declared_block = matches!(&declared, Some(names) if !names.is_empty());
+                    // An empty list already broke above, so a Some here has names.
+                    let declared_block = matches!(&declared, Some(_));
                     if !declared_block {
                         break;
                     }
@@ -4858,7 +4859,7 @@ H";
         assert!(bad.lines.next_line().is_none());
         let utf8_err = bad.next().unwrap().unwrap_err();
         let utf8_text = format!("{utf8_err:?}");
-        assert!(utf8_text.contains("UTF-8") || utf8_text.contains("utf8"), "{utf8_text}");
+        assert!(utf8_text.contains("UTF-8"), "{utf8_text}");
     }
 
     #[cfg(feature = "parallel")]
