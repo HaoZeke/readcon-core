@@ -981,7 +981,10 @@ O  0.000  0.000  0.000
         // JSON has no NaN, so the extra is null. The reserved index is
         // then the frame step, and a new frame's step is 0. The other
         // keys are the stamps for that one atom and the default cell.
-        let specified = "chemfiles::frame_index=null|chemfiles::library_version=\"0.10.4\"|chemfiles::unit_system={\"angle\":\"degree\",\"length\":\"angstrom\",\"mass\":\"amu\",\"velocity\":\"angstrom/ps\"}|chemfiles_atom_names=[\"H\"]|chemfiles_atom_types=[\"H\"]|con_spec_minor=1|frame_index=0|generator=\"readcon-core 0.18.1 chemfiles 0.10.4\"|pbc=[false,false,false]|units={\"energy\":\"eV\",\"length\":\"angstrom\",\"mass\":\"amu\",\"time\":\"ps\"}";
+        let specified = format!(
+            "chemfiles::frame_index=null|chemfiles::library_version=\"0.10.4\"|chemfiles::unit_system={{\"angle\":\"degree\",\"length\":\"angstrom\",\"mass\":\"amu\",\"velocity\":\"angstrom/ps\"}}|chemfiles_atom_names=[\"H\"]|chemfiles_atom_types=[\"H\"]|con_spec_minor=1|frame_index=0|generator=\"readcon-core {} chemfiles 0.10.4\"|pbc=[false,false,false]|units={{\"energy\":\"eV\",\"length\":\"angstrom\",\"mass\":\"amu\",\"time\":\"ps\"}}",
+            crate::VERSION
+        );
         assert_eq!(got, specified);
     }
 

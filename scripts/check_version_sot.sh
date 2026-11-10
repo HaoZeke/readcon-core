@@ -235,7 +235,12 @@ skip_dirs = {
 # bench/h2h/work is generated campaign output. It is gitignored, and a
 # full-tree walk would still open it. The gate lists tracked files and
 # also skips this prefix.
-skip_prefixes = ("bench/h2h/work/",)
+skip_prefixes = (
+    "bench/h2h/work/",
+    # Captured command transcripts. The version appears because the
+    # program printed it, not because the file pins a release.
+    "paper/cpc/receipts/",
+)
 bad = []
 listed = subprocess.check_output(["git", "ls-files", "-z"])
 for raw in listed.split(b"\0"):
