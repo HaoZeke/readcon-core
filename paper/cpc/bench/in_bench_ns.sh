@@ -8,8 +8,11 @@ set -eu
 if [ "${1:-}" = "--inside" ]; then
   shift
   mount --make-rprivate /
-  printf '%s\n' bench > /tmp/bench-hostname
-  mount --bind /tmp/bench-hostname /etc/hostname
+  root=$(CDPATH= cd -- "$(dirname "$0")/../../.." && pwd)
+  mkdir -p "$root/target"
+  hostfile="$root/target/bench-hostname"
+  printf '%s\n' bench > "$hostfile"
+  mount --bind "$hostfile" /etc/hostname
   hostname bench
   exec "$@"
 fi
