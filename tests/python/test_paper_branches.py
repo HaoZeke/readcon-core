@@ -456,9 +456,9 @@ def test_trace_and_union_and_manuscript_guards(tmp_path, monkeypatch):
     with pytest.raises(SystemExit, match="missing"):
         union._reader_samples()
     (tmp_path / "missing.log").write_text(
-        "sample arm=readcon_full_t1 seconds=\n"
-        "sample arm=readcon_full_t1 seconds=1\n"
-        "sample arm=readcon_pos_t1 seconds=1\n",
+        "sample arm=readcon_v0173 seconds=\n"
+        "sample arm=readcon_v0173 seconds=1\n"
+        "sample arm=readcon_tip seconds=1\n",
         encoding="utf-8",
     )
     with pytest.raises(SystemExit, match="at least six"):
