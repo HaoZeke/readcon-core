@@ -26,6 +26,23 @@ def test_a_text_iterator_yields_the_first_symbol_and_skips_one():
     assert iterator.forward() is False
 
 
+def test_a_second_index_returns_the_same_symbol():
+    frames = readcon.read_con(_resource("tiny_cuh2.con"))
+    assert frames[0].atoms[0].symbol == frames[0].atoms[0].symbol == "Cu"
+
+
+def test_array_rows_match_the_atoms_that_filled_them():
+    frames = readcon.read_con(_resource("tiny_cuh2.convel"))
+    frame = frames[0]
+    velocities = frame.vel
+    assert velocities is not None
+    assert len(velocities) == len(frame)
+    assert len(velocities[0]) == 3
+    coords = frame.coords_array()
+    assert len(coords) == len(frame)
+    assert len(coords[0]) == 3
+
+
 def test_a_convel_frame_exposes_its_velocity_rows():
     frames = readcon.read_con(_resource("tiny_cuh2.convel"))
     rows = frames[0].vel

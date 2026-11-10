@@ -3322,19 +3322,23 @@ Coordinates of Component 1
                 let _ = std::fs::remove_dir_all(&held.1);
                 unsafe { std::env::remove_var("LLVM_PROFILE_FILE") };
                 run_namespace_suite();
-                let case_dir = live.join(format!("case-{}", std::process::id()));
-                let _ = std::fs::remove_dir_all(&case_dir);
-                std::fs::create_dir_all(&case_dir).unwrap();
+                let bare = live.join(format!("case-bare-{}", std::process::id()));
+                let marked = live.join(format!("case-marked-{}", std::process::id()));
+                let _ = std::fs::remove_dir_all(&bare);
+                let _ = std::fs::remove_dir_all(&marked);
+                std::fs::create_dir_all(&bare).unwrap();
+                std::fs::create_dir_all(&marked).unwrap();
+                std::fs::write(marked.join("marker"), b"held").unwrap();
                 unsafe {
-                    std::env::set_var(
-                        "LLVM_PROFILE_FILE",
-                        case_dir.join("profile.profraw"),
-                    );
+                    std::env::set_var("LLVM_PROFILE_FILE", bare.join("profile.profraw"));
                 }
                 run_namespace_suite();
-                std::fs::write(case_dir.join("marker"), b"held").unwrap();
+                unsafe {
+                    std::env::set_var("LLVM_PROFILE_FILE", marked.join("profile.profraw"));
+                }
                 run_namespace_suite();
-                let _ = std::fs::remove_dir_all(&case_dir);
+                let _ = std::fs::remove_dir_all(&bare);
+                let _ = std::fs::remove_dir_all(&marked);
                 match saved {
                     Some(value) => unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) },
                     None => unsafe { std::env::remove_var("LLVM_PROFILE_FILE") },

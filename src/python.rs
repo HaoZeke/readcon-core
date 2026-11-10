@@ -3868,6 +3868,34 @@ mod api_coverage {
         SelectionMatch { size: 1, atoms }
     }
 
+    #[cfg(feature = "mpi")]
+    #[test]
+    fn a_null_communicator_returns_the_dup_error() {
+        Python::initialize();
+        let _universe = crate::distrib::test_universe();
+        unsafe {
+            ::mpi::ffi::MPI_Comm_set_errhandler(
+                ::mpi::ffi::RSMPI_COMM_WORLD,
+                ::mpi::ffi::RSMPI_ERRORS_RETURN,
+            );
+        }
+        Python::attach(|py| {
+            let handle = unsafe { ::mpi::ffi::RSMPI_Comm_c2f(::mpi::ffi::RSMPI_COMM_NULL) };
+            let code = format!(
+                "type('C', (), {{'py2f': staticmethod(lambda: {handle})}})()"
+            );
+            let comm = py
+                .eval(&std::ffi::CString::new(code).unwrap(), None, None)
+                .unwrap();
+            let path = concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/resources/test/tiny_cuh2.con"
+            );
+            let err = read_con(py, path, None, Some(&comm), "auto").unwrap_err();
+            assert!(err.to_string().contains("MPI_Comm_dup"), "{err}");
+        });
+    }
+
     #[test]
     fn selection_conversion_builds_the_python_dicts() {
         Python::initialize();
