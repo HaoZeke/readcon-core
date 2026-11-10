@@ -177,3 +177,59 @@ def test_ase_constraints_and_repeated_tags_convert_both_ways():
     back = frame.to_ase()
     assert list(back.get_chemical_symbols())[0] == "Cu"
     assert len(back) == 2
+
+
+def test_iterators_stop_and_views_follow_the_stored_columns(tmp_path):
+    path = resource("tiny_multi_cuh2.con")
+    cursor = readcon.iter_con(path)
+    first = next(cursor)
+    assert first.atoms[0].symbol == "Cu"
+    assert cursor.forward() is True
+    assert next(cursor, None) is None
+    assert cursor.forward() is False
+    built = readcon.ConFrame(
+        cell=[2.0, 2.0, 2.0],
+        angles=[90.0, 90.0, 90.0],
+        atoms=[one_atom()],
+    )
+    assert built.vel is None
+    assert built.frc is None
+    forces = readcon.read_first_frame(resource("tiny_cuh2_forces.con"))
+    assert forces.frc is not None
+    assert forces.frc.shape[1] == 3
+    assert abs(float(forces.frc[0, 0]) - 0.123456) < 1e-5
+    text = (
+        "2\n"
+        'Lattice="5.0 0.0 0.0 0.0 5.0 0.0 0.0 0.0 5.0" Properties=species:S:1:pos:R:3\n'
+        "H 0.0 0.0 0.0\n"
+        "H 0.0 0.0 0.7\n"
+    )
+    xyz = tmp_path / "two.extxyz"
+    xyz.write_text(text)
+    positions, masses, cell = readcon.read_extxyz(str(xyz))
+    assert positions.shape == (1, 2, 3)
+    assert masses.shape[1] == 2
+    assert cell.shape == (1, 6)
+    pdb = tmp_path / "one.pdb"
+    pdb.write_text(
+        "CRYST1    5.000    5.000    5.000  90.00  90.00  90.00 P 1\n"
+        "ATOM      1  H   HOH     1       0.000   0.000   0.000  1.00  0.00           H\n"
+        "END\n"
+    )
+    pdb_pos, pdb_mass, pdb_cell = readcon.read_pdb(str(pdb))
+    assert pdb_pos.shape[2] == 3
+    assert pdb_mass.shape[0] == pdb_pos.shape[0]
+    assert pdb_cell.shape[1] == 6
+    with pytest.raises(ValueError):
+        readcon.read_extxyz(str(tmp_path / "missing.extxyz"))
+    with pytest.raises(ValueError):
+        readcon.read_pdb(str(tmp_path / "missing.pdb"))
+    projection = forces.index_projection_json()
+    assert "n_atoms" in projection
+    one = readcon.read_con(path, 1)
+    assert len(one) >= 2
+    assert one.release_frames() >= 0.0
+    two = readcon.read_con(path, 2)
+    assert len(two) >= 2
+    assert two[0].atoms[0].symbol == "Cu"
+    assert two.release_frames() >= 0.0

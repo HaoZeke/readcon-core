@@ -107,6 +107,7 @@ fn no_frame_at(text: &str, pos: usize) -> bool {
 /// the next one, or at the end of the data for the last. A skip reads no
 /// state from earlier frames, so the frames are checked independently.
 /// The skip gets the next offset as a hint, which changes only its speed.
+#[inline(never)]
 fn offsets_match_scan(text: &str, offsets: &[u64]) -> bool {
     let Some(&first) = offsets.first() else {
         return no_frame_at(text, 0);
@@ -789,6 +790,14 @@ mod tests {
         assert!(checked >= 10, "{checked} fixtures");
         assert!(offsets_match_scan(" \n\n", &[]));
         assert!(!offsets_match_scan(&fixture(1), &[]));
+        let ended = format!("{}\n", fixture(1));
+        let mut past: Vec<u64> = frame_start_offsets_checked(&ended)
+            .unwrap()
+            .into_iter()
+            .map(|offset| offset as u64)
+            .collect();
+        past.push(ended.len() as u64);
+        assert!(!offsets_match_scan(&ended, &past));
     }
 
     #[test]

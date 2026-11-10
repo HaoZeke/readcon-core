@@ -715,6 +715,7 @@ impl<'a> ConFrameIterator<'a> {
     /// memchr-backed equivalent of [`Self::forward`]. Skips the next
     /// frame without fully parsing its atom data. Shares the same line
     /// cursor as [`Iterator::next`], so skip and full parse interleave safely.
+    #[inline(never)]
     pub fn forward_fast(&mut self) -> Option<Result<(), error::ParseError>> {
         self.forward_fast_to(None)
     }
@@ -954,6 +955,7 @@ impl<'a> ConFrameIterator<'a> {
     ///
     /// See also [`crate::index_proj::frame_byte_spans`] and
     /// [`crate::index_proj::spans_cover_buffer`].
+    #[inline(never)]
     pub fn next_with_raw_span(
         &mut self,
         file_contents: &'a str,
@@ -1013,6 +1015,7 @@ impl<'a> Iterator for ConFrameIterator<'a> {
     /// If there are lines but they do not form a complete frame, it will return
     /// `Some(Err(ParseError::...))`. Invalid UTF-8 is a validation error, not
     /// the end of the stream.
+    #[inline(never)]
     fn next(&mut self) -> Option<Self::Item> {
         // A byte-order mark is rejected only at the start of the file
         // (CON-file.2), before any peek moves the cursor. On a later
@@ -1480,6 +1483,7 @@ fn sample_llc_misses() -> i64 {
 /// refuses the event. `read` writes one `u64` and returns the byte count.
 /// Production always passes [`perf_open_os`], [`perf_read_os`], and
 /// [`perf_close_os`]. There is no environment switch.
+#[inline(never)]
 fn sample_llc_from(
     open: impl FnOnce() -> i64,
     read: impl FnOnce(i32, &mut u64) -> isize,
@@ -1916,6 +1920,7 @@ fn take_slot_buf(
 }
 
 #[cfg(feature = "parallel")]
+#[inline(never)]
 fn recycle_slot_buf(
     mut buf: Vec<std::mem::MaybeUninit<Result<types::ConFrame, error::ParseError>>>,
 ) {
@@ -2029,6 +2034,7 @@ fn first_touch_f64(values: &mut [f64], workers: usize) {
 /// pool that parsed the frames does this move. One thread still walks
 /// the slots when that pool is absent.
 #[cfg(feature = "parallel")]
+#[inline(never)]
 fn finish_results(
     pool: Option<&rayon::ThreadPool>,
     slots: Vec<Result<types::ConFrame, error::ParseError>>,
@@ -2079,6 +2085,7 @@ pub const SCAN_EQUAL_SPAN: u8 = 2;
 /// `None` and the caller keeps the serial walk. The starts are
 /// `0, span, 2*span, ...` and match [`collect_frame_starts`].
 #[cfg(feature = "parallel")]
+#[inline(never)]
 fn equal_span_boundaries(bytes: &[u8], workers: usize) -> Option<Vec<usize>> {
     if workers < 2 || bytes.len() < 2 {
         return None;
@@ -2131,6 +2138,7 @@ fn equal_span_boundaries(bytes: &[u8], workers: usize) -> Option<Vec<usize>> {
 static START_CACHE: std::sync::Mutex<Vec<usize>> = std::sync::Mutex::new(Vec::new());
 
 #[cfg(feature = "parallel")]
+#[inline(never)]
 fn arithmetic_starts(span: usize, n: usize) -> Vec<usize> {
     let mut starts = START_CACHE
         .lock()
@@ -2146,6 +2154,7 @@ fn arithmetic_starts(span: usize, n: usize) -> Vec<usize> {
 }
 
 #[cfg(feature = "parallel")]
+#[inline(never)]
 fn recycle_starts(starts: Vec<usize>) {
     if let Ok(mut slot) = START_CACHE.lock() {
         if starts.capacity() >= slot.capacity() {
@@ -3142,6 +3151,7 @@ pub fn touch_frame_checksum(
 /// [`touch_frame_checksum`] for frames still sitting in optional slots.
 ///
 /// `None` means a slot is empty or the position slice does not match.
+#[inline(never)]
 pub fn touch_option_checksum(
     frames: &[Option<types::ConFrame>],
     positions: &[f64],
@@ -3523,6 +3533,7 @@ mod parallel_header_scan_tests {
         assert_cuts_match("abcdef", &cuts[0]);
         assert_slab("a\n");
         assert_slab("\n");
+        assert_slab("plain");
         assert_crlf_gap_cut("\r\r\n");
     }
 }
@@ -4691,6 +4702,7 @@ mod missed_branch_tests {
         let mut empty = frame.clone();
         empty.atom_data.clear();
         assert!(touch_frame_checksum(std::slice::from_ref(&empty), &[], 1).is_none());
+        assert!(touch_option_checksum(&[Some(empty)], &[], 1).is_none());
         let stride = frame.atom_data.len() * 3;
         let coords = vec![0.0; stride];
         let one = touch_frame_checksum(std::slice::from_ref(&frame), &coords, 1).unwrap();
@@ -4714,5 +4726,119 @@ mod missed_branch_tests {
             .unwrap();
         assert_eq!(&*got.atom_data[0].symbol, "H");
         assert!(span.contains("H"));
+    }
+
+    #[test]
+    fn outlined_readers_take_the_remaining_sides() {
+        let legacy = b"\
+user
+{\"con_spec_version\":2}
+10.0 10.0 10.0
+90.0 90.0 90.0
+
+
+1
+1
+1.0
+H
+Coordinates of Component 1
+0.0 0.0 0.0 0 1
+
+not-a-section
+";
+        let skipped = ConFrameIterator::from_bytes(legacy).forward_fast();
+        assert!(skipped.unwrap().is_ok());
+
+        let empty_decl = b"\
+user
+{\"con_spec_version\":2,\"sections\":[]}
+10.0 10.0 10.0
+90.0 90.0 90.0
+
+
+1
+1
+1.0
+H
+Coordinates of Component 1
+0.0 0.0 0.0 0 1
+\xff
+";
+        let bad = ConFrameIterator::from_bytes(empty_decl).forward_fast();
+        assert!(bad.unwrap().is_ok());
+
+        let partial = b"\
+user
+{\"con_spec_version\":2}
+10.0 10.0 10.0
+90.0 90.0 90.0
+
+
+1
+1
+1.0
+H
+Coordinates of Component 1
+0.0 0.0 0.0 0 1
+
+H";
+        let cut = ConFrameIterator::from_bytes(partial).forward_fast();
+        assert!(cut.unwrap().is_ok());
+
+        let text = one_frame();
+        let mut peeked = ConFrameIterator::new(&text);
+        assert!(peeked.lines.peek_line().is_some());
+        let spanned = peeked.next_with_raw_span(&text).unwrap().unwrap();
+        assert_eq!(&*spanned.0.atom_data[0].symbol, "H");
+        let mut again = ConFrameIterator::new(&text);
+        assert!(again.lines.peek_line().is_some());
+        let frame = again.next().unwrap().unwrap();
+        assert_eq!(&*frame.atom_data[0].symbol, "H");
+
+        let two = super::finish_results(None, vec![Ok(frame.clone()), Ok(frame)]).unwrap();
+        assert_eq!(two.len(), 2);
+
+        let first = super::arithmetic_starts(4, 3);
+        assert_eq!(first, vec![0, 4, 8]);
+        super::recycle_starts(first);
+        let second = super::arithmetic_starts(4, 3);
+        assert_eq!(second, vec![0, 4, 8]);
+
+        use std::sync::atomic::{AtomicI64, Ordering};
+        static OPEN_MODE: AtomicI64 = AtomicI64::new(-1);
+        static READ_MODE: AtomicI64 = AtomicI64::new(8);
+        fn open_mode() -> i64 {
+            OPEN_MODE.load(Ordering::Relaxed)
+        }
+        fn read_mode(_fd: i32, slot: &mut u64) -> isize {
+            let n = READ_MODE.load(Ordering::Relaxed);
+            if n == 8 {
+                *slot = 9;
+            }
+            n as isize
+        }
+        fn close_mode(_fd: i32) {}
+        assert_eq!(super::sample_llc_from(open_mode, read_mode, close_mode), -1);
+        OPEN_MODE.store(3, Ordering::Relaxed);
+        READ_MODE.store(1, Ordering::Relaxed);
+        assert_eq!(super::sample_llc_from(open_mode, read_mode, close_mode), -1);
+        READ_MODE.store(8, Ordering::Relaxed);
+        assert_eq!(super::sample_llc_from(open_mode, read_mode, close_mode), 9);
+
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = super::START_CACHE.lock().unwrap();
+            panic!("poison the start cache");
+        }));
+        super::recycle_starts(vec![0, 4]);
+        super::START_CACHE.clear_poison();
+        assert!(super::START_CACHE.lock().is_ok());
+
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = super::slot_cache().lock().unwrap();
+            panic!("poison the slot cache");
+        }));
+        super::recycle_slot_buf(Vec::new());
+        super::slot_cache().clear_poison();
+        assert!(super::slot_cache().lock().is_ok());
     }
 }
