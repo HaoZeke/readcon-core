@@ -350,8 +350,57 @@ fn lattice_vectors_json(cell: &UnitCell) -> Option<Value> {
 ///   [`chemfiles_internal_units_json`].
 /// - `generator` defaults to `readcon-core chemfiles import` when unset.
 /// - `frame_index` defaults to chemfiles `step` when unset.
+/// A chemfiles frame with no atoms.
+///
+/// CON-count.1 (`docs/orgmode/spec.org:135`) says a type count of 0 is a
+/// frame with zero atoms. chemfiles 0.10.41 `Frame::positions` aborts on
+/// that frame (`src/frame.rs:465`), so this path does not call it.
+fn zero_atom_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImportError> {
+    let cell_ref = frame.cell();
+    let (boxl, angles, has_pbc) = cell_to_box_and_angles(&cell_ref);
+    let mut builder = ConFrameBuilder::new(boxl, angles);
+    builder.prebox_header(format!("imported via chemfiles {}", chemfiles::version()));
+    let mut metadata = BTreeMap::new();
+    for (key, prop) in frame.properties() {
+        insert_mapped_or_extra(&mut metadata, &key, &prop);
+    }
+    if !metadata.contains_key(meta::GENERATOR) {
+        metadata.insert(
+            meta::GENERATOR.into(),
+            Value::String(format!(
+                "readcon-core {} chemfiles {}",
+                crate::VERSION,
+                chemfiles::version()
+            )),
+        );
+    }
+    if !metadata.contains_key(meta::FRAME_INDEX) {
+        metadata.insert(meta::FRAME_INDEX.into(), json!(frame.step() as u64));
+    }
+    if has_pbc {
+        metadata.insert(meta::PBC.into(), json!([true, true, true]));
+    } else {
+        metadata.insert(meta::PBC.into(), json!([false, false, false]));
+    }
+    if let Some(lv) = lattice_vectors_json(&cell_ref) {
+        metadata.insert(meta::LATTICE_VECTORS.into(), lv);
+    }
+    metadata.insert(
+        format!("{CHEMFILES_EXTRA_PREFIX}library_version"),
+        Value::String(chemfiles::version()),
+    );
+    stamp_chemfiles_units(&mut metadata);
+    builder.metadata(metadata);
+    builder
+        .build()
+        .map_err(|e| ChemfilesImportError::InvalidFrame(e.to_string()))
+}
+
 pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImportError> {
     let n = frame.size();
+    if n == 0 {
+        return zero_atom_frame_from_chemfiles(frame);
+    }
     let positions = frame.positions();
     if positions.len() != n {
         return Err(ChemfilesImportError::InvalidFrame(format!(
@@ -869,6 +918,18 @@ O  0.000  0.000  0.000
             a.symbol.as_ref() == "O" && a.x.abs() < 1e-6 && a.y.abs() < 1e-6 && a.z.abs() < 1e-6
         });
         assert!(positions_ok, "expected O at origin in converted frame");
+    }
+
+    #[test]
+    fn an_empty_chemfiles_frame_is_a_zero_atom_frame() {
+        let mut frame = Frame::new();
+        frame.set_step(4);
+        let con = con_frame_from_chemfiles(&frame).expect("empty frame");
+        assert_eq!(con.header.natm_types, 0);
+        assert!(con.atom_data.is_empty());
+        assert!(con.header.natms_per_type.is_empty());
+        assert!(con.header.masses_per_type.is_empty());
+        assert_eq!(con.header.frame_index(), Some(4));
     }
 
     #[test]
