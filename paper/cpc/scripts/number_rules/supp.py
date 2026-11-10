@@ -20,22 +20,27 @@ def survey_ids() -> list[int]:
     ]
 
 
-VACUUM = float(grep(RESTART_PY, r"^VACUUM = ([\d.]+)$"))
-HEIGHT = float(grep(RESTART_PY, r"^HEIGHT = ([\d.]+)$"))
-if (VACUUM, HEIGHT) != (
-    jget(RESTART, "parameters.vacuum_A"),
-    jget(RESTART, "parameters.held_height_A"),
-):
-    raise SystemExit(f"{RESTART}: vacuum or held height disagrees with {RESTART_PY}")
-if "6.0" not in text(DRIFT_PY):
-    raise SystemExit(f"{DRIFT_PY}: the z value 6.0 is gone from BASE_ROWS")
-for package, recorded, source in (
-    ("python", jget(PROVENANCE, "tools.python"), PROVENANCE),
-    ("rust", jget(PROVENANCE, "build.rustc").split()[0], PROVENANCE),
-    ("pandoc", grep(SPEC_PY, r'if first != "pandoc ([\d.]+)":'), SPEC_PY),
-):
-    if grep(ENVIRONMENT, rf"/{package}-([\d.]+)-") != recorded:
-        raise SystemExit(f"{ENVIRONMENT}: {package} is not the {recorded} of {source}")
+def agree_supp() -> tuple[float, float]:
+    vacuum = float(grep(RESTART_PY, r"^VACUUM = ([\d.]+)$"))
+    height = float(grep(RESTART_PY, r"^HEIGHT = ([\d.]+)$"))
+    if (vacuum, height) != (
+        jget(RESTART, "parameters.vacuum_A"),
+        jget(RESTART, "parameters.held_height_A"),
+    ):
+        raise SystemExit(f"{RESTART}: vacuum or held height disagrees with {RESTART_PY}")
+    if "6.0" not in text(DRIFT_PY):
+        raise SystemExit(f"{DRIFT_PY}: the z value 6.0 is gone from BASE_ROWS")
+    for package, recorded, source in (
+        ("python", jget(PROVENANCE, "tools.python"), PROVENANCE),
+        ("rust", jget(PROVENANCE, "build.rustc").split()[0], PROVENANCE),
+        ("pandoc", grep(SPEC_PY, r'if first != "pandoc ([\d.]+)":'), SPEC_PY),
+    ):
+        if grep(ENVIRONMENT, rf"/{package}-([\d.]+)-") != recorded:
+            raise SystemExit(f"{ENVIRONMENT}: {package} is not the {recorded} of {source}")
+    return vacuum, height
+
+
+VACUUM, HEIGHT = agree_supp()
 
 RULES: list[Rule] = [
     Rule(

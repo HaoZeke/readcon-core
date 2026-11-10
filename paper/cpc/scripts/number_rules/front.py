@@ -27,48 +27,48 @@ def driver(name: str) -> float:
     return float(grep(RESTART_PY, rf"^{name} = ([\d.]+)$"))
 
 
-for key, name in (
-    ("fmax_eV_A", "FMAX"),
-    ("alpha_A2_eV", "ALPHA"),
-    ("interrupt_step", "K"),
-    ("step_cap", "NMAX"),
-):
-    if param(key) != driver(name):
+def agree_restart() -> None:
+    """The restart record and restart_formats.py name the same band parameters."""
+    for key, name in (
+        ("fmax_eV_A", "FMAX"),
+        ("alpha_A2_eV", "ALPHA"),
+        ("interrupt_step", "K"),
+        ("step_cap", "NMAX"),
+    ):
+        if param(key) != driver(name):
+            raise SystemExit(
+                f"{RESTART}: parameters.{key} = {param(key)} but {RESTART_PY} sets {name} = {driver(name)}"
+            )
+    if grep(RESTART_PY, r"^ENDPOINT_FMAX = (.+)$") != "FMAX / N_IMG":
         raise SystemExit(
-            f"{RESTART}: parameters.{key} = {param(key)} but {RESTART_PY} sets {name} = {driver(name)}"
+            f"{RESTART_PY}: the endpoint tolerance is not the band tolerance divided by N_IMG"
         )
-if grep(RESTART_PY, r"^ENDPOINT_FMAX = (.+)$") != "FMAX / N_IMG":
-    raise SystemExit(
-        f"{RESTART_PY}: the endpoint tolerance is not the band tolerance divided by N_IMG"
-    )
-if param("endpoint_fmax_eV_A") != param("fmax_eV_A") / int(
-    grep(RESTART_PY, r"^N_IMG = (\d+)")
-):
-    raise SystemExit(
-        f"{RESTART}: endpoint_fmax_eV_A is not the band tolerance divided by N_IMG"
-    )
-if param("fmax_eV_A") != float(
-    grep(RESTART_PY, r"^ASE_DEFAULT_FMAX = ([\d.]+)$")
-) / int(grep(RESTART_PY, r"^N_IMG = (\d+)")):
-    raise SystemExit(f"{RESTART}: fmax_eV_A is not ASE_DEFAULT_FMAX divided by N_IMG")
-if "fmax=ENDPOINT_FMAX" not in text(RESTART_PY):
-    raise SystemExit(f"{RESTART_PY}: BFGS does not use ENDPOINT_FMAX")
-if param("spring_eV_A2") != float(
-    grep(RESTART_PY, r"^SPRING, METHOD, CLIMB = ([\d.]+), ")
-):
-    raise SystemExit(f"{RESTART}: spring_eV_A2 disagrees with SPRING in {RESTART_PY}")
-SITES = param("sites")
-if (SITES[1][0] - SITES[0][0], SITES[1][1] - SITES[0][1]) != (1, 0):
-    raise SystemExit(f"{RESTART}: sites {SITES} are not neighbouring hollows along x")
+    if param("endpoint_fmax_eV_A") != param("fmax_eV_A") / int(
+        grep(RESTART_PY, r"^N_IMG = (\d+)")
+    ):
+        raise SystemExit(
+            f"{RESTART}: endpoint_fmax_eV_A is not the band tolerance divided by N_IMG"
+        )
+    if param("fmax_eV_A") != float(
+        grep(RESTART_PY, r"^ASE_DEFAULT_FMAX = ([\d.]+)$")
+    ) / int(grep(RESTART_PY, r"^N_IMG = (\d+)")):
+        raise SystemExit(f"{RESTART}: fmax_eV_A is not ASE_DEFAULT_FMAX divided by N_IMG")
+    if "fmax=ENDPOINT_FMAX" not in text(RESTART_PY):
+        raise SystemExit(f"{RESTART_PY}: BFGS does not use ENDPOINT_FMAX")
+    if param("spring_eV_A2") != float(
+        grep(RESTART_PY, r"^SPRING, METHOD, CLIMB = ([\d.]+), ")
+    ):
+        raise SystemExit(f"{RESTART}: spring_eV_A2 disagrees with SPRING in {RESTART_PY}")
+    sites = param("sites")
+    if (sites[1][0] - sites[0][0], sites[1][1] - sites[0][1]) != (1, 0):
+        raise SystemExit(f"{RESTART}: sites {sites} are not neighbouring hollows along x")
+
+
+agree_restart()
 
 
 def miller(rel: str, cells: str) -> int:
     return int(grep(rel, rf's = fcc(\d+)\("Pt", \({re.escape(cells)}\)'))
-
-
-def kib(rel: str, name: str) -> float:
-    a, b = re.search(rf"{name}: \w+ = (\d+) \* (\d+);", text(rel)).groups()
-    return int(a) * int(b) / 1024
 
 
 def spec_version(version: str) -> float:
@@ -107,27 +107,38 @@ def si_factor(aliases: str) -> float:
     return float(grep("/src/units.rs", pattern).replace("_", ""))
 
 
-ANGSTROM_M = si_factor('&["angstrom", "a", "å"]')
-ELECTRONVOLT_J = si_factor('&["ev"]')
-if (ANGSTROM_M, ELECTRONVOLT_J) != (
-    scipy.constants.angstrom,
-    scipy.constants.electron_volt,
-):
-    raise SystemExit(
-        "src/units.rs: the angstrom or the electronvolt is not the CODATA value of scipy.constants"
-    )
-AMU_KG = si_factor('&["u", "amu", "dalton", "da"]')
-# scipy.constants follows the latest CODATA set, and the text names the 2018 value that the unit table holds.
-if AMU_KG != 1.66053906660e-27:
-    raise SystemExit(
-        "src/units.rs: the atomic mass constant is not the CODATA 2018 value"
-    )
+def agree_units() -> tuple[float, float, float]:
+    angstrom_m = si_factor('&["angstrom", "a", "å"]')
+    electronvolt_j = si_factor('&["ev"]')
+    if (angstrom_m, electronvolt_j) != (
+        scipy.constants.angstrom,
+        scipy.constants.electron_volt,
+    ):
+        raise SystemExit(
+            "src/units.rs: the angstrom or the electronvolt is not the CODATA value of scipy.constants"
+        )
+    amu_kg = si_factor('&["u", "amu", "dalton", "da"]')
+    # scipy.constants follows the latest CODATA set, and the text names the 2018 value that the unit table holds.
+    if amu_kg != 1.66053906660e-27:
+        raise SystemExit(
+            "src/units.rs: the atomic mass constant is not the CODATA 2018 value"
+        )
+    return angstrom_m, electronvolt_j, amu_kg
+
+
+ANGSTROM_M, ELECTRONVOLT_J, AMU_KG = agree_units()
 BIG_IDS = corpus_ids()
 ABOVE_2_53 = next(i for i in BIG_IDS if i < 2**U64_BITS - 1)
-if ABOVE_2_53 - 1 != 2**53 or BIG_IDS[-1] != 2**U64_BITS - 1:
-    raise SystemExit(
-        f"{IDS}: expected the identifiers 2^53 + 1 and 2^64 - 1, found {BIG_IDS}"
-    )
+
+
+def agree_ids() -> None:
+    if ABOVE_2_53 - 1 != 2**53 or BIG_IDS[-1] != 2**U64_BITS - 1:
+        raise SystemExit(
+            f"{IDS}: expected the identifiers 2^53 + 1 and 2^64 - 1, found {BIG_IDS}"
+        )
+
+
+agree_ids()
 
 GRIND = "bench/results/r0174/cachegrind/cachegrind_results.json"
 GRIND_FRAMES = int(
@@ -146,14 +157,18 @@ GRIND_FRAMES = int(
 # benches/h5md_vs_con.py. Nothing in the manuscript prints that step, so the
 # number rules do not read either missing file.
 
-CONTOURS = variance_contours()
-if CONTOURS[0] != 0.05 or len(CONTOURS) != 2:
-    raise SystemExit(
-        f"plot_landscape_surface draws variance contours at {CONTOURS}, not at 5 and 95 percent"
-    )
+def agree_contours() -> list[float]:
+    contours = variance_contours()
+    if contours[0] != 0.05 or len(contours) != 2:
+        raise SystemExit(
+            f"plot_landscape_surface draws variance contours at {contours}, not at 5 and 95 percent"
+        )
+    if grep("/src/stream.rs", r"pub const DEFAULT_READ_SIZE: usize = 1 << (\d+);") != "20":
+        raise SystemExit("the stream reader's DEFAULT_READ_SIZE is not 1 MiB")
+    return contours
 
-if grep("/src/stream.rs", r"pub const DEFAULT_READ_SIZE: usize = 1 << (\d+);") != "20":
-    raise SystemExit("the stream reader's DEFAULT_READ_SIZE is not 1 MiB")
+
+CONTOURS = agree_contours()
 
 def log_field(rel: str, key: str) -> int:
     prefix = key + " "

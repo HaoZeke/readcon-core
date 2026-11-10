@@ -23,13 +23,13 @@ read_positions 8 threads     0.225907       0.176862
 ASE get_positions 1 thread   11.0932        11.1556
 eOn loadcons 1 thread        15.5686        14.6135
 
-Ratio of the peer median to read_con at 1 thread.
-The 8-thread row is read_con at 1 thread over read_con at 8 threads.
+Time over time: this row's median divided by read_con at 1 thread.
+A value above 1 is a slower arm. The 8-thread row is below 1.
 
-peer                         variant A      variant B
+arm                          variant A      variant B
 0.17.3 read_con              1.90246        1.95543
 ASE get_positions            6.80482        7.32729
 eOn loadcons                 9.55014        9.59849
-read_con 8 threads, as fast  1.7625         1.738
+read_con 8 threads           0.56738        0.57537
 
 read_positions is an absolute time in both variants.

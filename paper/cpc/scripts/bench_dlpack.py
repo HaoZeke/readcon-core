@@ -296,9 +296,6 @@ def main() -> int:
             lead_copy = list(copies)
             lead_view = list(per_consumer.get("numpy", []))
         for name, samples in per_consumer.items():
-            if len(samples) < REPEATS:
-                emit(f"summary_skip {name} n={n} n_sample={len(samples)}")
-                continue
             med, q1, q3, iqr = type7(samples)
             emit(
                 f"summary {name} from_dlpack n={n} n_rep={REPEATS} median={med:.9e} "
