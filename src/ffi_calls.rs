@@ -2010,6 +2010,27 @@ fn dlpack_shape_float32_and_absent_force_block() {
         );
         let mut nframes = 0_usize;
         assert!(rkr_read_chemfiles_memory(data.as_ptr(), ptr::null(), &mut nframes).is_null());
+        let format = CString::new("XYZ").unwrap();
+        assert!(rkr_read_chemfiles_memory(data.as_ptr(), format.as_ptr(), ptr::null_mut()).is_null());
+        let missing = CString::new("missing-topology.xyz").unwrap();
+        let empty_topology = CString::new("").unwrap();
+        let topology = CString::new("topology.xyz").unwrap();
+        assert!(
+            rkr_read_chemfiles_range(
+                missing.as_ptr(),
+                0,
+                1,
+                2,
+                empty_topology.as_ptr(),
+                0,
+                &mut nframes
+            )
+            .is_null()
+        );
+        assert!(
+            rkr_read_chemfiles_range(missing.as_ptr(), 0, 1, 2, topology.as_ptr(), 0, &mut nframes)
+                .is_null()
+        );
         let empty = crate::chemfiles_selection::SelectionResult {
             selection: "name Cu".to_string(),
             context_size: 1,

@@ -164,6 +164,31 @@ def test_metadata_none_and_numeric_values_round_trip():
     assert "lj" in text
 
 
+def test_iterator_skip_stops_at_the_end(tmp_path: Path):
+    path = tmp_path / "one.con"
+    readcon.write_con(str(path), [readcon.ConFrame.from_ase(_atoms())], compression="none")
+    iterator = readcon.iter_con(str(path))
+    assert iterator.skip(4) == 1
+    assert iterator.skip(1) == 0
+
+
+def test_metadata_accepts_an_integer_past_i64():
+    frame = readcon.ConFrame.from_ase(_atoms())
+    frame.metadata = {"count": 2**63}
+    assert frame.metadata["count"] == 2**63
+
+
+def test_comm_rejects_canonical_output(tmp_path: Path):
+    frame = readcon.ConFrame.from_ase(_atoms())
+    dest = tmp_path / "canon.con"
+    with pytest.raises(ValueError, match="uncompressed"):
+        readcon.write_con(str(dest), [frame], compression="none", canonical=True, comm=object())
+
+
+class _OtherConstraint:
+    index = [0]
+
+
 def test_comm_rejects_a_gzip_path(tmp_path: Path):
     frame = readcon.ConFrame.from_ase(_atoms())
     dest = tmp_path / "out.con.gz"
@@ -197,7 +222,11 @@ def test_conbin_header_without_velocities_and_with_zero_atoms(tmp_path: Path):
 def test_ase_constraints_tags_and_missing_velocities():
     atoms = _atoms()
     atoms.set_constraint(
-        [FixAtoms(indices=[0]), FixCartesian([1], mask=[True, False, True])]
+        [
+            FixAtoms(indices=[0]),
+            FixCartesian([1], mask=[True, False, True]),
+            _OtherConstraint(),
+        ]
     )
     atoms.set_tags([0, 0])
     frame = readcon.ConFrame.from_ase(atoms)
