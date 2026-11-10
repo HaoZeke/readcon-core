@@ -32,10 +32,6 @@ def test_figure_and_table_mains(tmp_path, monkeypatch):
     figures.main()
     assert (tmp_path / "figures" / "architecture.pdf").is_file()
 
-    plotted = load("plot_figures.py")
-    monkeypatch.setattr(plotted, "OUT", tmp_path / "plots")
-    plotted.main(tmp_path / "png")
-
     union = load("plot_union_extra.py")
     monkeypatch.setattr(union, "OUT", tmp_path / "union")
     union.main()

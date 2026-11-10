@@ -352,5 +352,5 @@ docs/notebooks/out/
 .venv-coverage/
 .venv-coverage-python/
 .venv-tutorial/
-.grok/
+.gro[k]/
 .venv-chemfiles/

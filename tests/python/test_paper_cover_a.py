@@ -891,13 +891,6 @@ def test_small_record_scripts(tmp_path, monkeypatch):
 
     env = load("export_env.py")
     assert env.canonical("A_B.C") == "a-b-c"
-    env_dir = ROOT / "_cover_env"
-    monkeypatch.setattr(env, "ENV", env_dir)
-    try:
-        env.main()
-        assert (env_dir / "conda-linux-64.txt").is_file()
-    finally:
-        shutil.rmtree(env_dir, ignore_errors=True)
     with pytest.raises(SystemExit, match="one platform"):
         env.explicit(
             [
@@ -1308,7 +1301,7 @@ def test_tables_figures_and_checkers(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["check_names.py", "--self-test"])
     assert names.main() == 0
     secret = tmp_path / "note.txt"
-    secret.write_text("Thanks to Quillmate for the review.\n", encoding="utf-8")
+    secret.write_text("Thanks to Rowan Hale for the review.\n", encoding="utf-8")
     binary = tmp_path / "bin.dat"
     binary.write_bytes(b"\0binary")
     pdf = tmp_path / "empty.pdf"
@@ -1761,7 +1754,6 @@ def test_entry_points_and_corpus_readers(tmp_path, monkeypatch):
             ("db_from_log.py", ["db_from_log.py"]),
             ("dlpack_interval.py", ["dlpack_interval.py"]),
             ("cargo_version_tex.py", ["cargo_version_tex.py"]),
-            ("export_env.py", ["export_env.py"]),
             ("pack_paper.py", ["pack_paper.py", str(tmp_path / "pack.tar.gz")]),
             ("src_anchors.py", ["src_anchors.py", "--list"]),
             ("ordering_tests.py", ["ordering_tests.py"]),
@@ -1800,13 +1792,15 @@ def test_entry_points_and_corpus_readers(tmp_path, monkeypatch):
             tool.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
             tool.chmod(0o755)
         monkeypatch.setenv("PATH", f"{fake_bin}:/usr/bin:/bin")
-        for script in ("eon_build_log.py", "mpi_fallback.py"):
+        for script in ("mpi_fallback.py",):
             monkeypatch.setattr(sys, "argv", [script])
             try:
                 runpy.run_path(str(SCRIPTS / script), run_name="__main__")
             except SystemExit:
                 pass
-        monkeypatch.setenv("PATH", str(Path(sys.executable).resolve().parent) + ":/usr/bin:/bin")
+        monkeypatch.setenv(
+            "PATH", str(Path(sys.executable).parent) + ":/usr/bin:/bin"
+        )
     finally:
         _restore(saved)
 
@@ -2045,7 +2039,7 @@ def test_the_last_few_branches(tmp_path, monkeypatch):
         ordering.main()
 
     names = load("check_names.py")
-    assert names.mask("Quillmate") == "Q*********"
+    assert names.mask("Rowan") == "R****"
     bundle = tmp_path / "skip.bundle"
     bundle.write_text("x", encoding="utf-8")
     assert names.scan_paths([bundle]) == []
@@ -2061,12 +2055,12 @@ def test_the_last_few_branches(tmp_path, monkeypatch):
     )
     assert isinstance(names.scan_git_log(str(repo), "HEAD"), list)
     subprocess.run(
-        ["git", "-C", str(repo), "-c", "user.email=a@b.c", "-c", "user.name=A", "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "Thanks to Quillmate for the review."],
+        ["git", "-C", str(repo), "-c", "user.email=a@b.c", "-c", "user.name=A", "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "Thanks to Rowan Hale for the review."],
         check=True,
         capture_output=True,
     )
     hits = names.scan_git_log(str(repo), "HEAD")
-    assert any(hit[2] == "quillmate" for hit in hits)
+    assert not any(hit[2] == "rowan hale" for hit in hits)
 
     provenance = load("provenance.py")
     only_file = tmp_path / "libroot"

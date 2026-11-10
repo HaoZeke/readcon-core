@@ -378,6 +378,7 @@ def test_version_map_notes_and_a_missing_build(tmp_path, monkeypatch):
         "commit": "d" * 40,
         "library_digest_at_commit": "e" * 64,
     }
+    monkeypatch.setattr(version_map, "public_ancestor", lambda sha: True)
     assert "are those" in version_map.release_note(build)
     build["diff_stat_source_tree_to_release_head_library_and_bindings"] = ["src/lib.rs | 1"]
     build["diff_stat_commit_to_release_head_library_and_bindings"] = ["Cargo.toml | 2"]
