@@ -96,6 +96,8 @@ def run_test(name: str) -> subprocess.CompletedProcess[str]:
     env["CARGO_TARGET_DIR"] = str(ROOT / "target" / "lib-tests")
     env.pop("RUSTFLAGS", None)
     env.pop("LLVM_PROFILE_FILE", None)
+    env["OMPI_ALLOW_RUN_AS_ROOT"] = "1"
+    env["OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"] = "1"
     env["LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu"
     return subprocess.run(
         [

@@ -1034,6 +1034,9 @@ mod tests {
             .env("LD_LIBRARY_PATH", &library_path)
             .env_remove("LD_PRELOAD");
             for (key, _) in std::env::vars() {
+                if key == "OMPI_ALLOW_RUN_AS_ROOT" || key == "OMPI_ALLOW_RUN_AS_ROOT_CONFIRM" {
+                    continue;
+                }
                 if key.starts_with("OMPI_") || key.starts_with("PMIX_") || key.starts_with("PMI_")
                 {
                     cmd.env_remove(key);

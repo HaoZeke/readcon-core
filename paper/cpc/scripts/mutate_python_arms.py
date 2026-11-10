@@ -79,6 +79,8 @@ def run_test(name: str) -> subprocess.CompletedProcess[str]:
     env["LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu"
     env["RUSTFLAGS"] = "-C link-arg=-lpython3.12"
     env.pop("LLVM_PROFILE_FILE", None)
+    env["OMPI_ALLOW_RUN_AS_ROOT"] = "1"
+    env["OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"] = "1"
     return subprocess.run(
         [
             "cargo",
