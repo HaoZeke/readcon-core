@@ -224,13 +224,10 @@ def check(
     same_protocol("cachegrind_results.json", grind, reads)
     commit = build.get("commit")
     sha = grind.get("git_sha")
-    if not commit or not sha:
-        print(
-            "the Cachegrind harness names no commit that this repository holds; "
-            "the tables use the stored samples"
-        )
-    elif (
-        not str(commit).startswith(str(sha))
+    if (
+        not commit
+        or not sha
+        or not str(commit).startswith(str(sha))
         or grind["provenance"].get("source_commit") != commit
     ):
         raise SystemExit(
