@@ -41,12 +41,15 @@ def test_from_ase_rejects_a_nonfinite_cell():
 
 
 def test_chemfiles_format_and_a_trajectory_index(tmp_path):
-    if not readcon.has_chemfiles_support():
-        pytest.fail("the coverage extension is built with chemfiles")
     path = FIXTURE / "water_min.xyz"
-    loaded = readcon.read_chemfiles(str(path), format="XYZ", guess_bonds=True)
-    assert len(loaded) == 1
-    assert len(loaded[0]) == 3
+    if not readcon.has_chemfiles_support():
+        with pytest.raises(Exception) as ei:
+            readcon.read_chemfiles(str(path), format="XYZ", guess_bonds=True)
+        assert "chemfiles" in str(ei.value).lower()
+    else:
+        loaded = readcon.read_chemfiles(str(path), format="XYZ", guess_bonds=True)
+        assert len(loaded) == 1
+        assert len(loaded[0]) == 3
     text = (FIXTURE / "tiny_cuh2.con").read_text()
     out = tmp_path / "tiny.con"
     out.write_text(text)

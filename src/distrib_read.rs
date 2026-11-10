@@ -822,6 +822,26 @@ mod tests {
                     }
                 }
             }
+            unsafe {
+                std::env::set_var("OMPI_TEST_MARKER", "1");
+                std::env::set_var("PMIX_TEST_MARKER", "1");
+                std::env::set_var("PMI_TEST_MARKER", "1");
+            }
+            let saved_profile = std::env::var_os("LLVM_PROFILE_FILE");
+            unsafe { std::env::remove_var("LLVM_PROFILE_FILE") };
+            let mut without_profile = std::process::Command::new("mpirun");
+            if std::env::var_os("LLVM_PROFILE_FILE").is_some() {
+                without_profile.args(["-x", "LLVM_PROFILE_FILE"]);
+            }
+            assert!(
+                without_profile
+                    .get_args()
+                    .all(|arg| arg != "LLVM_PROFILE_FILE"),
+                "an unset profile is not forwarded"
+            );
+            if let Some(value) = saved_profile {
+                unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) };
+            }
             let log_out = dir.path().join("mpirun.out");
             let log_err = dir.path().join("mpirun.err");
             let mut cmd = std::process::Command::new("mpirun");
@@ -860,6 +880,13 @@ mod tests {
                     cmd.env_remove(key);
                 }
             }
+            let removed = cmd
+                .get_envs()
+                .filter_map(|(key, value)| value.is_none().then_some(key.to_string_lossy().into_owned()))
+                .collect::<Vec<_>>();
+            assert!(removed.iter().any(|key| key == "OMPI_TEST_MARKER"), "{removed:?}");
+            assert!(removed.iter().any(|key| key == "PMIX_TEST_MARKER"), "{removed:?}");
+            assert!(removed.iter().any(|key| key == "PMI_TEST_MARKER"), "{removed:?}");
             let status = cmd
                 .stdout(std::fs::File::create(&log_out).unwrap())
                 .stderr(std::fs::File::create(&log_err).unwrap())
@@ -934,7 +961,8 @@ mod tests {
         .expect("gatherv");
         assert!(n > 16, "{n}");
         let text = std::fs::read_to_string(&gathered).unwrap();
-        assert!(text.contains("H") || text.contains("Cu"), "{text}");
+        assert!(text.contains("Cu"), "{text}");
+        assert!(text.contains("H"), "{text}");
 
         // Rank 1 contributes no frames, so its write rounds are empty.
         unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "64") };
@@ -990,7 +1018,7 @@ mod tests {
         )
         .expect_err("a full device must reject the write");
         assert!(
-            err.to_string().contains("space") || err.to_string().contains("28"),
+            err.to_string().contains("space"),
             "{err}"
         );
 
@@ -1078,6 +1106,22 @@ mod tests {
             )
         };
         assert_eq!(disagree, -1, "a null path must fail every rank");
+        let disagree = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                abi_c.as_ptr(),
+                std::ptr::null(),
+                0,
+                2,
+                -1,
+                if comm.rank() == 0 {
+                    std::ptr::null_mut()
+                } else {
+                    &mut total_bytes
+                },
+            )
+        };
+        assert_eq!(disagree, -1, "a null size pointer must fail every rank");
         let null_slot: *const crate::ffi::RKRConFrame = std::ptr::null();
         let bad_slots = [null_slot];
         let good_slots = [held];
@@ -1127,7 +1171,8 @@ mod tests {
         assert_eq!(wrote, 0, "the C writer stores one frame from each rank");
         assert!(total_bytes > 16, "{total_bytes}");
         let stored = std::fs::read_to_string(&ok_path).unwrap();
-        assert!(stored.contains("H") || stored.contains("Cu"), "{stored}");
+        assert!(stored.contains("Cu"), "{stored}");
+        assert!(stored.contains("H"), "{stored}");
 
         unsafe {
             mpi::ffi::MPI_Comm_set_errhandler(
@@ -1179,7 +1224,7 @@ mod tests {
         )
         .expect_err("sync on the null device must fail");
         assert!(
-            err.to_string().contains("22") || err.to_string().to_lowercase().contains("invalid"),
+            err.to_string().contains("22"),
             "{err}"
         );
         unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "8") };
@@ -1210,7 +1255,8 @@ mod tests {
         .expect("one rank gathers");
         assert!(n > 16, "{n}");
         let gathered = std::fs::read_to_string(&partial_gather).unwrap();
-        assert!(gathered.contains("H") || gathered.contains("Cu"), "{gathered}");
+        assert!(gathered.contains("Cu"), "{gathered}");
+        assert!(gathered.contains("H"), "{gathered}");
 
         let one = dir.join("one-frame.con");
         let uneven = dir.join("uneven.con");
