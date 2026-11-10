@@ -6658,3 +6658,13 @@ mod tests {
         assert_eq!(status, RKRStatus::RKR_STATUS_NULL_POINTER);
     }
 }
+
+#[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod exported_calls {
+    use super::*;
+    use std::ffi::CString;
+    use std::ptr;
+
+    include!("../tests/ffi_null_body.rs");
+}
