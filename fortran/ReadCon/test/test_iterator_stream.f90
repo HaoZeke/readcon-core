@@ -11,6 +11,7 @@ program test_iterator_stream
   call assert_public_readers()
   call assert_remaining_procedures()
   call assert_failure_returns()
+  call assert_every_public_reader()
 contains
 
   subroutine assert_missing_file()
@@ -475,5 +476,70 @@ contains
     if (z < 0) status = status + ndim + bits
     status = status + int(energy)
     ok = ok .or. has_order
+  end subroutine
+
+  subroutine assert_every_public_reader()
+    type(frame_t) :: built, nth, missing
+    type(frame_t), allocatable :: frames(:)
+    type(builder_t) :: builder
+    type(writer_t) :: writer
+    type(iterator_t) :: iter
+    real(real64) :: cell(3), angles(3), pos(3, 2), one(3, 1)
+    integer :: status, nmatch, i, j, order, nframes
+    integer(c_size_t) :: skipped
+    integer(int64) :: z
+    logical :: has_order
+    character(len=*), parameter :: path = "public-reader.con"
+    cell = [4.0_real64, 5.0_real64, 6.0_real64]
+    angles = [90.0_real64, 90.0_real64, 90.0_real64]
+    builder = new_builder(cell, angles)
+    status = builder%add_atom("Cu", 0.1_real64, 0.2_real64, 0.3_real64, &
+         1_int64, 63.546_real64, .false., .false., .false.)
+    if (status /= 0) error stop "public add Cu"
+    status = builder%add_atom("H", 1.0_real64, 0.0_real64, 0.0_real64, &
+         2_int64, 1.008_real64, .false., .false., .false.)
+    if (status /= 0) error stop "public add H"
+    status = builder%set_metadata_json('{"bonds":[[0,1],{"i":1,"j":0,"order":2}]}')
+    if (status /= 0) error stop "public bonds"
+    built = builder%build()
+    if (.not. built%valid()) error stop "public build"
+    if (built%bond_count() /= 2) error stop "bond count"
+    status = built%bond_at(0, i, j, order, has_order)
+    if (status /= 0 .or. has_order) error stop "bond 0"
+    status = built%bond_at(1, i, j, order, has_order)
+    if (status /= 0 .or. .not. has_order .or. order /= 2) error stop "bond 1"
+    status = built%bond_at(4, i, j, order, has_order)
+    if (status == 0) error stop "bond past the end"
+    writer = open_writer(path)
+    if (.not. writer%valid()) error stop "public writer"
+    status = writer%extend_one(built)
+    if (status /= 0) error stop "public extend"
+    call writer%free()
+    nframes = count_frames(path)
+    if (nframes /= 1) error stop "public count"
+    frames = read_all_frames(path)
+    if (size(frames) /= 1) error stop "public read all"
+    if (.not. frames(1)%valid()) error stop "public frame"
+    frames = read_all_frames(path, n_threads=2)
+    if (size(frames) /= 1) error stop "public threaded read"
+    nth = read_nth_frame(path, 0)
+    if (.not. nth%valid()) error stop "public nth"
+    status = nth%copy_positions(pos)
+    if (status /= 0) error stop "public positions"
+    status = nth%copy_positions(one)
+    if (status == 0) error stop "public short positions"
+    missing = read_nth_frame("no-such-public.con", 0)
+    if (missing%valid()) error stop "public missing nth"
+    if (count_frames("no-such-public.con") /= -1) error stop "public missing count"
+    iter = open_iterator(path)
+    if (.not. iter%valid()) error stop "public iterator"
+    skipped = iter%skip(0)
+    if (skipped < 0_c_size_t) error stop "public skip"
+    call iter%free()
+    z = symbol_to_z("Cu")
+    if (z /= 29_int64) error stop "public symbol"
+    call nth%free()
+    call built%free()
+    call builder%free()
   end subroutine
 end program
