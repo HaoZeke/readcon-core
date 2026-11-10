@@ -3866,3 +3866,55 @@ fn select_atom_positions_on_frames(
     let multi = rust_sel(selection, &rust_frames).map_err(chemfiles_err_to_py)?;
     multi_frame_selection_to_py(py, multi)
 }
+
+#[cfg(test)]
+mod api_coverage {
+    use super::*;
+    use pyo3::prelude::*;
+    use crate::chemfiles_selection::{
+        FrameSelectionSlice, MultiFrameSelectionResult, SelectionMatch, SelectionResult,
+    };
+
+    fn match_one(index: usize) -> SelectionMatch {
+        let mut atoms = [0usize; 4];
+        atoms[0] = index;
+        SelectionMatch { size: 1, atoms }
+    }
+
+    #[test]
+    fn selection_conversion_builds_the_python_dicts() {
+        Python::initialize();
+        Python::attach(|py| {
+            let result = SelectionResult {
+                selection: "name H".to_string(),
+                context_size: 1,
+                matches: vec![match_one(2), match_one(3)],
+            };
+            let converted = selection_result_to_py(py, result).unwrap();
+            assert!(!converted.is_none(py));
+            let multi = MultiFrameSelectionResult {
+                selection: "name H".to_string(),
+                frames: vec![FrameSelectionSlice {
+                    frame_index: 0,
+                    result: SelectionResult {
+                        selection: "name H".to_string(),
+                        context_size: 1,
+                        matches: vec![match_one(2)],
+                    },
+                    positions: vec![[1.0, 2.0, 3.0]],
+                    atom_indices: vec![2],
+                }],
+            };
+            multi_frame_selection_to_py(py, multi).unwrap();
+            let values = pyo3::types::PyList::new(py, [0usize, 1usize]).unwrap();
+            assert_eq!(py_usize_values(&values).unwrap(), vec![0, 1]);
+            let scalar = 4usize.into_pyobject(py).unwrap();
+            assert_eq!(py_usize_values(&scalar).unwrap(), vec![4]);
+            let bad = pyo3::types::PyDict::new(py);
+            assert!(py_usize_values(&bad).is_err());
+            let mask = pyo3::types::PyList::new(py, [true, false, true]).unwrap();
+            assert_eq!(py_bool_mask(&mask).unwrap(), [true, false, true]);
+            assert!(py_bool_mask(&bad).is_err());
+        });
+    }
+}

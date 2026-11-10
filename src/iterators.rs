@@ -477,9 +477,14 @@ pub struct ConFrameIterator<'a> {
 }
 
 impl<'a> ConFrameIterator<'a> {
-    /// 1-based line of the cursor after the last line this iterator consumed.
+    /// 1-based line of the read position after the last line this iterator consumed.
     pub fn cursor_line(&self) -> u32 {
         self.lines.line_no as u32
+    }
+
+    /// Same value as [`Self::cursor_line`].
+    pub fn lines_read(&self) -> u32 {
+        self.cursor_line()
     }
 
     /// A slice that is not the start of the file may begin with U+FEFF.

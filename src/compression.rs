@@ -187,10 +187,9 @@ fn read_contents(
     Ok((contents, compression))
 }
 
-/// The class the byte parser reports for these bytes, so a file that is
-/// not UTF-8 still names the line error instead of a bare decode failure.
+/// The message [`FileContents::as_str`] reports for the same bytes.
 pub(crate) fn invalid_utf8_message(bytes: &[u8]) -> String {
-    match crate::iterators::frames_from_bytes(bytes, None) {
+    match std::str::from_utf8(bytes) {
         Err(err) => err.to_string(),
         Ok(_) => "stream did not contain valid UTF-8".to_string(),
     }

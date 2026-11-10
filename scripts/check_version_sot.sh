@@ -208,6 +208,12 @@ allow_exact = {
     "paper/cpc/src/release.tex",
     # make_packet.py copies that version into the CPC submission form.
     "paper/cpc/packet/CPC-FORM.md",
+    # The reader-exchange logs and the variant table record the measured
+    # package version next to the module hash.
+    "paper/cpc/logs/reader-exchange.log",
+    "paper/cpc/logs/reader-exchange-public.log",
+    "paper/cpc/logs/mutant-differential.txt",
+    "paper/cpc/variants/NUMBERS.txt",
 }
 skip_dirs = {
     ".git",

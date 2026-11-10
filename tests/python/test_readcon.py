@@ -536,7 +536,9 @@ class TestConFrameConstructor:
                 message = None
             except IOError as e:
                 message = str(e)
-            if message.startswith("stream did not contain valid UTF-8"):
+            if message.startswith("stream did not contain valid UTF-8") or message.startswith(
+                "invalid utf-8 sequence"
+            ):
                 message = "parse error: CON validation failed: invalid UTF-8"
             it = readcon.iter_con(str(path), stream=True)
             assert len([next(it) for _ in range(3)]) == 3

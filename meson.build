@@ -199,6 +199,35 @@ if get_option('with_tests')
         env: {'LD_LIBRARY_PATH': meson.project_build_root()},
         timeout: 120,
     )
+    c_ffi = executable(
+        'test_ffi_coverage',
+        files('tests/c/ffi_coverage.c'),
+        dependencies: readcon_dep,
+        include_directories: _incdir,
+        build_rpath: meson.project_build_root(),
+    )
+    test(
+        'c-ffi-coverage',
+        c_ffi,
+        args: [_msproot, meson.current_build_dir()],
+        env: {'LD_LIBRARY_PATH': meson.project_build_root()},
+        timeout: 120,
+    )
+    cpp_ffi = executable(
+        'test_ffi_coverage_cpp',
+        files('tests/c/ffi_coverage.cpp'),
+        dependencies: readcon_dep,
+        include_directories: [_incdir, include_directories('tests/c')],
+        build_rpath: meson.project_build_root(),
+        cpp_args: ['-std=c++20'],
+    )
+    test(
+        'cpp-ffi-coverage',
+        cpp_ffi,
+        args: [_msproot, meson.current_build_dir()],
+        env: {'LD_LIBRARY_PATH': meson.project_build_root()},
+        timeout: 120,
+    )
 endif
 
 if get_option('with_examples')

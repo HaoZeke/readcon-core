@@ -226,11 +226,11 @@ mod tests {
             for after in [&small[..], &[][..]] {
                 let (filled, capacity) = after_first(&frame, after);
                 assert!(filled <= capacity);
-                assert!(
-                    capacity <= len + DEFAULT_READ_SIZE,
+                let message = format!(
                     "frame {len}, {} bytes after it: capacity {capacity}",
                     after.len()
                 );
+                assert!(capacity <= len + DEFAULT_READ_SIZE, "{message}");
             }
         }
     }

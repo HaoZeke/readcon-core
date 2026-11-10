@@ -58,12 +58,12 @@ fn line_of(bytes: &[u8], err: &ParseError) -> u32 {
     let mut line = 0u32;
     while let Some(item) = it.next() {
         if item.is_err() {
-            line = it.cursor_line();
+            line = it.lines_read();
             break;
         }
     }
     if line == 0 {
-        line = it.cursor_line();
+        line = it.lines_read();
     }
     let rows: Vec<&str> = text.lines().collect();
     if err.class_name() == "IncompleteSection" {
@@ -78,7 +78,7 @@ fn line_of(bytes: &[u8], err: &ParseError) -> u32 {
     if rendered.contains("parsing frame header") && line as usize == rows.len() {
         return line + 1;
     }
-    // The cursor sits on the last line that was present. A missing
+    // The read position is the last line that was present. A missing
     // coordinate row is the next line (CON-frame.4).
     if err.class_name() == "IncompleteFrame" && line as usize == rows.len() {
         return line + 1;
