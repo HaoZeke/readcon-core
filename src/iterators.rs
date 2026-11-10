@@ -1116,11 +1116,7 @@ mod aos_soa_agreement_tests {
         let has_vel = fr.atom_data.iter().any(|a| a.velocity().is_some());
         let has_frc = fr.atom_data.iter().any(|a| a.force().is_some());
         if has_vel {
-            assert_eq!(
-                fr.velocities.nrows(),
-                n,
-                "SoA velocities must match AoS after section parse"
-            );
+            assert_eq!(fr.velocities.nrows(), n);
         }
         if has_frc {
             assert_eq!(fr.forces.nrows(), n, "SoA forces must match AoS");
@@ -3675,11 +3671,7 @@ zero-atom frame
             let crlf = one.replace('\n', "\r\n");
             assert_workers(&format!("{name} crlf"), &crlf);
             let gap = crlf_gap_offsets(&crlf);
-            assert_eq!(
-                gap,
-                frame_start_offsets_serial(&crlf),
-                "{name} crlf gap offsets"
-            );
+            assert_eq!(gap, frame_start_offsets_serial(&crlf));
             let parsed = parse_frames_at_offsets(&crlf, &gap, Some(4));
             assert_same_results(
                 &format!("{name} crlf gap parse"),
@@ -4216,17 +4208,34 @@ mod one_thread_and_numa {
         assert!(
             super::finish_results(
                 Some(pool.as_ref()),
-                vec![Ok(frame), Err(error::ParseError::IncompleteFrame)],
+                vec![Ok(frame.clone()), Err(error::ParseError::IncompleteFrame)],
             )
             .is_err()
         );
-        let doubled = text.clone() + &text;
+        let doubled = format!("{text}\n{text}");
         let bytes = doubled.as_bytes();
         assert!(super::parse_byte_span(bytes, 0, bytes.len()).is_err());
-        let parsed = super::parse_into_slots_timed(bytes, bytes.len(), &[0], 2, |start, end| {
-            super::parse_byte_span(bytes, start, end)
-        });
-        assert!(parsed.slots[0].is_err());
+        let bad = text.replacen("0.63940000000000108", "notanumber", 1);
+        assert!(super::read_nth_frame_from_text(&bad, 0).is_err());
+        let mut other = frame.clone();
+        other.atom_data.pop();
+        let stride = frame.atom_data.len() * 3;
+        let coords = vec![0.0; stride * 2];
+        assert!(super::touch_frame_checksum(&[frame.clone(), other.clone()], &coords, 1).is_none());
+        assert!(super::touch_option_checksum(
+            &[Some(frame), Some(other)],
+            &coords,
+            1
+        )
+        .is_none());
+        let mut empty = Vec::<f64>::new();
+        super::first_touch_f64(&mut empty, 2);
+        let mut cursor = super::MemchrLines::new("abc\ndef\n");
+        cursor.newlines = Some(vec![3, 7]);
+        cursor.peek_line();
+        cursor.clear_peek();
+        cursor.utf8_bad = true;
+        assert!(!crate::parser::LineStream::remainder_is_whitespace(&mut cursor));
     }
 
     #[test]

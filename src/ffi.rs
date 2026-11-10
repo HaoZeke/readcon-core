@@ -429,9 +429,8 @@ pub unsafe extern "C" fn rkr_frame_bond_at(
     {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
     }
-    let Some(frame) = (unsafe { (frame_handle as *const ConFrame).as_ref() }) else {
-        return RKRStatus::RKR_STATUS_NULL_POINTER;
-    };
+    // Null was rejected above. `as_ref` is `None` only for null.
+    let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let bonds = frame.bonds();
     let Some(bond) = bonds.get(index as usize) else {
         return RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS;
@@ -8013,11 +8012,105 @@ mod tests {
         let traj = unsafe { rkr_trajectory_open(src.as_ptr(), 0) };
         assert!(!traj.is_null());
         TRAJECTORY_FRAME_PANIC.store(true, std::sync::atomic::Ordering::Relaxed);
+        let hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
         let mut out_frame = std::ptr::null_mut();
         let status = unsafe { rkr_trajectory_read_frame(traj, 0, &mut out_frame) };
+        std::panic::set_hook(hook);
         TRAJECTORY_FRAME_PANIC.store(false, std::sync::atomic::Ordering::Relaxed);
         assert_eq!(status, RKRStatus::RKR_STATUS_INTERNAL_ERROR);
         assert!(out_frame.is_null());
         unsafe { rkr_trajectory_free(traj) };
+
+        let live = test_builder_handle();
+        let symbol = CString::new("H").unwrap();
+        assert_eq!(
+            unsafe { rkr_frame_add_atom(live, symbol.as_ptr(), 0.0, 0.0, 0.0, false, 1, 1.0) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let xyz = [0.0f64; 3];
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_velocity(live, 9, xyz.as_ptr()) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_displacement(live, 9, xyz.as_ptr()) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_spread(live, 9, xyz.as_ptr()) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_fixed(live, 9, false, false, true) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_velocity(live, 9) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_force(live, 9) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_displacement(live, 9) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_clear_atom_spread(live, 9) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_forces_from_flat(live, xyz.as_ptr(), 1) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert!(unsafe { rkr_frame_builder_velocities_data(live) }.is_null());
+        assert!(unsafe { rkr_frame_builder_forces_data(live) }.is_null());
+        assert!(unsafe { rkr_frame_builder_displacements_data(live) }.is_null());
+        assert!(unsafe { rkr_frame_builder_spreads_data(live) }.is_null());
+        assert!(unsafe { rkr_frame_builder_atom_energies_data(live) }.is_null());
+        unsafe { free_rkr_frame_builder(live) };
+
+        let junk = CString::new("this is not a con frame\n").unwrap();
+        let iter = unsafe { read_con_string_iterator(junk.as_ptr()) };
+        assert!(!iter.is_null());
+        assert_eq!(
+            unsafe { con_frame_iterator_forward(iter) },
+            RKRStatus::RKR_STATUS_IO_ERROR
+        );
+        assert!(unsafe { con_frame_iterator_nth(iter, 3) }.is_null());
+        unsafe { free_con_frame_iterator(iter) };
+
+        let absent = CString::new(dir.path().join("no-file.con").to_str().unwrap()).unwrap();
+        assert!(unsafe { rkr_read_first_frame(absent.as_ptr()) }.is_null());
+        let mut count = 0usize;
+        assert!(unsafe { rkr_read_all_frames(absent.as_ptr(), &mut count) }.is_null());
+        let nested = CString::new(dir.path().join("missing-parent/out.con.gz").to_str().unwrap()).unwrap();
+        assert!(unsafe { create_writer_gzip_c(nested.as_ptr()) }.is_null());
+        assert!(unsafe { create_writer_zstd_c(nested.as_ptr()) }.is_null());
+        assert!(unsafe { create_writer_gzip_c(std::ptr::null()) }.is_null());
+
+        let xyz_path = CString::new("resources/test/water_min.xyz").unwrap();
+        let chem = unsafe { rkr_read_chemfiles_first(xyz_path.as_ptr()) };
+        if !chem.is_null() {
+            unsafe { free_rkr_frame(chem) };
+        }
+        let mut nchem = 0usize;
+        let many = unsafe { rkr_read_chemfiles(xyz_path.as_ptr(), &mut nchem) };
+        if !many.is_null() {
+            unsafe { free_rkr_frame_array(many, nchem) };
+        }
+        let nth = unsafe { rkr_read_chemfiles_nth(xyz_path.as_ptr(), 0) };
+        if !nth.is_null() {
+            unsafe { free_rkr_frame(nth) };
+        }
+        let topo = CString::new("resources/test/water_min.xyz").unwrap();
+        let ranged = unsafe {
+            rkr_read_chemfiles_range(xyz_path.as_ptr(), 0, 1, 1, topo.as_ptr(), 0, &mut nchem)
+        };
+        if !ranged.is_null() {
+            unsafe { free_rkr_frame_array(ranged, nchem) };
+        }
     }
 }
