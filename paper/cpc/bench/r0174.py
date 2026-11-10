@@ -125,12 +125,16 @@ def build() -> dict:
 
 
 def record() -> dict:
+    import interleave
+
+    interleave.require_bench_namespace()
     return {
         "build": build(),
         "host": host(),
         "hardware": provenance.hardware(),
         "peers": provenance.peers(),
         "tools": tools(),
+        **provenance.git_tip(),
     }
 
 

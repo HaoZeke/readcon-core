@@ -141,12 +141,45 @@ def settle(ms: float, window_ms: float | None = None) -> dict[int, list[int]]:
     return counts
 
 
+def per_core_stat() -> str:
+    """The ``cpuN`` lines of ``/proc/stat``, one core per line."""
+    lines = []
+    for line in Path("/proc/stat").read_text(encoding="utf-8").splitlines():
+        if line.startswith("cpu") and len(line) > 3 and line[3].isdigit():
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def require_bench_namespace() -> None:
+    """Timing runs in a private mount and UTS namespace whose hostname file reads ``bench``.
+
+    ``in_bench_ns.sh`` records the launching process's namespace ids in
+    ``READCON_HOST_UTS`` and ``READCON_HOST_MNT``. A run whose ids still match
+    those has not entered the private namespaces.
+    """
+    host = Path("/etc/hostname").read_text(encoding="utf-8").strip()
+    if host != "bench":
+        raise SystemExit(
+            f"/etc/hostname is {host!r}; a timing run sets it to 'bench' in its UTS namespace"
+        )
+    for kind, env in (("uts", "READCON_HOST_UTS"), ("mnt", "READCON_HOST_MNT")):
+        mine = os.readlink(f"/proc/self/ns/{kind}")
+        parent = os.environ.get(env, "")
+        if not parent or mine == parent:
+            raise SystemExit(f"a timing run is not in a private {kind} namespace")
+
+
 def host_snapshot() -> dict[str, str]:
-    """Boot id, uptime in seconds and the full ``lscpu`` text."""
+    """Boot id, uptime, ``lscpu`` and the per-core ``/proc/stat`` lines."""
     boot_id = Path("/proc/sys/kernel/random/boot_id").read_text(encoding="utf-8").strip()
     uptime_s = Path("/proc/uptime").read_text(encoding="utf-8").split()[0]
     lscpu = subprocess.check_output(["lscpu"], text=True)
-    return {"boot_id": boot_id, "uptime_s": uptime_s, "lscpu": lscpu}
+    return {
+        "boot_id": boot_id,
+        "uptime_s": uptime_s,
+        "lscpu": lscpu,
+        "per_core": per_core_stat(),
+    }
 
 
 def sha256_file(path: Path) -> str:
@@ -191,6 +224,7 @@ def campaign(
     artifacts: Mapping[str, Path] | None = None,
 ) -> dict:
     """Run ``cells`` in interleaved rounds; return the protocol, hardware and per-cell summary of the record."""
+    require_bench_namespace()
     n_rounds = rounds() if n_rounds is None else n_rounds
     if n_rounds < 6:
         raise SystemExit(f"a timing record takes at least 6 rounds, got {n_rounds}")
@@ -265,9 +299,11 @@ def campaign(
             "boot_id_before": host_before["boot_id"],
             "uptime_s_before": host_before["uptime_s"],
             "lscpu_before": host_before["lscpu"],
+            "per_core_before": host_before["per_core"],
             "boot_id_after": host_after["boot_id"],
             "uptime_s_after": host_after["uptime_s"],
             "lscpu_after": host_after["lscpu"],
+            "per_core_after": host_after["per_core"],
             "artifact_sha256": artifact_hashes,
             "campaign_s": round(time.perf_counter() - start, 1),
             **({} if settle_ms is None else {"settle_ms": settle_ms}),

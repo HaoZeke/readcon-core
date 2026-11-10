@@ -206,6 +206,9 @@ def run(cmd: list, **kw) -> subprocess.CompletedProcess:
 def stamp() -> dict:
     """The provenance block of a record: the ``readcon_read`` build, the library version it was built from, and
     the host."""
+    import interleave
+
+    interleave.require_bench_namespace()
     version = tomllib.loads((SRC / "Cargo.toml").read_text())["package"]["version"]
     return {
         "build": {
@@ -213,6 +216,7 @@ def stamp() -> dict:
             "readcon_version": version,
         },
         "host": provenance.host(),
+        **provenance.git_tip(),
     }
 
 

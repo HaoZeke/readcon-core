@@ -348,8 +348,21 @@ def peers() -> dict:
     return versions
 
 
+def git_tip() -> dict:
+    """The commit and tree the process is measuring. Both name HEAD, not an ancestor with the same library files."""
+    return {
+        "HEAD": _git("rev-parse", "HEAD") or "",
+        "TREE": _git("rev-parse", "HEAD^{tree}") or "",
+    }
+
+
 def record() -> dict:
-    return {"build": readcon_build(), "host": host(), "peers": peers()}
+    return {
+        "build": readcon_build(),
+        "host": host(),
+        "peers": peers(),
+        **git_tip(),
+    }
 
 
 if __name__ == "__main__":

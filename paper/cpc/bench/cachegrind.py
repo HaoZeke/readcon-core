@@ -124,6 +124,7 @@ def main() -> None:
         "hardware": record["hardware"],
         "cells": record["cells"],
         "provenance": provenance.binary_build(BIN),
+        **provenance.git_tip(),
     }
     if RESULTS.exists():
         shutil.rmtree(RESULTS)
