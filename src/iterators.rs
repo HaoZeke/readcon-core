@@ -4018,9 +4018,9 @@ mod differential_entry_points {
 mod one_thread_and_numa {
     use super::{
         error, frames_from_bytes, line_count, line_no_for_pos, line_start_pos, numa_remote_from,
-        copy_positions, fill_position_block, parse_byte_span, parse_bytes_timed, parse_text_span,
-        perf_close_os, perf_open_os, perf_read_os, read_all_frames_indexed, sample_llc_from,
-        sample_llc_misses,
+        copy_positions, fill_position_block, pack_position_slab, parse_byte_span, parse_bytes_timed,
+        parse_text_span, perf_close_os, perf_open_os, perf_read_os, read_all_frames_indexed,
+        read_first_frame, sample_llc_from, sample_llc_misses,
     };
 
     #[test]
@@ -4288,7 +4288,7 @@ mod one_thread_and_numa {
 
     #[test]
     fn timed_parse_and_position_copy_cover_the_worker_arms() {
-        let text = fixture("tiny_cuh2.con");
+        let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
         let bytes = text.as_bytes();
         let pooled = parse_bytes_timed(bytes, Some(2));
         assert_eq!(pooled.slots.len(), 1);
@@ -4311,9 +4311,9 @@ mod one_thread_and_numa {
         copy_positions(&frame, &mut wide).unwrap();
         assert_eq!(wide, frame.positions.f64_slice().unwrap());
         assert!(pack_position_slab(&[], 2).is_none());
-        let mut one = types::ConFrameBuilder::new([8.0, 8.0, 8.0], [90.0, 90.0, 90.0]);
+        let mut one = crate::types::ConFrameBuilder::new([8.0, 8.0, 8.0], [90.0, 90.0, 90.0]);
         one.add_atom("H", 0.0, 0.0, 0.0, [false, false, false], 1, 1.0);
-        let mut two = types::ConFrameBuilder::new([8.0, 8.0, 8.0], [90.0, 90.0, 90.0]);
+        let mut two = crate::types::ConFrameBuilder::new([8.0, 8.0, 8.0], [90.0, 90.0, 90.0]);
         two.add_atom("H", 0.0, 0.0, 0.0, [false, false, false], 1, 1.0)
             .add_atom("O", 1.0, 0.0, 0.0, [false, false, false], 8, 16.0);
         assert!(pack_position_slab(&[one.build().unwrap(), two.build().unwrap()], 3).is_none());
