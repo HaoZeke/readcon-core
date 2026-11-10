@@ -245,13 +245,11 @@ fn tiled_span(path: &Path) -> Option<(usize, usize)> {
         return None;
     }
     let span = iter.byte_pos();
-    if span < 2 || len % span != 0 {
+    // A frame that parsed is longer than one byte, so the remainder is safe.
+    if len % span != 0 {
         return None;
     }
     let n = len / span;
-    if n == 0 {
-        return None;
-    }
     if n >= 2 {
         let mut next = crate::iterators::ConFrameIterator::from_bytes(&map[span..span * 2]);
         if !matches!(next.forward_fast(), Some(Ok(()))) || next.byte_pos() != span {
