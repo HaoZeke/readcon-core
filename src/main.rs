@@ -57,17 +57,23 @@ fn main() {
         let output = Path::new(&args[3]);
         match convert_path_to_con(input, output) {
             Ok(report) => {
+                // A lean build never returns a chemfiles import. That arm
+                // exists only when the feature is compiled in.
+                #[cfg(feature = "chemfiles")]
                 let kind = if report.native_con {
                     "native CON"
                 } else {
                     "chemfiles import"
                 };
+                #[cfg(not(feature = "chemfiles"))]
+                let kind = "native CON";
                 println!(
                     "-> convert ({kind}): {} frame(s), last frame {} atom(s) → {}",
                     report.n_frames,
                     report.n_atoms_last,
                     output.display()
                 );
+                #[cfg(feature = "chemfiles")]
                 if !report.native_con && !path_looks_like_con(input) {
                     println!(
                         "-> tip: keep this .con as the interchange file; link C/Fortran/Python via rkr_* / readcon"
