@@ -138,8 +138,6 @@ def write_flat(stage: Path, flat: Path, snap: Path, report: dict) -> list[str]:
     bbl = stage / f"{MAIN}.bbl"
     if not bbl.exists():
         raise arxiv.PackError(f"missing {MAIN}.bbl in the staging tree")
-    if f"{MAIN}.bbl" not in used:
-        place(bbl, f"{MAIN}.bbl")
 
     # Collision check: every basename unique.
     if len(names) != len(set(names)):
