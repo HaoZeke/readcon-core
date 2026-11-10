@@ -763,6 +763,7 @@ mod tests {
                 .env("READCON_MPI_TEST_CHUNK", "64")
                 .env("READCON_TWO_RANK_DIR", dir.path())
                 .env("LD_LIBRARY_PATH", &library_path)
+                .env_remove("LD_PRELOAD")
                 .stdout(std::fs::File::create(&log_out).unwrap())
                 .stderr(std::fs::File::create(&log_err).unwrap())
                 .status()

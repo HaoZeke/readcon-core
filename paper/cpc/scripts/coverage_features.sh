@@ -92,7 +92,8 @@ echo "==> workspace, all targets, merged features"
 cargo llvm-cov clean --workspace
 cargo llvm-cov --workspace --all-targets \
   --features "$FEATURES" \
-  --branch --no-fail-fast --no-report --remap-path-prefix
+  --branch --no-fail-fast --no-report --remap-path-prefix \
+  -- --test-threads=1
 PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
 if ! find "$PROFDIR" -maxdepth 1 -name '*.profraw' | grep -q .; then
   echo "the feature build produced no profiles" >&2
