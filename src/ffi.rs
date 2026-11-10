@@ -393,6 +393,9 @@ pub enum RKRStatus {
     RKR_STATUS_DEVICE_MISMATCH = -12,
     /// Build cannot allocate on the requested non-CPU device (use caller-supplied buffers).
     RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED = -13,
+    /// `con_frame_iterator_next_status` reached the end of the file.
+    /// A parse error from that call is `RKR_STATUS_IO_ERROR`, not a separate code.
+    RKR_STATUS_END_OF_FILE = -14,
 }
 /// Number of optional frame topology bonds (`metadata["bonds"]`), or 0 if absent.
 ///
@@ -484,6 +487,7 @@ pub extern "C" fn rkr_status_message(status: RKRStatus) -> *const c_char {
         RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED => {
             c"device allocation unsupported in this build".as_ptr()
         }
+        RKRStatus::RKR_STATUS_END_OF_FILE => c"end of file".as_ptr(),
     }
 }
 
@@ -744,9 +748,10 @@ pub unsafe extern "C" fn con_frame_iterator_next(
 
 /// Next frame as a status code.
 ///
-/// `0` stores one frame in `frame_out`. `-14` is the end of the file.
-/// Any other code is a parse error; [`con_frame_iterator_error_message`]
-/// names its class.
+/// `RKR_STATUS_SUCCESS` (`0`) stores one frame in `frame_out`.
+/// `RKR_STATUS_END_OF_FILE` (`-14`) is the end of the file.
+/// `RKR_STATUS_IO_ERROR` (`-4`) is a parse error; [`con_frame_iterator_error_message`]
+/// names its class. `RKR_STATUS_NULL_POINTER` (`-1`) means an argument was null.
 ///
 /// # Safety
 /// `iterator` and `frame_out` must be valid. The caller owns `*frame_out`.
@@ -756,7 +761,7 @@ pub unsafe extern "C" fn con_frame_iterator_next_status(
     frame_out: *mut *mut RKRConFrame,
 ) -> i32 {
     if iterator.is_null() || frame_out.is_null() {
-        return -1;
+        return RKRStatus::RKR_STATUS_NULL_POINTER as i32;
     }
     let holder = unsafe { &mut *iterator };
     if !holder.last_error.is_null() {
@@ -771,15 +776,15 @@ pub unsafe extern "C" fn con_frame_iterator_next_status(
             unsafe {
                 *frame_out = Box::into_raw(Box::new(frame)) as *mut RKRConFrame;
             }
-            0
+            RKRStatus::RKR_STATUS_SUCCESS as i32
         }
-        None => -14,
+        None => RKRStatus::RKR_STATUS_END_OF_FILE as i32,
         Some(Err(err)) => {
             let text = err.to_string();
             holder.last_error = CString::new(text.replace('\0', ""))
                 .unwrap_or_else(|_| CString::new("error").expect("static"))
                 .into_raw();
-            -4
+            RKRStatus::RKR_STATUS_IO_ERROR as i32
         }
     }
 }
@@ -6724,7 +6729,10 @@ mod tests {
         let empty = unsafe { read_con_buffer_iterator(std::ptr::null(), 0) };
         assert!(!empty.is_null());
         let mut frame = std::ptr::null_mut();
-        assert_eq!(unsafe { con_frame_iterator_next_status(empty, &mut frame) }, -14);
+        assert_eq!(
+            unsafe { con_frame_iterator_next_status(empty, &mut frame) },
+            RKRStatus::RKR_STATUS_END_OF_FILE as i32
+        );
         let msg = unsafe { con_frame_iterator_error_message(empty) };
         assert_eq!(unsafe { CStr::from_ptr(msg) }.to_str().unwrap(), "no error");
         unsafe { free_con_frame_iterator(empty) };
@@ -6737,7 +6745,10 @@ mod tests {
         let bad = CString::new("not a con frame\n").unwrap();
         let it = unsafe { read_con_string_iterator(bad.as_ptr()) };
         assert!(!it.is_null());
-        assert_eq!(unsafe { con_frame_iterator_next_status(it, &mut frame) }, -4);
+        assert_eq!(
+            unsafe { con_frame_iterator_next_status(it, &mut frame) },
+            RKRStatus::RKR_STATUS_IO_ERROR as i32
+        );
         let err = unsafe { con_frame_iterator_error_message(it) };
         assert!(!err.is_null());
         assert!(!unsafe { CStr::from_ptr(err) }.to_bytes().is_empty());
@@ -7040,6 +7051,7 @@ mod tests {
             RKRStatus::RKR_STATUS_FEATURE_DISABLED,
             RKRStatus::RKR_STATUS_DEVICE_MISMATCH,
             RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED,
+            RKRStatus::RKR_STATUS_END_OF_FILE,
         ] {
             let msg = unsafe { rkr_status_message(status) };
             assert!(!unsafe { CStr::from_ptr(msg) }.to_bytes().is_empty());

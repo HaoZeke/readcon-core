@@ -383,6 +383,7 @@ fn ffi_null_and_error_paths() {
             RKRStatus::RKR_STATUS_FEATURE_DISABLED,
             RKRStatus::RKR_STATUS_DEVICE_MISMATCH,
             RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED,
+            RKRStatus::RKR_STATUS_END_OF_FILE,
         ] {
             let m = CStr::from_ptr(rkr_status_message(code));
             assert!(!m.to_bytes().is_empty());

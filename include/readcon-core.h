@@ -251,6 +251,11 @@ typedef enum RKRStatus {
      * Build cannot allocate on the requested non-CPU device (use caller-supplied buffers).
      */
     RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED = -13,
+    /**
+     * `con_frame_iterator_next_status` reached the end of the file.
+     * A parse error from that call is `RKR_STATUS_IO_ERROR`, not a separate code.
+     */
+    RKR_STATUS_END_OF_FILE = -14,
 } RKRStatus;
 
 /**
@@ -699,6 +704,24 @@ struct CConFrameIterator *read_con_buffer_iterator(const uint8_t *data,
  * iterator must be valid. The caller takes ownership of the returned frame.
  */
 struct RKRConFrame *con_frame_iterator_next(struct CConFrameIterator *iterator);
+
+/**
+ * Next frame as a status code.
+ *
+ * `RKR_STATUS_SUCCESS` (`0`) stores one frame in `frame_out`. The caller owns that frame.
+ * `RKR_STATUS_END_OF_FILE` (`-14`) means the iterator is exhausted.
+ * `RKR_STATUS_IO_ERROR` (`-4`) is a parse error. `con_frame_iterator_error_message`
+ * names its class. `RKR_STATUS_NULL_POINTER` (`-1`) means `iterator` or `frame_out` is NULL.
+ */
+int32_t con_frame_iterator_next_status(struct CConFrameIterator *iterator,
+                                       struct RKRConFrame **frame_out);
+
+/**
+ * Class and message of the last `con_frame_iterator_next_status` error.
+ * The pointer is owned by the iterator. It is "no error" when the last call
+ * stored a frame or reached the end of the file.
+ */
+const char *con_frame_iterator_error_message(struct CConFrameIterator *iterator);
 
 /**
  * Skip one frame without parsing atoms. `RKR_STATUS_SUCCESS` on skip,
