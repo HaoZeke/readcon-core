@@ -245,9 +245,10 @@ fn residues_from_chemfiles_frame(frame: &Frame) -> Vec<Value> {
     let n = topo.residues_count() as usize;
     let mut out = Vec::with_capacity(n);
     for i in 0..n {
-        let Some(res) = topo.residue(i) else {
-            continue;
-        };
+        // residues_count is residues_.size(). Topology::residue throws only
+        // past that size (Topology.hpp:260-268). The C wrapper returns null
+        // only for that throw (capi/residue.cpp:48-57).
+        let res = topo.residue(i).unwrap();
         let mut obj = serde_json::Map::new();
         obj.insert("name".into(), json!(res.name()));
         if let Some(id) = res.id() {
