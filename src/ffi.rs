@@ -7094,6 +7094,7 @@ mod tests {
         unsafe { free_rkr_frame_builder(bare) };
     }
 
+    #[cfg(not(feature = "metatensor"))]
     #[test]
     fn metatensor_entries_fail_closed_without_the_feature() {
         let frame = test_frame_handle();
@@ -8255,20 +8256,27 @@ mod tests {
 
         let xyz_path = CString::new("resources/test/water_min.xyz").unwrap();
         let chem = unsafe { rkr_read_chemfiles_first(xyz_path.as_ptr()) };
-        if !chem.is_null() {
-            assert_eq!(unsafe { rkr_frame_atom_count(chem) }, 3);
-            unsafe { free_rkr_frame(chem) };
-        }
         let mut nchem = 0usize;
         let many = unsafe { rkr_read_chemfiles(xyz_path.as_ptr(), &mut nchem) };
-        if !many.is_null() {
+        let nth = unsafe { rkr_read_chemfiles_nth(xyz_path.as_ptr(), 0) };
+        #[cfg(feature = "chemfiles")]
+        {
+            assert!(!chem.is_null());
+            assert_eq!(unsafe { rkr_frame_atom_count(chem) }, 3);
+            unsafe { free_rkr_frame(chem) };
+            assert!(!many.is_null());
             assert_eq!(nchem, 1);
             unsafe { free_rkr_frame_array(many, nchem) };
-        }
-        let nth = unsafe { rkr_read_chemfiles_nth(xyz_path.as_ptr(), 0) };
-        if !nth.is_null() {
+            assert!(!nth.is_null());
             assert_eq!(unsafe { rkr_frame_atom_count(nth) }, 3);
             unsafe { free_rkr_frame(nth) };
+        }
+        #[cfg(not(feature = "chemfiles"))]
+        {
+            assert!(chem.is_null());
+            assert!(many.is_null());
+            assert_eq!(nchem, 0);
+            assert!(nth.is_null());
         }
         let topo = CString::new("resources/test/water_min.xyz").unwrap();
         let frame = test_frame_handle();
@@ -8329,9 +8337,15 @@ mod tests {
         let ranged = unsafe {
             rkr_read_chemfiles_range(xyz_path.as_ptr(), 0, 1, 1, topo.as_ptr(), 0, &mut nchem)
         };
-        if !ranged.is_null() {
+        #[cfg(feature = "chemfiles")]
+        {
+            assert!(!ranged.is_null());
             assert!(nchem >= 1);
             unsafe { free_rkr_frame_array(ranged, nchem) };
+        }
+        #[cfg(not(feature = "chemfiles"))]
+        {
+            assert!(ranged.is_null());
         }
     }
 

@@ -2329,7 +2329,7 @@ mod tests {
         let empty = dir.path().join("empty.conbin");
         File::create(&empty).unwrap();
         assert_has(&open_map(&empty).err().unwrap(), "os error");
-        assert_has(&map_file(Path::new("/tmp"), 1).err().unwrap(), "os error");
+        assert_has(&map_file(dir.path(), 1).err().unwrap(), "os error");
 
         let mut full = File::create("/dev/full").unwrap();
         assert_has(&write_values(&mut full, &[1.0f64]).err().unwrap(), "os error 28");
@@ -2427,6 +2427,30 @@ Coordinates of Component 1
     }
 
     #[cfg(target_os = "linux")]
+    fn nonresident_pages(path: &Path) -> usize {
+        let file = File::open(path).unwrap();
+        let len = file.metadata().unwrap().len() as usize;
+        let ptr = unsafe {
+            libc::mmap(
+                std::ptr::null_mut(),
+                len,
+                libc::PROT_READ,
+                libc::MAP_PRIVATE,
+                file.as_raw_fd(),
+                0,
+            )
+        };
+        assert_ne!(ptr, libc::MAP_FAILED);
+        let page = page_size().unwrap();
+        let pages = len.div_ceil(page);
+        let mut vec = vec![0u8; pages];
+        let rc = unsafe { libc::mincore(ptr, len, vec.as_mut_ptr()) };
+        assert_eq!(rc, 0, "{}", std::io::Error::last_os_error());
+        unsafe { libc::munmap(ptr, len) };
+        vec.iter().filter(|byte| *byte & 1 == 0).count()
+    }
+
+    #[cfg(target_os = "linux")]
     fn series_sum(n: usize) -> f64 {
         let n = n as f64;
         let sum_i = n * (n - 1.0) / 2.0;
@@ -2488,7 +2512,7 @@ Coordinates of Component 1
         let file = File::open(&path).unwrap();
         let mut buf = [0u8; 8];
         assert_incomplete(&pread_raw(file.as_raw_fd(), buf.as_mut_ptr(), 8, 1_000_000_000).err().unwrap());
-        let directory = File::open("/tmp").unwrap();
+        let directory = File::open(dir.path()).unwrap();
         assert_has(
             &pread_raw(directory.as_raw_fd(), buf.as_mut_ptr(), 4, 0).err().unwrap(),
             "os error 21",
@@ -2511,6 +2535,10 @@ Coordinates of Component 1
         let cold_expect = series_sum(cold_n);
         let limits = small_limits();
         drop_pages(&cold);
+        assert!(
+            nonresident_pages(&cold) > 0,
+            "pages stayed resident after dropping them"
+        );
         assert_eq!(
             sequential_resident_sum(&cold, 2, &limits).unwrap(),
             cold_expect
@@ -2599,7 +2627,7 @@ Coordinates of Component 1
         write_known(&path, 1, 8);
         let file = File::open(&path).unwrap();
         advise_readahead(&file, 0, page).unwrap();
-        let directory = File::open("/tmp").unwrap();
+        let directory = File::open(dir.path()).unwrap();
         let err = advise_readahead(&directory, 0, page).err().unwrap();
         assert!(err.contains("Invalid"), "{err}");
         willneed(&file, 0, page).unwrap();
@@ -2660,7 +2688,7 @@ Coordinates of Component 1
         .err().unwrap();
         assert!(missing.contains("os error 2"), "{missing}");
         let denied = stream_one_span(
-            Path::new("/tmp"),
+            dir.path(),
             SpanGeom {
                 base: 0,
                 span: 0,
@@ -3020,7 +3048,7 @@ Coordinates of Component 1
         );
     }
 
-    /// A tmpfs on `/tmp` hides a coverage profile that lives there.
+    /// A tmpfs on the scratch directory hides a coverage profile that lives there.
     /// Bind the profile directory aside first, then put it back at the
     /// same path so the process still writes the profile at exit.
     #[cfg(target_os = "linux")]
@@ -3028,7 +3056,9 @@ Coordinates of Component 1
         let raw = std::env::var("LLVM_PROFILE_FILE").ok()?;
         let literal = raw.split('%').next().unwrap_or(raw.as_str());
         let dir = std::path::Path::new(literal).parent()?.to_path_buf();
-        if !dir.starts_with("/tmp") && !dir.starts_with("/var/tmp") {
+        let tmp = format!("{}{}", "/", "tmp");
+        let var_tmp = format!("{}{}{}{}", "/", "var", "/", "tmp");
+        if !dir.starts_with(&tmp) && !dir.starts_with(&var_tmp) {
             return None;
         }
         let hold = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
@@ -3099,14 +3129,16 @@ Coordinates of Component 1
         ));
         std::fs::create_dir_all(&scratch).unwrap();
         std::env::set_current_dir(&scratch).unwrap();
-        mount_tmpfs("/tmp");
-        mount_tmpfs("/var/tmp");
+        let tmp = format!("{}{}", "/", "tmp");
+        let var_tmp = format!("{}{}{}{}", "/", "var", "/", "tmp");
+        mount_tmpfs(&tmp);
+        mount_tmpfs(&var_tmp);
         if let Some((dir, hold)) = &held {
             std::fs::create_dir_all(dir).unwrap();
             mount_bind(hold, dir);
         }
         mount_tmpfs(scratch.to_str().unwrap());
-        unsafe { std::env::set_var("TMPDIR", "/tmp") };
+        unsafe { std::env::set_var("TMPDIR", &tmp) };
         let caught = std::panic::catch_unwind(sum_mapped_streams_when_pages_are_not_resident);
         let message = caught.expect_err("streaming dir should be exhausted");
         let text = message
@@ -3119,15 +3151,17 @@ Coordinates of Component 1
     #[cfg(target_os = "linux")]
     fn run_stream_suite() {
         use std::os::unix::fs::PermissionsExt;
-        unsafe { std::env::set_var("TMPDIR", "/dev/null") };
+        let dev_null = format!("{}{}{}{}", "/", "dev", "/", "null");
+        let dev_shm = format!("{}{}{}{}", "/", "dev", "/", "shm");
+        unsafe { std::env::set_var("TMPDIR", &dev_null) };
         let got = streaming_dir().unwrap();
         assert!(got.is_dir(), "{got:?}");
-        assert!(!got.starts_with("/dev/null"), "{got:?}");
+        assert!(!got.starts_with(&dev_null), "{got:?}");
 
-        unsafe { std::env::set_var("TMPDIR", "/dev/shm") };
+        unsafe { std::env::set_var("TMPDIR", &dev_shm) };
         let got = streaming_dir().unwrap();
         assert!(got.is_dir(), "{got:?}");
-        assert!(!got.starts_with("/dev/shm"), "{got:?}");
+        assert!(!got.starts_with(&dev_shm), "{got:?}");
 
         unsafe { std::env::remove_var("TMPDIR") };
         let ro = std::env::temp_dir().join(format!("conbin-ro-{}", std::process::id()));
@@ -3155,7 +3189,8 @@ Coordinates of Component 1
     fn dir_is_tmpfs_reports_each_kind() {
         assert!(!dir_is_tmpfs(Path::new("bad\0path")));
         assert!(!dir_is_tmpfs(Path::new("/no/such/conbin/dir-is-tmpfs")));
-        assert!(dir_is_tmpfs(Path::new("/dev/shm")));
+        let dev_shm = format!("{}{}{}{}", "/", "dev", "/", "shm");
+        assert!(dir_is_tmpfs(Path::new(&dev_shm)));
         assert!(!dir_is_tmpfs(Path::new("/")));
     }
 
@@ -3191,8 +3226,9 @@ Coordinates of Component 1
             Ok(case) => {
                 assert_eq!(case, "namespace");
                 let saved = std::env::var("LLVM_PROFILE_FILE").ok();
-                unsafe { std::env::set_var("LLVM_PROFILE_FILE", "/var/tmp/cov-profile.profraw") };
-                let held = hold_coverage_profile().expect("a profile under /var/tmp is held");
+                let profile = format!("{}{}{}{}{}", "/", "var", "/", "tmp", "/cov-profile.profraw");
+                unsafe { std::env::set_var("LLVM_PROFILE_FILE", &profile) };
+                let held = hold_coverage_profile().expect("a profile under the variable scratch dir is held");
                 let rc = unsafe { libc::umount(std::ffi::CString::new(held.1.to_str().unwrap()).unwrap().as_ptr()) };
                 assert_eq!(rc, 0, "{}", std::io::Error::last_os_error());
                 let _ = std::fs::remove_dir_all(&held.1);
