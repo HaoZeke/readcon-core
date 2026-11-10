@@ -10185,20 +10185,25 @@ mod tests {
             }
             .is_null()
         );
-        assert!(
-            unsafe {
-                rkr_read_chemfiles_range(
-                    xyz.as_ptr(),
-                    0,
-                    1,
-                    2,
-                    std::ptr::null(),
-                    1,
-                    &mut nchem,
-                )
-            }
-            .is_null()
-        );
+        let ranged = unsafe {
+            rkr_read_chemfiles_range(
+                xyz.as_ptr(),
+                0,
+                1,
+                2,
+                std::ptr::null(),
+                1,
+                &mut nchem,
+            )
+        };
+        #[cfg(not(feature = "chemfiles"))]
+        assert!(ranged.is_null());
+        #[cfg(feature = "chemfiles")]
+        {
+            assert!(!ranged.is_null());
+            assert!(nchem >= 1);
+            unsafe { free_rkr_frame_array(ranged, nchem) };
+        }
         assert!(
             unsafe { rkr_read_chemfiles_memory(bad, c"XYZ".as_ptr(), &mut nchem) }.is_null()
         );

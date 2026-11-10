@@ -2884,12 +2884,7 @@ Velocity of Component 1
         let err = parse_frame_header(&mut line_it).unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("units"), "expected units error, got {msg}");
-        for msg in [msg.as_str(), "v3 frame"] {
-            assert!(
-                msg.contains("units") || msg.contains("v3"),
-                "expected units error, got {msg}"
-            );
-        }
+        assert!(msg.contains("units"), "expected units error, got {msg}");
     }
 
     #[test]
@@ -4567,6 +4562,117 @@ Coordinates of Component 1
         let stored = ConFrameIterator::new(&float32).next().unwrap().unwrap();
         assert!(stored.positions.f64_slice().is_none());
         assert_eq!(stored.positions.as_f64_row(0), [0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn declared_sections_take_the_remaining_arms() {
+        let text = frame_with_count("1", false);
+        let frame = ConFrameIterator::new(&text).next().unwrap().unwrap();
+        let mut header = frame.header.clone();
+        header.strict_validation = false;
+        let mut atoms = frame.atom_data.clone();
+        let row = "\nCu\nVelocities of Component 1\n0.1 0.2 0.3 0 1\n";
+
+        let six = parse_line_of_range_f64("1 2 3 4 5 6", 6, 6, &[0.0; 6]).unwrap();
+        assert_eq!(six, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+
+        let mut blanks = ["", "Cu", "Velocities of Component 1"]
+            .into_iter()
+            .peekable();
+        assert!(blanks.blank_opens_velocity_block());
+
+        let mut words = crate::iterators::MemchrLines::new("Cu\n");
+        assert_eq!(open_section(&mut words).unwrap(), false);
+
+        header.sections_declared = false;
+        header.sections.clear();
+        let mut only_ws = crate::iterators::MemchrLines::new("\n  \n");
+        assert_eq!(
+            parse_velocity_section(&mut only_ws, &header, &mut atoms).unwrap(),
+            false
+        );
+        let mut not_blank = crate::iterators::MemchrLines::new("Cu\n");
+        assert_eq!(
+            parse_velocity_section(&mut not_blank, &header, &mut atoms).unwrap(),
+            false
+        );
+        let mut not_a_block = crate::iterators::MemchrLines::new("\nnot a label\n");
+        assert_eq!(
+            parse_velocity_section(&mut not_a_block, &header, &mut atoms).unwrap(),
+            false
+        );
+
+        header.sections_declared = true;
+        let mut declared = crate::iterators::MemchrLines::new("Cu\n");
+        let err = parse_velocity_section(&mut declared, &header, &mut []).unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteSection(_)));
+        let mut short_atoms = crate::iterators::MemchrLines::new(row);
+        assert_eq!(
+            parse_velocity_section(&mut short_atoms, &header, &mut []).unwrap(),
+            true
+        );
+        let force = "\nCu\nForces of Component 1\n0.1 0.2 0.3 0 1\n";
+        let mut forces = crate::iterators::MemchrLines::new(force);
+        assert_eq!(parse_force_section(&mut forces, &header, &mut []).unwrap(), true);
+        let energy = "\nCu\nEnergies of Component 1\n4.5 0 1\n";
+        let mut energies = crate::iterators::MemchrLines::new(energy);
+        assert_eq!(
+            parse_energy_section(&mut energies, &header, &mut []).unwrap(),
+            true
+        );
+        let charge = "\nCu\nCharges of Component 1\n0.2 0 1\n";
+        let mut charges = crate::iterators::MemchrLines::new(charge);
+        assert_eq!(
+            parse_charge_section(&mut charges, &header, &mut []).unwrap(),
+            true
+        );
+        let disp = "\nCu\nDisplacements of Component 1\n0.1 0.2 0.3 0 1\n";
+        let mut displacements = crate::iterators::MemchrLines::new(disp);
+        assert_eq!(
+            parse_displacement_section(&mut displacements, &header, &mut []).unwrap(),
+            true
+        );
+
+        let mut stored = header.clone();
+        stored.sections_declared = false;
+        stored.sections = vec!["velocities".into()];
+        stored
+            .metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(0));
+        let mut body = crate::iterators::MemchrLines::new(row);
+        assert_eq!(
+            parse_declared_sections(&mut body, &mut stored, &mut atoms).unwrap(),
+            1
+        );
+
+        let mut old = header.clone();
+        old.sections_declared = true;
+        old.sections = vec!["widgets".into()];
+        old.metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(0));
+        let mut none = crate::iterators::MemchrLines::new("\n");
+        let err = parse_declared_sections(&mut none, &mut old, &mut atoms).unwrap_err();
+        assert!(matches!(err, ParseError::UnknownSection(_)));
+
+        let mut newer = header.clone();
+        newer.sections_declared = true;
+        newer.sections = vec!["widgets".into()];
+        newer
+            .metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(2));
+        newer.metadata.remove(meta::SECTION_ARITY);
+        let mut missing_arity = crate::iterators::MemchrLines::new("\n");
+        let err = parse_declared_sections(&mut missing_arity, &mut newer, &mut atoms).unwrap_err();
+        assert!(matches!(err, ParseError::UnknownSection(_)));
+
+        newer.metadata.insert(
+            meta::SECTION_ARITY.into(),
+            serde_json::json!({"widgets": 1}),
+        );
+        newer.sections = vec!["widgets".into()];
+        let mut cut = crate::iterators::MemchrLines::new("\n");
+        let err = parse_declared_sections(&mut cut, &mut newer, &mut atoms).unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteSection(_)));
     }
 
     #[test]

@@ -4641,6 +4641,25 @@ mod missed_branch_tests {
     }
 
     #[test]
+    fn a_stored_section_list_is_not_a_legacy_velocity_prefix() {
+        let frame = ConFrameIterator::new(&one_frame()).next().unwrap().unwrap();
+        let mut header = frame.header.clone();
+        header.sections_declared = false;
+        header.sections = vec!["velocities".into()];
+        let mut it = ConFrameIterator::from_bytes(b"\n");
+        assert!(!it.legacy_velocity_prefix_is_open(&header));
+        header.sections_declared = true;
+        header.sections.clear();
+        assert!(!it.legacy_velocity_prefix_is_open(&header));
+        header.sections_declared = false;
+        let mut bare = ConFrameIterator::from_bytes(b"");
+        assert!(!bare.legacy_velocity_prefix_is_open(&header));
+        let mut word = ConFrameIterator::from_bytes(b"Cu\n");
+        word.lines.peeked = Some("Cu");
+        assert!(!word.legacy_velocity_prefix_is_open(&header));
+    }
+
+    #[test]
     fn the_second_span_is_not_at_the_start_of_the_buffer() {
         let text = one_frame() + &one_frame();
         let mut it = ConFrameIterator::new(&text);

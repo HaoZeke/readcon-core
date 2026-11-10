@@ -1,12 +1,13 @@
 """Observable edges of the extension that the CON fixtures do not take."""
 
+import os
+
 import pytest
 
 import readcon
 
 
 def test_feature_flags_match_this_build():
-    assert readcon.has_chemfiles_support() is False
     assert readcon.has_mpi_support() is False
     assert readcon.has_parallel_support() is True
     assert readcon.symbol_to_atomic_number("Cu") == 29
@@ -22,15 +23,24 @@ def test_chemfiles_entry_points_report_the_missing_feature():
         lambda: readcon.read_chemfiles_first("resources/test/water_min.xyz"),
         lambda: readcon.read_chemfiles_nth("resources/test/water_min.xyz", 0),
         lambda: readcon.read_chemfiles_nsteps("resources/test/water_min.xyz"),
-        lambda: readcon.read_chemfiles_memory("3\n\nO 0 0 0\n", "XYZ", guess_bonds=True),
+        lambda: readcon.read_chemfiles_memory("3\n\nO 0 0 0\nH 0 0 1\nH 0 1 0\n", "XYZ", guess_bonds=True),
         lambda: readcon.select_on_frame(frame, "name H"),
         lambda: readcon.select_atom_indices(frame, "name H"),
         lambda: readcon.evaluate_selection_on_frames("name H", [frame]),
         lambda: readcon.select_atom_positions_on_frames("name H", [frame]),
     ]
-    for call in calls:
-        with pytest.raises(RuntimeError, match="chemfiles"):
-            call()
+    if readcon.has_chemfiles_support():
+        first = readcon.read_chemfiles_first("resources/test/water_min.xyz")
+        assert first.atoms[0].symbol in ("O", "H")
+        assert readcon.read_chemfiles_nsteps("resources/test/water_min.xyz") >= 1
+        selected = readcon.select_on_frame(frame, "name H")
+        assert selected is not None
+        indices = readcon.select_atom_indices(frame, "name Cu")
+        assert indices
+    else:
+        for call in calls:
+            with pytest.raises(RuntimeError, match="chemfiles"):
+                call()
 
 
 def test_two_workers_release_a_multi_frame_list():
@@ -53,8 +63,15 @@ def test_extxyz_without_a_lattice_is_rejected_and_ase_reads_con():
 
 
 def test_convert_and_index_errors_name_the_cause():
-    with pytest.raises(OSError):
-        readcon.convert_to_con("resources/test/water_min.xyz", "out-unused.con")
+    if readcon.has_chemfiles_support():
+        report = readcon.convert_to_con(
+            "resources/test/water_min.xyz", "resources/test/out-water.con"
+        )
+        assert report["n_frames"] >= 1
+        os.remove("resources/test/out-water.con")
+    else:
+        with pytest.raises(OSError):
+            readcon.convert_to_con("resources/test/water_min.xyz", "out-unused.con")
     with pytest.raises(OSError, match="out of range"):
         readcon.read_nth_frame("resources/test/tiny_cuh2.con", 5)
     assert readcon.count_frames("resources/test/tiny_cuh2.con") == 1

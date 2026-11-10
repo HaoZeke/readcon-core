@@ -236,17 +236,33 @@ fn builder_mutation_round_trip_covers_the_c_setters() {
     assert!(
         unsafe { rkr_read_chemfiles_memory(ptr::null(), fmt.as_ptr(), &mut nframes) }.is_null()
     );
-    assert!(
-        unsafe { rkr_read_chemfiles_memory(xyz.as_ptr(), fmt.as_ptr(), &mut nframes) }.is_null()
-    );
-    assert_eq!(rkr_has_chemfiles_support(), 0);
+    let mem =
+        unsafe { rkr_read_chemfiles_memory(xyz.as_ptr(), fmt.as_ptr(), &mut nframes) };
     let mut selected: *mut RKRSelectionResult = ptr::null_mut();
     let query = cstr("name Cu");
-    assert_eq!(
-        unsafe { rkr_frame_select(frame, query.as_ptr(), &mut selected) },
-        RKRStatus::RKR_STATUS_SELECTION_ERROR
-    );
-    assert!(selected.is_null());
+    #[cfg(not(feature = "chemfiles"))]
+    {
+        assert!(mem.is_null());
+        assert_eq!(rkr_has_chemfiles_support(), 0);
+        assert_eq!(
+            unsafe { rkr_frame_select(frame, query.as_ptr(), &mut selected) },
+            RKRStatus::RKR_STATUS_SELECTION_ERROR
+        );
+        assert!(selected.is_null());
+    }
+    #[cfg(feature = "chemfiles")]
+    {
+        assert!(!mem.is_null());
+        assert!(nframes >= 1);
+        unsafe { free_rkr_frame_array(mem, nframes) };
+        assert_eq!(rkr_has_chemfiles_support(), 1);
+        assert_eq!(
+            unsafe { rkr_frame_select(frame, query.as_ptr(), &mut selected) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!selected.is_null());
+        unsafe { rkr_selection_result_free(selected) };
+    }
     unsafe { rkr_selection_result_free(ptr::null_mut()) };
     unsafe { free_rkr_frame(frame) };
     assert!(unsafe { rkr_frame_builder_build(ptr::null_mut()) }.is_null());

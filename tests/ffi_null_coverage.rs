@@ -814,6 +814,9 @@ fn every_export_accepts_a_null_argument() {
     );
     unsafe { rkr_selection_result_free(ptr::null_mut()) };
     assert_eq!(unsafe { rkr_abi_version_major() }, 1);
+    #[cfg(feature = "chemfiles")]
+    assert_eq!(unsafe { rkr_has_chemfiles_support() }, 1);
+    #[cfg(not(feature = "chemfiles"))]
     assert_eq!(unsafe { rkr_has_chemfiles_support() }, 0);
     assert_eq!(unsafe { rkr_has_parallel_support() }, 1);
     assert!(unsafe { rkr_read_chemfiles_first(ptr::null()) }.is_null());
@@ -1539,10 +1542,19 @@ fn section_frames_cover_dtype_and_trajectory_exports() {
     let mut result = ptr::null_mut();
     let frame = unsafe { rkr_read_first_frame(path.as_ptr()) };
     assert!(!frame.is_null());
-    assert_eq!(
-        unsafe { rkr_frame_select(frame, sel.as_ptr(), &mut result) },
-        RKRStatus::RKR_STATUS_SELECTION_ERROR
-    );
-    assert!(result.is_null());
+    let selected = unsafe { rkr_frame_select(frame, sel.as_ptr(), &mut result) };
+    #[cfg(not(feature = "chemfiles"))]
+    {
+        assert_eq!(selected, RKRStatus::RKR_STATUS_SELECTION_ERROR);
+        assert!(result.is_null());
+    }
+    #[cfg(feature = "chemfiles")]
+    {
+        assert_eq!(selected, RKRStatus::RKR_STATUS_SUCCESS);
+        assert!(!result.is_null());
+        let count = unsafe { rkr_selection_result_match_count(result) };
+        assert!(count >= 1);
+        unsafe { rkr_selection_result_free(result) };
+    }
     unsafe { free_rkr_frame(frame) };
 }

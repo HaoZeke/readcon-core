@@ -158,28 +158,37 @@ def test_readers_writers_and_feature_flags(tmp_path):
     assert probe[0] >= 1
     assert readcon.has_parallel_support() is True
     assert readcon.has_mpi_support() is False
-    assert readcon.has_chemfiles_support() is False
     with pytest.raises(OSError, match="CON-bin"):
         readcon.read_conbin(path)
-    chemfiles = "chemfiles support is not enabled"
-    with pytest.raises(RuntimeError, match=chemfiles):
-        readcon.read_chemfiles(path)
-    with pytest.raises(RuntimeError, match=chemfiles):
-        readcon.read_chemfiles_first(path)
-    with pytest.raises(RuntimeError, match=chemfiles):
-        readcon.read_chemfiles_nth(path, 0)
-    with pytest.raises(RuntimeError, match=chemfiles):
-        readcon.read_chemfiles_nsteps(path)
-    with pytest.raises(RuntimeError, match=chemfiles):
-        readcon.read_chemfiles_memory("H 0 0 0\n", "XYZ")
-    with pytest.raises(RuntimeError, match=chemfiles):
-        readcon.select_on_frame(first, "name H")
-    with pytest.raises(RuntimeError, match=chemfiles):
-        readcon.select_atom_indices(first, "name H")
-    with pytest.raises(RuntimeError, match=chemfiles):
-        first.select("name H")
-    with pytest.raises(RuntimeError, match=chemfiles):
-        first.select_atoms("name H")
+    if readcon.has_chemfiles_support():
+        xyz = os.path.join(os.path.dirname(path), "water_min.xyz")
+        loaded = readcon.read_chemfiles_first(xyz)
+        assert loaded.atoms[0].symbol in ("O", "H")
+        assert readcon.read_chemfiles_nsteps(xyz) >= 1
+        chosen = readcon.select_atom_indices(first, "name Cu")
+        assert list(chosen)
+        picked = first.select_atoms("name Cu")
+        assert list(picked)
+    else:
+        chemfiles = "chemfiles support is not enabled"
+        with pytest.raises(RuntimeError, match=chemfiles):
+            readcon.read_chemfiles(path)
+        with pytest.raises(RuntimeError, match=chemfiles):
+            readcon.read_chemfiles_first(path)
+        with pytest.raises(RuntimeError, match=chemfiles):
+            readcon.read_chemfiles_nth(path, 0)
+        with pytest.raises(RuntimeError, match=chemfiles):
+            readcon.read_chemfiles_nsteps(path)
+        with pytest.raises(RuntimeError, match=chemfiles):
+            readcon.read_chemfiles_memory("H 0 0 0\n", "XYZ")
+        with pytest.raises(RuntimeError, match=chemfiles):
+            readcon.select_on_frame(first, "name H")
+        with pytest.raises(RuntimeError, match=chemfiles):
+            readcon.select_atom_indices(first, "name H")
+        with pytest.raises(RuntimeError, match=chemfiles):
+            first.select("name H")
+        with pytest.raises(RuntimeError, match=chemfiles):
+            first.select_atoms("name H")
     with pytest.raises(ValueError, match="no atoms"):
         readcon.read_pdb(path)
     uneven = tmp_path / "uneven.con"

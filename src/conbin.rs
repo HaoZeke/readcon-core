@@ -2505,6 +2505,24 @@ Coordinates of Component 1
             sequential_resident_sum(&cold, 2, &limits).unwrap(),
             cold_expect
         );
+        let wide = dir.path().join("wide-cold.conbin");
+        write_known(&wide, 4, 80_000);
+        let wide_n = 4 * 80_000 * 3;
+        let wide_expect = series_sum(wide_n);
+        let deep = QueueLimits {
+            page: limits.page,
+            logical_block: limits.logical_block,
+            max_request: limits.max_request,
+            nr_requests: 100_000,
+            read_ahead: limits.read_ahead,
+            nr_hw_queues: limits.nr_hw_queues,
+            rotational: limits.rotational,
+        };
+        drop_pages(&wide);
+        assert_eq!(
+            sequential_resident_sum(&wide, 1, &deep).unwrap(),
+            wide_expect
+        );
         drop_pages(&cold);
         assert_eq!(split_stream_sum(&cold, 2, &limits).unwrap(), cold_expect);
         drop_pages(&cold);
