@@ -84,3 +84,9 @@ b6ea45b46e2a2fbaaded286e71c8dcf1ce6c388f	test: cover the host writer and the rea
 81335c9be31d3ec0b31cbd37ca2dc1fed1330455	docs: describe each commit from its diff.	edits COMMIT_CHECK.txt drops 78 lines, including `e63048d00cd720a309404dd23632c4bdd0722491 fix(paper)!: return Result fr`
 a283fba990cddb27efe38af0d1c45c24a81bfba2	fix(paper): drop an unreachable bibliography copy.	edits paper/cpc/scripts/make_em_flat.py drops 2 lines, including `if f"{MAIN}.bbl" not in used:`
 c89d2cada68f5be1f761464a32f5bf83e1130a41	test: read the corpus through the C library.	adds tests/python/test_paper_cover_e.py drops no line
+f91e9c370f96e1ece07ff8e730ac8bc9bf8660ae	docs: describe each commit from its diff.	edits COMMIT_CHECK.txt drops 34 lines, including `b7e65f74e2ca3058812a6b0c305db59be216364c fix(paper)!: return Result from cell_vectors.`
+91e3afb8815e9658d14a081160d07025ff2d7dc7	fix(paper): drop an unreachable flat-log branch.	edits paper/cpc/scripts/make_em_flat.py drops 1 line, including `elif cat != "labels changed" or v["count"]:`
+467b7a04334b1aed5c851539d0b69d401cce2172	test: check flat-build failures and a matrix crash.	adds tests/python/test_paper_cover_f.py drops no line
+d551445128380d8a2cd3897b0404a9c519b733af	fix(paper): drop an unreachable iterator verdict.	edits paper/cpc/scripts/referee_probes.py drops 4 lines, including `if statuses[-1] != STATUS["RKR_STATUS_SUCCESS"]:`
+42780d74e738701ca1fd245cded3690ec0d6ccd0	fix(paper): drop an unreachable binary macro check.	edits paper/cpc/scripts/binary_formats_tables.py drops 3 lines, including `names = [n for n, _ in macros]`
+d350023be6c749b63528b6d33cedec0721a98e5b	test: check the mid-band paper scripts.	adds tests/python/test_paper_cover_g.py drops no line
