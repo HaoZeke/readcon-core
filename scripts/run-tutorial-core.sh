@@ -44,6 +44,17 @@ mkdir -p "$OUT_DIR" "$(dirname "$TANGLE_PY")"
 export READCON_TUT_ROOT="$ROOT"
 export READCON_TUT_WORK="$OUT_DIR"
 
+# maturin develop installs into the active environment. Create one when
+# the caller has not already activated a venv or a pixi env.
+if [[ -z "${VIRTUAL_ENV:-}" && -z "${CONDA_PREFIX:-}" ]]; then
+  VENV="${READCON_TUTORIAL_VENV:-${ROOT}/.venv-tutorial}"
+  if [[ ! -x "${VENV}/bin/python3" ]]; then
+    python3 -m venv "$VENV"
+  fi
+  # shellcheck disable=SC1091
+  source "${VENV}/bin/activate"
+fi
+
 if ! python3 -c "import readcon" 2>/dev/null; then
   echo "Building lean Python extension (maturin develop --features python)..." >&2
   if command -v maturin >/dev/null 2>&1; then

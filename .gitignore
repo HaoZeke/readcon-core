@@ -488,5 +488,6 @@ docs/notebooks/out/
 
 # coverage instrumentation local venv
 .venv-coverage/
+.venv-tutorial/
 
 .grok/
