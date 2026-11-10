@@ -28,6 +28,10 @@ def _two_frames(tmp_path: Path) -> Path:
 
 
 def test_partial_optional_vectors_are_absent():
+    only_x = readcon.Atom("Cu", 0.0, 0.0, 0.0, fx=1.0, dx=0.1, sx=0.3, mx=0.2)
+    assert only_x.has_forces is False
+    assert only_x.has_displacement is False
+    assert only_x.has_spread is False
     bare = readcon.Atom("Cu", 0.0, 0.0, 0.0, fx=1.0, fy=2.0, dx=0.1, dy=0.2, sx=0.3, sy=0.4)
     assert bare.has_forces is False
     assert bare.has_displacement is False
@@ -121,6 +125,26 @@ def test_missing_sections_are_none_and_present_sections_have_rows(tmp_path: Path
     loaded = readcon.read_con(str(rich))[0]
     assert loaded.vel.shape == (2, 3)
     assert loaded.frc.shape == (2, 3)
+
+
+def test_array_helpers_and_potential_type():
+    empty = readcon.ConFrame([4.0, 5.0, 6.0], [90.0, 90.0, 90.0], [readcon.Atom("Cu", 0.0, 0.0, 0.0)])
+    assert empty.forces_array() is None
+    assert empty.energies_array() is None
+    assert empty.potential_type is None
+    charged = readcon.Atom("H", 1.0, 0.0, 0.0, energy=1.25, fx=0.1, fy=0.0, fz=0.0)
+    rich = readcon.ConFrame([4.0, 5.0, 6.0], [90.0, 90.0, 90.0], [charged])
+    assert rich.forces_array().shape == (1, 3)
+    assert rich.energies_array().shape == (1,)
+    assert float(rich.energies_array()[0]) == pytest.approx(1.25)
+    rich.metadata = {"potential": None}
+    assert rich.potential_type is None
+    rich.metadata = {"potential": "lj"}
+    assert rich.potential_type is None
+    rich.metadata = {"potential": {"type": None}}
+    assert rich.potential_type is None
+    rich.metadata = {"potential": {"type": "lj"}}
+    assert rich.potential_type == "lj"
 
 
 def test_metadata_none_and_numeric_values_round_trip():
