@@ -414,6 +414,8 @@ Cu 0 0 0
         assert!(tables_from_extxyz_bytes(no_nl).is_ok());
         let blank = b"\n1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nCu 0 0 0\n";
         assert!(tables_from_extxyz_bytes(blank).is_ok());
+        let ended = b"1\nLattice=\nCu 0 0 0\n";
+        assert!(tables_from_extxyz_bytes(ended).is_err());
         let half = b"\
 1
 Lattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S
