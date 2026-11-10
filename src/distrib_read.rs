@@ -719,6 +719,23 @@ mod tests {
             let text = fixture();
             std::fs::write(dir.path().join("two.con"), format!("{text}{text}")).unwrap();
             let exe = std::env::current_exe().unwrap();
+            let mut library_path = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
+            if let Ok(maps) = std::fs::read_to_string("/proc/self/maps") {
+                for line in maps.lines() {
+                    let Some(path) = line.split_whitespace().last() else {
+                        continue;
+                    };
+                    if path.ends_with("libmetatensor.so") {
+                        if let Some(parent) = std::path::Path::new(path).parent() {
+                            if !library_path.is_empty() {
+                                library_path.push(':');
+                            }
+                            library_path.push_str(&parent.display().to_string());
+                        }
+                        break;
+                    }
+                }
+            }
             let log_out = dir.path().join("mpirun.out");
             let log_err = dir.path().join("mpirun.err");
             let status = std::process::Command::new("mpirun")
@@ -745,6 +762,7 @@ mod tests {
                 .env(CHILD, "1")
                 .env("READCON_MPI_TEST_CHUNK", "64")
                 .env("READCON_TWO_RANK_DIR", dir.path())
+                .env("LD_LIBRARY_PATH", &library_path)
                 .stdout(std::fs::File::create(&log_out).unwrap())
                 .stderr(std::fs::File::create(&log_err).unwrap())
                 .status()
