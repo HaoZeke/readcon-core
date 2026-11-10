@@ -85,10 +85,11 @@ pub fn frame_start_offsets_checked(text: &str) -> Result<Vec<usize>, ParseError>
             break;
         }
         out.push(start);
-        match scanner.forward_fast() {
-            Some(Ok(())) => {}
-            Some(Err(e)) => return Err(e),
-            None => return Err(ParseError::IncompleteFrame),
+        // `forward_fast` returns None only when the cursor is already at
+        // the end, and `no_frame_at` breaks on that cursor above.
+        let stepped = scanner.forward_fast().unwrap();
+        if let Err(e) = stepped {
+            return Err(e);
         }
     }
     Ok(out)
@@ -188,7 +189,8 @@ pub fn validate_utf8_sliced(bytes: &[u8]) -> Result<&str, std::str::Utf8Error> {
     for k in 1..n_slices {
         let target = utf8_slice_target(bytes.len(), k, n_slices);
         let prev = *cuts.last().unwrap();
-        if target <= prev || target >= bytes.len() {
+        // `utf8_slice_target` already clamps an in-range index below `len`.
+        if target <= prev {
             continue;
         }
         match memchr::memchr(b'\n', &bytes[target..]) {
@@ -691,7 +693,7 @@ mod tests {
         let at = (4096..changed.len() - 4096)
             .find(|&i| changed[i].is_ascii_alphabetic())
             .expect("middle of the file has a letter");
-        changed[at] = if changed[at] == b'A' { b'B' } else { b'A' };
+        changed[at] ^= 1;
         let new_text = std::str::from_utf8(&changed).unwrap();
         let scan = FrameIndex::scan(new_text).unwrap();
         let expected = scanned_frames(new_text);
@@ -753,8 +755,13 @@ mod tests {
     #[test]
     fn only_the_scanned_table_matches() {
         let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/resources/test");
+        let scratch = tempfile::tempdir().unwrap();
+        std::fs::create_dir(scratch.path().join("nested")).unwrap();
         let mut checked = 0;
-        for entry in std::fs::read_dir(dir).unwrap() {
+        for entry in std::fs::read_dir(dir)
+            .unwrap()
+            .chain(std::fs::read_dir(scratch.path()).unwrap())
+        {
             let path = entry.unwrap().path();
             let Ok(one) = std::fs::read_to_string(&path) else {
                 continue;
@@ -787,8 +794,13 @@ mod tests {
     #[test]
     fn end_hint_never_changes_the_skip() {
         let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/resources/test");
+        let scratch = tempfile::tempdir().unwrap();
+        std::fs::create_dir(scratch.path().join("nested")).unwrap();
         let mut checked = 0;
-        for entry in std::fs::read_dir(dir).unwrap() {
+        for entry in std::fs::read_dir(dir)
+            .unwrap()
+            .chain(std::fs::read_dir(scratch.path()).unwrap())
+        {
             let path = entry.unwrap().path();
             let Ok(one) = std::fs::read_to_string(&path) else {
                 continue;
@@ -862,5 +874,52 @@ mod tests {
         bytes[COUNT_AT..COUNT_AT + 8].copy_from_slice(&(n as u64).to_le_bytes());
         rechecksum(&mut bytes);
         assert_eq!(decode(&bytes, &text), None);
+    }
+
+    #[test]
+    fn an_unordered_table_and_an_offset_past_the_end_are_rejected() {
+        let text = fixture(2);
+        let idx = FrameIndex::scan(&text).unwrap();
+        assert!(idx.len() >= 2, "{}", idx.len());
+        let fp = Fingerprint::of(text.as_bytes());
+        let mut swapped = encode(fp, &idx);
+        let first = u64_at(&swapped, HEADER_LEN);
+        let second = u64_at(&swapped, HEADER_LEN + 8);
+        assert!(first < second);
+        swapped[HEADER_LEN..HEADER_LEN + 8].copy_from_slice(&second.to_le_bytes());
+        swapped[HEADER_LEN + 8..HEADER_LEN + 16].copy_from_slice(&first.to_le_bytes());
+        rechecksum(&mut swapped);
+        assert_eq!(decode(&swapped, &text), None);
+
+        let mut past = encode(fp, &idx);
+        let at = HEADER_LEN + (idx.len() - 1) * 8;
+        let size = text.len() as u64;
+        past[at..at + 8].copy_from_slice(&size.to_le_bytes());
+        rechecksum(&mut past);
+        assert_eq!(decode(&past, &text), None);
+    }
+
+    #[test]
+    fn a_directory_sidecar_is_an_io_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let data = dir.path().join("frame.con");
+        std::fs::write(&data, fixture(1)).unwrap();
+        std::fs::create_dir(sidecar_path(&data)).unwrap();
+        let err = read_sidecar(&data).unwrap_err();
+        assert_eq!(err.kind(), std::io::ErrorKind::IsADirectory);
+    }
+
+    #[test]
+    fn sliced_utf8_covers_a_split_character_and_a_cut_that_falls_behind() {
+        let bytes = "é".as_bytes();
+        let err = std::str::from_utf8(&bytes[..1]).unwrap_err();
+        assert!(reject_with_absolute_utf8(bytes, 0, err).is_ok());
+
+        let wide = vec![b'Q'; 2 * UTF8_SLICE_MIN];
+        assert_eq!(validate_utf8_sliced(&wide).unwrap().len(), wide.len());
+
+        let mut late = vec![b'A'; 3 * UTF8_SLICE_MIN];
+        late[20 << 20] = b'\n';
+        assert_eq!(validate_utf8_sliced(&late).unwrap().len(), late.len());
     }
 }

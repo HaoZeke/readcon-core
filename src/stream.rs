@@ -286,9 +286,47 @@ mod tests {
         for size in [1usize, 3, 61, DEFAULT_READ_SIZE] {
             let got: Vec<_> = ConFrameReader::with_read_size(std::io::Cursor::new(&bytes), size)
                 .collect::<Result<Vec<_>, _>>()
-                .unwrap_or_else(|err| panic!("read size {size}: {err}"));
+                .unwrap();
             assert_eq!(got, expect, "read size {size}");
         }
+    }
+
+    /// One `Interrupted`, then the inner reader.
+    struct InterruptOnce<R> {
+        inner: R,
+        tripped: bool,
+    }
+
+    impl<R: std::io::Read> std::io::Read for InterruptOnce<R> {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            if !self.tripped {
+                self.tripped = true;
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Interrupted,
+                    "again",
+                ));
+            }
+            self.inner.read(buf)
+        }
+    }
+
+    #[test]
+    fn an_interrupted_read_is_retried_and_a_later_frame_is_probed() {
+        let first = zero_atom_frame(200);
+        let second = zero_atom_frame(4000);
+        let bytes = [first.clone(), second].concat();
+        let expect: Vec<_> = ConFrameIterator::from_bytes(&bytes)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(expect.len(), 2);
+        let src = InterruptOnce {
+            inner: std::io::Cursor::new(bytes),
+            tripped: false,
+        };
+        let got: Vec<_> = ConFrameReader::with_read_size(src, 64)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(got, expect);
     }
 
     #[test]

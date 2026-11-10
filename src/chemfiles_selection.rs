@@ -144,6 +144,49 @@ mod stub_tests {
     use crate::types::ConFrameBuilder;
 
     #[test]
+    fn match_indices_stop_at_the_declared_size() {
+        let one = SelectionMatch {
+            size: 1,
+            atoms: [4, 9, 9, 9],
+        };
+        assert_eq!(one.indices(), &[4]);
+        let wide = SelectionMatch {
+            size: 8,
+            atoms: [1, 2, 3, 4],
+        };
+        assert_eq!(wide.indices(), &[1, 2, 3, 4]);
+        let empty = SelectionMatch {
+            size: 0,
+            atoms: [0; 4],
+        };
+        assert!(empty.indices().is_empty());
+        let result = SelectionResult {
+            selection: "name H".into(),
+            context_size: 1,
+            matches: vec![one, empty],
+        };
+        assert_eq!(result.primary_indices(), vec![4]);
+        let blank = SelectionResult {
+            selection: "none".into(),
+            context_size: 2,
+            matches: vec![],
+        };
+        assert!(blank.primary_indices().is_empty());
+        let multi = MultiFrameSelectionResult {
+            selection: "name H".into(),
+            frames: vec![FrameSelectionSlice {
+                frame_index: 0,
+                result,
+                positions: vec![[0.0, 1.0, 2.0]],
+                atom_indices: vec![4],
+            }],
+        };
+        let rows: Vec<_> = multi.positions_per_frame().collect();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].len(), 1);
+    }
+
+    #[test]
     fn selection_stub_is_feature_disabled() {
         let frame = ConFrameBuilder::new([10.0; 3], [90.0; 3]).build().unwrap();
         let err = evaluate_selection_on_con_frame("name O", &frame).unwrap_err();
@@ -158,5 +201,10 @@ mod stub_tests {
         let frame2 = ConFrameBuilder::new([10.0; 3], [90.0; 3]).build().unwrap();
         let err2 = select_atom_positions_on_frames("name H", &[frame2]).unwrap_err();
         assert!(matches!(err2, ChemfilesImportError::FeatureDisabled));
+        let frame3 = ConFrameBuilder::new([10.0; 3], [90.0; 3]).build().unwrap();
+        let err3 = select_atom_indices("name O", &frame3).unwrap_err();
+        assert!(matches!(err3, ChemfilesImportError::FeatureDisabled));
+        let err4 = parse_selection_string("name O").unwrap_err();
+        assert!(matches!(err4, ChemfilesImportError::FeatureDisabled));
     }
 }

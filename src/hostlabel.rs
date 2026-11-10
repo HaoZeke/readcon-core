@@ -103,6 +103,12 @@ mod tests {
         assert_eq!(super::cpu_model_at(&path), "unknown");
         fs::write(&path, "model name\t: AMD EPYC 7R13\n").unwrap();
         assert_eq!(super::cpu_model_at(&path), "AMD EPYC 7R13");
+        fs::write(&path, "cpu family\t: 6\n").unwrap();
+        assert_eq!(super::cpu_model_at(&path), "family 6");
+        fs::write(&path, "model\t: 143\n").unwrap();
+        assert_eq!(super::cpu_model_at(&path), "model 143");
+        fs::write(&path, "stepping\t: 8\n").unwrap();
+        assert_eq!(super::cpu_model_at(&path), "stepping 8");
         fs::write(&path, "not a field\nmodel name\t: AMD EPYC 7R13\n").unwrap();
         assert_eq!(super::cpu_model_at(&path), "AMD EPYC 7R13");
         assert_eq!(
@@ -122,27 +128,15 @@ mod tests {
         let _ = fs::create_dir(&dir);
         let empty = std::env::temp_dir().join("readcon-hostname-empty");
         fs::write(&empty, "\n").unwrap();
-        for path in [
-            std::path::Path::new("/etc/hostname"),
-            missing.as_path(),
-            dir.as_path(),
-            empty.as_path(),
-        ] {
-            match fs::read_to_string(path) {
-                Ok(text) => {
-                    let node = text.trim();
-                    if !node.is_empty() {
-                        assert!(cpu.split('-').all(|token| token != node));
-                    }
-                }
-                Err(err) => {
-                    let kind = err.kind();
-                    assert!(
-                        kind == std::io::ErrorKind::NotFound
-                            || kind == std::io::ErrorKind::IsADirectory
-                    );
-                }
-            }
-        }
+        let host = fs::read_to_string("/etc/hostname").unwrap();
+        let node = host.trim();
+        assert!(!node.is_empty());
+        assert!(cpu.split('-').all(|token| token != node));
+        let missing_err = fs::read_to_string(&missing).unwrap_err();
+        assert_eq!(missing_err.kind(), std::io::ErrorKind::NotFound);
+        let dir_err = fs::read_to_string(&dir).unwrap_err();
+        assert_eq!(dir_err.kind(), std::io::ErrorKind::IsADirectory);
+        let empty_text = fs::read_to_string(&empty).unwrap();
+        assert!(empty_text.trim().is_empty());
     }
 }

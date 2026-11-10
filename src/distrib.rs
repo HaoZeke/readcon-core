@@ -197,7 +197,29 @@ mod tests {
                 }
                 assert_eq!(next, n);
                 assert!(block_range(n, p, p).is_empty());
+                assert_eq!(block_owner(n, p, n), None);
             }
         }
+        assert!(block_range(10, 0, 0).is_empty());
+        assert_eq!(block_owner(10, 0, 0), None);
+        assert_eq!(block_owner(0, 1, 0), None);
+    }
+
+    #[test]
+    fn block_range_export_rejects_a_null_and_writes_the_span() {
+        let mut start = 9u64;
+        let mut end = 9u64;
+        let rc = unsafe { rkr_block_range(10, 0, 0, std::ptr::null_mut(), &mut end) };
+        assert_eq!(rc, -1);
+        assert_eq!(end, 9);
+        let rc = unsafe { rkr_block_range(10, 4, 1, &mut start, std::ptr::null_mut()) };
+        assert_eq!(rc, -1);
+        assert_eq!(start, 9);
+        let rc = unsafe { rkr_block_range(10, 4, 1, &mut start, &mut end) };
+        assert_eq!(rc, 0);
+        assert_eq!(start, 3);
+        assert_eq!(end, 6);
+        assert_eq!(block_owner(10, 4, 3), Some(1));
+        assert_eq!(block_owner(10, 4, 5), Some(1));
     }
 }

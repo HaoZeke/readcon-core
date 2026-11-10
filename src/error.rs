@@ -139,6 +139,77 @@ impl fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
+#[cfg(test)]
+mod tests {
+    use super::ParseError;
+
+    #[test]
+    fn every_class_name_matches_the_error_table() {
+        let samples = [
+            (ParseError::IncompleteHeader, "IncompleteHeader"),
+            (ParseError::IncompleteFrame, "IncompleteFrame"),
+            (
+                ParseError::IncompleteVelocitySection,
+                "IncompleteVelocitySection",
+            ),
+            (
+                ParseError::InvalidVectorLength {
+                    expected: 3,
+                    found: 1,
+                },
+                "InvalidVectorLength",
+            ),
+            (
+                ParseError::InvalidNumberFormat("x".into()),
+                "InvalidNumberFormat",
+            ),
+            (ParseError::MissingSpecVersion, "MissingSpecVersion"),
+            (ParseError::UnsupportedSpecVersion(9), "UnsupportedVersion"),
+            (
+                ParseError::InvalidMetadataJson("{".into()),
+                "InvalidMetadataJson",
+            ),
+            (
+                ParseError::IncompleteForceSection,
+                "IncompleteForceSection",
+            ),
+            (
+                ParseError::IncompleteEnergySection,
+                "IncompleteEnergySection",
+            ),
+            (
+                ParseError::IncompleteSection("charges".into()),
+                "IncompleteSection",
+            ),
+            (ParseError::UnknownSection("nope".into()), "UnknownSection"),
+            (ParseError::ValidationError("bad".into()), "ValidationError"),
+            (ParseError::NonFiniteValue("nan".into()), "NonFiniteValue"),
+            (ParseError::InvalidFixedFlag("a".into()), "InvalidFixedFlag"),
+            (ParseError::InvalidCount("0".into()), "InvalidCount"),
+            (ParseError::InvalidUnits("furlong".into()), "InvalidUnits"),
+            (ParseError::UnsupportedVersion(0), "UnsupportedVersion"),
+            (
+                ParseError::IndexOutOfBounds { index: 4, len: 2 },
+                "IndexOutOfBounds",
+            ),
+            (
+                ParseError::MassMismatch {
+                    symbol: "H".into(),
+                    first_mass: 1.0,
+                    found_mass: 2.0,
+                    atom_index: 3,
+                },
+                "MassMismatch",
+            ),
+        ];
+        for (err, class) in samples {
+            assert_eq!(err.class_name(), class);
+            let text = err.to_string();
+            assert!(!text.is_empty(), "{class}");
+        }
+    }
+}
+
 impl ParseError {
     /// Stable class name from the v3.1 error table (CON-error.1).
     pub fn class_name(&self) -> &'static str {

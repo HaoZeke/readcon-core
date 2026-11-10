@@ -243,6 +243,60 @@ mod stub_tests {
     }
 
     #[test]
+    fn read_options_reject_a_zero_stride_and_keep_the_defaults() {
+        let opts = ChemfilesReadOpts::default();
+        assert_eq!(opts.start, 0);
+        assert_eq!(opts.step, 1);
+        assert_eq!(opts.stop, None);
+        assert_eq!(opts.format, None);
+        assert_eq!(opts.topology, None);
+        assert_eq!(opts.topology_format, None);
+        assert!(!opts.guess_bonds);
+        assert_eq!(opts.stride().unwrap(), 1);
+        let zero = ChemfilesReadOpts {
+            step: 0,
+            ..ChemfilesReadOpts::default()
+        };
+        let err = zero.stride().unwrap_err();
+        assert!(err.contains("stride"), "{err}");
+    }
+
+    #[cfg(not(feature = "chemfiles"))]
+    #[test]
+    fn each_stub_reports_the_disabled_feature() {
+        use std::io::{Error, ErrorKind};
+
+        let frames = con_frames_from_trajectory_path("nope.xyz").unwrap_err();
+        assert!(matches!(frames, ChemfilesImportError::FeatureDisabled));
+        let mem = con_frames_from_memory("3\n\nO 0 0 0\n", "XYZ").unwrap_err();
+        assert!(matches!(mem, ChemfilesImportError::FeatureDisabled));
+        let opts = ChemfilesReadOpts::default();
+        let with = con_frames_from_trajectory_path_with("nope.xyz", &opts).unwrap_err();
+        assert!(matches!(with, ChemfilesImportError::FeatureDisabled));
+        let mem_with = con_frames_from_memory_with("x", "XYZ", &opts).unwrap_err();
+        assert!(matches!(mem_with, ChemfilesImportError::FeatureDisabled));
+
+        let invalid = ChemfilesImportError::InvalidFrame("short".into());
+        assert!(invalid.to_string().contains("short"));
+        assert!(std::error::Error::source(&invalid).is_none());
+        let io_err = ChemfilesImportError::from(Error::new(ErrorKind::NotFound, "gone"));
+        assert!(matches!(io_err, ChemfilesImportError::Io(_)));
+        assert!(io_err.to_string().contains("gone"));
+        let src = std::error::Error::source(&io_err).unwrap();
+        assert!(src.to_string().contains("gone"));
+        assert!(std::error::Error::source(&io_err).is_some());
+        assert!(
+            std::error::Error::source(&ChemfilesImportError::FeatureDisabled).is_none()
+        );
+        assert_eq!(CHEMFILES_EXTRA_PREFIX, "chemfiles::");
+        assert!(!CHEMFILES_ATOM_PROPS_KEY.is_empty());
+        assert!(!CHEMFILES_ATOM_NAMES_KEY.is_empty());
+        assert!(!CHEMFILES_ATOM_TYPES_KEY.is_empty());
+        assert!(!CHEMFILES_RESIDUES_KEY.is_empty());
+        assert!(!CHEMFILES_UNIT_SYSTEM_KEY.is_empty());
+    }
+
+    #[test]
     fn chemfiles_internal_units_are_angstrom_ps() {
         let u = chemfiles_internal_units_json();
         assert_eq!(u["length"], "angstrom");

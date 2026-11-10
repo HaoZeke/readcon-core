@@ -431,6 +431,52 @@ mod tests {
     }
 
     #[test]
+    fn magic_bytes_reject_a_partial_gzip_and_a_partial_skippable_frame() {
+        assert_eq!(detect_compression(&[0x1f, 0x00]), Compression::None);
+        assert_eq!(detect_compression(&[0x1f]), Compression::None);
+        assert_eq!(
+            detect_compression(&[0x50, 0x00, 0x4d, 0x18]),
+            Compression::None
+        );
+        assert_eq!(
+            detect_compression(&[0x50, 0x2a, 0x00, 0x18]),
+            Compression::None
+        );
+        assert_eq!(
+            detect_compression(&[0x50, 0x2a, 0x4d, 0x00]),
+            Compression::None
+        );
+        assert_eq!(
+            detect_compression(&[0x50, 0x2a, 0x4d, 0x18]),
+            Compression::Zstd
+        );
+    }
+
+    #[test]
+    fn a_short_release_and_an_empty_map_leave_the_bytes_in_place() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("large.con");
+        std::fs::write(&path, large_text()).unwrap();
+        let mut forward = ForwardText::open(&path, true).unwrap();
+        let before = forward.as_str().len();
+        forward.release_before(0).unwrap();
+        forward.release_before(8).unwrap();
+        assert_eq!(forward.as_str().len(), before);
+        let mut owned = ForwardText::open(&path, false).unwrap();
+        owned.release_before(before + RELEASE_STEP).unwrap();
+        assert_eq!(owned.as_str(), forward.as_str());
+
+        let empty_path = dir.path().join("empty.con");
+        std::fs::write(&empty_path, b"").unwrap();
+        let file = std::fs::File::open(&empty_path).unwrap();
+        let map = unsafe { memmap2::Mmap::map(&file) }.unwrap();
+        assert_eq!(map.len(), 0);
+        advise_dontneed_parallel(&map, 1);
+        advise_dontneed_parallel(&map, 3);
+        assert_eq!(map.len(), 0);
+    }
+
+    #[test]
     fn file_text_matches_the_mapped_read() {
         let dir = tempfile::tempdir().unwrap();
         let small = dir.path().join("small.con");
@@ -504,10 +550,11 @@ mod tests {
                 .output()
                 .unwrap();
             let stdout = String::from_utf8_lossy(&out.stdout);
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            assert!(out.status.success(), "{stdout}{stderr}");
             assert!(
-                out.status.success() && stdout.contains("test result: ok. 1 passed;"),
-                "{stdout}{}",
-                String::from_utf8_lossy(&out.stderr)
+                stdout.contains("test result: ok. 1 passed;"),
+                "{stdout}{stderr}"
             );
             return;
         }
