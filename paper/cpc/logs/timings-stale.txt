@@ -1,6 +1,0 @@
-The reader-exchange numbers in the v10 PDFs measure tip 83414c7e.
-This revision changes frame parsing. A one-byte stream no longer ends a
-frame while a legacy velocity block is still arriving, a truncated
-velocity block whose label was seen is IncompleteFrame at end of file,
-and a parallel span reports a tail error after its last successful frame.
-Those numbers are not measurements of this revision.
