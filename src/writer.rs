@@ -1551,6 +1551,99 @@ mod section_arity_tests {
     }
 
     #[test]
+    fn a_file_writer_requires_time_for_minor_one_velocities() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("out.con");
+        let mut frame = load_frame("tiny_cuh2.convel");
+        frame.header.spec_version = 3;
+        frame
+            .header
+            .metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(1));
+        frame.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({"length": "angstrom", "energy": "eV"}),
+        );
+        let err = super::ConFrameWriter::from_path(&path)
+            .unwrap()
+            .write_frame(&frame)
+            .unwrap_err();
+        assert!(err.to_string().contains("units.time"), "{err}");
+
+        frame.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({
+                "length": "angstrom",
+                "energy": "eV",
+                "time": "ps"
+            }),
+        );
+        super::ConFrameWriter::from_path(&path)
+            .unwrap()
+            .write_frame(&frame)
+            .unwrap();
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert!(text.contains("Velocities of Component"), "{text}");
+
+        frame.atom_data[0].set_spread(Some([f64::NAN, 0.0, 0.0]));
+        let err = super::ConFrameWriter::from_path(dir.path().join("spread.con"))
+            .unwrap()
+            .write_frame(&frame)
+            .unwrap_err();
+        assert!(err.to_string().contains("spread"), "{err}");
+    }
+
+    #[test]
+    fn a_memory_writer_caches_a_repeat_and_writes_each_section() {
+        let frame = load_frame("tiny_cuh2.con");
+        let mut buf = Vec::new();
+        {
+            let mut writer = super::ConFrameWriter::new(&mut buf).canonical(true);
+            writer.write_frame(&frame).unwrap();
+        }
+        let canonical = String::from_utf8(buf).unwrap();
+        assert!(canonical.contains("con_spec_version"), "{canonical}");
+
+        let mut buf = Vec::new();
+        {
+            let mut writer = super::ConFrameWriter::new(&mut buf);
+            writer.write_frame(&frame).unwrap();
+            writer.write_frame(&frame).unwrap();
+        }
+        let repeated = String::from_utf8(buf).unwrap();
+        assert_eq!(repeated.matches("Coordinates of Component").count(), 4);
+
+        let forces = load_frame("tiny_cuh2_forces.con");
+        let text = write_text(&forces).unwrap();
+        assert!(text.contains("Forces of Component"), "{text}");
+        assert!(text.contains("0.123456"), "{text}");
+
+        let mut timed = load_frame("tiny_cuh2.convel");
+        timed.header.spec_version = 3;
+        timed
+            .header
+            .metadata
+            .insert(meta::CON_SPEC_MINOR.into(), serde_json::json!(1));
+        timed.header.metadata.insert(
+            meta::UNITS.into(),
+            serde_json::json!({
+                "length": "angstrom",
+                "energy": "eV",
+                "time": "ps"
+            }),
+        );
+        let text = write_text(&timed).unwrap();
+        assert!(text.contains("ps"), "{text}");
+        assert!(text.contains("Velocities of Component"), "{text}");
+
+        let mut energised = frame.clone();
+        energised.atom_data[0].set_energy(Some(4.5));
+        let text = write_text(&energised).unwrap();
+        assert!(text.contains("Energies of Component"), "{text}");
+        assert!(text.contains("4.5"), "{text}");
+    }
+
+    #[test]
     fn a_zero_atom_frame_cannot_declare_a_section() {
         let mut frame = load_frame("tiny_cuh2.con");
         frame.atom_data.clear();
