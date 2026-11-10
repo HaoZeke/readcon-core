@@ -156,6 +156,16 @@ Residual arms from that measurement:
   `hold_coverage_profile` from the suite is `run_namespace_suite`.
   The child no longer builds a profile on those prefixes.
 
+## Campaign at e262d9d
+
+`bench/cpp_reads.py`, `bench/r0174.py` and `bench/reads.py` ran in the
+bench namespace. `provenance.json` and `reads.json` name HEAD
+`e262d9d2ebdf` and TREE `48a9a7658986`, the package version, and one
+library digest. The manuscript source-hash check
+passes. `memray.json` still names release 0.17.4. The head-to-head
+peers and the binary-format
+digests are records those three producers do not write.
+
 ## Run 86
 
 `paper/cpc/receipts/run86-taken.txt` is the merged export after the
