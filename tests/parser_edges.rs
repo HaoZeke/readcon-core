@@ -34,6 +34,39 @@ fn replace_header(path: &str, header: &str) -> String {
 }
 
 #[test]
+fn a_malformed_velocity_row_is_still_an_error() {
+    let text = "\
+user
+{\"con_spec_version\":2}
+10.0 10.0 10.0
+90.0 90.0 90.0
+
+
+1
+1
+1.0
+H
+Coordinates of Component 1
+0.0 0.0 0.0 0 1
+
+H
+Velocities of Component 1
+bad 0.2 0.3 0 1
+";
+    let err = parse(text).expect_err("bad velocity");
+    let message = err.to_string();
+    assert!(
+        message.contains("bad") || message.contains("float") || message.contains("number"),
+        "{err}"
+    );
+
+    let good = text.replace("bad 0.2 0.3 0 1", "0.1 0.2 0.3 0 1");
+    let frame = parse(&good).expect("velocity");
+    let velocity = frame.atom_data[0].velocity().expect("stored velocity");
+    assert_eq!(velocity, [0.1, 0.2, 0.3]);
+}
+
+#[test]
 fn a_legacy_minor_one_velocity_block_needs_a_time_unit() {
     let text = replace_header(
         "resources/test/tiny_cuh2.convel",

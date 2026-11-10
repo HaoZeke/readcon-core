@@ -1966,7 +1966,6 @@ pub fn parse_velocity_section<'a>(
     header: &FrameHeader,
     atom_data: &mut [AtomDatum],
 ) -> Result<bool, ParseError> {
-    let validate = header.strict_validation;
     // A blank line followed only by whitespace to EOF is not a velocity
     // block (CON-frame.5, D2). Leave those lines for the iterator.
     match lines.peek_line() {
@@ -1988,6 +1987,31 @@ pub fn parse_velocity_section<'a>(
         _ => return Ok(false),
     }
 
+    parse_velocity_rows(lines, header, atom_data)?;
+    Ok(true)
+}
+
+/// A velocity block the legacy opener has already accepted.
+///
+/// The opener is three checks on the peeked blank: `peek_line` is empty,
+/// `blank_line_opens_section` sees a symbol and a velocity label, and
+/// `legacy_velocity_rows_complete` sees five fields on every row. Absence
+/// is not a result of this call. A row that does not parse is an error.
+fn parse_opened_velocity_block<'a>(
+    lines: &mut impl LineStream<'a>,
+    header: &FrameHeader,
+    atom_data: &mut [AtomDatum],
+) -> Result<(), ParseError> {
+    lines.next_line();
+    parse_velocity_rows(lines, header, atom_data)
+}
+
+fn parse_velocity_rows<'a>(
+    lines: &mut impl LineStream<'a>,
+    header: &FrameHeader,
+    atom_data: &mut [AtomDatum],
+) -> Result<(), ParseError> {
+    let validate = header.strict_validation;
     let mut atom_idx: usize = 0;
     for (type_idx, &num_atoms) in header.natms_per_type.iter().enumerate() {
         // Symbol line
@@ -2048,7 +2072,7 @@ pub fn parse_velocity_section<'a>(
         }
     }
 
-    Ok(true)
+    Ok(())
 }
 
 /// Attempts to parse a force section following coordinate (and optional velocity) blocks.
@@ -2202,12 +2226,7 @@ pub fn parse_declared_sections<'a>(
                     "legacy velocity block without units.time".into(),
                 ));
             }
-            // `opens` already required a blank line, a velocity label, and
-            // a complete row. parse_velocity_section returns Ok(false) only
-            // when that blank is absent, is only whitespace, or is not a
-            // velocity label, which contradicts `opens`. The Err path still
-            // stops the frame. Ok(true) is the only result that remains.
-            parse_velocity_section(lines, header, atom_data)?;
+            parse_opened_velocity_block(lines, header, atom_data)?;
             header.sections.push(SECTION_VELOCITIES.into());
             applied = 1;
         }
