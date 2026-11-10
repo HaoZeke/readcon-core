@@ -217,3 +217,17 @@ e8b31947ca42e0b2aaac66fc5529b2c5adebecc9	6f79f04e9a8950bca39cedf2f34d283d342041c
 c5bcce03bd8826aa1e65e28bccfedb2cecf78e83	d515c61cc28a4a56084bb6c634eb5b90a8feb9fd	6437d60a98a587e266da9a377213deae0f2ba4a6	yes	2026-11-09 21:03:47 -0600
 e852749ec7fcd40a2585cff2939d34dddf88536d	ab62d681c43bd2df494b34cdc0122c590865bc82	2df6a7d103013d2f3a394097e5c26e8347dd8bcb	yes	2026-11-09 21:03:47 -0600
 158e5b2032716d56d3d6924320f18faff40b4fe1	61a59651a6e2ab16ee3997c83e2f9a80e053cce4	3f19b64e50a32d4a1ece724127ed5468dca7ccfa	yes	2026-11-09 21:03:47 -0600
+
+## Commits after the rebase
+
+note these commits were created after the replay
+
+new	tree	date	subject
+edc16e2b7e334782d66ad1cde667ff8d981df5d9	facae1ce9f7635705ff02d95e07b0cb0219bb558	2026-11-09 21:04:36 -0600	docs: record the new lane map
+068e10a7f4e13fc959453aabc0f10993c856bc3c	d971cfdfc407522b08024b3b5a2fcb2b08aa7d5c	2026-11-09 21:07:59 -0600	fix: record provenance from the public base
+c9bdf6ba8574868a09c72b1627e5e654199c52df	3ccdd53c349e10aa12726d8826eb8af0a8f6985a	2026-11-09 21:09:09 -0600	test: cover a repeated atom id and a null communicator
+c78b69d5ad94ff45019bea65092dab1c3477910a	6ddf01eee7bb365d40fc9fcb4ca083ffe9c307ef	2026-11-09 21:12:18 -0600	fix: build the C++ reader against the current frame
+397141b309acbd4142a90b539707a314b8bf0a14	1ab453e4be7e354adda3db9618695cfe29582437	2026-11-09 21:14:44 -0600	fix: hash the readcon module from the repository root
+491d44df8d8dac85bf078d1c99cc29ef6acc7a31	70cd8e9cccfbdbdd59e0cda501847523c9a9ba73	2026-11-09 21:19:21 -0600	fix: build chemfiles for the C++ reader in the script
+9797a838bfeee7a6372e45589046d104e60ddf13	2904380762efabdbcc79a68f43b395c804dd6d33	2026-11-09 21:19:21 -0600	fix: report type-7 quartiles at seventeen digits
+9abc26d6c0d19f7855b9ad2203daaf115317baac	5b4fdb44f27631aee991cbbf1dd03ccf2433db38	2026-11-09 21:21:00 -0600	test: reject a bad bond entry and a breaking abi major
