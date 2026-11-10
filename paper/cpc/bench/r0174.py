@@ -1,11 +1,9 @@
-"""Provenance of the readcon-core 0.17.4 measurements: commit, library digest, module, host, tools.
+"""Provenance of the readcon-core measurements: commit, library digest, module, host, tools.
 
 The measured library is the tree of the commit that ``provenance.source_identity``
-finds: tag v0.17.4 once it holds these library files, and until then the
-release candidate at HEAD, which descends from commit ``BASE``, the head of
-pull request 80 to the main branch after the published release named in Cargo.toml, and
-adds the version bump and the changes that CHANGELOG.md lists under 0.17.4.
-``build()`` records that commit, the number of commits after ``BASE``, the
+finds. That commit is HEAD when HEAD has these library files. ``build()``
+requires HEAD to descend from ``BASE``, the public commit the lane replays
+onto. It records that commit, the number of commits after ``BASE``, the
 library digest of the working tree and of the commit's git objects, which must
 agree, and the imported module, which must be newer than every library file.
 ``record()`` adds the host, its hardware line (``provenance.hardware``), the
@@ -29,7 +27,7 @@ sys.path.insert(0, str(HERE))
 import portable  # noqa: E402
 import provenance  # noqa: E402
 
-BASE = "d0b7d3c7a5a7e7d7a6a963d515e9524c575c09fd"
+BASE = "df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff"
 RESULTS = Path(os.environ.get("BENCH_RESULTS", HERE / "results" / "r0174"))
 
 
