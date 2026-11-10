@@ -4235,6 +4235,50 @@ mod tests {
     }
 
     #[test]
+    fn idle_accessors_and_short_sections_report_their_errors() {
+        let mut builder = three_atom_builder();
+        let n = builder.positions().len();
+        assert_eq!(n, 9);
+        builder.positions_mut()[0] = 1.25;
+        assert_eq!(builder.positions()[0], 1.25);
+        assert_eq!(builder.masses().len(), 3);
+        assert!(matches!(
+            builder.set_atom_velocity(9, [0.0; 3]),
+            Err(crate::error::ParseError::IndexOutOfBounds { index: 9, .. })
+        ));
+        assert!(matches!(
+            builder.set_atom_force(9, [0.0; 3]),
+            Err(crate::error::ParseError::IndexOutOfBounds { index: 9, .. })
+        ));
+        assert!(matches!(
+            builder.set_forces_from_flat(&[0.0]),
+            Err(crate::error::ParseError::InvalidVectorLength { .. })
+        ));
+        assert!(matches!(
+            builder.set_atom_energies_from_flat(&[0.0]),
+            Err(crate::error::ParseError::InvalidVectorLength { .. })
+        ));
+        builder.add_bond(Bond::new(0, 1).with_order(1));
+        builder.set_atom_fixed(0, [true, true, true]).unwrap();
+        let frame = builder.build().unwrap();
+        assert!(frame.has_bonds());
+        assert_eq!(frame.bonds()[0].order, Some(1));
+        assert!(frame.atom_data[0].is_fully_fixed());
+        assert!(!frame.atom_data[1].is_fully_fixed());
+        let mut bare = three_atom_builder();
+        bare.set_bonds(&[]);
+        assert!(!bare.build().unwrap().has_bonds());
+        let mut cleared = three_atom_builder();
+        cleared.clear_forces_section();
+        cleared.clear_energies_section();
+        cleared.clear_displacements_section();
+        let cleared = cleared.build().unwrap();
+        assert!(!cleared.has_forces());
+        assert!(!cleared.has_energies());
+        assert!(!cleared.has_displacements());
+    }
+
+    #[test]
     fn section_slices_are_empty_until_written() {
         let bond = Bond::new(1, 0).with_order(2);
         assert_eq!(bond.order, Some(2));

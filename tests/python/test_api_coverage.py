@@ -258,6 +258,27 @@ def test_bonds_release_and_indexes(tmp_path):
     assert len(listed) == 2
 
 
+def test_lean_selection_and_bad_indexes_fail():
+    frame = _one()
+    with pytest.raises(Exception) as selected:
+        readcon.select_on_frame(frame, "name Cu")
+    assert "chemfiles" in str(selected.value).lower() or "feature" in str(selected.value).lower()
+    with pytest.raises(Exception) as indices:
+        readcon.select_atom_indices(frame, "name Cu")
+    assert "chemfiles" in str(indices.value).lower() or "feature" in str(indices.value).lower()
+    with pytest.raises(Exception) as multi:
+        readcon.evaluate_selection_on_frames("name Cu", [frame])
+    assert "chemfiles" in str(multi.value).lower() or "feature" in str(multi.value).lower()
+    with pytest.raises(Exception) as positions:
+        readcon.select_atom_positions_on_frames("name Cu", [frame])
+    assert "chemfiles" in str(positions.value).lower() or "feature" in str(positions.value).lower()
+    frames = readcon.read_con(_resource("tiny_multi_cuh2.con"))
+    with pytest.raises(IndexError):
+        frames[99]
+    with pytest.raises(ValueError, match="unknown build"):
+        readcon.read_con_phases(_resource("tiny_cuh2.con"), build="sideways")
+
+
 def test_symbol_table_and_conbin(tmp_path):
     assert readcon.symbol_to_atomic_number("Fe") == 26
     assert readcon.atomic_number_to_symbol(1) == "H"
