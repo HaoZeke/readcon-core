@@ -1,0 +1,22 @@
+method git commit-tree
+dates_set_by_hand no
+spacing no sleep, no timer, no minimum gap
+range_start 2026-11-09 22:59:46 -0600
+range_end 2026-11-09 22:59:49 -0600
+shared_seconds 4
+commits 222
+messages original bodies, byte for byte
+authors unchanged Rohit Goswami <rgoswami@ieee.org>
+public_commits unchanged
+base 0b9e9f035ce61a1a51b4efe8b6c611b2b84cf6cb
+base_parent df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff
+prerebase refs/archive/readcon-v14.4-prerebase 0098fe441f57592b1cf51e8edaa64a9171b6c4ef
+replay_tip cd505aa7b075c0a9130dec3ca6856859f36a4a69
+Each new tree equals the prerebase tree plus the two Cachegrind doc files
+from 0b9e9f03, which no lane commit touches:
+docs/source/_generated/cachegrind_results.json
+docs/source/_generated/cachegrind_results.rst
+The per-commit receipt is replay-diff-tree.txt, written by
+paper/cpc/scripts/replay_diff_tree.py.
+ls_remote refs/heads/main 0b9e9f035ce61a1a51b4efe8b6c611b2b84cf6cb
+ls_remote_checked 2026-11-09 23:00:00 -0600
