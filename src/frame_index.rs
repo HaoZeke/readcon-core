@@ -922,4 +922,12 @@ mod tests {
         late[20 << 20] = b'\n';
         assert_eq!(validate_utf8_sliced(&late).unwrap().len(), late.len());
     }
+
+    #[test]
+    fn a_short_buffer_and_a_bad_magic_do_not_decode() {
+        assert!(decode(&[0u8; 8], "x").is_none());
+        let mut bytes = vec![0u8; HEADER_LEN + 8];
+        bytes[..4].copy_from_slice(b"NOPE");
+        assert!(decode(&bytes, "x").is_none());
+    }
 }
