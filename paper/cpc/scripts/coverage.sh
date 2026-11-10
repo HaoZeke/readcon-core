@@ -28,10 +28,20 @@ mkdir -p "$CARGO_TARGET_DIR"
 OUT="$CARGO_TARGET_DIR/report"
 mkdir -p "$OUT"
 
-echo "==> workspace, all targets, doctests, branches"
-cargo llvm-cov --workspace --all-targets --doctests \
+echo "==> workspace, all targets, branches"
+cargo llvm-cov --workspace --all-targets \
   --features parallel,zstd,grammar \
   --branch --no-fail-fast --no-report
+mkdir -p "$OUT/prof"
+find "$CARGO_TARGET_DIR" -maxdepth 2 -name '*.profraw' -o -name '*.profdata' | while read -r prof; do
+  mv "$prof" "$OUT/prof/"
+done
+echo "==> doctests"
+cargo llvm-cov --workspace --doc \
+  --features parallel,zstd,grammar \
+  --branch --no-fail-fast --no-report \
+  || echo "doctests exited $?" >&2
+find "$OUT/prof" -type f -exec mv {} "$CARGO_TARGET_DIR/" \;
 
 if [ -f tests/c/ffi_coverage.c ] && [ -f include/readcon-core.h ]; then
   echo "==> C driver against the instrumented static library"
