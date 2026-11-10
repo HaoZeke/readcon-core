@@ -115,21 +115,9 @@ pub fn chemfiles_frame_from_con_frame(frame: &ConFrame) -> Result<Frame, Chemfil
         let mut ch_atom = Atom::new(display_name.as_str());
         ch_atom.set_atomic_type(atomic_type.as_str());
         let vel = atom.velocity();
+        // chemfiles 0.10.4 Frame::add_atom pushes this velocity when
+        // add_velocities has run (Frame.cpp:134-139, capi/frame.cpp:89-102).
         chfl.add_atom(&ch_atom, [atom.x, atom.y, atom.z], vel);
-    }
-
-    // chemfiles 0.10.4, vendored by chemfiles-sys 0.10.41: Frame::add_velocities
-    // sizes the velocity vector to the current atom count (Frame.cpp:57-60),
-    // and Frame::add_atom pushes one velocity when that vector is present
-    // (Frame.cpp:134-139). The zip is the same length as the atom list.
-    if need_vel {
-        if let Some(vels) = chfl.velocities_mut() {
-            for (atom, slot) in frame.atom_data.iter().zip(vels.iter_mut()) {
-                if let Some(v) = atom.velocity() {
-                    *slot = v;
-                }
-            }
-        }
     }
 
     // Preserve step from metadata when present.
