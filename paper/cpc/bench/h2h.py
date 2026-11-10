@@ -6,10 +6,11 @@ Two trajectories of 10,000 frames of the 218-atom CuH2 slab:
 * ``traj_coords.con``: ``resources/test/cuh2.con`` repeated 10,000 times,
   coordinates only, with the plain XYZ, extended XYZ, ASE ``.traj`` and h5py
   ``position/value`` peers that ``benches/headtohead.py`` writes;
-* ``traj_vel_206.con``: the 206,095,637-byte velocity trajectory of
-  ``benches/make_velocity_campaign.py``, with the plain XYZ and GRO files of the
-  same frames.  The script is run a second time and its three outputs must
-  equal the first ones byte for byte.
+* ``traj_vel_206.con``: the velocity trajectory of
+  ``benches/make_velocity_campaign.py`` (the CuH2 fixture, one velocity on
+  every atom, repeated for 10,000 frames), with the plain XYZ and GRO files
+  of the same frames.  The script is run a second time and its three outputs
+  must equal the first ones byte for byte.
 
 Each CON gets a positions ``.rcbin`` image written by ``examples/peer_time.rs``.
 The Python campaign times the calls of ``benches/headtohead.py`` (readcon, h5py
