@@ -4257,4 +4257,129 @@ Coordinates of Component 1
         assert!(validate_metadata_schema(&ok).is_ok());
     }
 
+    #[test]
+    fn cold_header_and_row_arms_name_their_errors() {
+        let angles = [90.0, 90.0, 90.0];
+        let lengths = [1.0, 1.0, 1.0];
+        let bad_geom = [
+            ([f64::NAN, 1.0, 1.0], angles),
+            ([0.0, 1.0, 1.0], angles),
+            ([-1.0, 1.0, 1.0], angles),
+            (lengths, [f64::NAN, 90.0, 90.0]),
+            (lengths, [0.0, 90.0, 90.0]),
+            (lengths, [180.0, 90.0, 90.0]),
+        ];
+        for (boxl, ang) in bad_geom {
+            let err = validate_header_geometry(&boxl, &ang).unwrap_err();
+            assert!(
+                matches!(err, ParseError::ValidationError(_)),
+                "{boxl:?} {ang:?} {err}"
+            );
+        }
+        assert!(validate_header_geometry(&lengths, &angles).is_ok());
+        assert!(matches!(
+            validate_masses(&[f64::NAN]).unwrap_err(),
+            ParseError::ValidationError(_)
+        ));
+        assert!(matches!(
+            validate_masses(&[0.0]).unwrap_err(),
+            ParseError::ValidationError(_)
+        ));
+        assert!(validate_masses(&[1.0]).is_ok());
+        assert!(
+            validate_coordinate_component(0, "X", "Coordinates of Component 1").is_ok()
+        );
+        assert!(
+            validate_coordinate_component(0, "H", "Coordinates of Component 1").is_ok()
+        );
+        assert!(matches!(
+            validate_coordinate_component(0, "Zz", "Coordinates of Component 1").unwrap_err(),
+            ParseError::ValidationError(_)
+        ));
+
+        let huge = "user\n{\"con_spec_version\":4294967296}\n";
+        let err = parse_frame_header(&mut huge.lines()).unwrap_err();
+        assert!(matches!(err, ParseError::UnsupportedVersion(_)), "{err}");
+        let neg = "user\n{\"con_spec_version\":-1}\n";
+        let err = parse_frame_header(&mut neg.lines()).unwrap_err();
+        assert!(matches!(err, ParseError::UnsupportedVersion(0)), "{err}");
+        let frac = "user\n{\"con_spec_version\":1.5}\n";
+        let err = parse_frame_header(&mut frac.lines()).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidMetadataJson(_)), "{err}");
+        assert_eq!(json_u64(&serde_json::json!(3.0)), Some(3));
+        assert_eq!(json_u64(&serde_json::json!(1.5)), None);
+        assert_eq!(json_u64(&serde_json::json!(-2)), None);
+        assert!(json_negative_integer(&serde_json::json!(-2)));
+        assert!(json_negative_integer(&serde_json::json!(-2.0)));
+        assert!(!json_negative_integer(&serde_json::json!(-1.5)));
+        assert!(!json_negative_integer(&serde_json::json!("no")));
+        assert!(json_nonneg_integer(&serde_json::json!(4)));
+        assert!(json_nonneg_integer(
+            &serde_json::json!(18446744073709551616.0)
+        ));
+        assert!(!json_nonneg_integer(&serde_json::json!(1.5)));
+        assert!(!json_nonneg_integer(&serde_json::json!("no")));
+
+        let mut out = [0.0; 5];
+        let err = parse_line_of_range_f64_stack("1e999", 1, 1, &[0.0], &mut out).unwrap_err();
+        assert!(matches!(err, ParseError::NonFiniteValue(_)), "{err}");
+        let err = parse_line_of_range_f64_stack("1.2abc", 1, 1, &[0.0], &mut out).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)), "{err}");
+        let err = parse_line_of_range_f64_stack("1", 2, 3, &[0.0, 0.0, 0.0], &mut out).unwrap_err();
+        assert!(matches!(
+            err,
+            ParseError::InvalidVectorLength { found: 1, .. }
+        ));
+        let n = parse_line_of_range_f64_stack("1 2", 1, 3, &[9.0, 8.0, 7.0], &mut out).unwrap();
+        assert_eq!(n, 3);
+        assert_eq!(out[0], 1.0);
+        assert_eq!(out[2], 7.0);
+        let err = parse_line_of_range_f64_stack("1 2 3 4 5 6", 1, 5, &[0.0; 5], &mut out).unwrap_err();
+        assert!(matches!(
+            err,
+            ParseError::InvalidVectorLength { expected: 5, .. }
+        ));
+
+        let row = parse_coord_fields(b"1 2 3 1 4\n", 0, 2, Some(9)).unwrap();
+        assert_eq!(row.0.0, [1.0, 2.0, 3.0]);
+        assert_eq!(row.0.1, [true, false, false]);
+        assert_eq!(row.0.2, 4);
+        let row = parse_coord_fields(b"1 2 3 1\n", 0, 1, Some(9)).unwrap();
+        assert_eq!(row.0.1, [true, true, true]);
+        assert_eq!(row.0.2, 9);
+        let err = parse_coord_fields(b"1 2 3 1\n", 0, 2, None).unwrap_err();
+        assert!(matches!(
+            err,
+            ParseError::InvalidVectorLength { found: 4, .. }
+        ));
+        let err = parse_coord_fields(b"1 2 3 8 1\n", 0, 2, Some(0)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidFixedFlag(_)), "{err}");
+        let err = parse_coord_fields(&[0xff, b'\n'], 0, 2, Some(0)).unwrap_err();
+        assert!(matches!(err, ParseError::ValidationError(_)), "{err}");
+        let wide = parse_coord_fields(b"1 2 3 0 1234567890123456789\n", 0, 2, Some(0)).unwrap();
+        assert_eq!(wide.0.2, 1234567890123456789);
+        let err = parse_coord_fields(b"1 2 3 0 123456789012345678901\n", 0, 2, Some(0)).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)), "{err}");
+        let err = parse_coord_fields(b"1 2 3 0 1 extra\n", 0, 2, Some(0)).unwrap_err();
+        assert!(matches!(
+            err,
+            ParseError::InvalidVectorLength { found: 6, .. }
+        ));
+
+        let mut lines = ["", "H"].into_iter().peekable();
+        assert!(!section_follows(&mut lines));
+        let mut lines = ["{meta", "nope"].into_iter().peekable();
+        assert!(!section_follows(&mut lines));
+        let mut lines = ["H"].into_iter().peekable();
+        assert!(!section_follows(&mut lines));
+        let mut lines = ["Cu", "velocities of Component 1"].into_iter().peekable();
+        assert!(section_follows(&mut lines));
+        let mut probe = ["", "Cu", "velocities of Component 1"]
+            .into_iter()
+            .peekable();
+        assert!(probe.blank_line_opens_section());
+        let mut bare = ["not blank"].into_iter().peekable();
+        assert!(bare.blank_opens_velocity_block());
+    }
+
 }

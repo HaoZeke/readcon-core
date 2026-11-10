@@ -4324,4 +4324,67 @@ mod one_thread_and_numa {
         ));
     }
 
+    #[test]
+    fn cold_span_and_slab_arms_return_the_documented_value() {
+        let one = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+        assert!(super::equal_span_boundaries(&one, 1).is_none());
+        assert!(super::equal_span_boundaries(b"a", 4).is_none());
+        assert!(super::equal_span_boundaries(b"not a frame", 2).is_none());
+        assert!(super::equal_span_boundaries(&one, 2).is_none());
+        let mut mixed = one.clone();
+        mixed.extend(std::iter::repeat(b'x').take(one.len()));
+        assert!(super::equal_span_boundaries(&mixed, 2).is_none());
+        let repeated = {
+            let mut buf = Vec::new();
+            for _ in 0..4 {
+                buf.extend_from_slice(&one);
+            }
+            buf
+        };
+        let starts = super::equal_span_boundaries(&repeated, 64).expect("many workers");
+        assert_eq!(starts.len(), 4);
+        let again = super::equal_span_boundaries(&repeated, 2).expect("cached starts");
+        assert_eq!(again, starts);
+
+        let mut empty = [];
+        super::first_touch_f64(&mut empty, 4);
+        let mut one_slot = [1.0];
+        super::first_touch_f64(&mut one_slot, 1);
+        assert_eq!(one_slot[0], 1.0);
+        let mut pages = vec![1.0; 64];
+        super::first_touch_f64(&mut pages, 8);
+        assert!(pages.iter().any(|v| *v == 0.0));
+
+        let mut builder = crate::types::ConFrameBuilder::new([8.0, 8.0, 8.0], [90.0, 90.0, 90.0]);
+        builder.add_atom("H", 1.5, 2.5, 3.5, [false, false, false], 1, 1.0);
+        let mut frame = builder.build().unwrap();
+        let mut dtypes = crate::storage_dtype::StorageDtypes::default();
+        dtypes.positions = crate::storage_dtype::ElementKind::Float32;
+        frame.project_storage_dtypes(&dtypes);
+        assert!(frame.positions.f64_slice().is_none());
+        let slab = pack_position_slab(&[frame.clone(), frame.clone()], 2).unwrap();
+        assert!((slab[0] - 1.5).abs() < 1e-5);
+        assert!((slab[3] - 1.5).abs() < 1e-5);
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        let from_pool = pool.install(|| pack_position_slab(&[frame.clone()], 2).unwrap());
+        assert!((from_pool[1] - 2.5).abs() < 1e-5);
+
+        let mut cursor = super::MemchrLines::from_bytes(b"   \n1 2 3 0 1\r\n");
+        let err = crate::parser::LineStream::next_coord_row(&mut cursor, 2, 0).unwrap_err();
+        assert!(matches!(
+            err,
+            error::ParseError::InvalidVectorLength { found: 0, .. }
+        ));
+        let row = crate::parser::LineStream::next_coord_row(&mut cursor, 2, 7).unwrap();
+        assert_eq!(row.0, [1.0, 2.0, 3.0]);
+        let mut done = super::MemchrLines::from_bytes(b"");
+        assert!(matches!(
+            crate::parser::LineStream::next_coord_row(&mut done, 2, 0).unwrap_err(),
+            error::ParseError::IncompleteFrame
+        ));
+    }
+
 }
