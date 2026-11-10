@@ -29,7 +29,7 @@ OUT="$CARGO_TARGET_DIR/report"
 mkdir -p "$OUT"
 
 echo "==> workspace, all targets, doctests, branches"
-cargo llvm-cov --workspace --all-targets --doc \
+cargo llvm-cov --workspace --all-targets --doctests \
   --features parallel,zstd,grammar \
   --branch --no-fail-fast --no-report
 
