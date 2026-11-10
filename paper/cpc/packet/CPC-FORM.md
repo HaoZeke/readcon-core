@@ -4,7 +4,7 @@
 Status: Prepared, not submitted.
 
 `make_packet.py` writes every count and quoted text in this form from the sources and the `build_tex.sh`
-build of the paper, for readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e`, library digest `d94b6ad922e9`.
+build of the paper, for readcon-core 0.18.0, release commit `d5e77f997438557c72c3b3e360d446310f85d6b7`, library digest `249fd2ffe10e`.
 
 ## Sources
 
@@ -26,7 +26,7 @@ build of the paper, for readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d29
 | Article type | CPiP: programs archived in the CPC Program Library on Mendeley Data under an approved licence | GFA | Computer Programs in Physics: the paper has a Program Summary and describes a program. |
 | Licence | One of MIT, Apache-2.0, BSD 2/3-clause, GPLv2/3, LGPL, MPL-2.0, CeCILL, CeCILL-B, CC BY 4.0, CC0 1.0, CC BY-NC 3.0 | GFA | MIT, the Program Summary's licensing provision. |
 | Program Summary | Immediately after the abstract. Fields: Program title; CPC Library link (Technical Editor); Developer's repository link; Licensing provisions; Programming language; Supplementary material; Nature of problem, Solution method, Additional comments (each in the 50 to 250 word range the guide gives); References | GFA, TPL | All fields, in the CPC order, after the abstract. Word counts: Nature of problem 161, Solution method 211, Additional comments 121. |
-| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the complete git bundle that contains the untagged commit `f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e` and its whole history (`git clone readcon-core.bundle` checks it out with no prerequisite commit), and `patches/`, a patch series that `git am --keep-cr` applies on commit `d0b7d3c7` in that clone to give the tree of that commit. The commit descends from `d0b7d3c7`, the head of pull request 80 to the main branch after the published release 0.17.3 (tag v0.17.3 at commit `12ca800b`), and its change log lists every change since 0.17.3 under 0.18.1. No tag names this commit. The latest release tag is v0.18.0. |
+| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the complete git bundle of the paper history (`git clone readcon-core.bundle` checks it out with no prerequisite commit). The described release is tag v0.18.0 at commit `d5e77f997438557c72c3b3e360d446310f85d6b7`, which is on the public main branch. The published release before it is 0.17.3 (tag v0.17.3 at commit `12ca800b`). |
 | Source format | Editable source, `.tex` for LaTeX. A PDF is not a source file. | GFA | The LaTeX sources of `paper/cpc/src`. |
 | EM LaTeX build | No subfolders. `.tex`, `.bbl` and support files as item type Manuscript, images as Figure. Order: `.tex`, bibliography, styles, figures. | EMTEX | `make_em_flat.py` writes the flat set (Packet files below). |
 | Abstract | At most 250 words, stands alone, define uncommon abbreviations at first use | GFA | 125 words by `check_manuscript.py`'s count. |
@@ -41,7 +41,7 @@ build of the paper, for readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d29
 | Competing interests | Statement plus the Elsevier declarations tool `.docx` uploaded at Attach Files | GFA | Section "Declaration of competing interest" declares none; the `.docx` comes from the declarations tool during submission. |
 | Funding | Guide asks for disclosure | GFA | Section "Funding" carries the guide's sentence for research without specific funding. |
 | Generative AI in writing | Declare in a section before the references if used in writing | GFA | Section "Declaration of generative AI and AI-assisted technologies in the manuscript preparation process", the last section before the references, in Elsevier's form. |
-| Data availability | Option C: deposit, cite and link data, plus a data statement at submission | GFA | Section "Data availability" names readcon-core 0.18.1, its untagged commit `f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e`, the digest `d94b6ad922e9` of its library and the git bundle `readcon-core.bundle` of the supplementary material, and links https://doi.org/10.5281/zenodo.18753567. |
+| Data availability | Option C: deposit, cite and link data, plus a data statement at submission | GFA | Section "Data availability" names readcon-core 0.18.0, its release commit `d5e77f997438557c72c3b3e360d446310f85d6b7`, the digest `249fd2ffe10e` of its library and the git bundle `readcon-core.bundle` of the supplementary material, and links https://doi.org/10.5281/zenodo.18753567. |
 | References | Numbered, elsarticle-num, software cited with identifier | GFA | elsarticle-num; 70 references in the manuscript and 52 in the supplement; no undefined reference or citation in either pdfTeX log. |
 | Tables | Editable, no vertical rules | GFA | 11 tables; no tabular has a vertical rule. |
 | Preprint | Sharing a preprint anywhere at any time is allowed, and a preprint is not prior publication | GFA, SHARE | The preprint is on arXiv. |
@@ -60,7 +60,7 @@ build of the paper, for readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d29
 `em-flat/` differs from the arXiv source in two ways: `figures/generated/` prefixes are removed, and
 `\bibliographystyle{elsarticle-num}\bibliography{rg_main}` becomes `\input{rg_main.bbl}` (method B in EMTEX).
 
-Data availability names readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e`, which
+Data availability names readcon-core 0.18.0, release commit `d5e77f997438557c72c3b3e360d446310f85d6b7`, which
 `readcon-core.bundle` contains the commit with its whole history, and links the concept record https://doi.org/10.5281/zenodo.18753567
 of readcon-core. No tag names this commit. The latest release tag is v0.18.0.
 `rg_main.pdf` has 53 pages, sha256 `07c3e9db1747932df704d731b418d7970308082cb41c47e159710060ece00fcc`.
@@ -106,7 +106,7 @@ Upload the `.docx` the tool produces.
 
 **Generative AI declaration question:** AI tools were used, as Section "Declaration of generative AI and AI-assisted technologies in the manuscript preparation process" states: "Chatbots were used to refine certain turns of phrase and to speed through some implementation details; all the work is the author's own. The author reviewed and edited all tool output as needed and takes full responsibility for the content of the published article."
 
-**Data statement:** "The software is readcon-core 0.18.1, untagged commit f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e, which the complete git bundle readcon-core.bundle of the supplementary material contains with its whole history. No tag names this commit. The latest release tag is v0.18.0. Every record of the paper names the library of that commit by its digest, d94b6ad922e9. The concept record of readcon-core is https://doi.org/10.5281/zenodo.18753567. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: https://doi.org/10.5281/zenodo.18753567
+**Data statement:** "The software is readcon-core 0.18.0, release commit d5e77f997438557c72c3b3e360d446310f85d6b7, which tag v0.18.0 names. The library digest of that release begins 249fd2ffe10e. The concept record of readcon-core is https://doi.org/10.5281/zenodo.18753567. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: https://doi.org/10.5281/zenodo.18753567
 
 **Preprint:** the arXiv identifier of the preprint. Decline the SSRN option, since the preprint is on arXiv.
 

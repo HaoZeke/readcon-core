@@ -1,35 +1,37 @@
-Variant A measures the library in this checkout, readcon 0.18.1,
-module sha256 27c90f1a67c23db52f1856e95aa2858f371be0901bc28398ef7656e07b5c978b.
-The log is paper/cpc/logs/reader-exchange.log.
-Its rev_parse is e64638c6a90b94551fdb5d17d475d0f51c826be0 and its git status is clean.
-The build line is maturin develop --release --offline --features python,zstd,parallel.
-The tag for that library is not assigned. Variant A is not a submission copy.
-
-Variant B measures the public release v0.18.0, commit
+Variant B measures the public release v0.18.0.
+The library and the harness are commit
 d5e77f997438557c72c3b3e360d446310f85d6b7,
-module sha256 968aec3d6f654144cf91bc5a43cfe4e0d2dd7f80ec6f32ce8248088d9b80ce15.
+tag v0.18.0, an ancestor of the public main branch.
 The log is paper/cpc/logs/reader-exchange-public.log.
-Its rev_parse is e286bf570120069cbdf221d14219a381dd3eda2a and its git status is clean.
-Variant B cites that public tag and no unpublished commit.
+Its rev_parse is d5e77f997438557c72c3b3e360d446310f85d6b7 and its git status is clean.
+The command is python3 paper/cpc/scripts/bench_readers.py from that tag.
+readcon_tip calls read_positions, because that module provides it.
+readcon_v0173 inserts paper/cpc/build/readcon-0.18.0 and calls read_con.
+readcon_base inserts the baseline build and calls read_con.
+The C++ arm did not load libemt.so, so it has no median.
 
 Median seconds, six repeats, type 7.
 
-arm                          variant A      variant B
-read_con 1 thread            1.63019        1.52248
-read_con 8 threads           0.924936       0.875994
-read_positions 1 thread      0.882897       0.789266
-read_positions 8 threads     0.225907       0.176862
-0.17.3 read_con 1 thread     3.10138        2.97709
-ASE get_positions 1 thread   11.0932        11.1556
-eOn loadcons 1 thread        15.5686        14.6135
+arm                          seconds
+read_positions               0.191445964
+read_con of the v0.18.0 build 1.619664509
+baseline read_con            2.102760336
+ASE get_positions            11.66434817
+eOn loadcons                 15.61954329
+readcon-db                   12.24548414
+h5py                         0.6484206265
+conbin                       0.009393485001
+read_first_frame             0.037811441
+Matter.con2matter            0.347087842
 
-Time over time: this row's median divided by read_con at 1 thread.
-A value above 1 is a slower arm. The 8-thread row is below 1.
+Time over time: this row's median divided by read_con of the v0.18.0 build.
+A value above 1 is a slower arm.
 
-arm                          variant A      variant B
-0.17.3 read_con              1.90246        1.95543
-ASE get_positions            6.80482        7.32729
-eOn loadcons                 9.55014        9.59849
-read_con 8 threads           0.56738        0.57537
+arm                          time over time
+baseline read_con            1.29827
+ASE get_positions            7.20167
+eOn loadcons                 9.64329
+read_positions               0.11820
 
-read_positions is an absolute time in both variants.
+read_positions is also an absolute time above.
+It is not a ratio against ASE or loadcons.

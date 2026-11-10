@@ -1173,9 +1173,8 @@ six times, one fresh process per sample.
 \begin{figure*}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/timing.pdf} \caption{Wall time of the full-frame CON readers on one 100000-frame file, six
 interleaved repeats.
 The bar is the type 7 median.
-\texttt{read\_con} is shown at 1 thread and at 8 threads.
-The other bars are 1 thread.
-The log is \texttt{paper/cpc/logs/reader-exchange.log}.}
+The medians in the text are Table~\ref{tab:host}, from
+\texttt{paper/cpc/logs/reader-exchange-public.log}.}
 \label{fig:timing} \end{figure*}
 
 \begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/ratios.pdf} \caption{Full-frame readers at 1 thread, each divided by \texttt{read\_con} at 1
@@ -1197,20 +1196,11 @@ repeats.}
 read one trajectory of 100000 frames and 32 copper atoms, six times for
 each arm, interleaved, each sample a fresh process.
 Each library is imported before the clock starts.
-The host is an \rcHostCpu{}, CPU family \rcHostFamily{} model
-\rcHostModel{}, at \rcHostGhz{} GHz, with \rcHostCores{} cores and
-\rcHostMem{} GiB of memory.
-It runs kernel \rcHostKernel{} on \rcHostOs{}.
-rustc \rcHostRustc{} builds the library, and \rcHostCxx{} builds the eOn
-C++ arm.
-The trajectory is on an \rcHostFs{} filesystem.
-The page cache is \rcHostCache{}, because the files are written once
-before the samples.
-The log names measurement commit \texttt{\rcHostCommit}.
-The release arm is readcon-core \rcReleaseVersion, commit
-\texttt{\rcReleaseCommit}, \texttt{read\_con} at 1 thread.
+The host is an \rcHostCpu{} with \rcHostCores{} cores.
+The log names measurement commit \texttt{\rcHostCommit}, tag v0.18.0.
+The \texttt{read\_con} arm loads \path{paper/cpc/build/readcon-0.18.0}.
 The baseline arm is readcon-core \rcBaselineVersion, commit
-\texttt{\rcBaselineCommit}, \texttt{read\_con} at 1 thread.
+\texttt{\rcBaselineCommit}.
 CON readers read the CON file, XYZ readers read the XYZ file, and HDF5
 readers read the same HDF5 file.
 readcon reads neither XYZ nor HDF5.
@@ -1219,31 +1209,22 @@ Memory is the VmHWM after the read minus the VmHWM after the import.
 \texttt{MKL\_NUM\_THREADS}, \texttt{NUMEXPR\_NUM\_THREADS} and
 \texttt{RAYON\_NUM\_THREADS} are set to the thread count of the arm.
 
-\subsection{Results}\label{sec:results} On the coordinate file, \texttt{read\_con} at 1 thread takes \rcFullOneMedian~s.
-The same call at 8 threads takes \rcFullEightMedian~s, which is
-\rcFullThreads{} times as fast as the 1-thread call.
-readcon-core \rcReleaseVersion{} \texttt{read\_con} at 1 thread takes
-\rcReleaseMedian~s.
-At 1 thread, \texttt{read\_con} on the measurement checkout is
-\rcTipOverRelease{} times as fast as readcon-core \rcReleaseVersion{}.
-ASE ase.io (format eon) calls \texttt{get\_positions} at 1 thread and
-takes \rcAseMedian~s.
-\texttt{read\_con} at 1 thread is \rcTipOverAse{} times as fast as that
-call.
-eOn 3.6.0 \texttt{loadcons} reads every frame at 1 thread and takes
-\rcEonMedian~s.
-\texttt{read\_con} at 1 thread is \rcTipOverEon{} times as fast as
-\texttt{loadcons}.
+\subsection{Results}\label{sec:results} On the coordinate file, \texttt{read\_con} of the v0.18.0 build takes \rcFullOneMedian~s.
+The baseline \texttt{read\_con} takes \rcReleaseMedian~s.
+\texttt{read\_con} of the v0.18.0 build is \rcTipOverRelease{} times as
+fast as that baseline.
+ASE ase.io (format eon) calls \texttt{get\_positions} and takes
+\rcAseMedian~s.
+\texttt{read\_con} is \rcTipOverAse{} times as fast as that call.
+eOn 3.6.0 \texttt{loadcons} reads every frame and takes \rcEonMedian~s.
+\texttt{read\_con} is \rcTipOverEon{} times as fast as \texttt{loadcons}.
 \texttt{read\_positions} returns one coordinate array and builds no
 per-frame object.
-At 1 thread it takes \rcPosOneMedian~s, and at 8 threads it takes
-\rcPosEightMedian~s.
-Those are absolute times.
-They are not ratios against ASE or \texttt{loadcons}, which build a
-frame object per record.
-The C++ row calls \texttt{read\_all\_frames} and then
-\texttt{con2matter} on every frame.
-It takes \rcApiMedian~s.
+It takes \rcPosOneMedian~s.
+That is an absolute time.
+It is not a ratio against ASE or \texttt{loadcons}, which build a frame
+object per record.
+The C++ arm did not load \texttt{libemt.so}, so it has no time in the log.
 readcon-db ingests the same file in \rcDbMedian~s.
 That row writes a corpus and then reads the corpus, so it is not a
 speedup against a read of the file.
