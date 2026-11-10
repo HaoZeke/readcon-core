@@ -4325,7 +4325,7 @@ pub unsafe extern "C" fn rkr_frame_xyz_view(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
 ) -> RKRStatus {
-    fill_array2_view(frame_handle, out, |f| &f.positions, false)
+    fill_array2_view::<false>(frame_handle, out, |f| &f.positions)
 }
 
 /// Borrow velocities SoA, or `SECTION_ABSENT`.
@@ -4338,7 +4338,7 @@ pub unsafe extern "C" fn rkr_frame_velocities_view(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
 ) -> RKRStatus {
-    fill_array2_view(frame_handle, out, |f| &f.velocities, true)
+    fill_array2_view::<true>(frame_handle, out, |f| &f.velocities)
 }
 
 /// Borrow forces SoA, or `SECTION_ABSENT`.
@@ -4351,7 +4351,7 @@ pub unsafe extern "C" fn rkr_frame_forces_view(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
 ) -> RKRStatus {
-    fill_array2_view(frame_handle, out, |f| &f.forces, true)
+    fill_array2_view::<true>(frame_handle, out, |f| &f.forces)
 }
 
 /// True when the frame carries a `"displacements"` section. False for a
@@ -4376,7 +4376,7 @@ pub unsafe extern "C" fn rkr_frame_displacements_view(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
 ) -> RKRStatus {
-    fill_array2_view(frame_handle, out, |f| &f.displacements, true)
+    fill_array2_view::<true>(frame_handle, out, |f| &f.displacements)
 }
 
 /// True when the frame carries a `"spreads"` section. False for a
@@ -4401,7 +4401,7 @@ pub unsafe extern "C" fn rkr_frame_spreads_view(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
 ) -> RKRStatus {
-    fill_array2_view(frame_handle, out, |f| &f.spreads, true)
+    fill_array2_view::<true>(frame_handle, out, |f| &f.spreads)
 }
 
 /// Borrow per-atom energies, or `SECTION_ABSENT`.
@@ -4414,7 +4414,7 @@ pub unsafe extern "C" fn rkr_frame_energies_view(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
 ) -> RKRStatus {
-    fill_array1_view(frame_handle, out, |f| &f.atom_energies, true)
+    fill_array1_view::<true>(frame_handle, out, |f| &f.atom_energies)
 }
 
 /// Borrow per-atom masses.
@@ -4427,7 +4427,7 @@ pub unsafe extern "C" fn rkr_frame_masses_view(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
 ) -> RKRStatus {
-    fill_array1_view(frame_handle, out, |f| &f.masses, false)
+    fill_array1_view::<false>(frame_handle, out, |f| &f.masses)
 }
 
 /// Borrow `atom_id` column (always u64).
@@ -4524,11 +4524,10 @@ pub unsafe extern "C" fn rkr_frame_spreads_f64(
     f64_col_ptr(frame_handle, n, |f| f.spreads.f64_slice())
 }
 
-fn fill_array2_view(
+fn fill_array2_view<const SECTION: bool>(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
     get: impl FnOnce(&ConFrame) -> &crate::storage_dtype::FloatArray2,
-    section: bool,
 ) -> RKRStatus {
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
@@ -4536,7 +4535,7 @@ fn fill_array2_view(
     // `as_ref` is `None` only for null, and null already returned.
     let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let arr = get(frame);
-    if section && arr.nrows() == 0 {
+    if SECTION && arr.nrows() == 0 {
         unsafe { *out = RKRArrayView::empty() };
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
@@ -4544,11 +4543,10 @@ fn fill_array2_view(
     RKRStatus::RKR_STATUS_SUCCESS
 }
 
-fn fill_array1_view(
+fn fill_array1_view<const SECTION: bool>(
     frame_handle: *const RKRConFrame,
     out: *mut RKRArrayView,
     get: impl FnOnce(&ConFrame) -> &crate::storage_dtype::FloatArray1,
-    section: bool,
 ) -> RKRStatus {
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
@@ -4556,7 +4554,7 @@ fn fill_array1_view(
     // `as_ref` is `None` only for null, and null already returned.
     let frame = unsafe { &*(frame_handle as *const ConFrame) };
     let arr = get(frame);
-    if section && arr.is_empty() {
+    if SECTION && arr.is_empty() {
         unsafe { *out = RKRArrayView::empty() };
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
@@ -4603,14 +4601,13 @@ pub unsafe extern "C" fn rkr_frame_copy_positions(
     out: *mut f64,
     out_len: usize,
 ) -> RKRStatus {
-    copy_array2_f64(frame_handle, out, out_len, |f| &f.positions, false)
+    copy_array2_f64::<false>(frame_handle, out, out_len, |f| &f.positions)
 }
-fn copy_array2_f64(
+fn copy_array2_f64<const SECTION: bool>(
     frame_handle: *const RKRConFrame,
     out: *mut f64,
     out_len: usize,
     get: impl FnOnce(&ConFrame) -> &crate::storage_dtype::FloatArray2,
-    section: bool,
 ) -> RKRStatus {
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
@@ -4623,7 +4620,7 @@ fn copy_array2_f64(
     } else {
         frame.atom_data.len()
     };
-    if section && arr.nrows() == 0 {
+    if SECTION && arr.nrows() == 0 {
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
     let need = n.saturating_mul(3);
@@ -4652,12 +4649,11 @@ fn copy_array2_f64(
     RKRStatus::RKR_STATUS_SUCCESS
 }
 
-fn copy_array1_f64(
+fn copy_array1_f64<const SECTION: bool>(
     frame_handle: *const RKRConFrame,
     out: *mut f64,
     out_len: usize,
     get: impl FnOnce(&ConFrame) -> &crate::storage_dtype::FloatArray1,
-    section: bool,
 ) -> RKRStatus {
     if frame_handle.is_null() || out.is_null() {
         return RKRStatus::RKR_STATUS_NULL_POINTER;
@@ -4670,7 +4666,7 @@ fn copy_array1_f64(
     } else {
         frame.atom_data.len()
     };
-    if section && arr.is_empty() {
+    if SECTION && arr.is_empty() {
         return RKRStatus::RKR_STATUS_SECTION_ABSENT;
     }
     if out_len < n {
@@ -4697,7 +4693,7 @@ pub unsafe extern "C" fn rkr_frame_copy_velocities(
     out: *mut f64,
     out_len: usize,
 ) -> RKRStatus {
-    copy_array2_f64(frame_handle, out, out_len, |f| &f.velocities, true)
+    copy_array2_f64::<true>(frame_handle, out, out_len, |f| &f.velocities)
 }
 /// # Safety
 ///
@@ -4709,7 +4705,7 @@ pub unsafe extern "C" fn rkr_frame_copy_forces(
     out: *mut f64,
     out_len: usize,
 ) -> RKRStatus {
-    copy_array2_f64(frame_handle, out, out_len, |f| &f.forces, true)
+    copy_array2_f64::<true>(frame_handle, out, out_len, |f| &f.forces)
 }
 /// Copy displacements into row-major `out` (length >= `3 * N`), or
 /// `SECTION_ABSENT`.
@@ -4722,7 +4718,7 @@ pub unsafe extern "C" fn rkr_frame_copy_displacements(
     out: *mut f64,
     out_len: usize,
 ) -> RKRStatus {
-    copy_array2_f64(frame_handle, out, out_len, |f| &f.displacements, true)
+    copy_array2_f64::<true>(frame_handle, out, out_len, |f| &f.displacements)
 }
 /// Copy spreads into row-major `out` (length >= `3 * N`), or
 /// `SECTION_ABSENT`.
@@ -4735,7 +4731,7 @@ pub unsafe extern "C" fn rkr_frame_copy_spreads(
     out: *mut f64,
     out_len: usize,
 ) -> RKRStatus {
-    copy_array2_f64(frame_handle, out, out_len, |f| &f.spreads, true)
+    copy_array2_f64::<true>(frame_handle, out, out_len, |f| &f.spreads)
 }
 /// # Safety
 ///
@@ -4747,7 +4743,7 @@ pub unsafe extern "C" fn rkr_frame_copy_atom_energies(
     out: *mut f64,
     out_len: usize,
 ) -> RKRStatus {
-    copy_array1_f64(frame_handle, out, out_len, |f| &f.atom_energies, true)
+    copy_array1_f64::<true>(frame_handle, out, out_len, |f| &f.atom_energies)
 }
 /// # Safety
 ///
@@ -4759,7 +4755,7 @@ pub unsafe extern "C" fn rkr_frame_copy_masses(
     out: *mut f64,
     out_len: usize,
 ) -> RKRStatus {
-    copy_array1_f64(frame_handle, out, out_len, |f| &f.masses, false)
+    copy_array1_f64::<false>(frame_handle, out, out_len, |f| &f.masses)
 }
 /// # Safety
 ///
