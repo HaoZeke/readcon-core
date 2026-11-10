@@ -2671,7 +2671,9 @@ fn export_owned_array1_u64_dlpack_opts(
     out_tensor: *mut *mut RKRDLManagedTensorVersioned,
 ) -> RKRStatus {
     use rkr_dl_type_code::*;
-    if opts.dtype.code == RKR_DL_UINT && opts.dtype.bits == 64 && opts.dtype.lanes == 1 {
+    // `resolve_dlpack_opts` already returns an error when `lanes != 1`,
+    // so a second lanes test here cannot fail.
+    if opts.dtype.code == RKR_DL_UINT && opts.dtype.bits == 64 {
         return export_owned_array1_u64_dlpack(arr, out_tensor);
     }
     let as_f64: Vec<f64> = arr.iter().map(|&x| x as f64).collect();
