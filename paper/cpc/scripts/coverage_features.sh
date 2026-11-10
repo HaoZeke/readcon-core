@@ -62,6 +62,10 @@ set -a
 . "$CARGO_TARGET_DIR/py-env.sh"
 set +a
 export LLVM_PROFILE_FILE="$PROFDIR/py-%p-%m.profraw"
+case "$RUSTFLAGS" in
+  *remap-path-prefix*) ;;
+  *) export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=${ROOT}=." ;;
+esac
 VENV="${READCON_PY_VENV:-$ROOT/.venv-coverage-python}"
 if [ ! -x "$VENV/bin/python" ]; then
   python3 -m venv "$VENV"
