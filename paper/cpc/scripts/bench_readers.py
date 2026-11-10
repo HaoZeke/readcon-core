@@ -282,7 +282,7 @@ def module_identity(mod):
     if os.path.isdir(parent):
         for name in os.listdir(parent):
             meta = os.path.join(parent, name, "METADATA")
-            if name.endswith(".dist-info") and os.path.isfile(meta):
+            if name.startswith("readcon-") and name.endswith(".dist-info") and os.path.isfile(meta):
                 for line in open(meta, encoding="utf-8"):
                     if line.startswith("Version:"):
                         version = line.split(":", 1)[1].strip()
