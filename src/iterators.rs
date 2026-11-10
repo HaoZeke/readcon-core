@@ -4053,8 +4053,9 @@ mod differential_entry_points {
 mod one_thread_and_numa {
     use super::{
         error, frames_from_bytes, line_count, line_no_for_pos, line_start_pos, numa_remote_from,
-        parse_byte_span, parse_bytes_timed, parse_text_span, perf_close_os, perf_open_os,
-        read_all_frames_indexed, sample_llc_from, sample_llc_misses,
+        copy_positions, fill_position_block, parse_byte_span, parse_bytes_timed, parse_text_span,
+        perf_close_os, perf_open_os, perf_read_os, read_all_frames_indexed, sample_llc_from,
+        sample_llc_misses,
     };
 
     #[test]
@@ -4112,6 +4113,45 @@ mod one_thread_and_numa {
         assert_eq!(line_start_pos(&nl, 8, 9), 8);
         let sample = sample_llc_misses();
         assert!(sample >= -1);
+    }
+
+    #[test]
+    fn position_blocks_and_real_descriptor_reads() {
+        let bytes = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+        let block = fill_position_block(&bytes, Some(2)).unwrap();
+        assert!(block.n_frames >= 1);
+        assert_eq!(block.values.len(), block.n_frames * block.n_atoms * 3);
+        let empty = fill_position_block(b"", Some(1)).unwrap();
+        assert_eq!(empty.n_frames, 0);
+        assert!(empty.values.is_empty());
+        let frame = parse_byte_span(&bytes, 0, bytes.len()).unwrap();
+        assert!(copy_positions(&frame, &mut [0.0]).is_err());
+        let mut stored = frame.clone();
+        let mut dtypes = crate::storage_dtype::StorageDtypes::default();
+        dtypes.positions = crate::storage_dtype::ElementKind::Float32;
+        stored.project_storage_dtypes(&dtypes);
+        let mut dest = vec![0.0; stored.positions.nrows() * 3];
+        copy_positions(&stored, &mut dest).unwrap();
+        assert_eq!(dest.len(), block.n_atoms * 3);
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("eight.bin");
+        std::fs::write(&path, 42u64.to_le_bytes()).unwrap();
+        let file = std::fs::File::open(&path).unwrap();
+        use std::os::fd::AsRawFd;
+        let mut value = 0u64;
+        assert_eq!(perf_read_os(file.as_raw_fd(), &mut value), 8);
+        assert_eq!(value, 42);
+        let extra = unsafe { libc::dup(file.as_raw_fd()) };
+        assert!(extra >= 0);
+        perf_close_os(extra);
+
+        let text = std::str::from_utf8(&bytes).unwrap();
+        let mut bad = text.to_string();
+        bad.push_str("\nnot a number\n");
+        assert!(parse_text_span(&bad, 0, bad.len()).is_err());
+        let mut iter = super::ConFrameIterator::from_bytes(&bytes);
+        assert_eq!(iter.cursor_line(), iter.lines_read());
     }
 
     #[test]

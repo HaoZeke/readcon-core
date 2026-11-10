@@ -3770,6 +3770,122 @@ Coordinates of Component 1
     }
 
     #[test]
+    fn validators_reject_bad_tokens_labels_and_metadata() {
+        assert_eq!(super::count_tokens_on_line(b"  a\tb c\n", 0), 3);
+        assert_eq!(super::count_tokens_on_line(b" \n", 0), 0);
+        let err = super::parse_finite_at("", 0).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { .. }));
+        let err = super::parse_finite_at("nan", 0).unwrap_err();
+        assert!(matches!(err, ParseError::NonFiniteValue(_)));
+        let err = super::parse_finite_at("1.0xyz", 0).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)));
+        let err = super::parse_atom_id_token("no").unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)));
+        let err = super::parse_flag_at(b"2\n", 0, 1).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidFixedFlag(_)));
+
+        let frames = crate::iterators::frames_from_text(
+            &std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap(),
+            Some(1),
+        )
+        .unwrap();
+        let frame = &frames[0];
+        let err = super::validate_section_component(
+            "velocities",
+            0,
+            0,
+            "Cu",
+            "not a label",
+            &frame.header,
+            &frame.atom_data,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("expected section label"));
+        let err = super::validate_section_component(
+            "velocities",
+            0,
+            99,
+            "Cu",
+            "velocities of Component 1",
+            &frame.header,
+            &frame.atom_data,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("no coordinate atom"));
+        let err = super::validate_section_component(
+            "velocities",
+            0,
+            0,
+            "Nope",
+            "velocities of Component 1",
+            &frame.header,
+            &frame.atom_data,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("symbol mismatch"));
+        let mut header = frame.header.clone();
+        header.natms_per_type[0] = 0;
+        super::validate_section_component(
+            "velocities",
+            0,
+            0,
+            "Cu",
+            "velocities of Component 1",
+            &header,
+            &frame.atom_data,
+        )
+        .unwrap();
+
+        let err = super::validate_section_atom_identity(
+            "forces",
+            99,
+            [false; 3],
+            0,
+            &frame.atom_data,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("no coordinate atom"));
+        let atom = &frame.atom_data[0];
+        let mut other = atom.fixed;
+        other[0] = !other[0];
+        let err = super::validate_section_atom_identity(
+            "forces",
+            0,
+            other,
+            atom.atom_id,
+            &frame.atom_data,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("fixed mask"));
+        let err = super::validate_section_atom_identity(
+            "forces",
+            0,
+            atom.fixed,
+            atom.atom_id.wrapping_add(1),
+            &frame.atom_data,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("atom_id mismatch"));
+
+        let err = super::validate_section_arity_value(&serde_json::json!("no")).unwrap_err();
+        assert!(err.to_string().contains("section_arity"));
+        let err = super::validate_section_arity_value(&serde_json::json!({"velocities": 0}))
+            .unwrap_err();
+        assert!(matches!(err, ParseError::InvalidCount(_)));
+        let err = super::validate_metadata_integer("frame_index", &serde_json::json!("x"))
+            .unwrap_err();
+        assert!(err.to_string().contains("non-negative integer"));
+        let mut obj = serde_json::Map::new();
+        obj.insert("validate".into(), serde_json::json!(true));
+        let err = super::validate_metadata_schema(&obj).unwrap_err();
+        assert!(err.to_string().contains("sections"));
+        let err = super::validate_lattice_vectors_metadata(&serde_json::json!("no")).unwrap_err();
+        assert!(err.to_string().contains("lattice_vectors"));
+        let err = super::validate_masses(&[-1.0]).unwrap_err();
+        assert!(matches!(err, ParseError::ValidationError(_)));
+    }
+
+    #[test]
     fn a_peekable_reports_the_bytes_still_ahead() {
         use super::LineStream;
         let lines = ["a", "bb", ""];

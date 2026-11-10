@@ -4310,6 +4310,20 @@ mod tests {
         assert!(builder.forces_dlpack().unwrap().is_none());
         builder.clear_energies_section();
         assert!(builder.atom_energies_dlpack().unwrap().is_none());
+
+        let frames = crate::iterators::frames_from_text(
+            &std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap(),
+            Some(1),
+        )
+        .unwrap();
+        let frame = frames.into_iter().next().unwrap();
+        let mut header = frame.header.clone();
+        let mut dtypes = crate::storage_dtype::StorageDtypes::default();
+        dtypes.masses = crate::storage_dtype::ElementKind::Float32;
+        dtypes.insert_into(&mut header.metadata);
+        let built = con_frame_coords_only(header, frame.atom_data.clone(), frame.positions.clone());
+        assert_eq!(built.masses.len(), frame.atom_data.len());
+        assert_eq!(built.atom_data.len(), frame.atom_data.len());
     }
 
     #[test]
