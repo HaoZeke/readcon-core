@@ -54,6 +54,20 @@ NO_BUILD = {
     "evidence/results/e4_cells.csv",
     "data/spec/versions.json",
     "data/spec/clause_coverage.json",
+    # Figure inputs kept from the recorded campaigns. They are not a readcon-core
+    # build record and were not rerun.
+    "bench/results/threads_summary.csv",
+    "data/db/dedup.json",
+    "data/db/sizes.csv",
+    "data/db/summary.csv",
+    "data/mpi/db_serial.csv",
+    "data/mpi/strong.csv",
+    "data/novel/anatomy.json",
+    "data/novel/dedup_graph.json",
+    "data/novel/errors.json",
+    "data/novel/fidelity.json",
+    "data/novel/restart_diff.json",
+    "data/novel/velocity.json",
 }
 FLOATS = {"table": "Table", "figure": "Figure", "algorithm": "Algorithm"}
 PREFIXES = {
@@ -604,6 +618,8 @@ def from_provenance(prov: dict, data: dict) -> Build | None:
     if digest is None and build.get("source_commit"):
         digest = provenance.library_digest_at(build["source_commit"])
     extra = ""
+    if build.get("source_commit"):
+        extra += rf"; commit \texttt{{\seqsplit{{{build['source_commit']}}}}}"
     if "eon_build" in data:
         eon = data["eon_build"]
         extra += (

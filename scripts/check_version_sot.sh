@@ -204,6 +204,10 @@ allow_exact = {
     # The one macro the paper reads. scripts/cargo_version_tex.py writes
     # it from Cargo.toml, and the Snakemake rule cargo_version runs that.
     "paper/cpc/src/cargo_version.tex",
+    # gen_release.py writes the Cargo.toml version of the commit the paper names.
+    "paper/cpc/src/release.tex",
+    # make_packet.py copies that version into the CPC submission form.
+    "paper/cpc/packet/CPC-FORM.md",
 }
 skip_dirs = {
     ".git",

@@ -92,7 +92,7 @@ def main() -> int:
         f"The scatter-mode interquartile range at eight ranks is {fmt(scatter_iqr)}~s"
     )
     lines = [
-        "% Generated from paper/cpc/logs/mpi.log by scripts/mpi_from_log.py.",
+        "% Written by paper/cpc/scripts/mpi_from_log.py from logs/mpi.log.",
         f"\\newcommand{{\\mpiRepeats}}{{{repeats}}}",
         f"\\newcommand{{\\mpiSharedLine}}{{{shared_line}}}",
         f"\\newcommand{{\\mpiScatterLine}}{{{scatter_line}}}",
@@ -116,7 +116,7 @@ def main() -> int:
             )
     table = "\n".join(
         [
-            "% Generated from paper/cpc/logs/mpi.log by scripts/mpi_from_log.py.",
+            "% Written by paper/cpc/scripts/mpi_from_log.py from logs/mpi.log.",
             "\\begin{table}[tbp]",
             "\\centering",
             "\\footnotesize",

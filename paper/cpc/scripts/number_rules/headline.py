@@ -7,7 +7,7 @@ reads, and divide the medians themselves.
 
 from __future__ import annotations
 
-from numbers_lib import ROOT, Rule, jget
+from numbers_lib import ROOT, Rule, grep, jget, text
 from r0174_tables import RESULTS
 
 R0174 = RESULTS.resolve().relative_to(ROOT).as_posix()
@@ -43,6 +43,18 @@ for route, item in PREFACTORS.items():
         )
 
 
+def dlpack_ratio() -> float:
+    view = copy = None
+    for line in text("logs/dlpack-exchange.log").splitlines():
+        if line.startswith("summary numpy from_dlpack n=32768 "):
+            view = float(line.split("median=")[1].split()[0])
+        elif line.startswith("summary numpy copy n=32768 "):
+            copy = float(line.split("median=")[1].split()[0])
+    if view is None or copy is None:
+        raise SystemExit("logs/dlpack-exchange.log has no 32768 numpy medians")
+    return view / copy
+
+
 RULES = [
     Rule(
         r"\corpusFiles",
@@ -51,17 +63,21 @@ RULES = [
         "groups.all.files",
     ),
     Rule(
-        r"\eOneExtraCalls",
-        jget(SD, "neb.resume_roundtrip.extra_force_calls"),
-        SD,
-        "neb.resume_roundtrip.extra_force_calls",
-    ),
-    Rule(
         r"\eFivePrefactorRatioFree",
         PREFACTORS["free"]["prefactor_Hz"] / HELD_HZ,
         E5,
         "prefactor_by_reading.free.prefactor_Hz over prefactor_by_reading.correct.prefactor_Hz",
     ),
-    read_ratio("rcRatioAseExtxyz", "ase_extxyz"),
-    read_ratio("rcRatioHfivepy", "h5py"),
+    Rule(
+        r"\dlpackAtoms",
+        int(grep("scripts/bench_dlpack.py", r"SIZES = \(32, 128, 512, 2048, 8192, (\d+)\)")),
+        "scripts/bench_dlpack.py",
+        "last entry of SIZES, the atom count of the lead DLPack row",
+    ),
+    Rule(
+        r"\dlpackRatio",
+        dlpack_ratio(),
+        "logs/dlpack-exchange.log",
+        "median from_dlpack over median copy at 32768 atoms",
+    ),
 ]

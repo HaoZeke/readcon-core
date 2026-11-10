@@ -3,13 +3,17 @@
 
 Status: Prepared, not submitted.
 
-Every count and quoted text below is written by `make_packet.py` from the sources and the `build_tex.sh` build of the paper, for readcon-core 0.17.4, release commit `b65aa63d3092b6319ee7d39d578ef8fccad553f6`, library digest `3b4d00ae2427`.
+`make_packet.py` writes every count and quoted text in this form from the sources and the `build_tex.sh`
+build of the paper, for readcon-core 0.18.1, untagged commit `df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff`, library digest `7b3951c614a5`.
 
 ## Sources
 
-- [GFA] CPC Guide for Authors: https://www.sciencedirect.com/journal/computer-physics-communications/publish/guide-for-authors (the live page answers the box with a captcha; the text was read from the Wayback snapshot https://web.archive.org/web/20250802150417/https://www.sciencedirect.com/journal/computer-physics-communications/publish/guide-for-authors)
+- [GFA] CPC Guide for Authors: https://www.sciencedirect.com/journal/computer-physics-communications/publish/guide-for-authors
+  (the live page answers the box with a captcha; the text was read from the Wayback snapshot
+  https://web.archive.org/web/20250802150417/https://www.sciencedirect.com/journal/computer-physics-communications/publish/guide-for-authors)
 - [TPL] CPiP LaTeX template: https://legacyfileshare.elsevier.com/promis_misc/cpc-cpip-template.tex
-- [EM] Editorial Manager: https://www.editorialmanager.com/comphy/ (the page carried the banner "Site under development. Do not use for live manuscript submission." when it was read)
+- [EM] Editorial Manager: https://www.editorialmanager.com/comphy/ (the page carried the banner "Site under
+  development. Do not use for live manuscript submission." when it was read)
 - [EMTEX] Elsevier LaTeX in EM: https://www.elsevier.support/publishing/answer/how-to-submit-a-latex-file-in-editorial-manager and https://www.ariessys.com/wp-content/uploads/EM_PM_LaTeX_Guide.pdf
 - [SHARE] Elsevier article sharing: https://www.elsevier.com/about/policies-and-standards/sharing
 - [MDATA] CPC Program Library on Mendeley Data: https://data.mendeley.com/journal/00104655
@@ -21,14 +25,14 @@ Every count and quoted text below is written by `make_packet.py` from the source
 | System | Editorial Manager, `editorialmanager.com/comphy` | GFA, TPL, EM | Start from the "Submit your article" button on the journal page and confirm the route there. |
 | Article type | CPiP: programs archived in the CPC Program Library on Mendeley Data under an approved licence | GFA | Computer Programs in Physics: the paper has a Program Summary and describes a program. |
 | Licence | One of MIT, Apache-2.0, BSD 2/3-clause, GPLv2/3, LGPL, MPL-2.0, CeCILL, CeCILL-B, CC BY 4.0, CC0 1.0, CC BY-NC 3.0 | GFA | MIT, the Program Summary's licensing provision. |
-| Program Summary | Immediately after the abstract. Fields: Program title; CPC Library link (Technical Editor); Developer's repository link; Licensing provisions; Programming language; Supplementary material; Nature of problem, Solution method, Additional comments (each in the 50 to 250 word range the guide gives); References | GFA, TPL | All fields, in the CPC order, after the abstract. Word counts: Nature of problem 157, Solution method 199, Additional comments 121. |
-| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the git bundle that holds the release commit `b65aa63d3092b6319ee7d39d578ef8fccad553f6` with its whole history (`git clone readcon-core.bundle` checks it out), and `patches/`, a patch series that `git am --keep-cr` applies on commit `d0b7d3c7` in that clone to give the tree of that commit. The commit descends from `d0b7d3c7`, the head of pull request 80 to the main branch after the published release named in Cargo.toml (that version's tag at commit `12ca800b`), and its change log lists every change since that version under 0.17.4. Tag v0.17.4 names this commit. |
+| Program Summary | Immediately after the abstract. Fields: Program title; CPC Library link (Technical Editor); Developer's repository link; Licensing provisions; Programming language; Supplementary material; Nature of problem, Solution method, Additional comments (each in the 50 to 250 word range the guide gives); References | GFA, TPL | All fields, in the CPC order, after the abstract. Word counts: Nature of problem 161, Solution method 211, Additional comments 121. |
+| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the git bundle that holds the untagged commit `df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff` with its whole history (`git clone readcon-core.bundle` checks it out), and `patches/`, a patch series that `git am --keep-cr` applies on commit `d0b7d3c7` in that clone to give the tree of that commit. The commit descends from `d0b7d3c7`, the head of pull request 80 to the main branch after the published release 0.17.3 (tag v0.17.3 at commit `12ca800b`), and its change log lists every change since 0.17.3 under 0.18.1. No tag names this commit. The latest release tag is v0.18.0. |
 | Source format | Editable source, `.tex` for LaTeX. A PDF is not a source file. | GFA | The LaTeX sources of `paper/cpc/src`. |
 | EM LaTeX build | No subfolders. `.tex`, `.bbl` and support files as item type Manuscript, images as Figure. Order: `.tex`, bibliography, styles, figures. | EMTEX | `make_em_flat.py` writes the flat set (Packet files below). |
-| Abstract | At most 250 words, stands alone, define uncommon abbreviations at first use | GFA | 248 words by `check_manuscript.py`'s count. |
+| Abstract | At most 250 words, stands alone, define uncommon abbreviations at first use | GFA | 125 words by `check_manuscript.py`'s count. |
 | Keywords | 1 to 7 | GFA | 5: geometry checkpoint; file format specification; saddle search; conformance corpus; nudged elastic band. |
 | Highlights | 3 to 5 bullets, each at most 85 characters with spaces, separate editable file with "highlights" in the name | GFA | 5 bullets of 76, 81, 79, 85, 83 characters in `paper/cpc/highlights.txt`, the same text as the highlights of `rg_main.tex`. |
-| Graphical abstract | Not mentioned in the CPC guide | GFA | `rg_main.tex` has none; leave the slot empty. |
+| Graphical abstract | Not mentioned in the CPC guide | GFA | `rg_main.tex` has a graphical abstract; upload it in the graphical abstract slot. |
 | Title page | Full postal address of each affiliation with country; corresponding author email on the title page | GFA | TurtleTech ehf., Fornhaga 24, 107 Reykjavík, Iceland; rgoswami@ieee.org. |
 | Corresponding author | Full contact details incl. postal address and phone in EM | GFA checklist | The author enters them in EM. |
 | Cover letter | Not listed in the guide; EM accepts one | EM | The author's cover letter; it is not part of the supplementary material. |
@@ -37,8 +41,8 @@ Every count and quoted text below is written by `make_packet.py` from the source
 | Competing interests | Statement plus the Elsevier declarations tool `.docx` uploaded at Attach Files | GFA | Section "Declaration of competing interest" declares none; the `.docx` comes from the declarations tool during submission. |
 | Funding | Guide asks for disclosure | GFA | Section "Funding" carries the guide's sentence for research without specific funding. |
 | Generative AI in writing | Declare in a section before the references if used in writing | GFA | Section "Declaration of generative AI and AI-assisted technologies in the manuscript preparation process", the last section before the references, in Elsevier's form. |
-| Data availability | Option C: deposit, cite and link data, plus a data statement at submission | GFA | Section "Data availability" names readcon-core 0.17.4, its release commit `b65aa63d3092b6319ee7d39d578ef8fccad553f6`, the digest `3b4d00ae2427` of its library and the git bundle `readcon-core.bundle` of the supplementary material, and links https://doi.org/10.5281/zenodo.18753567. |
-| References | Numbered, elsarticle-num, software cited with identifier | GFA | elsarticle-num; 72 references in the manuscript and 48 in the supplement; no undefined reference or citation in either pdfTeX log. |
+| Data availability | Option C: deposit, cite and link data, plus a data statement at submission | GFA | Section "Data availability" names readcon-core 0.18.1, its untagged commit `df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff`, the digest `7b3951c614a5` of its library and the git bundle `readcon-core.bundle` of the supplementary material, and links https://doi.org/10.5281/zenodo.18753567. |
+| References | Numbered, elsarticle-num, software cited with identifier | GFA | elsarticle-num; 70 references in the manuscript and 52 in the supplement; no undefined reference or citation in either pdfTeX log. |
 | Tables | Editable, no vertical rules | GFA | 11 tables; no tabular has a vertical rule. |
 | Preprint | Sharing a preprint anywhere at any time is allowed, and a preprint is not prior publication | GFA, SHARE | The preprint is on arXiv. |
 
@@ -48,16 +52,18 @@ Every count and quoted text below is written by `make_packet.py` from the source
 |---|---|
 | `DIR/em-flat/` from `python3 paper/cpc/scripts/make_em_flat.py --out DIR` (TeX Live 2025) | `rg_main.tex` first, then `rg_main.bbl`, then every other file of the set, then the figure PDFs |
 | `paper/cpc/highlights.txt` | Highlights |
-| `paper/cpc/src/rg_supp.pdf` (79 pages, sha256 `9b61b86a4853d597c366830007526d84c92e3bc2f32e919ab0e8843cc2f27ff1`) | Supplementary material |
+| `paper/cpc/src/rg_supp.pdf` (67 pages, sha256 `c9021a6a6e2793137fc082dc84fb9fcfce9578d86839ac40937c558b650e30c0`) | Supplementary material |
 | `paper-cpc.tar.gz`, the directory `paper/cpc` (`paper/cpc/REPRO-ARCHIVE.md`) | Supplementary material |
 | `readcon-core.bundle` and `patches/` | Program files |
 | The author's cover letter | Cover letter |
 
-`em-flat/` differs from the arXiv source in two ways: `figures/generated/` prefixes are removed, and `\bibliographystyle{elsarticle-num}\bibliography{rg_main}` becomes `\input{rg_main.bbl}` (method B in EMTEX).
+`em-flat/` differs from the arXiv source in two ways: `figures/generated/` prefixes are removed, and
+`\bibliographystyle{elsarticle-num}\bibliography{rg_main}` becomes `\input{rg_main.bbl}` (method B in EMTEX).
 
-Data availability names readcon-core 0.17.4, release commit `b65aa63d3092b6319ee7d39d578ef8fccad553f6`, which `readcon-core.bundle` holds with its whole history, and links the concept record https://doi.org/10.5281/zenodo.18753567 of readcon-core.
-Tag v0.17.4 names this commit.
-`rg_main.pdf` has 42 pages, sha256 `fb5a052cc23de991fc1b6c2f9b2b07d5f9d24faf6c9f012076e924a3d3668da8`.
+Data availability names readcon-core 0.18.1, untagged commit `df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff`, which
+`readcon-core.bundle` holds with its whole history, and links the concept record https://doi.org/10.5281/zenodo.18753567
+of readcon-core. No tag names this commit. The latest release tag is v0.18.0.
+`rg_main.pdf` has 52 pages, sha256 `ec5fd68c395cbdd9b0d26b7d3b5c6bfff2097978f369a4583f11cdf7bb145278`.
 
 ## Form answers
 
@@ -65,21 +71,22 @@ Tag v0.17.4 names this commit.
 
 **Title:** readcon-core: a versioned geometry checkpoint for resumed saddle searches
 
-**Authors:** Rohit Goswami (corresponding), TurtleTech ehf., Fornhaga 24, 107 Reykjavík, Iceland.
-Email rgoswami@ieee.org.
-ORCID 0000-0002-2393-8056.
+**Authors:** Rohit Goswami (corresponding), TurtleTech ehf., Fornhaga 24, 107 Reykjavík, Iceland. Email rgoswami@ieee.org. ORCID 0000-0002-2393-8056.
 The author enters the phone number in EM.
 
-**Abstract:** plain text, 1474 characters, 247 words (`check_manuscript.py` counts 248 in the TeX source, limit 250).
-Macros expanded: `\corpusFiles` = 165, `\eFivePrefactorRatioFree` = 36.8, `\rcRatioAseExtxyz` = 0.46, `\rcRatioHfivepy` = 16.
+**Abstract:** plain text, 697 characters, 124 words (`check_manuscript.py` counts
+125 in the TeX source, limit 250). Macros expanded: `\corpusFiles` = 165, `\dlpackAtoms` = 32768, `\dlpackRatio` = 0.1236, `\eFivePrefactorRatioFree` = 36.8.
 
 ```
-Rare-event campaigns stop and resume thousands of saddle searches from stored geometries. A restart reads the fixed components of each atom, the identity of each row and the velocity time unit, and repeats the interrupted search bit for bit only when the coordinates read back as the binary64 values written. General-purpose formats keep these fields in one library's layout or not at all, and the configuration (CON) text of the eOn code lacked a specification. Here, we describe CON 3.1, a versioned grammar for that text, and its reference reader and writer readcon-core, a Rust library with C, C++, Python, Julia and Fortran interfaces. A JSON line declares the version, units and periodic flags, each coordinate row carries a mask of fixed components and an atom identifier, and readers accept any later minor of a known major. Two corpora of 165 legal and illegal files decide what a conforming reader accepts, and every read path of the readcon-core Python module and C library returns the verdict their manifests name. On a platinum slab with its adatom held at a fixed height, a climbing-image band resumed from its checkpoint repeats the uninterrupted band bit for bit, and without the hold the band crosses a saddle with a prefactor 37 times larger. From Python on one core, a trajectory with velocities, masks and identifiers takes 0.46 times the wall time of the extended XYZ reader of the Atomic Simulation Environment and 16 times that of h5py on binary H5MD.
+CON is a geometry file format used in many codes. readcon-core formalizes that text as CON 3.1 and improves the fields a restart reads back. A JSON line states the version and the units. Each coordinate row carries a mask of fixed components and an atom identifier, and a reader of a known major accepts any later minor. Two corpora of 165 files fix the verdict of a conforming reader, and every Python and C read path returns that verdict. On a platinum slab, a climbing-image band resumed from CON 3.1 repeats the uninterrupted band, and a lost hold changes the prefactor by a factor 37. A borrowed DLPack view of 32768 positions costs 0.1236 times an explicit copy, the median of eight repeats.
 ```
 
 **Keywords:** geometry checkpoint; file format specification; saddle search; conformance corpus; nudged elastic band
 
-**Program title:** readcon-core **Developer's repository link:** https://github.com/lode-org/readcon-core **Licence:** MIT **Programming language:** Rust, with C, C++, Python, Julia and Fortran 2008 interfaces
+**Program title:** readcon-core
+**Developer's repository link:** https://github.com/lode-org/readcon-core
+**Licence:** MIT
+**Programming language:** Rust, with C, C++, Python, Julia and Fortran 2008 interfaces
 
 **Highlights:** upload `paper/cpc/highlights.txt`.
 
@@ -89,21 +96,19 @@ Rare-event campaigns stop and resume thousands of saddle searches from stored ge
 
 **Opposed reviewers:** none.
 
-**Competing interests:** the manuscript's Declaration of competing interest states "The author declares no competing interests."
-In the declarations tool, choose the first option, no known competing financial interests or personal relationships.
+**Competing interests:** the manuscript's Declaration of competing interest states "The author declares no competing interests." In the
+declarations tool, choose the first option, no known competing financial interests or personal relationships.
 Upload the `.docx` the tool produces.
 
 **CRediT:** Rohit Goswami: Conceptualization, Methodology, Software, Visualization, Writing – original draft, Writing – review and editing.
 
-**Funding:** "This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors."
-(Section "Funding").
+**Funding:** "This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors." (Section "Funding").
 
-**Generative AI declaration question:** AI tools were used, as Section "Declaration of generative AI and AI-assisted technologies in the manuscript preparation process" states: "The author reviewed and edited all tool output as needed and takes full responsibility for the content of the published article. Chatbots were used to refine certain turns of phrase and to speed through some implementation details; all the work is the author's own."
+**Generative AI declaration question:** AI tools were used, as Section "Declaration of generative AI and AI-assisted technologies in the manuscript preparation process" states: "Chatbots were used to refine certain turns of phrase and to speed through some implementation details; all the work is the author's own. The author reviewed and edited all tool output as needed and takes full responsibility for the content of the published article."
 
-**Data statement:** "The software is readcon-core 0.17.4, release commit b65aa63d3092b6319ee7d39d578ef8fccad553f6, which the git bundle readcon-core.bundle of the supplementary material holds with its whole history. Tag v0.17.4 names this commit. Every record of the paper names the library of that commit by its digest, 3b4d00ae2427. The concept record of readcon-core is https://doi.org/10.5281/zenodo.18753567. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: https://doi.org/10.5281/zenodo.18753567
+**Data statement:** "The software is readcon-core 0.18.1, untagged commit df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff, which the git bundle readcon-core.bundle of the supplementary material holds with its whole history. No tag names this commit. The latest release tag is v0.18.0. Every record of the paper names the library of that commit by its digest, 7b3951c614a5. The concept record of readcon-core is https://doi.org/10.5281/zenodo.18753567. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: https://doi.org/10.5281/zenodo.18753567
 
-**Preprint:** the arXiv identifier of the preprint.
-Decline the SSRN option, since the preprint is on arXiv.
+**Preprint:** the arXiv identifier of the preprint. Decline the SSRN option, since the preprint is on arXiv.
 
 **Open access or subscription:** subscription (non-open-access).
 

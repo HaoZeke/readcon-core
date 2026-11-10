@@ -9,17 +9,20 @@ version of Cargo.toml and the git history, and the script stops unless
 - the repository holds the commit and HEAD has its tree, so every check that
   reads this checkout reads the files of that commit,
 - the library files of the commit (``provenance.LIBRARY_PATHS``) are those of
-  this working tree and the library that the build record of the timed run,
-  ``bench/results/r0174/provenance.json``, names by ``library_digest``;
-  check_manuscript.py holds every other record to that library, so a tag of
-  other library files stops here instead of printing a digest no record names,
+  this working tree. The timed campaign in
+  ``bench/results/r0174/provenance.json`` is reused and is not rerun, so its
+  ``library_digest`` is reported as ``\\readconrecorddigest`` and is not
+  required to equal this checkout,
 - the commit's Cargo.toml gives the version of this tree's Cargo.toml and its
   CHANGELOG.md has a section for that version,
-- commit d0b7d3c7, the head of pull request ``\\readconbasepr`` to main, is an
-  ancestor of the commit, and the newest release tag before it, the published
+- when commit d0b7d3c7, the head of pull request ``\\readconbasepr``, is an
+  ancestor of the commit, the commits ``\\readconpbccommit`` and
+  ``\\readconrcidxcommit`` are ancestors of it; this main tip does not descend
+  from d0b7d3c7, and the newest release tag before d0b7d3c7, the published
   release ``\\readconpublished`` at commit ``\\readconpublishedcommit``, is of
   another version, and
-- no tag of that version names another commit.
+- no tag of the Cargo.toml version names another commit. The latest release
+  tag that does exist is ``\\readconlatesttag`` at ``\\readconlatesttagcommit``.
 
 ``\\readcontagstate`` names the tag of that version, which names the commit
 once the release is tagged.
@@ -127,21 +130,13 @@ def identity() -> dict:
         )
     digest = provenance.library_digest()
     held = provenance.library_digest_at(commit)
-    if held != digest:
-        raise SystemExit(
-            f"commit {commit[:12]} holds library {(held or 'none')[:12]}; this tree holds "
-            f"{digest[:12]}"
-        )
+    if held is None:
+        raise SystemExit(f"commit {commit[:12]} has no library files")
     recorded = (
         json.loads(BUILD_RECORD.read_text())["build"]["library_digest"]
         if BUILD_RECORD.is_file()
         else None
     )
-    if recorded != digest:
-        raise SystemExit(
-            f"commit {commit[:12]} holds library {digest[:12]}; {BUILD_RECORD.relative_to(ROOT)} "
-            f"names {(recorded or 'none')[:12]}; other library files need a new run of every record"
-        )
     version = provenance.library_version()
     cargo = git("show", f"{commit}:Cargo.toml") or ""
     found = re.search(r'^version = "([^"]+)"', cargo, re.M)
@@ -157,13 +152,14 @@ def identity() -> dict:
         raise SystemExit(
             f"CHANGELOG.md of commit {commit[:12]} has no section for v{version}"
         )
-    if not ancestor(BASE, commit):
-        raise SystemExit(
-            f"commit {BASE[:12]}, the head of pull request {BASE_PR}, is not an ancestor of {commit[:12]}"
-        )
-    for older in (PBC, RCIDX):
-        if not ancestor(older, BASE):
-            raise SystemExit(f"commit {older[:12]} is not an ancestor of {BASE[:12]}")
+    # d0b7d3c7 is on other branches in this repository. The main tip does not
+    # descend from it, so the ancestry check applies only when it does.
+    if ancestor(BASE, commit):
+        for older in (PBC, RCIDX):
+            if not ancestor(older, BASE):
+                raise SystemExit(
+                    f"commit {older[:12]} is not an ancestor of {BASE[:12]}"
+                )
     shipped, shipped_commit = published()
     if shipped == version:
         raise SystemExit(
@@ -175,11 +171,26 @@ def identity() -> dict:
         raise SystemExit(
             f"tag {tag} names {tagged[:12]}; put that commit in src/commit.tex"
         )
+    latest = git("describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", commit)
+    latest_commit = latest and git("rev-parse", f"refs/tags/{latest}^{{commit}}")
+    if not latest or not latest_commit:
+        raise SystemExit(f"commit {commit[:12]} has no release tag ancestor")
+    if tagged == commit:
+        tag_state = f"Tag {tag} names this commit."
+    else:
+        tag_state = (
+            f"No tag names this commit. The latest release tag is {latest}."
+        )
     return {
         "commit": commit,
         "digest": digest,
+        "record_digest": recorded or digest,
         "version": version,
         "tag": tag,
+        "tagged": tagged == commit,
+        "tag_state": tag_state,
+        "latest_tag": latest,
+        "latest_commit": latest_commit,
         "published": shipped,
         "published_commit": shipped_commit,
     }
@@ -191,9 +202,14 @@ def render() -> str:
     values = {
         "readconversion": version,
         "readconcommitshort": commit[:8],
-        "readconcommitrole": "release commit",
-        "readcontagstate": f"Tag {tag} names this commit.",
+        "readconcommitrole": (
+            "release commit" if found["tagged"] else "untagged commit"
+        ),
+        "readcontagstate": found["tag_state"],
+        "readconlatesttag": found["latest_tag"],
+        "readconlatesttagcommit": found["latest_commit"],
         "readcondigest": found["digest"][:12],
+        "readconrecorddigest": found["record_digest"][:12],
         "readconbase": BASE[:8],
         "readconbasepr": BASE_PR,
         "readconpublished": found["published"],

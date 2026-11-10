@@ -595,13 +595,37 @@ def spec_macros(org: str) -> str:
     )
 
 
+# A power written in the specification as 2^64-1. TeX treats ^ as math, so the
+# prose form becomes $2^{64}-1$ and any other caret is a text circumflex.
+POWER = re.compile(r"(?<![\w\\])(\d+)\^(\d+)([+-]\d+)?")
+
+
+def escape_prose(part: str) -> str:
+    """LaTeX for a non-verbatim span of specification text."""
+    part = re.sub(r"\[\[[^\]]*\]\[([^\]]+)\]\]", r"\1", part)
+    out: list[str] = []
+    last = 0
+    for match in POWER.finditer(part):
+        out.append(_escape_prose_chars(part[last : match.start()]))
+        suffix = match.group(3) or ""
+        out.append(f"${match.group(1)}^{{{match.group(2)}}}{suffix}$")
+        last = match.end()
+    out.append(_escape_prose_chars(part[last:]))
+    return "".join(out)
+
+
+def _escape_prose_chars(part: str) -> str:
+    part = re.sub(r"([&%$#_{}])", r"\\\1", part)
+    return part.replace("^", r"\textasciicircum{}")
+
+
 def org_inline(text: str) -> str:
     """Org table text as LaTeX, a =verbatim= span as texttt."""
     parts = re.split(r"=([^=\s][^=]*?)=", text)
     return "".join(
         f"\\texttt{{{''.join(TT_ESCAPES.get(ch, ch) for ch in part)}}}"
         if k % 2
-        else re.sub(r"([&%$#_{}])", r"\\\1", part)
+        else escape_prose(part)
         for k, part in enumerate(parts)
     )
 
@@ -623,7 +647,8 @@ def versions_table(rows: list[dict]) -> str:
             )
             + " \\\\"
         )
-    return "\n".join([*lines, "\\bottomrule"]) + "\n"
+    # The longtable in rg_main.tex supplies the closing rule in \endlastfoot.
+    return "\n".join(lines) + "\n"
 
 
 def git(*args: str, check: bool = True) -> subprocess.CompletedProcess:

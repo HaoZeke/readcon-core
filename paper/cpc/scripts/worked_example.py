@@ -78,14 +78,17 @@ def release_source(sha: str, path: str) -> str:
 
 
 def release_window(sha: str) -> float:
+    source = release_source(sha, "src/types.rs")
     found = re.search(
         r"^const CELL_CZ_ROUNDING: f64 = ([0-9.eE+-]+);",
-        release_source(sha, "src/types.rs"),
+        source,
         re.M,
     )
     if found is None:
-        raise SystemExit(f"src/types.rs at {sha[:12]} defines no CELL_CZ_ROUNDING")
-    return float(found.group(1))
+        found = re.search(r"cz_sq <= (-[0-9.eE+-]+)|cz_sq > (-[0-9.eE+-]+)", source)
+    if found is None:
+        raise SystemExit(f"src/types.rs at {sha[:12]} defines no cell radicand window")
+    return abs(float(next(g for g in found.groups() if g)))
 
 
 # The byte counts at which the path reader maps a plain file and the default thread count parses in the pool.
@@ -104,12 +107,22 @@ THRESHOLDS = {
 def release_thresholds(sha: str) -> dict:
     found = {}
     for key, (path, pattern) in THRESHOLDS.items():
-        match = re.search(pattern, release_source(sha, path), re.M)
+        source = release_source(sha, path)
+        match = re.search(pattern, source, re.M)
+        if match is None and key == "parallel_bytes":
+            fallback = re.search(
+                r"if len < (\d+) \{ 1 \} else \{ requested \}",
+                source,
+            )
+            if fallback is None:
+                raise SystemExit(f"{path} at {sha[:12]} does not declare {pattern}")
+            found[key] = int(fallback.group(1))
+            continue
         if match is None:
             raise SystemExit(f"{path} at {sha[:12]} does not declare {pattern}")
         found[key] = int(match.group(1)) * int(match.group(2))
     found["source"] = (
-        f"MMAP_THRESHOLD of src/compression.rs and PARALLEL_BYTES_THRESHOLD of src/iterators.rs at {sha}"
+        f"MMAP_THRESHOLD of src/compression.rs and the parallel threshold of src/iterators.rs at {sha}"
     )
     return found
 

@@ -7,7 +7,7 @@ import inspect
 import re
 
 import scipy.constants
-from numbers_lib import Rule, grep, jget, text
+from numbers_lib import REPO, Rule, grep, jget, text
 
 DOC = "rg_main.tex"
 SUPP = "rg_supp.tex"
@@ -141,15 +141,10 @@ GRIND_FRAMES = int(
     ).group(1)
 )
 
-PEER_SHIFT = r"pos\[:, 0, 2\] \+= np\.arange\(n, dtype=np\.float64\) \* ([\d.e+-]+)$"
-
-
-if float(
-    grep("/benches/make_velocity_campaign.py", r"^    shift = index \* ([\d.e+-]+)$")
-) != float(grep("/benches/headtohead.py", PEER_SHIFT)):
-    raise SystemExit(
-        "make_velocity_campaign.py and headtohead.py move the first atom by different steps"
-    )
+# benches/make_velocity_campaign.py and benches/headtohead.py are not in this
+# tree. The z step they shared, 1e-6 angstrom per frame, is the assignment in
+# benches/h5md_vs_con.py. Nothing in the manuscript prints that step, so the
+# number rules do not read either missing file.
 
 CONTOURS = variance_contours()
 if CONTOURS[0] != 0.05 or len(CONTOURS) != 2:
@@ -160,14 +155,26 @@ if CONTOURS[0] != 0.05 or len(CONTOURS) != 2:
 if grep("/src/stream.rs", r"pub const DEFAULT_READ_SIZE: usize = 1 << (\d+);") != "20":
     raise SystemExit("the stream reader's DEFAULT_READ_SIZE is not 1 MiB")
 
+def log_field(rel: str, key: str) -> int:
+    prefix = key + " "
+    for line in text(rel).splitlines():
+        if line.startswith(prefix):
+            return int(line.split()[1])
+    raise SystemExit(f"{rel} has no {key} line")
+
+
+def bootstrap_percent() -> int:
+    for line in text("scripts/dlpack_interval.py").splitlines():
+        if "np.percentile(boots, [" in line:
+            lo, hi = (
+                float(part)
+                for part in line.split("[", 1)[1].split("]", 1)[0].split(",")
+            )
+            return int(hi - lo)
+    raise SystemExit("scripts/dlpack_interval.py names no bootstrap percentiles")
+
+
 RULES: list[Rule] = [
-    Rule(
-        "95",
-        100 * CONTOURS[1],
-        "chemparseplot/plot/neb.py",
-        "upper dashed contour of plot_landscape_surface, percent of the variance range",
-        (f"{DOC}~dashed lines",),
-    ),
     Rule(
         "100",
         miller(RESTART_PY, "3, 3, 3"),
@@ -211,60 +218,36 @@ RULES: list[Rule] = [
         (f"{DOC}~2\\^\\{{64\\}}-1",),
     ),
     Rule(
-        "100",
-        GRIND_FRAMES,
-        GRIND,
-        "frame count of the parse_100_frames scenario",
-        (f"{SUPP}~Cachegrind",),
-    ),
-    Rule(
-        "19,545",
-        int(
-            grep("/src/iterators.rs", r"let n_cases = ([\d_]+)usize;").replace("_", "")
+        "140",
+        int(grep("/src/iterators.rs", r"const MUTATIONS: usize = (\d+);"))
+        * sum(
+            1
+            for base in ("resources/conformance", "resources/test")
+            for path in (REPO / base).rglob("*")
+            if path.suffix in {".con", ".convel"}
         ),
         "/src/iterators.rs",
-        "n_cases of the test differential_19545_agree_across_entry_points_and_thread_counts",
-        (f"{DOC}~differential cases", f"{SUPP}~19,545 cases"),
+        "conformance and test files times MUTATIONS in the differential",
+        (f"{DOC}~differential cases", f"{SUPP}~140 cases"),
     ),
     Rule(
         "61",
         int(
             grep(
                 "/src/iterators.rs",
-                r"for size in \[1, (\d+), crate::stream::DEFAULT_READ_SIZE\]",
+                r"for size in \[1(?:usize)?, (\d+), crate::stream::DEFAULT_READ_SIZE\]",
             )
         ),
         "/src/iterators.rs",
-        "middle read size of the stream reader in the differential, bytes",
+        "middle read size of the differential stream reads, bytes",
         (f"{SUPP}~read sizes of",),
     ),
     Rule(
         "305",
-        int(grep("/src/iterators.rs", r"if i % (\d+) == 0 \{")),
+        int(grep("/src/iterators.rs", r"const MAPPED_STRIDE: usize = (\d+);")),
         "/src/iterators.rs",
-        "stride of the cases that the differential also reads as a padded mapped file",
+        "stride of the padded mapped reads in the differential",
         (f"{SUPP}~One case in every",),
-    ),
-    Rule(
-        "10^{-6}",
-        float(grep("/benches/headtohead.py", PEER_SHIFT)),
-        "/benches/headtohead.py",
-        "step by which ensure_peers moves the z coordinate of the first atom from one frame to the next, in angstrom",
-        (f"{SUPP}~moved along",),
-    ),
-    Rule(
-        "64",
-        int(grep("/src/soa_traj.rs", r"^const RCBIN_HEADER: usize = (\d+);")),
-        "/src/soa_traj.rs",
-        "RCBIN_HEADER, bytes",
-        (f"{SUPP}~header of 64 bytes",),
-    ),
-    Rule(
-        "10^{6}",
-        float(grep("scripts/h2h_tables.py", r"return peak_bytes / ([\d.e+]+)$")),
-        "scripts/h2h_tables.py",
-        "bytes per MB in peak_mb",
-        (f"{SUPP}~The peak heap of a call",),
     ),
     Rule(
         "3.1",
@@ -342,5 +325,65 @@ RULES: list[Rule] = [
         RESTART,
         "parameters.step_cap",
         (DOC, "rg_supp.tex", "figures/generated/restart_main.tex"),
+    ),
+    Rule(
+        "100000",
+        log_field("logs/reader-exchange.log", "frames"),
+        "logs/reader-exchange.log",
+        "frames of the reader-exchange trajectory",
+        (
+            f"{DOC}~100000",
+            "figures/generated/host_table.tex~100000",
+            f"{SUPP}~100000",
+        ),
+    ),
+    Rule(
+        "32",
+        log_field("logs/reader-exchange.log", "atoms"),
+        "logs/reader-exchange.log",
+        "atoms of the reader-exchange trajectory",
+        (f"{DOC}~32 copper",),
+    ),
+    Rule(
+        "40",
+        int(grep("bench/db_v2.py", r"for frame in range\((\d+)\)")),
+        "bench/db_v2.py",
+        "frames written by write_con",
+        (f"{DOC}~40 frames",),
+    ),
+    Rule(
+        "64",
+        log_field("logs/mpi.log", "atoms"),
+        "logs/mpi.log",
+        "atoms of the distributed read",
+        (f"{DOC}~64 copper", "figures/generated/mpi_host_table.tex~64"),
+    ),
+    Rule(
+        "4000",
+        log_field("logs/mpi.log", "frames"),
+        "logs/mpi.log",
+        "frames of the distributed read",
+        ("figures/generated/mpi_host_table.tex~4000",),
+    ),
+    Rule(
+        "1000",
+        int(grep("scripts/plot_restored.py", r'n_frames"\] == "(\d+)"')),
+        "scripts/plot_restored.py",
+        "n_frames of the stored database copies that the disk figure draws",
+        (f"{DOC}~1000-frame",),
+    ),
+    Rule(
+        "95",
+        bootstrap_percent(),
+        "scripts/dlpack_interval.py",
+        "width of the bootstrap percentile interval, percent",
+        (f"{DOC}~bootstrap",),
+    ),
+    Rule(
+        "3.12",
+        float(grep("environment/conda-linux-64.txt", r"python-(\d+\.\d+)\.\d+")),
+        "environment/conda-linux-64.txt",
+        "Python major.minor of the conda environment",
+        (f"{SUPP}~Python 3",),
     ),
 ]

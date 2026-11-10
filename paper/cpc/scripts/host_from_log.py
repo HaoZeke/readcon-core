@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ GEN = ROOT / "src" / "figures" / "generated"
 
 LABELS = {
     "readcon_tip": "readcon, tip",
-    "readcon_v0173": r"readcon-core \readconCargoVersion{}",
+    "readcon_v0173": "readcon-core",
     "readcon_base": "readcon, main",
     "ase_eon": r"ASE ase.io (format eon)",
     "eon_py": r"eOn \texttt{loadcons}",
@@ -71,6 +72,7 @@ def table(
     found: dict[str, dict[str, str]], order: tuple[str, ...], caption: str, label: str
 ) -> str:
     lines = [
+        "% Written by paper/cpc/scripts/host_from_log.py from logs/reader-exchange.log.",
         "\\begin{table}[tbp]",
         "\\centering",
         "\\footnotesize",
@@ -94,11 +96,45 @@ def table(
     return "\n".join(lines)
 
 
-def rev_short(text: str) -> str:
+def field(text: str, key: str) -> str:
+    prefix = key + " "
     for line in text.splitlines():
-        if line.startswith("rev_parse "):
-            return line.split()[1][:8]
-    raise SystemExit("reader-exchange.log has no rev_parse line")
+        if line.startswith(prefix):
+            return line[len(prefix):].strip()
+    raise SystemExit(f"reader-exchange.log has no {key} line")
+
+
+def exact_tag(commit: str) -> str | None:
+    repo = ROOT.parents[1]
+    tag = subprocess.run(
+        ["git", "-C", str(repo), "describe", "--tags", "--exact-match", commit],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if tag.returncode == 0:
+        return tag.stdout.strip()
+    return None
+
+
+def version_at(commit: str) -> str:
+    """The version tag that names ``commit``, or the version in its Cargo.toml."""
+    repo = ROOT.parents[1]
+    tag = exact_tag(commit)
+    if tag:
+        return tag.removeprefix("v")
+    cargo = subprocess.run(
+        ["git", "-C", str(repo), "show", f"{commit}:Cargo.toml"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if cargo.returncode != 0:
+        raise SystemExit(f"reader-exchange.log names {commit}, which this repository does not hold")
+    for line in cargo.stdout.splitlines():
+        if line.startswith('version = "'):
+            return line.split('"', 2)[1]
+    raise SystemExit(f"{commit}:Cargo.toml has no version")
 
 
 def arm_s(found: dict[str, dict[str, str]], name: str) -> float:
@@ -112,6 +148,21 @@ def arm_mib(found: dict[str, dict[str, str]], name: str) -> float:
 def main() -> int:
     text = LOG.read_text(encoding="utf-8")
     found = rows(text)
+    measured = field(text, "rev_parse")
+    release_commit = field(text, "release_commit")
+    release_version = version_at(release_commit)
+    measured_version = version_at(measured)
+    baseline = field(text, "baseline_commit")
+    baseline_version = version_at(baseline)
+    def arm_label(commit: str, version: str) -> str:
+        tag = exact_tag(commit)
+        if tag:
+            return f"{version}, tag {tag}"
+        return f"{version}, untagged"
+
+    LABELS["readcon_tip"] = arm_label(measured, measured_version)
+    LABELS["readcon_v0173"] = arm_label(release_commit, release_version)
+    LABELS["readcon_base"] = arm_label(baseline, baseline_version) + ", baseline"
     tip = arm_s(found, "readcon_tip")
     base = arm_s(found, "readcon_v0173")
     h5 = arm_s(found, "h5py")
@@ -122,8 +173,13 @@ def main() -> int:
     GEN.mkdir(parents=True, exist_ok=True)
     macros = "\n".join(
         [
-            "% Generated from paper/cpc/logs/reader-exchange.log by scripts/host_from_log.py.",
-            f"\\newcommand{{\\rcHostCommit}}{{{rev_short(text)}}}",
+            "% Written by paper/cpc/scripts/host_from_log.py from logs/reader-exchange.log.",
+            f"\\newcommand{{\\rcHostCommit}}{{\\seqsplit{{{measured}}}}}",
+            f"\\newcommand{{\\rcReleaseCommit}}{{\\seqsplit{{{release_commit}}}}}",
+            f"\\newcommand{{\\rcReleaseVersion}}{{{release_version}}}",
+            f"\\newcommand{{\\rcMeasuredVersion}}{{{measured_version}}}",
+            f"\\newcommand{{\\rcBaselineCommit}}{{\\seqsplit{{{baseline}}}}}",
+            f"\\newcommand{{\\rcBaselineVersion}}{{{baseline_version}}}",
             f"\\newcommand{{\\rcTipMedian}}{{{tip:.4g}}}",
             f"\\newcommand{{\\rcReleaseMedian}}{{{base:.4g}}}",
             f"\\newcommand{{\\rcTipOverRelease}}{{{base / tip:.3g}}}",

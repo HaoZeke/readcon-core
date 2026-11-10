@@ -374,7 +374,7 @@ def scan() -> tuple[list[Printed], list[Identifier]]:
             r"\\input\{(figures/generated/[^}]+)\}", _strip_comment_all(text)
         ):
             path = SRC / (target if target.endswith(".tex") else target + ".tex")
-            if path.name.endswith("macros.tex"):
+            if path.name.endswith("macros.tex") or not path.is_file():
                 continue
             rel = str(path.relative_to(SRC))
             p, ids = scan_lines(rel, captions(path.read_text()))

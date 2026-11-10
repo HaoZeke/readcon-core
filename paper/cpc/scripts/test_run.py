@@ -45,7 +45,7 @@ SHORT = 8
 ANGLE_LINE = 4
 JSON_LINE = 2
 FAILED = re.compile(r"Failed to parse frame: (.*)")
-AT_LINE = re.compile(r"AtLine \{ line: (\d+),")
+AT_LINE = re.compile(r"AtLine \{ line: (\d+),|on line (\d+)")
 
 
 def commit() -> str:
@@ -104,7 +104,7 @@ def cell_runs(checkout: Path, example: list[str]) -> dict:
                 "exit": done.returncode,
                 "stdout": done.stdout,
                 "error": failed.group(1) if failed else None,
-                "line": int(at.group(1)) if at else None,
+                "line": int(next(g for g in at.groups() if g)) if at else None,
             }
     return runs
 
@@ -223,7 +223,9 @@ def main() -> None:
     if args.tables:
         record = json.loads(RECORD.read_text())
         if record["tree_commit"] != commit() or record["input_sha256"] != frame_sha():
-            raise SystemExit("data/test_run.json names another commit or another frame")
+            raise SystemExit(
+                "data/test_run.json names another commit or another frame"
+            )
     else:
         if args.checkout is None:
             raise SystemExit("--checkout is required to run the example")

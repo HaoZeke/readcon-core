@@ -37,7 +37,7 @@ def main() -> int:
     OUT.write_text(
         "\n".join(
             [
-                "% Generated from paper/cpc/logs/db.log by scripts/db_from_log.py.",
+                "% Written by paper/cpc/scripts/db_from_log.py from logs/db.log.",
                 f"\\newcommand{{\\rcDbIngestMedian}}{{{readcon:.4g}}}",
                 f"\\newcommand{{\\rcAseDbMedian}}{{{ase:.4g}}}",
                 "",

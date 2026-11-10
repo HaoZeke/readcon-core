@@ -2,7 +2,7 @@
 
 Status: Prepared, not submitted.
 
-Every count and quoted text below is written by `make_packet.py` from the sources and the `build_tex.sh`
+`make_packet.py` writes every count and quoted text in this form from the sources and the `build_tex.sh`
 build of the paper, for readcon-core ${version}, ${commit_role} `${commit}`, library digest `${digest}`.
 
 ## Sources

@@ -23,14 +23,13 @@
 *.tectonic.txt
 auto/
 bench/work/
-bench/results/
-evidence/results/
 src/figures/generated/**
+!src/figures/generated/
 src/rg_main.pdf
 src/rg_supp.pdf
 src/figures/generated/work/
 src/figures/generated/*.aux
-evidence/work/
+evidence/work/**
 .pixi/
 __pycache__/
 target/
@@ -39,8 +38,10 @@ build/
 logs/reader-work/
 logs/dlpack-work/
 
-# Generated records live in the handoff archive. The two notes stay tracked.
+# Measurement records live in records.tar.xz. regen_paper.py unpacks that
+# archive after checking records.sha256. The loose trees stay untracked.
+bench/results/
+evidence/results/
 data/**
 !data/**/
-!data/cloud-runs-2/SUMMARY.md
-!data/db/RESULTS.md
+!data/src_anchors.toml

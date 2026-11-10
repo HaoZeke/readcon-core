@@ -66,6 +66,7 @@ def main() -> int:
     run("restored_db", plot_restored.db_plots)
     run("restored_anatomy", plot_restored.anatomy_and_errors)
     run("restored_landscapes", plot_restored.landscapes)
+    run("timing_and_fairness", plot_restored.timing_and_fairness)
     # The head-to-head figures are last so they are not replaced by a stored campaign.
     run("union_extra", plot_union_extra.main)
     code = 1 if failures else 0

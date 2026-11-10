@@ -1,17 +1,18 @@
-rev_parse 5e1430ddf6da5d2b0d4652f47dce889e7895598f
-tree 7df8390b6ee7cfd73f0b849b02313a365121d4a2
+rev_parse df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff
+tree cc2a71b270f4b2d421a317babb00c00df5f83647
 command python3 paper/cpc/scripts/regen_figures.py
 regen figures
 ok gen_figures
 ok structures_svg
 ok restart_formats
 ok velocity
-skip restart evidence/work is not in the tree
+ok restart
 ok restored_dlpack
 ok graphical_abstract
 ok restored_mpi
 ok restored_db
 ok restored_anatomy
 ok restored_landscapes
+ok timing_and_fairness
 ok union_extra
 exit_code 0

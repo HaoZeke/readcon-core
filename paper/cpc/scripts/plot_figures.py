@@ -11,7 +11,7 @@ Series colours are Okabe-Ito. The sequential map is cividis.
 The face is Latin Modern Roman, the face of the text.
 A missing face is a failed figure.
 
-The pins are in ``pixi.lock``. chemparseplot 1.11.0, ira 2.2.0,
+The pins are in ``pixi.lock``. chemparseplot 1.14.0, ira 2.2.0,
 rgpycrumbs 1.10.10 and ase 3.29.0 are conda-forge packages.
 xyzrender 0.3.8 is a PyPI wheel: ``[pypi-dependencies]`` in
 ``pixi.toml``, ``files.pythonhosted.org`` in ``pixi.lock``, and

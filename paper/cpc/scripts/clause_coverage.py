@@ -69,7 +69,7 @@ REASONS = {
     "It states nothing a reader or a writer does.",
     "CON-section.18": "A SHOULD on the values a producer stores. CON-section.19 forbids a reader to reject a frame "
     "whose energy differs from the sum of its energies rows, and "
-    "tests/clause_coverage.rs::energy_that_differs_from_the_energies_sum_is_accepted reads such "
+    "tests/spec_clause_gaps.rs::con_section_19_energy_sum_mismatch_does_not_reject_the_frame reads such "
     "a frame.",
 }
 

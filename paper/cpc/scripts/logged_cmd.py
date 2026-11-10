@@ -66,7 +66,7 @@ def main() -> int:
             line = redact(line)
             if any(
                 token in line
-                for token in ("/agent", "/tmp", "/home", "/cursor", "~/", "_home_")
+                for token in ("/agent", "/tmp", "/home", "~/", "_home_")
             ):
                 continue
             lines.append(line)

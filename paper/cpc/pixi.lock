@@ -188,7 +188,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/cached-property-2.0.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cached_property-2.0.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/certifi-2026.10.23-pyhd8ed1ab_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/chemparseplot-1.11.0-pyhc364b38_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/chemparseplot-1.14.0-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.5.0-pyh5ded981_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cloudpickle-3.1.2-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.12.16-py312hd8ed1ab_0.conda
@@ -4304,9 +4304,9 @@ packages:
   run_exports: {}
   size: 135537
   timestamp: 1792764012327
-- conda: https://conda.anaconda.org/conda-forge/noarch/chemparseplot-1.11.0-pyhc364b38_0.conda
-  sha256: 420d24874f832212eca9b4a2d68bef7d7c8b2393dacf82608311631eca60464f
-  md5: d1720e5532d20f4fc9260dcdc27ada71
+- conda: https://conda.anaconda.org/conda-forge/noarch/chemparseplot-1.14.0-pyhc364b38_0.conda
+  sha256: 9d21ed1d13fe2072e983be6b571503b375e4a66d318505272829eef8898cf2bf
+  md5: 24fcaefc4e188c0282961910233046da
   depends:
   - python >=3.11
   - numpy
@@ -4317,8 +4317,8 @@ packages:
   purls:
   - pkg:pypi/chemparseplot?source=hash-mapping
   run_exports: {}
-  size: 152831
-  timestamp: 1786462803505
+  size: 572890
+  timestamp: 1793886938889
 - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.5.0-pyh5ded981_0.conda
   sha256: 9afb0c2c089330321a219c7ee5a25313bd574d4024be606cbb33e7a5735df662
   md5: dea5b13a211bbf99876deb980b408a66

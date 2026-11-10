@@ -32,10 +32,12 @@ the figures carry a fixed date.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 from pathlib import Path
@@ -43,7 +45,8 @@ from pathlib import Path
 CPC = Path(__file__).resolve().parents[1]
 REPO = CPC.parents[1]
 READS = CPC / "data" / "trace" / "reads.json"
-SOURCE_DATE_EPOCH = "1793404800"
+# 8 November 2026 00:00:00 UTC, the date of this build. \today in both PDFs follows it.
+SOURCE_DATE_EPOCH = "1794096000"
 
 MEASURE = [
     ["scripts/failure_matrix.py"],
@@ -93,11 +96,17 @@ FORMAT = [
     ["scripts/sinum.py"],
     ["scripts/gen_figures.py"],
     ["scripts/plot_perf.py"],
+    ["scripts/gen_spec_supp.py", "--measure"],
     ["scripts/gen_spec_supp.py", "--as-is"],
     ["scripts/plot_figures.py"],
     ["scripts/plot_restart_formats.py"],
     ["scripts/plot_structures.py"],
     ["scripts/plot_supp.py"],
+    ["scripts/host_from_log.py"],
+    ["scripts/db_from_log.py"],
+    ["scripts/mpi_from_log.py"],
+    ["scripts/bench_dlpack.py", "--from-log"],
+    ["scripts/regen_figures.py"],
 ]
 
 VERSION_MAP = ["scripts/gen_version_map.py"]
@@ -207,6 +216,20 @@ def run(step: list[str], env: dict[str, str], ledger: list[dict] | None = None) 
     print(f"{' '.join(step)}: {time.perf_counter() - start:.1f} s", flush=True)
 
 
+def unpack_records() -> None:
+    """Extract the measurement records and check the recorded SHA-256."""
+    archive = CPC / "records.tar.xz"
+    recorded = (CPC / "records.sha256").read_text(encoding="utf-8").split()[0]
+    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    if digest != recorded:
+        raise SystemExit(
+            f"records.tar.xz sha256 {digest} does not match records.sha256 {recorded}"
+        )
+    with tarfile.open(archive, "r:xz") as tar:
+        tar.extractall(CPC, filter="data")
+    print(f"unpacked records.tar.xz sha256 {digest}", flush=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -217,6 +240,7 @@ def main() -> None:
         help="rerun the measurements before formatting",
     )
     args = parser.parse_args()
+    unpack_records()
     env = dict(os.environ, SOURCE_DATE_EPOCH=SOURCE_DATE_EPOCH, FORCE_SOURCE_DATE="1")
     env["PATH"] = os.pathsep.join([str(Path(sys.prefix) / "bin"), env.get("PATH", "")])
     env.setdefault(

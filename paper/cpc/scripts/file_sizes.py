@@ -221,7 +221,9 @@ def table() -> None:
 \centering
 \small
 \caption{Bytes per atom of the payloads of Section~\ref{sec:performance}, raw and after gzip at level \sizeGzipLevel.
-Every file stores, for every frame, the species, the positions, the per-component fixed mask, the identifiers, the cell and the periodic flags, the timed trajectory stores the velocities as well, and no file stores another per-atom field.
+Every file stores, for every frame, the species, the positions, the per-component fixed mask, the identifiers, the cell and the periodic flags.
+The timed trajectory also stores the velocities.
+No file stores another per-atom field.
 The first frame is frame 0 of the timed trajectory without velocities.
 The timed trajectory is the file the campaign reads, all \sizeFrames{} frames with velocities, per atom row.
 CON~\sizeConVersion{} is the default writer of readcon-core~\sizeWriter.

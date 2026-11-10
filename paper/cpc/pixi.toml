@@ -11,7 +11,7 @@ platforms = [
 
 [dependencies]
 python = "3.12.*"
-chemparseplot = "==1.11.0"
+chemparseplot = "==1.14.0"
 rgpycrumbs = "==1.10.10"
 polars = "*"
 h5py = "==3.16.0"

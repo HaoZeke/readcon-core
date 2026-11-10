@@ -64,7 +64,7 @@ RELEASE = {
     "readconversion": r"\d+\.\d+\.\d+",
     "readconcommit": r"[0-9a-f]{40}",
     "readconcommitshort": r"[0-9a-f]{7,40}",
-    "readconcommitrole": r"release (?:candidate )?commit",
+    "readconcommitrole": r"(?:release (?:candidate )?commit|untagged commit)",
     "readcontagstate": r"[^\\{}$]+\.",
     "readcondigest": r"[0-9a-f]{12,64}",
     "readconbase": r"[0-9a-f]{7,40}",
