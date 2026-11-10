@@ -859,6 +859,8 @@ mod tests {
             let exe = std::env::current_exe().unwrap();
             let env_library = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
             let maps_missing = dir.path().join("no-maps");
+            let bare_maps = dir.path().join("bare-maps");
+            std::fs::write(&bare_maps, "libmetatensor.so\n").unwrap();
             let injected = format!(
                 "00000000-00000000 r--p 00000000 00:00 0 {}",
                 dir.path().join("libmetatensor.so").display()
@@ -869,17 +871,24 @@ mod tests {
             let mut saw_colon = false;
             let mut saw_empty_seed = false;
             let mut saw_bare_library = false;
+            let mut saw_no_directory = false;
             for (seed, keep) in [
                 (env_library.clone(), true),
                 ("already-set".to_string(), false),
                 (String::new(), false),
             ] {
                 let mut built = seed;
-                for maps_path in ["/proc/self/maps", maps_missing.to_str().unwrap()] {
+                for maps_path in [
+                    "/proc/self/maps",
+                    maps_missing.to_str().unwrap(),
+                    bare_maps.to_str().unwrap(),
+                ] {
                     if let Ok(maps) = std::fs::read_to_string(maps_path) {
                         let mut lines = vec![String::new(), "libmetatensor.so".to_string()];
                         lines.extend(maps.lines().map(str::to_string));
-                        lines.push(injected.clone());
+                        if !maps_path.ends_with("bare-maps") {
+                            lines.push(injected.clone());
+                        }
                         let mut dir = None;
                         for line in &lines {
                             let Some(path) = line.split_whitespace().last() else {
@@ -909,6 +918,8 @@ mod tests {
                                 saw_empty_seed = true;
                             }
                             built.push_str(&dir);
+                        } else {
+                            saw_no_directory = true;
                         }
                     } else {
                         saw_missing_maps = true;
@@ -932,6 +943,10 @@ mod tests {
             assert!(
                 saw_bare_library,
                 "a library name with no slash adds no directory"
+            );
+            assert!(
+                saw_no_directory,
+                "maps that name only the bare library add no directory"
             );
             assert!(!library_path.starts_with(':'));
             unsafe {
