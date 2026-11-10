@@ -270,12 +270,11 @@ for rel in required:
         print(f"OK: {rel} contains {version}")
 
 if fail:
-    code = 0 if os.environ.get("READCON_SOT_EXIT", "1") == "0" else 1
-    sys.exit(code)
+    sys.exit(1)
 PY
 
 if [[ "$fail" -ne 0 ]]; then
   echo "check_version_sot: FAILED" >&2
-  exit "${READCON_SOT_EXIT:-1}"
+  exit 1
 fi
 echo "check_version_sot: all checks passed"
