@@ -3,12 +3,9 @@
 #
 # Runs `cargo +nightly llvm-cov --branch` on the iterator, stream, and
 # open_decoded tests, then writes llvm-cov's own reports:
-#   functions.txt            report --show-functions
-#   c_iter-branches.txt      show --show-branches=count src/c_iter.rs
-#   ffi-branches.txt         show --show-branches=count src/ffi.rs
-#   stream-branches.txt      show --show-branches=count src/stream.rs
-#   compression-branches.txt show --show-branches=count src/compression.rs
-#   branch.json              export of those files
+#   functions.txt       report
+#   show-branches.txt   show --show-branches=count
+#   branch.json         export of the measured sources
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -89,7 +86,7 @@ if [[ ${#RAW[@]} -eq 0 ]]; then
 fi
 "$LLVM/llvm-profdata" merge -sparse "${RAW[@]}" -o "$PROFDATA"
 
-BIN="$(find "$CARGO_TARGET_DIR" -type f -path '*/deps/readcon_core-*' ! -name '*.*' -printf '%s %p\n' | sort -n | awk '{print $2}' | tail -n 1)"
+BIN="$(find "$CARGO_TARGET_DIR" -type f -path '*/out/readcon_core-*' ! -name '*.*' -printf '%s %p\n' | sort -n | awk '{print $2}' | tail -n 1)"
 if [[ -z "$BIN" ]]; then
   echo "no lib test binary" >&2
   exit 1
@@ -111,18 +108,9 @@ SOURCES=(
 
 "$LLVM/llvm-cov" report --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
   > "$OUT/functions.txt" || true
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  --sources "$dir_src/c_iter.rs" > "$OUT/c_iter-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  --sources "$dir_src/ffi.rs" > "$OUT/ffi-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  --sources "$dir_src/stream.rs" > "$OUT/stream-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  --sources "$dir_src/compression.rs" > "$OUT/compression-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  --sources "$dir_src/extxyz_scan.rs" > "$OUT/extxyz_scan-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  --sources "$dir_src/python.rs" > "$OUT/python-branches.txt"
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" \
+  --ignore-filename-regex='/rustc/|/cargo/registry/' \
+  "${OBJECTS[@]}" > "$OUT/show-branches.txt"
 "$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
   > "$OUT/branch.json"
 
@@ -131,8 +119,9 @@ if [[ -n "${SO:-}" && ${#PYRAW[@]} -gt 0 ]]; then
   "$LLVM/llvm-profdata" merge -sparse "${PYRAW[@]}" -o "$pydata"
   "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "$SO" \
     "$dir_src/python.rs" > "$OUT/python.json"
-  "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" "$SO" \
-    --sources "$dir_src/python.rs" > "$OUT/python-branches.txt"
+  "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" \
+    --ignore-filename-regex='/rustc/|/cargo/registry/' \
+    "$SO" > "$OUT/python-branches.txt"
   rm -f "$pydata"
 fi
 
