@@ -159,6 +159,12 @@ mod unix_tests {
         let frames = client.parse_bytes(MINIMAL.as_bytes()).expect("parse");
         assert_eq!(frames.len(), 1);
         assert_eq!(frames[0].atom_data.len(), 1);
+        let written = client.write_frames(&frames).expect("write");
+        let again = client.parse_bytes(&written).expect("parse written");
+        assert_eq!(again.len(), 1);
+        assert_eq!(again[0].atom_data.len(), 1);
+        assert!(client.parse_bytes(&[0xff, 0xfe]).is_err());
+        assert!(client.parse_bytes(b"not a con frame").is_err());
         let _ = std::fs::remove_file(&sock);
     }
 }

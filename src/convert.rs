@@ -295,6 +295,19 @@ mod tests {
         assert!(matches!(err, ConvertError::Empty), "{err}");
         let err = read_frames_for_convert(&dir).unwrap_err();
         assert!(matches!(err, ConvertError::InputMissing(_)), "{err}");
+        #[cfg(feature = "chemfiles")]
+        {
+            let empty_xyz = dir.join("empty.xyz");
+            {
+                let traj = chemfiles::Trajectory::open(&empty_xyz, 'w').unwrap();
+                let _ = traj;
+            }
+            let err = read_frames_for_convert(&empty_xyz).unwrap_err();
+            assert!(
+                matches!(err, ConvertError::Empty),
+                "an empty chemfiles trajectory is an empty convert, got {err}"
+            );
+        }
 
         assert!(path_looks_like_con(Path::new("dir/A.CON.ZST")));
         assert!(!path_looks_like_con(Path::new("")));

@@ -830,4 +830,64 @@ mod chemfiles_selection_cpp_regression {
         assert!(multi.frames[0].positions.is_empty());
         assert!(multi.frames[0].atom_indices.is_empty());
     }
+
+    #[test]
+    fn every_bond_order_and_a_skew_cell_project() {
+        use crate::types::{Bond, ConFrameBuilder};
+        use chemfiles::CellShape;
+        let mut builder = ConFrameBuilder::new([10.0, 11.0, 12.0], [90.0, 80.0, 70.0]);
+        for i in 0..3 {
+            builder.add_atom("C", i as f64, 0.0, 0.0, [false; 3], i as u64, 12.0);
+        }
+        builder
+            .set_atom_velocity(0, [0.1, 0.2, 0.3])
+            .unwrap();
+        let mut frame = builder.build().unwrap();
+        let mut bonds = Vec::new();
+        for order in [0, 1, 2, 3, 4, 5, 6, 7, 9] {
+            bonds.push(Bond::new(0, 1).with_order(order));
+        }
+        bonds.push(Bond::new(0, 1));
+        bonds.push(Bond::new(0, 0));
+        bonds.push(Bond::new(0, 9).with_order(1));
+        frame.header.set_bonds(&bonds);
+        let chfl = chemfiles_frame_from_con_frame(&frame).expect("project");
+        assert_eq!(chfl.cell().shape(), CellShape::Triclinic);
+        assert!(chfl.has_velocities());
+        assert!(!chfl.topology().bonds().is_empty());
+        let selected = evaluate_selection_on_con_frame("bonds: all", &frame).expect("bonds");
+        assert!(!selected.matches.is_empty());
+
+        let mut open = ConFrameBuilder::new([0.0, 0.0, 0.0], [90.0, 90.0, 90.0]);
+        open.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 0, 1.0);
+        let open = open.build().unwrap();
+        let chfl = chemfiles_frame_from_con_frame(&open).expect("open cell");
+        assert_eq!(chfl.cell().shape(), CellShape::Infinite);
+    }
+
+    #[test]
+    fn mixed_velocities_and_a_non_atom_selection() {
+        use crate::types::ConFrameBuilder;
+        use chemfiles::CellShape;
+        let mut builder = ConFrameBuilder::new([8.0, 9.0, 10.0], [90.0, 90.0, 90.0]);
+        builder.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 0, 1.0);
+        builder.with_velocity([0.1, 0.0, 0.0]);
+        builder.add_atom("O", 1.0, 0.0, 0.0, [false; 3], 1, 16.0);
+        builder.set_energy(-3.0);
+        builder.set_time(1.5);
+        builder.set_frame_index(4);
+        let mut frame = builder.build().unwrap();
+        let chfl = chemfiles_frame_from_con_frame(&frame).expect("ortho");
+        assert_eq!(chfl.cell().shape(), CellShape::Orthorhombic);
+        assert!(chfl.has_velocities());
+        assert_eq!(chfl.step(), 4);
+
+        let empty = select_atom_positions_on_frames("name H", &[]).expect("empty");
+        assert!(empty.frames.is_empty());
+        frame
+            .header
+            .set_bonds(&[crate::types::Bond::new(0, 1)]);
+        let err = select_atom_positions_on_frames("bonds: all", &[frame]).unwrap_err();
+        assert!(err.to_string().contains("atom context"), "{err}");
+    }
 }

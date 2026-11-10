@@ -178,6 +178,14 @@ mod with_mpi {
     }
 }
 
+/// One `MPI_Init` for the process. Dropping a `Universe` finalizes MPI, so a
+/// second test cannot call `initialize` again. The lock lives until exit.
+#[cfg(all(test, feature = "mpi"))]
+pub(crate) fn test_universe() -> &'static ::mpi::environment::Universe {
+    static UNIVERSE: std::sync::OnceLock<::mpi::environment::Universe> = std::sync::OnceLock::new();
+    UNIVERSE.get_or_init(|| ::mpi::initialize().expect("MPI_Init"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,5 +229,63 @@ mod tests {
         assert_eq!(end, 6);
         assert_eq!(block_owner(10, 4, 3), Some(1));
         assert_eq!(block_owner(10, 4, 5), Some(1));
+    }
+
+    #[cfg(feature = "mpi")]
+    #[test]
+    fn a_duplicated_world_keeps_its_rank_and_broadcasts() {
+        use ::mpi::raw::AsRaw;
+        let universe = super::test_universe();
+        let world = universe.world();
+        let comm = with_mpi::Comm::dup_of(&world);
+        assert!(comm.size() >= 1);
+        assert!(comm.rank() < comm.size());
+        let mine = comm.my_frames(10);
+        assert_eq!(mine.start, block_range(10, comm.size(), comm.rank()).start);
+        let blob = comm.bcast_bytes(0, b"frame");
+        assert_eq!(blob, b"frame");
+        let mut size = -1i32;
+        let mut rank = -1i32;
+        let raw = world.as_raw();
+        let rc = unsafe {
+            with_mpi::rkr_mpi_comm_info_f(
+                ::mpi::ffi::RSMPI_Comm_c2f(raw),
+                std::ptr::null_mut(),
+                &mut rank,
+            )
+        };
+        assert_eq!(rc, -1);
+        let rc = unsafe {
+            with_mpi::rkr_mpi_comm_info_f(
+                ::mpi::ffi::RSMPI_Comm_c2f(raw),
+                &mut size,
+                std::ptr::null_mut(),
+            )
+        };
+        assert_eq!(rc, -1);
+        unsafe {
+            ::mpi::ffi::MPI_Comm_set_errhandler(
+                ::mpi::ffi::RSMPI_COMM_WORLD,
+                ::mpi::ffi::RSMPI_ERRORS_RETURN,
+            );
+        }
+        let rejected = unsafe { with_mpi::Comm::dup_raw(::mpi::ffi::RSMPI_COMM_NULL) };
+        unsafe {
+            ::mpi::ffi::MPI_Comm_set_errhandler(
+                ::mpi::ffi::RSMPI_COMM_WORLD,
+                ::mpi::ffi::RSMPI_ERRORS_ARE_FATAL,
+            );
+        }
+        assert!(rejected.is_err(), "duplicating MPI_COMM_NULL must fail");
+        let rc = unsafe {
+            with_mpi::rkr_mpi_comm_info_f(
+                ::mpi::ffi::RSMPI_Comm_c2f(raw),
+                &mut size,
+                &mut rank,
+            )
+        };
+        assert_eq!(rc, 0);
+        assert_eq!(size as usize, comm.size());
+        assert_eq!(rank as usize, comm.rank());
     }
 }

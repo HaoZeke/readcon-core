@@ -4036,6 +4036,26 @@ mod api_coverage {
                 binary32.to_string().contains("binary32"),
                 "{binary32}"
             );
+            let vel_text =
+                std::fs::read_to_string("resources/test/tiny_cuh2_vel_forces.con").unwrap();
+            let vel_con = dir.path().join("vel.con");
+            std::fs::write(&vel_con, vel_text).unwrap();
+            let f64_path = dir.path().join("vel.f64.conbin");
+            write_conbin(py, vel_con.to_str().unwrap(), f64_path.to_str().unwrap(), false)
+                .unwrap();
+            let (_pos, _vel, n_atoms) = read_conbin(py, f64_path.to_str().unwrap(), 1).unwrap();
+            assert!(n_atoms > 0);
+            assert!(frames_from_parsed(py, Vec::new()).unwrap().is_empty());
+            let mut zero = frame.clone();
+            zero.atom_data.clear();
+            zero.positions = crate::storage_dtype::FloatArray2::zeros_f64(0, 3);
+            assert_eq!(frames_from_parsed(py, vec![zero]).unwrap().len(), 1);
+            let pair = frames_from_parsed(py, vec![frame.clone(), frame.clone()]).unwrap();
+            assert_eq!(pair.len(), 2);
+            let indices = numpy.call_method1("array", (vec![0_usize, 1_usize],)).unwrap();
+            assert_eq!(py_usize_values(&indices).unwrap(), vec![0, 1]);
+            let single = numpy.call_method1("array", (3_usize,)).unwrap();
+            assert_eq!(py_usize_values(&single).unwrap(), vec![3]);
 
             let bad_count = frame_from_arrays(&[], &[], &[1.0, 2.0, 3.0, 90.0, 90.0, 90.0], "Cu");
             assert!(bad_count.unwrap_err().contains("disagree"));
@@ -4221,6 +4241,61 @@ mod api_coverage {
             )
             .unwrap();
             drop(one);
+        });
+    }
+
+    #[cfg(feature = "mpi")]
+    #[test]
+    fn one_rank_reads_and_writes_each_mpi_mode() {
+        let universe = crate::distrib::test_universe();
+        let fint = unsafe {
+            use ::mpi::raw::AsRaw;
+            ::mpi::ffi::RSMPI_Comm_c2f(universe.world().as_raw())
+        };
+        Python::initialize();
+        Python::attach(|py| {
+            let dummy = py.None();
+            let err = read_con_mpi(py, "x.con", None, dummy.bind(py), "sideways").unwrap_err();
+            assert!(err.to_string().contains("unknown read mode"), "{err}");
+            let err = write_con_mpi(py, "x.con", &[], None, dummy.bind(py), "sideways").unwrap_err();
+            assert!(err.to_string().contains("unknown write mode"), "{err}");
+
+            let locals = pyo3::types::PyDict::new(py);
+            locals.set_item("fint", fint).unwrap();
+            py.run(
+                cr#"
+class C:
+    def py2f(self):
+        return fint
+comm = C()
+"#,
+                Some(&locals),
+                Some(&locals),
+            )
+            .unwrap();
+            let comm = locals.get_item("comm").unwrap().unwrap();
+            for mode in ["auto", "shared", "scatter"] {
+                let list = read_con_mpi(
+                    py,
+                    "resources/test/tiny_cuh2.con",
+                    Some(1),
+                    &comm,
+                    mode,
+                )
+                .unwrap_or_else(|e| panic!("{mode}: {e}"));
+                assert!(list.bind(py).borrow().len_frames() >= 1);
+            }
+            let mut builder = crate::types::ConFrameBuilder::new([10.0; 3], [90.0; 3]);
+            builder.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 1, 1.0);
+            let frame = builder.build().unwrap();
+            let dir = std::env::temp_dir().join(format!("readcon-mpi-{}", std::process::id()));
+            let _ = std::fs::create_dir_all(&dir);
+            for mode in ["auto", "mpiio", "gather"] {
+                let path = dir.join(format!("{mode}.con"));
+                write_con_mpi(py, path.to_str().unwrap(), &[frame.clone()], None, &comm, mode)
+                    .unwrap_or_else(|e| panic!("{mode}: {e}"));
+                assert!(path.is_file(), "{mode}");
+            }
         });
     }
 }

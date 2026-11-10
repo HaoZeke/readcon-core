@@ -1049,4 +1049,189 @@ H -0.240  0.927  0.000
             Some(3)
         );
     }
+
+    #[test]
+    fn every_bond_order_and_each_reserved_property_is_kept() {
+        use chemfiles::{BondOrder, Residue};
+        let mut frame = Frame::new();
+        for i in 0..8 {
+            frame.add_atom(&Atom::new("C"), [i as f64, 0.0, 0.0], None);
+        }
+        let orders = [
+            BondOrder::Unknown,
+            BondOrder::Single,
+            BondOrder::Double,
+            BondOrder::Triple,
+            BondOrder::Quadruple,
+            BondOrder::Quintuplet,
+            BondOrder::Amide,
+            BondOrder::Aromatic,
+        ];
+        for (i, order) in orders.iter().enumerate() {
+            frame.add_bond_with_order(i, (i + 1) % 8, *order);
+        }
+        frame.set("total_energy", Property::Double(-1.0));
+        frame.set("potential_energy", Property::String("kept".into()));
+        frame.set("simulation_time", Property::Double(4.0));
+        frame.set("delta_t", Property::Double(0.5));
+        frame.set("frame_index", Property::Double(1.5));
+        frame.set("frame", Property::Double(3.0));
+        frame.set("index", Property::Double(-2.0));
+        frame.set("max_force", Property::Double(0.2));
+        frame.set("maxforce", Property::Vector3D([0.0, 1.0, 0.0]));
+        frame.set("convergence_fmax", Property::Double(0.01));
+        frame.set("convergence_energy", Property::Bool(true));
+        frame.set("software", Property::String("chemfiles".into()));
+        frame.set("program", Property::Double(1.0));
+        frame.set("converged", Property::Bool(true));
+        frame.set("bead", Property::Double(2.0));
+        frame.set("neb_band", Property::String("a".into()));
+        frame.set("flag", Property::Bool(false));
+        frame.set("shift", Property::Vector3D([1.0, 2.0, 3.0]));
+        let mut bare = Residue::new("SOL");
+        bare.add_atom(0);
+        frame.add_residue(&bare).expect("residue");
+        let mut tagged = Residue::with_id("WAT", 4);
+        tagged.add_atom(1);
+        tagged.set("chain", Property::String("A".into()));
+        frame.add_residue(&tagged).expect("tagged residue");
+        frame.set_cell(&UnitCell::new([8.0, 8.0, 8.0]));
+        let con = con_frame_from_chemfiles(&frame).expect("convert");
+        assert_eq!(con.header.bonds().len(), 8);
+        let orders: Vec<Option<i32>> = con.header.bonds().iter().map(|b| b.order).collect();
+        assert!(orders.contains(&Some(2)));
+        assert!(orders.contains(&Some(7)));
+        assert_eq!(
+            con.header.metadata.get(meta::GENERATOR).and_then(|v| v.as_str()),
+            Some("chemfiles")
+        );
+        let extra_key = format!("{CHEMFILES_EXTRA_PREFIX}frame_index");
+        assert!(con.header.metadata.contains_key(&extra_key));
+        let residues = con
+            .header
+            .metadata
+            .get(CHEMFILES_RESIDUES_KEY)
+            .and_then(|v| v.as_array())
+            .expect("residues");
+        assert_eq!(residues.len(), 2);
+        assert!(residues.iter().any(|r| r.get("properties").is_some()));
+
+        let invalid = ChemfilesImportError::InvalidFrame("short".into());
+        assert!(invalid.to_string().contains("short"));
+        assert!(std::error::Error::source(&invalid).is_none());
+        let disabled = ChemfilesImportError::FeatureDisabled;
+        assert!(disabled.to_string().contains("not enabled"));
+        assert!(std::error::Error::source(&disabled).is_none());
+        let io = ChemfilesImportError::Io(std::io::Error::other("disk"));
+        assert!(io.to_string().contains("disk"));
+        assert!(std::error::Error::source(&io).is_some());
+        let missing = con_frames_from_memory("1\n\nH 0 0 0\n", "NOTAFORMAT");
+        assert!(missing.is_err(), "{missing:?}");
+        let err = missing.unwrap_err();
+        assert!(err.to_string().contains("chemfiles"));
+        assert!(std::error::Error::source(&err).is_some());
+    }
+
+    #[test]
+    fn a_topology_file_and_an_explicit_format_open() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("bare.xyz");
+        std::fs::write(
+            &path,
+            "2\n\nC 0 0 0\nO 1 0 0\n",
+        )
+        .unwrap();
+        let topo = dir.path().join("topo.pdb");
+        std::fs::write(
+            &topo,
+            "\
+ATOM      1  C   MOL     1       0.000   0.000   0.000  1.00  0.00           C
+ATOM      2  O   MOL     1       1.000   0.000   0.000  1.00  0.00           O
+END
+",
+        )
+        .unwrap();
+        let opts = ChemfilesReadOpts {
+            format: Some("XYZ".into()),
+            topology: Some(topo.clone()),
+            topology_format: Some("PDB".into()),
+            ..ChemfilesReadOpts::default()
+        };
+        let frames = con_frames_from_trajectory_path_with(&path, &opts).expect("topology");
+        assert_eq!(frames.len(), 1);
+        let guessed = ChemfilesReadOpts {
+            format: Some("XYZ".into()),
+            topology: Some(topo),
+            topology_format: None,
+            ..ChemfilesReadOpts::default()
+        };
+        assert_eq!(
+            con_frames_from_trajectory_path_with(&path, &guessed)
+                .expect("guessed topology")
+                .len(),
+            1
+        );
+        let absent = dir.path().join("missing.xyz");
+        let err = con_frame_from_trajectory_path(&absent).unwrap_err();
+        assert!(err.to_string().contains("chemfiles") || err.to_string().contains("I/O"), "{err}");
+    }
+
+    #[test]
+    fn blank_names_a_window_and_each_property_kind() {
+        let _io: ChemfilesImportError = std::io::Error::other("disk").into();
+        let mut frame = Frame::new();
+        let mut named = Atom::new("H1");
+        named.set_atomic_type("");
+        named.set_mass(0.0);
+        named.set_charge(0.2);
+        named.set("flag", Property::Bool(true));
+        named.set("vec", Property::Vector3D([1.0, 2.0, 3.0]));
+        frame.add_atom(&named, [0.0, 0.0, 0.0], Some([0.1, 0.0, 0.0]));
+        let mut blank = Atom::new("");
+        blank.set_atomic_type("");
+        blank.set_mass(12.0);
+        frame.add_atom(&blank, [1.0, 0.0, 0.0], None);
+        let mut typed = Atom::new("");
+        typed.set_atomic_type("C");
+        typed.set_mass(12.0);
+        frame.add_atom(&typed, [2.0, 0.0, 0.0], None);
+        frame.set_cell(&UnitCell::infinite());
+        let con = con_frame_from_chemfiles(&frame).expect("blank names");
+        assert_eq!(con.atom_data.len(), 3);
+        assert!(con.atom_data.iter().any(|a| a.symbol.as_ref() == "X"));
+        let meta = serde_json::to_string(&con.header.metadata).unwrap();
+        assert!(meta.contains("0.2"), "{meta}");
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("steps.xyz");
+        std::fs::write(&path, "1\n\nH 0 0 0\n1\n\nO 1 0 0\n").unwrap();
+        let past = ChemfilesReadOpts {
+            start: 3,
+            stop: Some(1),
+            ..ChemfilesReadOpts::default()
+        };
+        let err = con_frames_from_trajectory_path_with(&path, &past).unwrap_err();
+        assert!(err.to_string().contains("past"), "{err}");
+        let stride = ChemfilesReadOpts {
+            step: 2,
+            guess_bonds: true,
+            ..ChemfilesReadOpts::default()
+        };
+        let frames = con_frames_from_trajectory_path_with(&path, &stride).expect("stride");
+        assert_eq!(frames.len(), 1);
+        let none = ChemfilesReadOpts {
+            stop: Some(0),
+            ..ChemfilesReadOpts::default()
+        };
+        let frames = con_frames_from_memory_with("1\n\nH 0 0 0\n", "XYZ", &none).expect("stop");
+        assert!(frames.is_empty());
+        let err = con_frame_from_trajectory_path_nth(&path, 9).unwrap_err();
+        assert!(err.to_string().contains("out of range"), "{err}");
+        assert_eq!(nsteps_from_trajectory_path(&path).unwrap(), 2);
+        let bad_step = ChemfilesReadOpts {
+            step: 0,
+            ..ChemfilesReadOpts::default()
+        };
+        assert!(con_frames_from_trajectory_path_with(&path, &bad_step).is_err());
+    }
 }

@@ -460,4 +460,122 @@ mod tests {
             assert_eq!(encode_fixed_bitmask(a.fixed), encode_fixed_bitmask(b.fixed));
         }
     }
+
+    fn finish(
+        message: &capnp::message::Builder<capnp::message::HeapAllocator>,
+    ) -> Result<ConFrame, String> {
+        let reader = message
+            .get_root_as_reader::<con_frame_data::Reader>()
+            .unwrap();
+        frame_from_reader(reader)
+    }
+
+    #[test]
+    fn a_short_cell_and_a_sparse_record_round_trip() {
+        let mut frame = load_fixture("tiny_cuh2.con");
+        frame.atom_data[0].set_energy(Some(-1.5));
+        let mut message = Builder::new_default();
+        {
+            let root = message.init_root::<con_frame_data::Builder>();
+            fill_frame_builder(root, &frame).unwrap();
+        }
+        let back = finish(&message).unwrap();
+        assert_eq!(back.atom_data[0].energy(), Some(-1.5));
+
+        let mut short = Builder::new_default();
+        {
+            let mut root = short.init_root::<con_frame_data::Builder>();
+            root.reborrow().init_cell(1).set(0, 1.0);
+            root.init_angles(3);
+        }
+        let err = finish(&short).unwrap_err();
+        assert!(err.contains("length 3"), "{err}");
+
+        let mut short_angles = Builder::new_default();
+        {
+            let mut root = short_angles.init_root::<con_frame_data::Builder>();
+            root.reborrow().init_cell(3);
+            root.init_angles(1).set(0, 90.0);
+        }
+        let err = finish(&short_angles).unwrap_err();
+        assert!(err.contains("length 3"), "{err}");
+
+        let mut sparse = Builder::new_default();
+        {
+            let mut root = sparse.init_root::<con_frame_data::Builder>();
+            let mut cell = root.reborrow().init_cell(3);
+            cell.set(0, 4.0);
+            cell.set(1, 5.0);
+            cell.set(2, 6.0);
+            let mut angles = root.reborrow().init_angles(3);
+            angles.set(0, 90.0);
+            angles.set(1, 90.0);
+            angles.set(2, 90.0);
+            let mut atoms = root.reborrow().init_atoms(3);
+            for (i, sym) in ["H", "H", "O"].iter().enumerate() {
+                let mut atom = atoms.reborrow().get(i as u32);
+                atom.set_symbol(sym);
+                atom.set_x(i as f64);
+                if i == 2 {
+                    atom.set_has_energy(true);
+                    atom.set_energy(-2.0);
+                }
+            }
+        }
+        let back = finish(&sparse).unwrap();
+        assert_eq!(back.atom_data.len(), 3);
+        assert_eq!(back.header.natms_per_type, vec![2, 1]);
+        assert_eq!(back.atom_data[2].energy(), Some(-2.0));
+        assert!(back.header.prebox_header.user.is_empty());
+        assert!(back.header.metadata.is_empty());
+
+        let mut one_line = Builder::new_default();
+        {
+            let mut root = one_line.init_root::<con_frame_data::Builder>();
+            let mut cell = root.reborrow().init_cell(3);
+            cell.set(0, 1.0);
+            cell.set(1, 1.0);
+            cell.set(2, 1.0);
+            root.reborrow().init_angles(3);
+            root.reborrow().init_prebox_header(1).set(0, "user");
+            root.reborrow().init_postbox_header(1).set(0, "tail");
+            root.set_metadata_json("   ");
+            let mut atom = root.init_atoms(1).get(0);
+            atom.set_symbol("Cu");
+        }
+        let back = finish(&one_line).unwrap();
+        assert_eq!(back.header.prebox_header.user, "user");
+        assert_eq!(back.header.postbox_header[0], "tail");
+        assert!(back.header.postbox_header[1].is_empty());
+        assert!(back.header.metadata.is_empty());
+
+        let mut two_lines = Builder::new_default();
+        {
+            let mut root = two_lines.init_root::<con_frame_data::Builder>();
+            root.reborrow().init_cell(3);
+            root.reborrow().init_angles(3);
+            let mut pre = root.reborrow().init_prebox_header(2);
+            pre.set(0, "user");
+            pre.set(1, "meta");
+            let mut post = root.reborrow().init_postbox_header(2);
+            post.set(0, "a");
+            post.set(1, "b");
+            root.set_metadata_json("{}");
+            root.init_atoms(0);
+        }
+        let back = finish(&two_lines).unwrap();
+        assert_eq!(back.header.prebox_header.metadata_line, "meta");
+        assert_eq!(back.header.postbox_header[1], "b");
+        assert!(back.atom_data.is_empty());
+
+        let mut bad_meta = Builder::new_default();
+        {
+            let mut root = bad_meta.init_root::<con_frame_data::Builder>();
+            root.reborrow().init_cell(3);
+            root.reborrow().init_angles(3);
+            root.set_metadata_json("not-json");
+        }
+        let err = finish(&bad_meta).unwrap_err();
+        assert!(err.contains("metadataJson"), "{err}");
+    }
 }

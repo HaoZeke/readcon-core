@@ -548,3 +548,240 @@ pub unsafe extern "C" fn rkr_mpi_read_block_f(
         Err(_) => std::ptr::null_mut(),
     }
 }
+
+#[cfg(all(test, feature = "mpi"))]
+mod tests {
+    use super::*;
+    use crate::distrib::test_universe;
+    use crate::frame_index::FrameIndex;
+    use mpi::raw::AsRaw;
+    use std::ffi::CString;
+
+    fn world_comm() -> Comm {
+        Comm::dup_of(&test_universe().world())
+    }
+
+    fn fixture() -> String {
+        std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap()
+    }
+
+    #[test]
+    fn one_rank_reads_each_mode_and_the_export() {
+        let comm = world_comm();
+        let dir = tempfile::tempdir().unwrap();
+        let text = fixture();
+        let one = dir.path().join("one.con");
+        let two = dir.path().join("two.con");
+        let extra = dir.path().join("extra.con");
+        let short = dir.path().join("short.con");
+        let garbage = dir.path().join("garbage.con");
+        std::fs::write(&one, &text).unwrap();
+        std::fs::write(&two, format!("{text}{text}")).unwrap();
+        std::fs::write(&extra, format!("{text}x")).unwrap();
+        std::fs::write(&short, "x").unwrap();
+        std::fs::write(&garbage, "this is not a con frame").unwrap();
+
+        assert!(tiled_span(&short).is_none());
+        assert!(tiled_span(&garbage).is_none());
+        assert!(tiled_span(&dir.path().join("missing.con")).is_none());
+        assert_eq!(tiled_span(&one).unwrap().1, 1);
+        assert_eq!(tiled_span(&two).unwrap().1, 2);
+        assert!(tiled_span(&extra).is_none());
+        assert!(read_span(&one, 4, 1).is_err());
+        assert!(read_span(&dir.path().join("missing.con"), 0, 1).is_err());
+        let bytes = read_span(&one, 0, 4).unwrap();
+        assert_eq!(bytes.len(), 4);
+
+        let idx = FrameIndex {
+            data_len: 10,
+            offsets: vec![0, 4, 10],
+        };
+        let (lo, hi, offs) = block_bytes(&idx, &(0..0));
+        assert_eq!((lo, hi), (0, 0));
+        assert!(offs.is_empty());
+        let (lo, hi, offs) = block_bytes(&idx, &(1..3));
+        assert_eq!(lo, 4);
+        assert_eq!(hi, 10);
+        assert_eq!(offs, vec![0, 6]);
+        let packed = pack_index(&idx);
+        let back = unpack_index(&packed);
+        assert_eq!(back.offsets, idx.offsets);
+        assert_eq!(back.data_len, idx.data_len);
+
+        for mode in [ReadMode::Auto, ReadMode::Shared, ReadMode::Scatter] {
+            let got = read_block(&comm, &two, mode, Some(1)).expect("read");
+            assert_eq!(got.n_total, 2);
+            assert_eq!(got.first, 0);
+            assert_eq!(got.frames.len(), 2);
+        }
+        assert!(read_block(&comm, &dir.path().join("missing.con"), ReadMode::Auto, None).is_err());
+        assert!(read_block(&comm, &garbage, ReadMode::Shared, None).is_err());
+
+        let path_c = CString::new(two.to_str().unwrap()).unwrap();
+        let fint = unsafe { mpi::ffi::RSMPI_Comm_c2f(test_universe().world().as_raw()) };
+        let mut n = 0usize;
+        let mut first = 0u64;
+        let mut total = 0u64;
+        let ptr = unsafe {
+            rkr_mpi_read_block_f(fint, path_c.as_ptr(), 1, 1, &mut n, &mut first, &mut total)
+        };
+        assert!(!ptr.is_null(), "shared export returned null");
+        assert_eq!(total, 2);
+        unsafe { crate::ffi::free_rkr_frame_array(ptr, n) };
+        let nulls = unsafe {
+            rkr_mpi_read_block_f(
+                fint,
+                std::ptr::null(),
+                0,
+                0,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            )
+        };
+        assert!(nulls.is_null());
+        let mut n2 = 0usize;
+        let no_outs = unsafe {
+            rkr_mpi_read_block_f(
+                fint,
+                path_c.as_ptr(),
+                0,
+                0,
+                &mut n2,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            )
+        };
+        assert!(no_outs.is_null());
+        let bad_mode = unsafe {
+            rkr_mpi_read_block_f(fint, path_c.as_ptr(), 9, 0, &mut n2, &mut first, &mut total)
+        };
+        assert!(bad_mode.is_null());
+
+        let out = dir.path().join("written.con");
+        let out_c = CString::new(out.to_str().unwrap()).unwrap();
+        let mut total_bytes = 0u64;
+        let rc = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                std::ptr::null(),
+                std::ptr::null(),
+                0,
+                2,
+                -1,
+                std::ptr::null_mut(),
+            )
+        };
+        assert_eq!(rc, -1);
+        let rc = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                out_c.as_ptr(),
+                std::ptr::null(),
+                1,
+                2,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(rc, -1);
+        let rc = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                out_c.as_ptr(),
+                std::ptr::null(),
+                0,
+                9,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(rc, -1);
+        let rc = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                out_c.as_ptr(),
+                std::ptr::null(),
+                0,
+                2,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(rc, 0, "an empty gather write should succeed");
+    }
+
+    #[test]
+    fn two_ranks_read_and_write_every_mode() {
+        const CHILD: &str = "READCON_TWO_RANK_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            let dir = tempfile::tempdir().unwrap();
+            let text = fixture();
+            std::fs::write(dir.path().join("two.con"), format!("{text}{text}")).unwrap();
+            let exe = std::env::current_exe().unwrap();
+            let log_out = dir.path().join("mpirun.out");
+            let log_err = dir.path().join("mpirun.err");
+            let status = std::process::Command::new("mpirun")
+                .args([
+                    "--oversubscribe",
+                    "-np",
+                    "2",
+                    "-x",
+                    "LD_LIBRARY_PATH",
+                    "-x",
+                    "READCON_TWO_RANK_CHILD",
+                    "-x",
+                    "READCON_TWO_RANK_DIR",
+                    "-x",
+                    "READCON_MPI_TEST_CHUNK",
+                ])
+                .arg(&exe)
+                .args([
+                    "distrib_read::tests::two_ranks_read_and_write_every_mode",
+                    "--exact",
+                    "--test-threads=1",
+                    "--nocapture",
+                ])
+                .env(CHILD, "1")
+                .env("READCON_MPI_TEST_CHUNK", "64")
+                .env("READCON_TWO_RANK_DIR", dir.path())
+                .stdout(std::fs::File::create(&log_out).unwrap())
+                .stderr(std::fs::File::create(&log_err).unwrap())
+                .status()
+                .expect("mpirun");
+            let stdout = std::fs::read_to_string(&log_out).unwrap_or_default();
+            let stderr = std::fs::read_to_string(&log_err).unwrap_or_default();
+            assert!(
+                status.success(),
+                "two-rank job failed ({status:?})\n{stdout}\n{stderr}"
+            );
+            return;
+        }
+        let universe = ::mpi::initialize().expect("MPI_Init");
+        let comm = Comm::dup_of(&universe.world());
+        assert_eq!(comm.size(), 2, "the child must be launched with two ranks");
+        let dir = std::path::PathBuf::from(std::env::var("READCON_TWO_RANK_DIR").unwrap());
+        let path = dir.join("two.con");
+        for mode in [ReadMode::Shared, ReadMode::Scatter, ReadMode::Auto] {
+            let got = read_block(&comm, &path, mode, None).expect("collective read");
+            assert_eq!(got.n_total, 2);
+            assert_eq!(got.frames.len(), 1);
+        }
+        let frames = read_block(&comm, &path, ReadMode::Shared, None)
+            .unwrap()
+            .frames;
+        let blob = comm.bcast_bytes(0, b"frame");
+        assert_eq!(blob, b"frame");
+        for (name, mode) in [
+            ("gather.con", crate::distrib_write::WriteMode::Gather),
+            ("mpiio.con", crate::distrib_write::WriteMode::MpiIo),
+            ("auto.con", crate::distrib_write::WriteMode::Auto),
+        ] {
+            let n = crate::distrib_write::write_block(&comm, &dir.join(name), &frames, mode, Some(6))
+                .expect(name);
+            assert!(n > 0, "{name}");
+        }
+        drop(comm);
+        drop(universe);
+    }
+}

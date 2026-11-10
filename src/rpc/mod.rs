@@ -86,4 +86,35 @@ mod tests {
         let error = validate_compatibility_stamp(stamp).expect_err("newer minor must fail");
         assert!(error.contains("ABI minor"));
     }
+
+    #[test]
+    fn rejects_a_different_layout_and_a_newer_spec() {
+        let mut message = capnp::message::Builder::new_default();
+        {
+            let mut stamp = message.init_root::<compatibility_stamp::Builder>();
+            stamp.set_abi_major(crate::ffi::RKR_ABI_VERSION_MAJOR);
+            stamp.set_abi_minor(crate::ffi::RKR_ABI_VERSION_MINOR);
+            stamp.set_abi_layout_revision(crate::ffi::RKR_ABI_LAYOUT_REVISION + 1);
+            stamp.set_con_spec_version(crate::CON_SPEC_VERSION);
+        }
+        let stamp = message
+            .get_root_as_reader::<compatibility_stamp::Reader>()
+            .expect("compatibility stamp root");
+        let error = validate_compatibility_stamp(stamp).expect_err("layout mismatch must fail");
+        assert!(error.contains("layout"));
+
+        let mut message = capnp::message::Builder::new_default();
+        {
+            let mut stamp = message.init_root::<compatibility_stamp::Builder>();
+            stamp.set_abi_major(crate::ffi::RKR_ABI_VERSION_MAJOR);
+            stamp.set_abi_minor(crate::ffi::RKR_ABI_VERSION_MINOR);
+            stamp.set_abi_layout_revision(crate::ffi::RKR_ABI_LAYOUT_REVISION);
+            stamp.set_con_spec_version(crate::CON_SPEC_VERSION + 1);
+        }
+        let stamp = message
+            .get_root_as_reader::<compatibility_stamp::Reader>()
+            .expect("compatibility stamp root");
+        let error = validate_compatibility_stamp(stamp).expect_err("newer spec must fail");
+        assert!(error.contains("spec"));
+    }
 }

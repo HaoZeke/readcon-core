@@ -586,14 +586,54 @@ mod tests {
         // Each filler takes the highest gap that fits the file map. The first
         // one below the region shows that no such gap is left above it.
         let mut fillers = Vec::new();
+        let mut attempts = 0usize;
         loop {
-            let filler = anonymous(map_len);
+            let hint = if attempts == 0 {
+                region.cast::<u8>().wrapping_add(map_len + GUARD) as *mut libc::c_void
+            } else {
+                std::ptr::null_mut()
+            };
+            attempts += 1;
+            let filler = unsafe {
+                libc::mmap(
+                    hint,
+                    map_len,
+                    libc::PROT_READ | libc::PROT_WRITE,
+                    libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+                    -1,
+                    0,
+                )
+            };
+            assert_ne!(filler, libc::MAP_FAILED);
             if filler < region {
                 unsafe { libc::munmap(filler, map_len) };
+                if attempts == 1 {
+                    let pinned = unsafe {
+                        libc::mmap(
+                            region.cast::<u8>().wrapping_add(map_len + GUARD) as *mut libc::c_void,
+                            map_len,
+                            libc::PROT_READ | libc::PROT_WRITE,
+                            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED,
+                            -1,
+                            0,
+                        )
+                    };
+                    if pinned != libc::MAP_FAILED && pinned >= region {
+                        fillers.push(pinned);
+                    }
+                    continue;
+                }
                 break;
             }
             fillers.push(filler);
+            if fillers.len() > 4 {
+                break;
+            }
         }
+        assert!(
+            !fillers.is_empty(),
+            "a mapping at or above the region is required"
+        );
         unsafe { libc::munmap(region, map_len) };
         let mut text = ForwardText::open(&path, true).unwrap();
         assert!(
