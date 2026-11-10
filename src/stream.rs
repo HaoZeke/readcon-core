@@ -124,13 +124,11 @@ impl<R: Read> ConFrameReader<R> {
                 // A legacy velocity block that is cut between its label and
                 // its last row is not finished. More bytes can still attach
                 // it to this frame. The error is final only at end of input,
-                // where the same bytes are parsed as a whole file.
+                // where the same bytes are parsed as a whole file. A failed
+                // read sets `ended`, so the source error is the result below
+                // once that whole-file parse does not yield a frame.
                 if !ended && incomplete_prefix(&result) {
                     cut = true;
-                    if let Some(e) = self.failed.take() {
-                        self.done = true;
-                        return Some(Err(e.into()));
-                    }
                     self.fill();
                     continue;
                 }
@@ -306,5 +304,58 @@ mod tests {
             assert!(reader.buf.capacity() <= len + len / 8 + read_size);
         }
         assert!(reader.next().is_none());
+    }
+
+    /// A source that yields `data`, then fails.
+    struct FailAfter {
+        data: Vec<u8>,
+        pos: usize,
+    }
+
+    impl Read for FailAfter {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            if self.pos >= self.data.len() {
+                return Err(io::Error::new(io::ErrorKind::Other, "source failed"));
+            }
+            let n = (self.data.len() - self.pos).min(buf.len());
+            buf[..n].copy_from_slice(&self.data[self.pos..self.pos + n]);
+            self.pos += n;
+            Ok(n)
+        }
+    }
+
+    /// A read that fails inside a legacy velocity block is the source error.
+    /// The bytes already read are not a finished file, so they are not
+    /// reported as IncompleteFrame.
+    #[test]
+    fn a_failed_read_inside_a_velocity_block_is_the_source_error() {
+        let file = std::fs::read("resources/test/tiny_cuh2.convel").unwrap();
+        let label = file
+            .windows(b"Velocities of Component".len())
+            .position(|w| w == b"Velocities of Component")
+            .expect("velocity label");
+        let prefix = file[..label + b"Velocities of Component 1\n".len()].to_vec();
+        let err = ConFrameReader::with_read_size(FailAfter { data: prefix, pos: 0 }, 32)
+            .next()
+            .expect("a result")
+            .expect_err("source error");
+        assert!(err.to_string().contains("source failed"), "{err}");
+    }
+
+    /// The second frame of a small read is probed after the first frame
+    /// has been consumed, including when its velocity block is still cut.
+    #[test]
+    fn a_later_frame_allows_a_mid_file_bom_after_a_cut_block() {
+        let first = zero_atom_frame(200);
+        let second = std::fs::read("resources/test/tiny_cuh2.convel").unwrap();
+        let bytes = [first.clone(), second].concat();
+        let expect: Vec<_> = ConFrameIterator::from_bytes(&bytes)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(expect.len(), 2);
+        let got: Vec<_> = ConFrameReader::with_read_size(std::io::Cursor::new(bytes), 48)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(got, expect);
     }
 }
