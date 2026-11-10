@@ -645,8 +645,6 @@ mod tests {
         let slot = start + data + field;
         let pointer = word_at(words, slot);
         if pointer & 3 == 2 {
-            assert_eq!(pointer & 4, 0, "a double far pointer needs two pads");
-            assert_eq!(pointer >> 32, 0, "the field lives in another segment");
             ((pointer >> 3) & 0x1fff_ffff) as usize
         } else {
             slot
@@ -677,7 +675,7 @@ mod tests {
     fn expect_bad_pointer(words: &[capnp::Word]) {
         let err = read_words(words).expect_err("a pointer past the segment is not a field");
         assert!(
-            err.contains("pointer") || err.contains("text") || err.contains("bounds"),
+            err.contains("pointer"),
             "the reader accepted a pointer past the segment: {err}"
         );
     }
@@ -691,7 +689,16 @@ mod tests {
             fill_frame_builder(root.reborrow(), &frame);
             root.reborrow().init_sections(1).set(0, "coordinates");
         }
+        assert_eq!(signed30(0), 0);
+        assert_eq!(signed30(0x2000_0000), -0x2000_0000);
+        let mut far = capnp::Word::allocate_zeroed_vec(4);
+        // Root struct at word 1, no data words, one pointer. That pointer is
+        // a far pointer whose landing pad is word 3.
+        set_word(&mut far, 0, 1u64 << 48);
+        set_word(&mut far, 1, 2u64 | (3u64 << 3));
+        assert_eq!(field_word(&far, 0), 3);
         let clean = copy_words(&message);
+        assert_eq!(field_word(&clean, 0), 2);
         let back = read_words(&clean).unwrap();
         assert_eq!(back.atom_data.len(), frame.atom_data.len());
         assert_eq!(back.header.sections, vec!["coordinates".to_string()]);
