@@ -1502,6 +1502,17 @@ fn sample_llc_misses() -> i64 {
 #[cfg(feature = "parallel")]
 fn numa_remote_pages() -> i64 {
     let online = std::fs::read_to_string("/sys/devices/system/node/online").unwrap_or_default();
+    let maps = std::fs::read_to_string("/proc/self/numa_maps").unwrap_or_default();
+    numa_remote_from(&online, &maps)
+}
+
+/// Pages that `maps` records on a node other than 0.
+///
+/// `online` is the kernel node list (`0` or `0-3`). One node has no
+/// remote pages. A wider list sums every `N<node>=<pages>` token whose
+/// node is not 0.
+#[cfg(feature = "parallel")]
+fn numa_remote_from(online: &str, maps: &str) -> i64 {
     let online = online.trim();
     let nodes = if let Some((start, end)) = online.split_once('-') {
         let start: i64 = start.parse().unwrap_or(0);
@@ -1513,9 +1524,8 @@ fn numa_remote_pages() -> i64 {
     if nodes <= 1 {
         return 0;
     }
-    let text = std::fs::read_to_string("/proc/self/numa_maps").unwrap_or_default();
     let mut remote = 0i64;
-    for line in text.lines() {
+    for line in maps.lines() {
         for token in line.split_whitespace() {
             if let Some(rest) = token.strip_prefix('N') {
                 if let Some((node, pages)) = rest.split_once('=') {
@@ -4010,5 +4020,31 @@ mod differential_entry_points {
             let _ = std::fs::remove_file(&plain);
             let _ = std::fs::remove_file(&gz_path);
         }
+    }
+}
+
+#[cfg(all(test, feature = "parallel"))]
+mod one_thread_and_numa {
+    use super::{frames_from_bytes, numa_remote_from, parse_bytes_timed};
+
+    #[test]
+    fn one_worker_and_the_default_stay_on_the_caller() {
+        let bytes = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+        let serial = frames_from_bytes(&bytes, Some(1)).unwrap();
+        for requested in [None, Some(0), Some(1)] {
+            let timed = parse_bytes_timed(&bytes, requested);
+            let got: Vec<_> = timed.slots.into_iter().collect::<Result<Vec<_>, _>>().unwrap();
+            assert_eq!(got, serial);
+            assert!(timed.pool.is_none());
+        }
+    }
+
+    #[test]
+    fn remote_pages_sum_nodes_other_than_zero() {
+        assert_eq!(numa_remote_from("0", "N1=9"), 0);
+        assert_eq!(numa_remote_from("0-0", "N1=9"), 0);
+        assert_eq!(numa_remote_from("nope-also", "N1=9"), 0);
+        assert_eq!(numa_remote_from("0-1", "abc N0=3 N1=4 N2=bad Nx"), 4);
+        assert_eq!(numa_remote_from("0-3", "N1=2\nN3=5 N0=1"), 7);
     }
 }

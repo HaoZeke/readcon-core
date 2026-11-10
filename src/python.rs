@@ -3917,4 +3917,21 @@ mod api_coverage {
             assert!(py_bool_mask(&bad).is_err());
         });
     }
+
+    #[test]
+    fn packed_positions_clear_outside_a_pool() {
+        let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
+        let frame = crate::iterators::ConFrameIterator::new(&text)
+            .next()
+            .unwrap()
+            .unwrap();
+        let mut frames = vec![frame.clone(), frame];
+        assert!(frames[0].positions.nrows() > 0);
+        clear_packed_positions(&mut frames, 2);
+        assert_eq!(frames[0].positions.nrows(), 0);
+        assert_eq!(frames[1].positions.nrows(), 0);
+        frames[0].positions = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        clear_packed_positions(&mut frames, 1);
+        assert_eq!(frames[0].positions.nrows(), 0);
+    }
 }
