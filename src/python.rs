@@ -1713,9 +1713,12 @@ impl ConFrameList {
                 return Ok(hit.clone_ref(py));
             }
         }
+        // The slot starts full. This call is the only take, and only after
+        // the cache miss above. release_frames drops the vector first, so
+        // an index then fails the length check and does not reach here.
         let frame = self.frames.lock().expect("frames")[index]
             .take()
-            .ok_or_else(|| PyIOError::new_err(format!("frame {index} is already borrowed")))?;
+            .unwrap();
         let built = if let Some(slab) = &self.slab {
             PyConFrame::from_slab(py, frame, slab.clone_ref(py), index, self.n_atoms)?
         } else {
