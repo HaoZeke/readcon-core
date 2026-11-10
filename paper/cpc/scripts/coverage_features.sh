@@ -17,6 +17,7 @@
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/../../.." && pwd)
 cd "$ROOT"
+export PATH="/usr/local/bin:${PATH}"
 
 case "$(rustc --version)" in
   *nightly*) ;;
@@ -67,11 +68,25 @@ unset CMAKE_INSTALL_PREFIX || true
 mkdir -p "$CARGO_TARGET_DIR"
 OUT="${COVERAGE_JSON:-$CARGO_TARGET_DIR/coverage.json}"
 mkdir -p "$(dirname "$OUT")"
-# capi is an empty switch. rpc and metatensor build from crates.
-# mpi needs an MPI library and libclang. cuda needs the NVIDIA driver
-# and libcudart. This host has neither mpicc nor nvcc, so those two
-# features stay out of the report.
-FEATURES=parallel,zstd,grammar,python,chemfiles-from-sources,capi,rpc,metatensor
+# capi is an empty switch. rpc, metatensor and mpi build on this host.
+# mpi uses the system OpenMPI (mpicc, libmpi, libclang).
+# cuda is not measurable. cargo test --features cuda --lib
+# allocate_cuda_succeeds panics in cudarc 0.13.9 because it cannot load
+# libcuda.so or libnvcuda.so. cargo check --features cuda exits 0.
+# Not measurable, ruling (e), every cfg(feature = "cuda") arm:
+#   src/lib.rs:4
+#   src/ffi.rs:2523
+#   src/ffi.rs:2609
+#   src/ffi.rs:2640
+#   src/ffi.rs:4894
+#   src/ffi.rs:6383
+#   src/types.rs:3620
+#   src/array.rs:179
+#   src/array.rs:408
+#   src/storage_dtype.rs:536
+#   src/storage_dtype.rs:779
+# src/cuda_array.rs is compiled only from the arm at src/lib.rs:4.
+FEATURES=parallel,zstd,grammar,python,chemfiles-from-sources,capi,rpc,metatensor,mpi
 
 echo "==> workspace, all targets, merged features"
 cargo llvm-cov clean --workspace
@@ -107,13 +122,21 @@ if [ ! -x "$VENV/bin/python" ]; then
 fi
 # shellcheck disable=SC1091
 . "$VENV/bin/activate"
-python -m pip install -q maturin pytest numpy h5py threadpoolctl chemparseplot xyzrender rgpycrumbs polars
-if command -v pdftotext >/dev/null; then
-  ln -sfn "$(command -v pdftotext)" "$VENV/bin/pdftotext"
-fi
-if command -v pandoc >/dev/null; then
-  ln -sfn "$(command -v pandoc)" "$VENV/bin/pandoc"
-fi
+python -m pip install -q maturin pytest numpy h5py threadpoolctl chemparseplot xyzrender rgpycrumbs polars MDAnalysis 'jax[cpu]>=0.4'
+link_host_tool() {
+  tool=$1
+  nightly="${RUSTUP_HOME:-$HOME/.rustup}/toolchains/nightly-x86_64-unknown-linux-gnu/bin"
+  src=$(PATH="/usr/local/bin:${nightly}:/usr/bin:/bin" command -v "$tool" || true)
+  if [ -n "$src" ]; then
+    ln -sfn "$(readlink -f "$src")" "$VENV/bin/$tool"
+  fi
+}
+link_host_tool pdftotext
+link_host_tool pandoc
+link_host_tool cargo
+link_host_tool rustc
+echo "==> release library, newer than the sources the probes compare"
+cargo build --release --lib --features parallel,zstd,mpi --target-dir "$ROOT/target"
 maturin develop --features python,zstd,chemfiles-from-sources
 python -m pytest \
   tests/python/test_v143_arms.py \
@@ -137,6 +160,7 @@ python -m pytest \
   tests/python/test_line_coverage.py \
   tests/python/test_physical_coverage.py \
   tests/python/test_helpers.py \
+  tests/python/test_v144_public.py \
   tests/python/test_paper_cover_a.py \
   tests/python/test_paper_cover_b.py \
   tests/python/test_paper_cover_c.py \

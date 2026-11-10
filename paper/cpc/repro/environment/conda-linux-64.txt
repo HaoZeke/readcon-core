@@ -1,0 +1,4 @@
+# Written by paper/cpc/scripts/export_env.py.
+# platform: linux-64
+@EXPLICIT
+https://example.invalid/zlib-1.2.13-0.tar.bz2#0123456789abcdef0123456789abcdef

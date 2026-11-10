@@ -1,0 +1,17 @@
+# Written by paper/cpc/scripts/export_env.py.
+ansible==9.2.0
+ansible-core==2.16.3
+argcomplete==3.1.4
+blinker==1.7.0
+cryptography==41.0.7
+distro==1.9.0
+dnspython==2.6.1
+httplib2==0.20.4
+numpy==1.26.4
+packaging==24.0
+PyJWT==2.7.0
+pyparsing==3.1.1
+PyYAML==6.0.1
+resolvelib==1.0.1
+urllib3==2.0.7
+wheel==0.42.0
