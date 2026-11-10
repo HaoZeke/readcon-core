@@ -2676,6 +2676,17 @@ Coordinates of Component 1
             )
         };
         assert_ne!(ptr, libc::MAP_FAILED);
+        let blocked = unsafe {
+            libc::mmap(
+                ptr,
+                page,
+                libc::PROT_READ,
+                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
+                -1,
+                0,
+            )
+        };
+        assert_eq!(blocked, libc::MAP_FAILED);
         unsafe { libc::munmap(ptr, page) };
         let mut message = None;
         for _ in 0..8 {
