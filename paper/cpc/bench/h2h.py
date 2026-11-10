@@ -498,6 +498,7 @@ def cpp() -> None:
             "provenance": {
                 "library": provenance.binary_build(library),
                 "host": provenance.host(),
+                **provenance.git_tip(),
             },
         }
         write(f"cpp_{campaign}.json", doc)
