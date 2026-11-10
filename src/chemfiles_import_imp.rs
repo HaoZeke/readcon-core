@@ -401,7 +401,7 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
         } else {
             symbol.clone()
         };
-        if display_name != symbol || atomic_type_str != symbol {
+        if display_name != symbol {
             any_name_type_extra = true;
         }
         chfl_names.push(display_name);
@@ -851,10 +851,11 @@ H  1.0 0.0 0.0
             write!(
                 f,
                 "\
-3
+4
 water-like
 H  0.957  0.000  0.000
 O  1.000  0.000  0.000
+O  0.000  0.000  1.000
 O  0.000  0.000  0.000
 "
             )
@@ -862,12 +863,35 @@ O  0.000  0.000  0.000
         }
 
         let con = con_frame_from_trajectory_path(&path).expect("read xyz path");
-        assert_eq!(con.atom_data.len(), 3);
+        assert_eq!(con.atom_data.len(), 4);
         assert_eq!(con.header.natm_types, 2);
         let positions_ok = con.atom_data.iter().any(|a| {
             a.symbol.as_ref() == "O" && a.x.abs() < 1e-6 && a.y.abs() < 1e-6 && a.z.abs() < 1e-6
         });
         assert!(positions_ok, "expected O at origin in converted frame");
+    }
+
+    #[test]
+    fn a_non_finite_frame_index_stays_out_of_the_reserved_key() {
+        let mut frame = Frame::new();
+        frame.add_atom(&Atom::new("H"), [0.0, 0.0, 0.0], None);
+        frame.set("frame_index", Property::Double(f64::NAN));
+        let con = con_frame_from_chemfiles(&frame).expect("import");
+        assert_eq!(
+            con.header
+                .metadata
+                .get(meta::FRAME_INDEX)
+                .and_then(|v| v.as_u64()),
+            Some(0),
+            "a NaN index does not replace the step"
+        );
+        assert_eq!(
+            con.header
+                .metadata
+                .get("chemfiles::frame_index")
+                .map(|v| v.is_null()),
+            Some(true)
+        );
     }
 
     #[test]

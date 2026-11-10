@@ -99,7 +99,6 @@ pub fn chemfiles_frame_from_con_frame(frame: &ConFrame) -> Result<Frame, Chemfil
     };
     chfl.set_cell(&unit_cell);
 
-    let n = frame.atom_data.len();
     let mut need_vel = false;
     for atom in &frame.atom_data {
         if atom.velocity().is_some() {
@@ -122,22 +121,12 @@ pub fn chemfiles_frame_from_con_frame(frame: &ConFrame) -> Result<Frame, Chemfil
     // Restore velocities explicitly if add_atom did not set them.
     if need_vel {
         if let Some(vels) = chfl.velocities_mut() {
-            for (i, atom) in frame.atom_data.iter().enumerate() {
+            for (atom, slot) in frame.atom_data.iter().zip(vels.iter_mut()) {
                 if let Some(v) = atom.velocity() {
-                    if i < vels.len() {
-                        vels[i] = v;
-                    }
+                    *slot = v;
                 }
             }
         }
-    }
-
-    if chfl.size() != n {
-        return Err(ChemfilesImportError::InvalidFrame(format!(
-            "chemfiles frame size {} != con frame {}",
-            chfl.size(),
-            n
-        )));
     }
 
     // Preserve step from metadata when present.
@@ -172,10 +161,8 @@ pub fn evaluate_selection_on_chemfiles_frame(
         .map(|m| {
             let size = m.len();
             let mut atoms = [0usize; 4];
-            for (i, idx) in m.iter().enumerate() {
-                if i < 4 {
-                    atoms[i] = *idx;
-                }
+            for (i, idx) in m.iter().take(4).enumerate() {
+                atoms[i] = *idx;
             }
             SelectionMatch { size, atoms }
         })
@@ -271,13 +258,13 @@ pub fn select_atom_positions_on_frames(
         });
     }
     let multi = evaluate_selection_on_frames(selection, frames)?;
-    if let Some(first) = multi.frames.first() {
-        if first.result.context_size != 1 {
-            return Err(ChemfilesImportError::InvalidFrame(format!(
-                "select_atom_positions_on_frames requires atom context (size 1), got {}",
-                first.result.context_size
-            )));
-        }
+    // evaluate_selection_on_frames pushes one slice per input frame, and the
+    // empty input returned above, so the first slice is present.
+    if multi.frames[0].result.context_size != 1 {
+        return Err(ChemfilesImportError::InvalidFrame(format!(
+            "select_atom_positions_on_frames requires atom context (size 1), got {}",
+            multi.frames[0].result.context_size
+        )));
     }
     Ok(multi)
 }
@@ -307,6 +294,23 @@ mod tests {
         b.add_atom("H", 0.96, 0.0, 0.0, [false; 3], 1, 1.0);
         b.add_atom("H", -0.24, 0.93, 0.0, [false; 3], 2, 1.0);
         b.build().unwrap()
+    }
+
+    #[test]
+    fn a_frame_with_one_velocity_keeps_the_others_at_zero() {
+        let mut b = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+        b.add_atom("O", 0.0, 0.0, 0.0, [false; 3], 0, 16.0);
+        b.with_velocity([0.2, 0.0, 0.0]);
+        b.add_atom("H", 0.96, 0.0, 0.0, [false; 3], 1, 1.0);
+        b.add_atom("H", -0.24, 0.93, 0.0, [false; 3], 2, 1.0);
+        let frame = b.build().unwrap();
+        let chfl = super::chemfiles_frame_from_con_frame(&frame).expect("project");
+        assert!(chfl.has_velocities());
+        let vels = chfl.velocities().expect("velocities");
+        assert_eq!(vels.len(), 3);
+        assert_eq!(vels[0], [0.2, 0.0, 0.0]);
+        assert_eq!(vels[1], [0.0, 0.0, 0.0]);
+        assert_eq!(vels[2], [0.0, 0.0, 0.0]);
     }
 
     #[test]
