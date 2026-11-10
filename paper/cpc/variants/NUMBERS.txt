@@ -5,37 +5,45 @@ tag v0.18.0, an ancestor of the public main branch.
 The log is paper/cpc/logs/reader-exchange-public.log.
 Its rev_parse is d5e77f997438557c72c3b3e360d446310f85d6b7 and its git status is clean.
 The command is python3 paper/cpc/scripts/bench_readers.py from that tag.
+Every arm of that command ran in one session.
+Odd repetitions reverse the arm order.
+Each sample is a fresh process.
 readcon_tip calls read_positions, because that module provides it.
 readcon_v0173 inserts paper/cpc/build/readcon-0.18.0 and calls read_con.
 readcon_base inserts the baseline build and calls read_con.
 libemt.so sha256 begins 5088ec8e06f7.
-The C++ samples are six fresh processes on the same file after that library loaded.
-They were not interleaved with the other arms.
+The guest is a KVM virtual machine.
+cpuinfo names the model Intel(R) Xeon(R) Processor, family 6, model 207, stepping 2.
+The flags include the hypervisor flag.
+The exchange log shortens the model name to Intel Xeon Processor.
+The model, stepping and flags are in paper/cpc/logs/host-identity.txt.
 
-Median seconds, six repeats, type 7.
+Median and IQR seconds, six repeats, type 7, printed with %.17g.
 
-arm                          seconds
-read_positions               0.191445964
-read_con of the v0.18.0 build 1.619664509
-baseline read_con            2.102760336
-C++ read_all_frames          1.710233674
-ASE get_positions            11.66434817
-eOn loadcons                 15.61954329
-readcon-db                   12.24548414
-h5py                         0.6484206265
-conbin                       0.009393485001
-read_first_frame             0.037811441
-Matter.con2matter            0.347087842
+arm                            median_s              iqr_s
+read_positions                 0.17789260049903532   0.011610266996285645
+read_con of the v0.18.0 build  1.5089495559950592    0.057292956997116562
+baseline read_con              1.9675188279943541    0.092784218508313643
+C++ read_all_frames            1.4680197234999999    0.014157723000000066
+ASE get_positions              10.973138462999486    0.15007745274488116
+eOn loadcons                   14.618452116497792    0.31927170700146235
+readcon-db                     11.513268114998937    0.11907425750541734
+h5py                           0.5867561119957827    0.019553972000721842
+conbin                         0.0076079699938418344 0.0032147452584467828
+read_first_frame               0.032074574497528374  0.013231742756033782
+Matter.con2matter              0.2901932430031593    0.017214994244568516
 
 Time over time: this row's median divided by read_con of the v0.18.0 build.
 A value above 1 is a slower arm.
+A value below 1 is a faster arm.
 
 arm                          time over time
-baseline read_con            1.29827
-C++ read_all_frames          1.05592
-ASE get_positions            7.20167
-eOn loadcons                 9.64329
-read_positions               0.11820
+baseline read_con            1.3038996699242851
+C++ read_all_frames          0.97287528113021071
+ASE get_positions            7.2720379680044225
+eOn loadcons                 9.6878335385160206
+read_positions               0.11789168152922523
 
 read_positions is also an absolute time above.
 It is not a ratio against ASE or loadcons.
+The C++ arm is slightly faster than read_con.

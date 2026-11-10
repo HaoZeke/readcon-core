@@ -1183,8 +1183,10 @@ Each point is the median of the six per-repeat ratios, and the whisker
 is their type 7 interquartile range.
 The text quotes the ratio of the medians.
 The horizontal line is 1.
-A point above the line means \texttt{read\_con} at 1 thread is that many
-times as fast.
+A point above the line is a slower arm, and \texttt{read\_con} is that
+many times as fast.
+A point below the line is a faster arm.
+The C++ arm is below the line.
 \texttt{read\_positions} is not on this figure.}
 \label{fig:ratios} \end{figure}
 
@@ -1196,7 +1198,11 @@ repeats.}
 read one trajectory of 100000 frames and 32 copper atoms, six times for
 each arm, interleaved, each sample a fresh process.
 Each library is imported before the clock starts.
-The host is an \rcHostCpu{} with \rcHostCores{} cores.
+The host is a KVM virtual machine with \rcHostCores{} cores.
+Guest cpuinfo names the model \texttt{Intel(R) Xeon(R) Processor}, family 6, model 207, stepping 2.
+The exchange log shortens that name to \rcHostCpu.
+The flags include the hypervisor flag, and \texttt{lscpu} reports full virtualization under KVM.
+The model, stepping and flags are in \path{paper/cpc/logs/host-identity.txt}.
 The log names measurement commit \texttt{\rcHostCommit}, tag v0.18.0.
 The \texttt{read\_con} arm loads \path{paper/cpc/build/readcon-0.18.0}.
 The baseline arm is readcon-core \rcBaselineVersion, commit
@@ -1226,6 +1232,7 @@ It is not a ratio against ASE or \texttt{loadcons}, which build a frame
 object per record.
 The C++ arm calls \texttt{read\_all\_frames} and then \texttt{con2matter} on every frame.
 It takes \rcApiMedian~s, which is \rcApiOverRead{} times the \texttt{read\_con} time.
+That ratio is below 1, so this C++ arm is slightly faster than \texttt{read\_con}.
 Its \texttt{libemt.so} digest begins \texttt{5088ec8e06f7}.
 readcon-db ingests the same file in \rcDbMedian~s.
 That row writes a corpus and then reads the corpus, so it is not a

@@ -1,6 +1,6 @@
 rev_parse d5e77f997438557c72c3b3e360d446310f85d6b7
 tree cc5b76f1256e72fce3128523ad872fbc2e85e50a
-date_utc 2026-11-09T08:37:17Z
+date_utc 2026-11-09T09:33:43Z
 uname_m x86_64
 nproc 8
 cpu_model Intel Xeon Processor
@@ -27,125 +27,123 @@ readcon_eon_api readcon through the eOn C++ API, all frames
 conbin mmap zero-copy positions
 eon_reader eon.fileio.loadcons
 readcon_first read_first_frame first frame
-sample arm=readcon_tip rep=0 seconds=0.1780555750010535 mib=205.41796875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_base rep=0 seconds=2.5780285430082586 mib=2531.3359375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_v0173 rep=0 seconds=1.6024744439928327 mib=881.046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_first rep=0 seconds=0.03497379399777856 mib=131.04296875 matched=1 got=1 requested=1 exit=0 error=
-sample arm=readcon_db rep=0 seconds=11.887450847003493 mib=397.6328125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_eon rep=0 seconds=11.193046628992306 mib=383.91015625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon rep=0 seconds=0.3363793269963935 mib=263.015625 matched=1 got=1 requested=1 exit=0 error=
-sample arm=eon_py rep=0 seconds=15.451466157988762 mib=2716.05859375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=0 seconds=1.504000686 mib=1058.73046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=conbin rep=0 seconds=0.008547880002879538 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=numpy rep=0 seconds=1.275795392008149 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=chemfiles rep=0 seconds=1.5107583770004567 mib=166.31640625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ovito rep=0 seconds=5.034718053007964 mib=171.7109375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_extxyz rep=0 seconds=7.970970263995696 mib=345.859375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=pymatgen rep=0 seconds=25.50865189099568 mib=2118.91796875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=h5py rep=0 seconds=0.6171454950090265 mib=758.609375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=mdanalysis rep=0 seconds=34.858255289000226 mib=139.3203125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=mdanalysis rep=1 seconds=35.2423725270055 mib=139.48828125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=h5py rep=1 seconds=0.6893492289964342 mib=758.66015625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=pymatgen rep=1 seconds=26.599735940006212 mib=2118.859375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_extxyz rep=1 seconds=8.046388602000661 mib=345.828125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ovito rep=1 seconds=4.914596992995939 mib=171.74609375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=chemfiles rep=1 seconds=1.5671698530059075 mib=166.3203125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=numpy rep=1 seconds=1.3167118300043512 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=conbin rep=1 seconds=0.01311706900014542 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=1 seconds=1.893831982 mib=1058.78125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon_py rep=1 seconds=15.741233893000754 mib=2692.0390625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon rep=1 seconds=0.35779635699873324 mib=263.01953125 matched=1 got=1 requested=1 exit=0 error=
-sample arm=ase_eon rep=1 seconds=11.552883031996316 mib=383.91015625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_db rep=1 seconds=12.14018957799999 mib=398.26953125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_first rep=1 seconds=0.03375572900404222 mib=131.0390625 matched=1 got=1 requested=1 exit=0 error=
-sample arm=readcon_v0173 rep=1 seconds=1.6359392019949155 mib=881.046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_base rep=1 seconds=2.056559392993222 mib=2531.484375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_tip rep=1 seconds=0.19337255900609307 mib=205.30078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_tip rep=2 seconds=0.1917358439968666 mib=205.30078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_base rep=2 seconds=2.1131792009982746 mib=2531.59375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_v0173 rep=2 seconds=1.5974593480059411 mib=880.9296875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_first rep=2 seconds=0.044032039993908256 mib=131.11328125 matched=1 got=1 requested=1 exit=0 error=
-sample arm=readcon_db rep=2 seconds=12.305928809000761 mib=398.14453125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_eon rep=2 seconds=11.544583695998881 mib=383.89453125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon rep=2 seconds=0.3288838440057589 mib=263.00390625 matched=1 got=1 requested=1 exit=0 error=
-sample arm=eon_py rep=2 seconds=15.497852683998644 mib=2692.0390625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=2 seconds=1.845301069 mib=1058.73828125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=conbin rep=2 seconds=0.006506687990622595 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=numpy rep=2 seconds=1.2989800500072306 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=chemfiles rep=2 seconds=1.5184814089880092 mib=166.3046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ovito rep=2 seconds=4.936974639000255 mib=171.71875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_extxyz rep=2 seconds=8.296117149002384 mib=345.70703125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=pymatgen rep=2 seconds=27.416651343999547 mib=2118.984375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=h5py rep=2 seconds=0.7398158230062108 mib=758.546875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=mdanalysis rep=2 seconds=38.15474823399563 mib=139.3125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=mdanalysis rep=3 seconds=38.0871528639982 mib=139.1640625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=h5py rep=3 seconds=0.6595026129944017 mib=758.6640625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=pymatgen rep=3 seconds=25.409148291000747 mib=2118.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_extxyz rep=3 seconds=8.238898948999122 mib=345.83984375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ovito rep=3 seconds=5.662285853002686 mib=171.7421875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=chemfiles rep=3 seconds=1.582854035004857 mib=166.7421875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=numpy rep=3 seconds=1.341022972992505 mib=390.95703125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=conbin rep=3 seconds=0.006050317999324761 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=3 seconds=1.575166279 mib=1058.78125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon_py rep=3 seconds=16.10944191800081 mib=2692.046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon rep=3 seconds=0.3634767000039574 mib=263.00390625 matched=1 got=1 requested=1 exit=0 error=
-sample arm=ase_eon rep=3 seconds=11.895705072005512 mib=383.8671875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_db rep=3 seconds=12.614329471005476 mib=398.24609375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_first rep=3 seconds=0.04064908799773548 mib=131.046875 matched=1 got=1 requested=1 exit=0 error=
-sample arm=readcon_v0173 rep=3 seconds=1.6524582710117102 mib=880.953125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_base rep=3 seconds=2.0923414710123325 mib=2531.42578125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_tip rep=3 seconds=0.1797375909955008 mib=205.3046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_tip rep=4 seconds=0.19115608399442863 mib=205.3046875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_base rep=4 seconds=2.062480174994562 mib=2531.77734375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_v0173 rep=4 seconds=1.6033898159948876 mib=881.0546875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_first rep=4 seconds=0.0478090589895146 mib=131.0546875 matched=1 got=1 requested=1 exit=0 error=
-sample arm=readcon_db rep=4 seconds=12.185039470001357 mib=398.2734375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_eon rep=4 seconds=11.775813302010647 mib=383.8828125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon rep=4 seconds=0.3290729550062679 mib=263.00390625 matched=1 got=1 requested=1 exit=0 error=
-sample arm=eon_py rep=4 seconds=15.165454551999574 mib=2691.95703125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=4 seconds=1.990851079 mib=1058.78125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=conbin rep=4 seconds=0.01418915500107687 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=numpy rep=4 seconds=1.3198539620061638 mib=390.98828125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=chemfiles rep=4 seconds=1.5772662719973596 mib=166.31640625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ovito rep=4 seconds=5.391867509999429 mib=171.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_extxyz rep=4 seconds=8.411085525003728 mib=345.8203125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=pymatgen rep=4 seconds=26.616883933005738 mib=2118.92578125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=h5py rep=4 seconds=0.6373386400082381 mib=758.63671875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=mdanalysis rep=4 seconds=37.381255507003516 mib=139.265625 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=mdanalysis rep=5 seconds=38.167708819004474 mib=139.3359375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=h5py rep=5 seconds=0.6204466649942333 mib=758.67578125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=pymatgen rep=5 seconds=28.71339191000152 mib=2118.92578125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ase_extxyz rep=5 seconds=8.336286267003743 mib=345.63671875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=ovito rep=5 seconds=5.289351824001642 mib=171.62109375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=chemfiles rep=5 seconds=1.5737693499977468 mib=165.76171875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=numpy rep=5 seconds=1.351455158990575 mib=390.98828125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=conbin rep=5 seconds=0.01023908999923151 mib=146.86328125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_eon_api rep=5 seconds=1.460437243 mib=1058.79296875 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon_py rep=5 seconds=16.484095063991845 mib=2691.93359375 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=eon rep=5 seconds=0.3596992829989176 mib=263.03125 matched=1 got=1 requested=1 exit=0 error=
-sample arm=ase_eon rep=5 seconds=12.123917438002536 mib=383.8203125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_db rep=5 seconds=12.627092077003908 mib=398.125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_first rep=5 seconds=0.033457404002547264 mib=130.94921875 matched=1 got=1 requested=1 exit=0 error=
-sample arm=readcon_v0173 rep=5 seconds=1.660038755988353 mib=881.05078125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_base rep=5 seconds=2.175963143003173 mib=2531.39453125 matched=100000 got=100000 requested=100000 exit=0 error=
-sample arm=readcon_tip rep=5 seconds=0.19817785400664434 mib=205.296875 matched=100000 got=100000 requested=100000 exit=0 error=
-summary arm=readcon_tip scope=all_frames n_rep=6 median_s=1.914459640e-01 iqr_s=1.037116601e-02 mib_median=205.302734 mib_iqr=0.003906 requested=100000 matched=100000 failed=0 exit=0
-summary arm=readcon_base scope=all_frames n_rep=6 median_s=2.102760336e+00 iqr_s=9.032165850e-02 mib_median=2531.455078 mib_iqr=0.164062 requested=100000 matched=100000 failed=0 exit=0
-summary arm=readcon_v0173 scope=all_frames n_rep=6 median_s=1.619664509e+00 iqr_s=4.562521676e-02 mib_median=881.046875 mib_iqr=0.073242 requested=100000 matched=100000 failed=0 exit=0
-summary arm=readcon_first scope=first_frame n_rep=6 median_s=3.781144100e-02 iqr_s=9.126056742e-03 mib_median=131.044922 mib_iqr=0.012695 requested=1 matched=1 failed=0 exit=0
-summary arm=readcon_db scope=all_frames n_rep=6 median_s=1.224548414e+01 iqr_s=3.858272545e-01 mib_median=398.195312 mib_iqr=0.133789 requested=100000 matched=100000 failed=0 exit=0
-summary arm=ase_eon scope=all_frames n_rep=6 median_s=1.166434817e+01 iqr_s=3.190735995e-01 mib_median=383.888672 mib_iqr=0.035156 requested=100000 matched=100000 failed=0 exit=0
-summary arm=eon scope=first_frame n_rep=6 median_s=3.470878420e-01 iqr_s=2.832400350e-02 mib_median=263.009766 mib_iqr=0.014648 requested=1 matched=1 failed=0 exit=0
-summary arm=eon_py scope=all_frames n_rep=6 median_s=1.561954329e+01 iqr_s=5.543271223e-01 mib_median=2692.039062 mib_iqr=0.067383 requested=100000 matched=100000 failed=0 exit=0
-summary arm=readcon_eon_api scope=readcon_through_eon n_rep=6 median_s=1.710233674e+00 iqr_s=3.599071695e-01 mib_median=1058.781250 mib_iqr=0.032227 requested=100000 matched=100000 failed=0 exit=0
-summary arm=conbin scope=all_frames n_rep=6 median_s=9.393485001e-03 iqr_s=5.380588256e-03 mib_median=146.800781 mib_iqr=0.000000 requested=100000 matched=100000 failed=0 exit=0
-summary arm=numpy scope=all_frames n_rep=6 median_s=1.318282896e+00 iqr_s=3.231772524e-02 mib_median=390.980469 mib_iqr=0.005859 requested=100000 matched=100000 failed=0 exit=0
-summary arm=chemfiles scope=all_frames n_rep=6 median_s=1.570469602e+00 iqr_s=4.573852150e-02 mib_median=166.316406 mib_iqr=0.011719 requested=100000 matched=100000 failed=0 exit=0
-summary arm=ovito scope=all_frames n_rep=6 median_s=5.162034939e+00 iqr_s=4.048280960e-01 mib_median=171.730469 mib_iqr=0.032227 requested=100000 matched=100000 failed=0 exit=0
-summary arm=ase_extxyz scope=all_frames n_rep=6 median_s=8.267508049e+00 iqr_s=2.317277988e-01 mib_median=345.824219 mib_iqr=0.101562 requested=100000 matched=100000 failed=0 exit=0
-summary arm=pymatgen scope=all_frames n_rep=6 median_s=2.660830994e+01 iqr_s=1.435286588e+00 mib_median=2118.921875 mib_iqr=0.051758 requested=100000 matched=100000 failed=0 exit=0
-summary arm=h5py scope=all_frames n_rep=6 median_s=6.484206265e-01 iqr_s=5.721791625e-02 mib_median=758.648438 mib_iqr=0.046875 requested=100000 matched=100000 failed=0 exit=0
-summary arm=mdanalysis scope=all_frames n_rep=6 median_s=3.773420419e+01 iqr_s=2.360756119e+00 mib_median=139.316406 mib_iqr=0.054688 requested=100000 matched=100000 failed=0 exit=0
-libemt_sha256 5088ec8e06f71c258b3366961b0c4a47bf48a31968096f812cca615a9fb066b5
-readcon_eon_api_note six fresh processes on the same frames.con after libemt.so loaded; not interleaved with the other arms
+sample arm=readcon_tip rep=0 seconds=0.1674560449901037 mib=205.4296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_base rep=0 seconds=1.9434369419905124 mib=2531.69921875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_v0173 rep=0 seconds=1.4693781990063144 mib=881.0546875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_first rep=0 seconds=0.030680954005219974 mib=131.109375 matched=1 got=1 requested=1 exit=0 error=
+sample arm=readcon_db rep=0 seconds=11.619189421006013 mib=398.19140625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_eon rep=0 seconds=10.927926514006685 mib=383.8984375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon rep=0 seconds=0.29175216099247336 mib=263.05078125 matched=1 got=1 requested=1 exit=0 error=
+sample arm=eon_py rep=0 seconds=14.391562037999392 mib=2692.03515625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_eon_api rep=0 seconds=1.496612797 mib=1058.78515625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=conbin rep=0 seconds=0.006866206997074187 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=numpy rep=0 seconds=1.233237686989014 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=chemfiles rep=0 seconds=1.4629840039997362 mib=166.3984375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ovito rep=0 seconds=4.783203068000148 mib=171.7890625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_extxyz rep=0 seconds=7.724870327991084 mib=345.828125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=pymatgen rep=0 seconds=25.035579974995926 mib=2118.8515625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=h5py rep=0 seconds=0.5900503320008283 mib=758.6640625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=mdanalysis rep=0 seconds=34.76432814699365 mib=139.4296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=mdanalysis rep=1 seconds=34.453548215009505 mib=139.53515625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=h5py rep=1 seconds=0.5478934370039497 mib=758.72265625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=pymatgen rep=1 seconds=24.43254003499169 mib=2119.05078125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_extxyz rep=1 seconds=7.826725646998966 mib=345.8359375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ovito rep=1 seconds=4.728774863004219 mib=171.7578125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=chemfiles rep=1 seconds=1.4758912989927921 mib=166.78125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=numpy rep=1 seconds=1.1995596140041016 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=conbin rep=1 seconds=0.011350007000146434 mib=146.86328125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_eon_api rep=1 seconds=1.463716969 mib=1058.79296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon_py rep=1 seconds=14.533559531992069 mib=2692.1015625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon rep=1 seconds=0.3099809020059183 mib=263.01171875 matched=1 got=1 requested=1 exit=0 error=
+sample arm=ase_eon rep=1 seconds=10.893637729008333 mib=383.81640625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_db rep=1 seconds=11.691495726001449 mib=398.20703125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_first rep=1 seconds=0.049138171001686715 mib=131.0546875 matched=1 got=1 requested=1 exit=0 error=
+sample arm=readcon_v0173 rep=1 seconds=1.5195851309981663 mib=880.87109375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_base rep=1 seconds=1.9400086969981203 mib=2531.375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_tip rep=1 seconds=0.17296750500099733 mib=205.18359375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_tip rep=2 seconds=0.18460087401035707 mib=205.4375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_base rep=2 seconds=2.1059036730002845 mib=2531.54296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_v0173 rep=2 seconds=1.5386784250003984 mib=881.0390625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_first rep=2 seconds=0.04788466900936328 mib=131.0546875 matched=1 got=1 requested=1 exit=0 error=
+sample arm=readcon_db rep=2 seconds=11.544263572999625 mib=398.25390625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_eon rep=2 seconds=11.141744606997236 mib=383.90234375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon rep=2 seconds=0.3313872989965603 mib=263.0078125 matched=1 got=1 requested=1 exit=0 error=
+sample arm=eon_py rep=2 seconds=14.178514710991294 mib=2692.03515625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_eon_api rep=2 seconds=1.453992548 mib=1058.78515625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=conbin rep=2 seconds=0.0071855699934531 mib=146.86328125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=numpy rep=2 seconds=1.1883984470041469 mib=391.04296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=chemfiles rep=2 seconds=1.4821345800010022 mib=166.7734375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ovito rep=2 seconds=4.818025189000764 mib=171.85546875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_extxyz rep=2 seconds=7.848978939990047 mib=345.79296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=pymatgen rep=2 seconds=23.986926260011387 mib=2118.91015625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=h5py rep=2 seconds=0.5938565779943019 mib=758.7265625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=mdanalysis rep=2 seconds=34.65041544599808 mib=139.296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=mdanalysis rep=3 seconds=34.392623892010306 mib=139.28125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=h5py rep=3 seconds=0.5834618919907371 mib=758.60546875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=pymatgen rep=3 seconds=23.988123928007553 mib=2119.04296875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_extxyz rep=3 seconds=7.9501316730020335 mib=345.8359375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ovito rep=3 seconds=4.917159599004663 mib=171.90625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=chemfiles rep=3 seconds=1.4448050119972322 mib=165.80859375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=numpy rep=3 seconds=1.2091595990059432 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=conbin rep=3 seconds=0.007425134986988269 mib=146.86328125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_eon_api rep=3 seconds=1.472322478 mib=1058.69921875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon_py rep=3 seconds=14.791915018999134 mib=2692.16015625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon rep=3 seconds=0.2886343250138452 mib=263.03125 matched=1 got=1 requested=1 exit=0 error=
+sample arm=ase_eon rep=3 seconds=11.082436950993724 mib=383.75390625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_db rep=3 seconds=11.459895817999495 mib=398.32421875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_first rep=3 seconds=0.0312499290012056 mib=131.12109375 matched=1 got=1 requested=1 exit=0 error=
+sample arm=readcon_v0173 rep=3 seconds=1.450783631997183 mib=881.06640625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_base rep=3 seconds=1.9509638059971621 mib=2531.68359375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_tip rep=3 seconds=0.18281769599707332 mib=205.421875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_tip rep=4 seconds=0.17172493399993982 mib=205.30078125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_base rep=4 seconds=1.984073849991546 mib=2531.51953125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_v0173 rep=4 seconds=1.4983139809919521 mib=881.0546875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_first rep=4 seconds=0.030792108998866752 mib=131.109375 matched=1 got=1 requested=1 exit=0 error=
+sample arm=readcon_db rep=4 seconds=11.482272656998248 mib=398.27734375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_eon rep=4 seconds=11.018350411992287 mib=383.8984375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon rep=4 seconds=0.28806685500603635 mib=263.04296875 matched=1 got=1 requested=1 exit=0 error=
+sample arm=eon_py rep=4 seconds=14.703344701003516 mib=2692.03515625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_eon_api rep=4 seconds=1.457414004 mib=1058.77734375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=conbin rep=4 seconds=0.021477435002452694 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=numpy rep=4 seconds=1.1893453959928593 mib=390.98828125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=chemfiles rep=4 seconds=1.4754595830017934 mib=166.7109375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ovito rep=4 seconds=4.796165359992301 mib=171.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_extxyz rep=4 seconds=7.6759870310052065 mib=345.86328125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=pymatgen rep=4 seconds=23.916420887995628 mib=2119.015625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=h5py rep=4 seconds=0.5699807619967032 mib=758.6171875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=mdanalysis rep=4 seconds=34.25865618699754 mib=139.37109375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=mdanalysis rep=5 seconds=36.612148287997115 mib=139.39453125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=h5py rep=5 seconds=0.6509682850009995 mib=758.63671875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=pymatgen rep=5 seconds=25.152864989999216 mib=2118.9765625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ase_extxyz rep=5 seconds=7.737602048000554 mib=345.76953125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=ovito rep=5 seconds=4.8158678650070215 mib=172.14453125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=chemfiles rep=5 seconds=1.4569824229984079 mib=166.7890625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=numpy rep=5 seconds=1.2075580939999782 mib=390.98046875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=conbin rep=5 seconds=0.0077908050006954 mib=146.80078125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_eon_api rep=5 seconds=1.473422465 mib=1058.69921875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon_py rep=5 seconds=14.760662590997526 mib=2692.16015625 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=eon rep=5 seconds=0.28316212400386576 mib=263.01171875 matched=1 got=1 requested=1 exit=0 error=
+sample arm=ase_eon rep=5 seconds=10.91247497999575 mib=383.89453125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_db rep=5 seconds=11.481087382999249 mib=398.3203125 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_first rep=5 seconds=0.03289921999385115 mib=131.109375 matched=1 got=1 requested=1 exit=0 error=
+sample arm=readcon_v0173 rep=5 seconds=1.635301227986929 mib=881.046875 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_base rep=5 seconds=2.0561125520034693 mib=2531.65234375 matched=100000 got=100000 requested=100000 exit=0 error=
+sample arm=readcon_tip rep=5 seconds=0.18392189299629536 mib=205.17578125 matched=100000 got=100000 requested=100000 exit=0 error=
+summary arm=readcon_tip scope=all_frames n_rep=6 median_s=1.778926005e-01 iqr_s=1.161026700e-02 mib_median=205.361328 mib_iqr=0.214844 requested=100000 matched=100000 failed=0 exit=0
+summary arm=readcon_base scope=all_frames n_rep=6 median_s=1.967518828e+00 iqr_s=9.278421851e-02 mib_median=2531.597656 mib_iqr=0.150391 requested=100000 matched=100000 failed=0 exit=0
+summary arm=readcon_v0173 scope=all_frames n_rep=6 median_s=1.508949556e+00 iqr_s=5.729295700e-02 mib_median=881.050781 mib_iqr=0.013672 requested=100000 matched=100000 failed=0 exit=0
+summary arm=readcon_first scope=first_frame n_rep=6 median_s=3.207457450e-02 iqr_s=1.323174276e-02 mib_median=131.109375 mib_iqr=0.041016 requested=1 matched=1 failed=0 exit=0
+summary arm=readcon_db scope=all_frames n_rep=6 median_s=1.151326811e+01 iqr_s=1.190742575e-01 mib_median=398.265625 mib_iqr=0.090820 requested=100000 matched=100000 failed=0 exit=0
+summary arm=ase_eon scope=all_frames n_rep=6 median_s=1.097313846e+01 iqr_s=1.500774527e-01 mib_median=383.896484 mib_iqr=0.062500 requested=100000 matched=100000 failed=0 exit=0
+summary arm=eon scope=first_frame n_rep=6 median_s=2.901932430e-01 iqr_s=1.721499424e-02 mib_median=263.021484 mib_iqr=0.028320 requested=1 matched=1 failed=0 exit=0
+summary arm=eon_py scope=all_frames n_rep=6 median_s=1.461845212e+01 iqr_s=3.192717070e-01 mib_median=2692.068359 mib_iqr=0.110352 requested=100000 matched=100000 failed=0 exit=0
+summary arm=readcon_eon_api scope=readcon_through_eon n_rep=6 median_s=1.468019723e+00 iqr_s=1.415772300e-02 mib_median=1058.781250 mib_iqr=0.066406 requested=100000 matched=100000 failed=0 exit=0
+summary arm=conbin scope=all_frames n_rep=6 median_s=7.607969994e-03 iqr_s=3.214745258e-03 mib_median=146.832031 mib_iqr=0.062500 requested=100000 matched=100000 failed=0 exit=0
+summary arm=numpy scope=all_frames n_rep=6 median_s=1.203558854e+00 iqr_s=1.686027226e-02 mib_median=390.980469 mib_iqr=0.005859 requested=100000 matched=100000 failed=0 exit=0
+summary arm=chemfiles scope=all_frames n_rep=6 median_s=1.469221794e+00 iqr_s=1.730055175e-02 mib_median=166.742188 mib_iqr=0.302734 requested=100000 matched=100000 failed=0 exit=0
+summary arm=ovito scope=all_frames n_rep=6 median_s=4.806016612e+00 iqr_s=3.104221700e-02 mib_median=171.880859 mib_iqr=0.156250 requested=100000 matched=100000 failed=0 exit=0
+summary arm=ase_extxyz scope=all_frames n_rep=6 median_s=7.782163847e+00 iqr_s=1.153623587e-01 mib_median=345.832031 mib_iqr=0.034180 requested=100000 matched=100000 failed=0 exit=0
+summary arm=pymatgen scope=all_frames n_rep=6 median_s=2.421033198e+01 iqr_s=8.975943130e-01 mib_median=2118.996094 mib_iqr=0.109375 requested=100000 matched=100000 failed=0 exit=0
+summary arm=h5py scope=all_frames n_rep=6 median_s=5.867561120e-01 iqr_s=1.955397200e-02 mib_median=758.650391 mib_iqr=0.085938 requested=100000 matched=100000 failed=0 exit=0
+summary arm=mdanalysis scope=all_frames n_rep=6 median_s=3.455198183e+01 iqr_s=3.279949990e-01 mib_median=139.382812 mib_iqr=0.105469 requested=100000 matched=100000 failed=0 exit=0
 exit_code 0
