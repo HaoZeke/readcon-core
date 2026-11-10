@@ -4476,6 +4476,13 @@ mod missed_branch_tests {
         assert!(indexed.next_line().is_none());
         assert_eq!(indexed.line_no, 1);
 
+        let mut indexed_peek = MemchrLines::new("ab\ncd\n");
+        indexed_peek.newlines = Some(vec![2, 5]);
+        assert_eq!(indexed_peek.peek_line(), Some("ab"));
+        indexed_peek.clear_peek();
+        assert_eq!(indexed_peek.pos, 0);
+        assert_eq!(indexed_peek.peek_line(), Some("ab"));
+
         let mut tail = MemchrLines::new("ab\ncd");
         tail.newlines = Some(vec![2]);
         assert_eq!(tail.next_line(), Some("ab"));
