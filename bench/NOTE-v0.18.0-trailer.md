@@ -1,8 +1,11 @@
 # Published tag trailer
 
-Commit d5e77f997438557c72c3b3e360d446310f85d6b7 is the public v0.18.0 tag.
-That commit carries this trailer: `Co-authored-by: Rohit Goswami <rgoswami@ieee.org>`.
-The trailer names Rohit Goswami, who is also the author of the commit.
-Rewriting the commit would move the published tag, so the tag stays where it is.
-Twelve of the eighteen public commits on main after that tag also carry Co-authored-by.
+The public v0.18.0 tag commit names its author a second time in a trailer.
+The trailer names the same person as the author.
+Rewriting that commit would move the published tag, so the tag stays where it is.
+Twelve of the eighteen public commits on main after that tag also carry the same trailer.
 Those public commits stay as published.
+
+Coverage receipts keep the tool text.
+If a receipt still contains an absolute path, its header says so.
+The path is left in place.
