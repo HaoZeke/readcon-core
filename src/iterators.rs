@@ -3852,6 +3852,7 @@ mod phased_read_tests {
         }
     }
 
+    #[cfg(feature = "parallel")]
     #[test]
     fn equal_span_boundaries_match_the_serial_walk() {
         let text = fixture("cuh2.con").repeat(8);
@@ -4125,10 +4126,13 @@ mod one_thread_and_numa {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("tiny.con");
         std::fs::copy("resources/test/tiny_cuh2.con", &path).unwrap();
-        let frames = read_all_frames_indexed(&path, Some(1)).unwrap();
-        assert!(!frames.is_empty());
-        let again = read_all_frames_indexed(&path, None).unwrap();
-        assert_eq!(again.len(), frames.len());
+        #[cfg(feature = "parallel")]
+        {
+            let frames = read_all_frames_indexed(&path, Some(1)).unwrap();
+            assert!(!frames.is_empty());
+            let again = read_all_frames_indexed(&path, None).unwrap();
+            assert_eq!(again.len(), frames.len());
+        }
         let nl = [3usize, 7];
         assert_eq!(line_count(&nl, 0), 0);
         assert_eq!(line_count(&nl, 8), 2);
@@ -4390,25 +4394,28 @@ mod one_thread_and_numa {
 
     #[test]
     fn cold_span_and_slab_arms_return_the_documented_value() {
-        let one = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
-        assert!(super::equal_span_boundaries(&one, 1).is_none());
-        assert!(super::equal_span_boundaries(b"a", 4).is_none());
-        assert!(super::equal_span_boundaries(b"not a frame", 2).is_none());
-        assert!(super::equal_span_boundaries(&one, 2).is_none());
-        let mut mixed = one.clone();
-        mixed.extend(std::iter::repeat(b'x').take(one.len()));
-        assert!(super::equal_span_boundaries(&mixed, 2).is_none());
-        let repeated = {
-            let mut buf = Vec::new();
-            for _ in 0..4 {
-                buf.extend_from_slice(&one);
-            }
-            buf
-        };
-        let starts = super::equal_span_boundaries(&repeated, 64).expect("many workers");
-        assert_eq!(starts.len(), 4);
-        let again = super::equal_span_boundaries(&repeated, 2).expect("cached starts");
-        assert_eq!(again, starts);
+        #[cfg(feature = "parallel")]
+        {
+            let one = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+            assert!(super::equal_span_boundaries(&one, 1).is_none());
+            assert!(super::equal_span_boundaries(b"a", 4).is_none());
+            assert!(super::equal_span_boundaries(b"not a frame", 2).is_none());
+            assert!(super::equal_span_boundaries(&one, 2).is_none());
+            let mut mixed = one.clone();
+            mixed.extend(std::iter::repeat(b'x').take(one.len()));
+            assert!(super::equal_span_boundaries(&mixed, 2).is_none());
+            let repeated = {
+                let mut buf = Vec::new();
+                for _ in 0..4 {
+                    buf.extend_from_slice(&one);
+                }
+                buf
+            };
+            let starts = super::equal_span_boundaries(&repeated, 64).expect("many workers");
+            assert_eq!(starts.len(), 4);
+            let again = super::equal_span_boundaries(&repeated, 2).expect("cached starts");
+            assert_eq!(again, starts);
+        }
 
         let mut empty = [];
         super::first_touch_f64(&mut empty, 4);
@@ -4632,9 +4639,12 @@ mod missed_branch_tests {
         assert_eq!(positions.n_frames, 400);
         assert_eq!(positions.values.len(), 400 * 3);
         assert_eq!(positions.values[0], 0.0);
-        let indexed = read_all_frames_indexed(&path, Some(1)).unwrap();
-        assert_eq!(indexed.len(), 400);
-        assert_eq!(indexed[0].atom_data[0].x, 0.0);
+        #[cfg(feature = "parallel")]
+        {
+            let indexed = read_all_frames_indexed(&path, Some(1)).unwrap();
+            assert_eq!(indexed.len(), 400);
+            assert_eq!(indexed[0].atom_data[0].x, 0.0);
+        }
         let serial = read_all_frames_phased(&path, None).unwrap();
         assert!(serial.phases.mapped);
         assert_eq!(serial.frames.len(), 400);
@@ -4707,6 +4717,7 @@ mod missed_branch_tests {
         assert_ne!(both, 0);
         let mut extra = text.into_bytes();
         extra.push(b'x');
+        #[cfg(feature = "parallel")]
         assert!(equal_span_boundaries(&extra, 2).is_none());
         let peeked_text = one_frame();
         let mut peeked = ConFrameIterator::new(&peeked_text);
@@ -4786,14 +4797,17 @@ H";
         let frame = again.next().unwrap().unwrap();
         assert_eq!(&*frame.atom_data[0].symbol, "H");
 
-        let two = super::finish_results(None, vec![Ok(frame.clone()), Ok(frame)]).unwrap();
-        assert_eq!(two.len(), 2);
+        #[cfg(feature = "parallel")]
+        {
+            let two = super::finish_results(None, vec![Ok(frame.clone()), Ok(frame.clone())]).unwrap();
+            assert_eq!(two.len(), 2);
 
-        let first = super::arithmetic_starts(4, 3);
-        assert_eq!(first, vec![0, 4, 8]);
-        super::recycle_starts(first);
-        let second = super::arithmetic_starts(4, 3);
-        assert_eq!(second, vec![0, 4, 8]);
+            let first = super::arithmetic_starts(4, 3);
+            assert_eq!(first, vec![0, 4, 8]);
+            super::recycle_starts(first);
+            let second = super::arithmetic_starts(4, 3);
+            assert_eq!(second, vec![0, 4, 8]);
+        }
 
         use std::sync::atomic::{AtomicI64, Ordering};
         static OPEN_MODE: AtomicI64 = AtomicI64::new(-1);
@@ -4816,21 +4830,24 @@ H";
         READ_MODE.store(8, Ordering::Relaxed);
         assert_eq!(super::sample_llc_from(open_mode, read_mode, close_mode), 9);
 
-        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _guard = super::START_CACHE.lock().unwrap();
-            panic!("poison the start cache");
-        }));
-        super::recycle_starts(vec![0, 4]);
-        super::START_CACHE.clear_poison();
-        assert!(super::START_CACHE.lock().is_ok());
+        #[cfg(feature = "parallel")]
+        {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _guard = super::START_CACHE.lock().unwrap();
+                panic!("poison the start cache");
+            }));
+            super::recycle_starts(vec![0, 4]);
+            super::START_CACHE.clear_poison();
+            assert!(super::START_CACHE.lock().is_ok());
 
-        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _guard = super::slot_cache().lock().unwrap();
-            panic!("poison the slot cache");
-        }));
-        super::recycle_slot_buf(Vec::new());
-        super::slot_cache().clear_poison();
-        assert!(super::slot_cache().lock().is_ok());
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _guard = super::slot_cache().lock().unwrap();
+                panic!("poison the slot cache");
+            }));
+            super::recycle_slot_buf(Vec::new());
+            super::slot_cache().clear_poison();
+            assert!(super::slot_cache().lock().is_ok());
+        }
 
         let marked = one_frame();
         let mut held = ConFrameIterator::new(&marked);

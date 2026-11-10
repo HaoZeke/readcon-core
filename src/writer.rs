@@ -1447,29 +1447,35 @@ mod section_arity_tests {
             writer.flush().unwrap();
         }
         assert!(std::fs::metadata(&gz_prec).unwrap().len() > 0);
-        let zst = dir.join("out.con.zst");
+        #[cfg(feature = "zstd")]
         {
-            let mut writer = super::ConFrameWriter::from_path_zstd(&zst).unwrap();
-            writer.write_frame(&frame).unwrap();
-            writer.flush().unwrap();
+            let zst = dir.join("out.con.zst");
+            {
+                let mut writer = super::ConFrameWriter::from_path_zstd(&zst).unwrap();
+                writer.write_frame(&frame).unwrap();
+                writer.flush().unwrap();
+            }
+            assert!(std::fs::metadata(&zst).unwrap().len() > 0);
+            let zst_prec = dir.join("prec.con.zst");
+            {
+                let mut writer =
+                    super::ConFrameWriter::from_path_zstd_with_precision(&zst_prec, 3).unwrap();
+                writer.write_frame(&frame).unwrap();
+                writer.flush().unwrap();
+            }
+            assert!(std::fs::metadata(&zst_prec).unwrap().len() > 0);
         }
-        assert!(std::fs::metadata(&zst).unwrap().len() > 0);
-        let zst_prec = dir.join("prec.con.zst");
-        {
-            let mut writer =
-                super::ConFrameWriter::from_path_zstd_with_precision(&zst_prec, 3).unwrap();
-            writer.write_frame(&frame).unwrap();
-            writer.flush().unwrap();
-        }
-        assert!(std::fs::metadata(&zst_prec).unwrap().len() > 0);
 
         let missing = dir.join("missing").join("x.con");
         assert!(super::ConFrameWriter::from_path(&missing).is_err());
         assert!(super::ConFrameWriter::from_path_with_precision(&missing, 2).is_err());
         assert!(super::ConFrameWriter::from_path_gzip(&missing).is_err());
         assert!(super::ConFrameWriter::from_path_gzip_with_precision(&missing, 2).is_err());
-        assert!(super::ConFrameWriter::from_path_zstd(&missing).is_err());
-        assert!(super::ConFrameWriter::from_path_zstd_with_precision(&missing, 2).is_err());
+        #[cfg(feature = "zstd")]
+        {
+            assert!(super::ConFrameWriter::from_path_zstd(&missing).is_err());
+            assert!(super::ConFrameWriter::from_path_zstd_with_precision(&missing, 2).is_err());
+        }
 
         let mut odd = frame.clone();
         odd.atom_data.clear();
@@ -1490,11 +1496,14 @@ mod section_arity_tests {
             let err = writer.write_frame(&odd).unwrap_err();
             assert!(err.to_string().contains("per-type"), "{err}");
         }
-        let odd_zst = dir.join("odd.con.zst");
+        #[cfg(feature = "zstd")]
         {
-            let mut writer = super::ConFrameWriter::from_path_zstd(&odd_zst).unwrap();
-            let err = writer.write_frame(&odd).unwrap_err();
-            assert!(err.to_string().contains("per-type"), "{err}");
+            let odd_zst = dir.join("odd.con.zst");
+            {
+                let mut writer = super::ConFrameWriter::from_path_zstd(&odd_zst).unwrap();
+                let err = writer.write_frame(&odd).unwrap_err();
+                assert!(err.to_string().contains("per-type"), "{err}");
+            }
         }
         {
             let mut writer = super::ConFrameWriter::from_path("/dev/full").unwrap();
