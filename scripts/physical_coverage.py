@@ -52,6 +52,42 @@ def _count(value: object, where: str) -> int:
     return value
 
 
+def lines_from_segments(segments: list, source: str) -> dict[int, int]:
+    """Expand segments to physical lines the way ``llvm-cov show`` does.
+
+    A counted segment covers every line from its own line through the next
+    segment's line, inclusive. A later count on the same line replaces a
+    lower one. A gap segment does not open a line range. A count of zero
+    still marks those lines executable.
+    """
+    if not isinstance(segments, list):
+        raise ScoreError(f"{source}: segments missing")
+    parsed = []
+    for index, segment in enumerate(segments):
+        if not isinstance(segment, list) or len(segment) < 4:
+            raise ScoreError(f"{source}: short segment {index}")
+        line = segment[0]
+        if isinstance(line, bool) or not isinstance(line, int):
+            raise ScoreError(f"{source}: bad line {line!r}")
+        has = segment[3]
+        gap = segment[5] if len(segment) > 5 else False
+        count = 0
+        if has is True and gap is not True:
+            count = _count(segment[2], f"{source}:{line}")
+        parsed.append((line, segment[1], has is True and gap is not True, count))
+    parsed.sort(key=lambda item: (item[0], item[1]))
+    lines: dict[int, int] = {}
+    for index, (line, _col, counted, count) in enumerate(parsed):
+        if not counted:
+            continue
+        # Segments are ordered by line, so the next point is not earlier.
+        end = parsed[index + 1][0] if index + 1 < len(parsed) else line
+        for number in range(line, end + 1):
+            if number not in lines or count > lines[number]:
+                lines[number] = count
+    return lines
+
+
 def line_hits(export: dict, source: str) -> dict[int, int]:
     """Maximum count of each physical line of ``source`` in one export."""
     found = False
@@ -65,21 +101,13 @@ def line_hits(export: dict, source: str) -> dict[int, int]:
             raise ScoreError(f"{source}: export files are not a list")
         for record in files:
             name = record.get("filename")
-            if not isinstance(name, str) or not name.endswith(source):
+            if not isinstance(name, str) or not (
+                name == source or name.endswith("/" + source)
+            ):
                 continue
             found = True
-            segments = record.get("segments")
-            if not isinstance(segments, list):
-                raise ScoreError(f"{source}: segments missing in {name}")
-            for index, segment in enumerate(segments):
-                if not isinstance(segment, list) or len(segment) < 4:
-                    raise ScoreError(f"{source}: short segment {index}")
-                if segment[3] is not True:
-                    continue
-                line = segment[0]
-                if isinstance(line, bool) or not isinstance(line, int):
-                    raise ScoreError(f"{source}: bad line {line!r}")
-                count = _count(segment[2], f"{source}:{line}")
+            expanded = lines_from_segments(record.get("segments"), source)
+            for line, count in expanded.items():
                 if line not in lines or count > lines[line]:
                     lines[line] = count
     if not found:

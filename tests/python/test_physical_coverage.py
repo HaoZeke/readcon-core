@@ -38,19 +38,60 @@ def test_display_matches_the_observed_rounding():
 
 
 def test_union_keeps_one_line_and_the_highest_count():
+    # A counted segment covers through the next segment's line.
+    # Line 13 is zero in both objects, so it stays a miss.
+    # Line 10 has counts 0 and 5; the line is covered.
     first = _export(
         "src/ffi.rs",
-        [[10, 1, 0, True], [10, 4, 5, True], [11, 1, 0, False], [13, 1, 0, True]],
+        [
+            [10, 1, 0, True, True, False],
+            [10, 4, 5, True, True, False],
+            [11, 1, 0, False, False, False],
+            [13, 1, 0, True, True, False],
+            [14, 1, 0, False, False, False],
+        ],
     )
-    second = _export("src/ffi.rs", [[10, 1, 0, True], [12, 1, 3, True], [13, 1, 0, True]])
+    second = _export(
+        "src/ffi.rs",
+        [
+            [10, 1, 0, True, True, False],
+            [12, 1, 3, True, True, False],
+            [12, 8, 3, False, False, False],
+            [13, 1, 0, True, True, False],
+            [14, 1, 0, False, False, False],
+        ],
+    )
     scored = union_lines([first, second], ["src/ffi.rs"])
-    # Line 10 is covered by the count of 5. Line 12 is covered by 3.
-    # The gap segment on line 11 is not an executable line.
-    assert scored["src/ffi.rs"]["hit"] == 2
-    assert scored["src/ffi.rs"]["total"] == 3
-    assert scored["src/ffi.rs"]["miss"] == [13]
+    assert scored["src/ffi.rs"]["miss"] == [13, 14]
+    assert scored["src/ffi.rs"]["hit"] == scored["src/ffi.rs"]["total"] - 2
     hits = line_hits(first, "src/ffi.rs")
     assert hits[10] == 5
+    assert hits[11] == 5
+    assert hits[13] == 0
+    assert hits[14] == 0
+
+
+def test_multiline_overlap_gap_and_wrong_source():
+    spanned = _export(
+        "src/ffi.rs",
+        [
+            [1, 1, 4, True, True, False],
+            [3, 1, 9, True, True, False],
+            [3, 8, 9, False, False, False],
+            [8, 1, 0, True, True, True],
+            [10, 1, 0, False, False, False],
+        ],
+    )
+    hits = line_hits(spanned, "src/ffi.rs")
+    assert hits[1] == 4
+    assert hits[2] == 4
+    assert hits[3] == 9
+    assert 8 not in hits
+    assert 9 not in hits
+    assert 10 not in hits
+    wrong = _export("src/ffi.rs.old", [[1, 1, 1, True, True, False]])
+    with pytest.raises(ScoreError, match="missing source"):
+        line_hits(wrong, "src/ffi.rs")
 
 
 def test_rejects_a_missing_source_object_or_unknown_count(tmp_path: Path):
