@@ -1,0 +1,6 @@
+corpus31: 143 files, 143 match the manifest, 0 disagreements, 0 entries not followed, 0 files where thread settings differ
+  class-open: 21 of 21 match
+  explicit: 95 of 95 match
+  open: 23 of 23 match
+  optional: 4 of 4 match
+paper/cpc/data/corpus31-results.json, corpus31_macros.tex and corpus31_table.tex match this run

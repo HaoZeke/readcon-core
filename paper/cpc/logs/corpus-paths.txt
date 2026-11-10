@@ -1,0 +1,5 @@
+corpus paths: 165 files, 9393 of 9393 reads match the manifest over 57 entry points and thread settings, 0 differ
+  wheel: 3783 of 3783
+  clib: 2805 of 2805
+  clib_parallel: 2805 of 2805
+paper/cpc/data/corpus_paths.json, corpus_paths_macros.tex and corpus_paths_table.tex match this run

@@ -1,1 +1,18 @@
-unslop binary not present
+Line-by-line review of the changed prose against the unslop rules.
+There is no unslop executable. Each rule was applied to rg_main.tex,
+rg_supp.tex and CPC-FORM.md.
+
+3 Superficial -ing phrases: none added.
+5 Vague attributions: none added.
+7 AI vocabulary: "holds" was replaced by "contains" in the form.
+8 serves as / stands as / boasts: none added. "stands alone" is the CPC template sentence and was left.
+9 Not just X but Y: none.
+13 Em dash: the CRediT taxonomy names keep their dashes. No other em dash was added.
+23 Filler: none added.
+24 Hedging: none added.
+29 The two sentences "readcon does not read XYZ" and "readcon does not read HDF5" are now one sentence.
+32 Process talk ("so a maintainer can apply it after approval", "Until that landing") was removed.
+The false claim that both sides of the positions ratio are positions paths was removed.
+read_positions is stated as an absolute time.
+
+No other added sentence matches rules 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 22, 25, 26, 27, 28, 30, 31 or 33.

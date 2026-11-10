@@ -1,0 +1,10 @@
+21000 cases from 132 corpus31 files: 20985 same, 15 differ, 0 unexplained (readcon 0.18.1, library d94b6ad922e9)
+  seed 1: 3000 same, 0 differ
+  seed 2: 2998 same, 2 differ
+  seed 3: 2997 same, 3 differ
+  seed 4: 2999 same, 1 differ
+  seed 5: 2997 same, 3 differ
+  seed 6: 2998 same, 2 differ
+  seed 7: 2996 same, 4 differ
+     15 count line
+mutant_differential.json and mutant_macros.tex match this run

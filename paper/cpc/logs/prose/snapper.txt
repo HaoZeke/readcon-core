@@ -1,0 +1,9 @@
+snapper -w 72 --diff -f latex paper/cpc/src/rg_main.tex
+exit 0
+diff lines 0
+no render-check stderr
+snapper -w 72 --diff -f latex paper/cpc/src/rg_supp.tex
+exit 0
+diff lines 0
+The four snapper:off regions added in v9 were removed.
+The inherited snapper:off in the supplement preamble and on the algorithm stays.

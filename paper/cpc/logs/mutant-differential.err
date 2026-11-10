@@ -1,0 +1,6 @@
+python-env/lib/python3.12/site-packages/ovito/_extensions/analysis.py:2: UserWarning: Did you accidentally install the OVITO package from the PyPI repository in an Anaconda/Miniconda Python interpreter using the 'pip' command? This will likely lead to conflicts with existing libraries in the Anaconda environment, and import of the OVITO module may fail with an error related to the Qt framework. To fix this, please uninstall the ovito pip package by running 'pip uninstall -y ovito PySide6' and then install the OVITO Anaconda package provided by OVITO GmbH. Visit https://docs.ovito.org/python/introduction/getting_started/installation.html for further instructions. If you would rather like to ignore this warning message, add the following code to the top of your Python script:
+
+  import warnings
+  warnings.filterwarnings('ignore', message='.*OVITO.*PyPI')
+
+  import ovito._extensions.pyscript
