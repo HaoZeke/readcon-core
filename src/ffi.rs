@@ -615,6 +615,7 @@ pub struct CAtom {
 pub struct CConFrameIterator {
     iterator: *mut ConFrameIterator<'static>,
     file_contents: *mut String,
+    last_error: *mut c_char,
 }
 
 /// Build a path/buffer-backed C iterator from an owned CON text buffer.
@@ -626,6 +627,7 @@ fn c_iterator_from_owned_string(contents: String) -> *mut CConFrameIterator {
     let c_iterator = Box::new(CConFrameIterator {
         iterator: Box::into_raw(iterator),
         file_contents: file_contents_ptr,
+        last_error: ptr::null_mut(),
     });
     Box::into_raw(c_iterator)
 }
@@ -727,6 +729,67 @@ pub unsafe extern "C" fn con_frame_iterator_next(
     match iter.next() {
         Some(Ok(frame)) => Box::into_raw(Box::new(frame)) as *mut RKRConFrame,
         _ => ptr::null_mut(),
+    }
+}
+
+/// Next frame as a status code.
+///
+/// `0` stores one frame in `frame_out`. `-14` is the end of the file.
+/// Any other code is a parse error; [`con_frame_iterator_error_message`]
+/// names its class.
+///
+/// # Safety
+/// `iterator` and `frame_out` must be valid. The caller owns `*frame_out`.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn con_frame_iterator_next_status(
+    iterator: *mut CConFrameIterator,
+    frame_out: *mut *mut RKRConFrame,
+) -> i32 {
+    if iterator.is_null() || frame_out.is_null() {
+        return -1;
+    }
+    let holder = unsafe { &mut *iterator };
+    if !holder.last_error.is_null() {
+        unsafe {
+            let _ = CString::from_raw(holder.last_error);
+        }
+        holder.last_error = ptr::null_mut();
+    }
+    let iter = unsafe { &mut *holder.iterator };
+    match iter.next() {
+        Some(Ok(frame)) => {
+            unsafe {
+                *frame_out = Box::into_raw(Box::new(frame)) as *mut RKRConFrame;
+            }
+            0
+        }
+        None => -14,
+        Some(Err(err)) => {
+            let text = format!("{}: {err}", err.class_name());
+            holder.last_error = CString::new(text.replace('\0', ""))
+                .unwrap_or_else(|_| CString::new("error").expect("static"))
+                .into_raw();
+            -4
+        }
+    }
+}
+
+/// The class and message of the last [`con_frame_iterator_next_status`] error.
+///
+/// # Safety
+/// `iterator` must be valid. The returned pointer is owned by the iterator.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn con_frame_iterator_error_message(
+    iterator: *mut CConFrameIterator,
+) -> *const c_char {
+    if iterator.is_null() {
+        return c"null iterator".as_ptr();
+    }
+    let holder = unsafe { &*iterator };
+    if holder.last_error.is_null() {
+        c"no error".as_ptr()
+    } else {
+        holder.last_error
     }
 }
 
@@ -981,6 +1044,9 @@ pub unsafe extern "C" fn free_con_frame_iterator(iterator: *mut CConFrameIterato
         let c_iterator_box = Box::from_raw(iterator);
         let _ = Box::from_raw(c_iterator_box.iterator);
         let _ = Box::from_raw(c_iterator_box.file_contents);
+        if !c_iterator_box.last_error.is_null() {
+            let _ = CString::from_raw(c_iterator_box.last_error);
+        }
     }
 }
 //=============================================================================

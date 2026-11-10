@@ -396,7 +396,9 @@ fn parse_vector_row(
 /// Field separator inside a coordinate row. Newline ends the row.
 #[inline(always)]
 fn is_field_ws(b: u8) -> bool {
-    matches!(b, b' ' | b'\t' | b'\r' | 0x0c)
+    // Separators are spaces and tabs (CON-token.3). A form feed or a
+    // carriage return that does not end the line is part of the field.
+    matches!(b, b' ' | b'\t')
 }
 
 #[inline(always)]
@@ -568,7 +570,7 @@ type ParsedCoord = ([f64; 3], [bool; 3], u64);
 /// id are parsed in that single scan. The success path does not build error
 /// strings; those stay on the cold fallback.
 #[inline(always)]
-fn parse_coord_fields(
+pub(crate) fn parse_coord_fields(
     bytes: &[u8],
     i: usize,
     spec_version: u32,
@@ -842,12 +844,33 @@ fn label_has_prefix(line: &str, prefix: &str) -> bool {
     true
 }
 
-fn token_count(line: &str) -> usize {
+pub(crate) fn token_count(line: &str) -> usize {
     line.split_ascii_whitespace().count()
 }
 
 fn json_u64(value: &Value) -> Option<u64> {
-    value.as_u64()
+    if let Some(n) = value.as_u64() {
+        return Some(n);
+    }
+    // 3.0 and 3e0 are JSON numbers that name an integer (CON-line2.4).
+    let f = value.as_f64()?;
+    if f.is_finite() && f >= 0.0 && f <= u64::MAX as f64 && f.fract() == 0.0 {
+        Some(f as u64)
+    } else {
+        None
+    }
+}
+
+fn json_nonneg_integer(value: &Value) -> bool {
+    if json_u64(value).is_some() {
+        return true;
+    }
+    // A minor has no upper bound (CON-line2.7). 2^64 does not fit in u64
+    // and still names a non-negative integer.
+    let Some(f) = value.as_f64() else {
+        return false;
+    };
+    f.is_finite() && f >= 0.0 && f.fract() == 0.0
 }
 
 fn validate_section_arity_value(value: &Value) -> Result<(), ParseError> {
@@ -884,10 +907,10 @@ pub(crate) fn parse_count_line(line: &str, n: usize) -> Result<Vec<usize>, Parse
     // the line is what turns a declared count of 2^64 into a multi-terabyte
     // buffer.
     if n > line.len() {
-        return Err(ParseError::InvalidCount(format!(
-            "declared {n} counts but the line has {} bytes",
-            line.len()
-        )));
+        return Err(ParseError::InvalidVectorLength {
+            expected: n,
+            found: line.split_whitespace().count(),
+        });
     }
     let mut values = Vec::with_capacity(n);
     for token in line.split_ascii_whitespace() {
@@ -1000,7 +1023,7 @@ pub fn validate_metadata_schema(
         match key.as_str() {
             meta::CON_SPEC_VERSION | meta::SECTIONS | meta::VALIDATE => {}
             meta::CON_SPEC_MINOR => {
-                if json_u64(value).is_none() {
+                if !json_nonneg_integer(value) {
                     return Err(metadata_json_error(
                         "con_spec_minor must be a JSON integer >= 0",
                     ));
@@ -1221,19 +1244,13 @@ pub fn parse_frame_header<'a>(
         .next()
         .ok_or(ParseError::IncompleteHeader)?
         .to_string();
-    // CON-file.2: a leading BOM is rejected. It would sit on line 1.
-    if prebox1.starts_with('\u{feff}') {
-        return Err(ParseError::ValidationError(
-            "file begins with a byte-order mark".into(),
-        ));
-    }
     let prebox2_raw = lines.next().ok_or(ParseError::IncompleteHeader)?;
 
     // Line 2: if it starts with '{', parse as JSON metadata (spec v2+).
     // Otherwise treat as a legacy (pre-v2) file with spec_version = 1.
     // One JSON object and nothing else (CON-line2.1). serde_json::from_str
     // rejects trailing junk after the value.
-    let trimmed = prebox2_raw.trim();
+    let trimmed = prebox2_raw.trim_matches([' ', '\t']);
     let (spec_version, metadata, sections, validate, sections_declared) =
         if trimmed.starts_with('{') {
             let json_val: serde_json::Value = serde_json::from_str(trimmed)
@@ -1259,6 +1276,15 @@ pub fn parse_frame_header<'a>(
             if ver == 0 || ver == 1 || ver > crate::CON_SPEC_VERSION {
                 return Err(ParseError::UnsupportedVersion(ver));
             }
+            if let Some(time) = json_obj
+                .get(meta::UNITS)
+                .and_then(|units| units.get("time"))
+                .and_then(|value| value.as_str())
+            {
+                crate::units::validate_unit_for_quantity("time", time).map_err(|err| {
+                    ParseError::InvalidUnits(format!("units.time: {err}"))
+                })?;
+            }
             if ver >= 3 {
                 match json_obj.get(meta::UNITS) {
                     Some(u) => crate::units::validate_v3_units_metadata(u)
@@ -1283,7 +1309,7 @@ pub fn parse_frame_header<'a>(
                 match k.as_str() {
                     meta::CON_SPEC_VERSION => {}
                     meta::CON_SPEC_MINOR => {
-                        if json_u64(v).is_none() {
+                        if !json_nonneg_integer(v) {
                             return Err(metadata_json_error(
                                 "con_spec_minor must be a JSON integer >= 0",
                             ));
@@ -1322,6 +1348,16 @@ pub fn parse_frame_header<'a>(
 
             // Strict-mode schema check fires only when the file requested
             // it. Hot-path parses (validate=false) skip the per-key match.
+            // Bonds of an unknown shape stay in the metadata (CON-bonds.3).
+            if let Some(pbc) = json_obj.get(meta::PBC) {
+                validate_pbc_metadata(pbc)?;
+            }
+            if let Some(lattice) = json_obj.get(meta::LATTICE_VECTORS) {
+                validate_lattice_vectors_metadata(lattice)?;
+            }
+            if let Some(energy) = json_obj.get(meta::ENERGY) {
+                validate_metadata_number(meta::ENERGY, energy)?;
+            }
             if validate {
                 validate_metadata_schema(json_obj)?;
             }
@@ -1335,6 +1371,11 @@ pub fn parse_frame_header<'a>(
 
     let boxl_vec = parse_line_of_n_f64(lines.next().ok_or(ParseError::IncompleteHeader)?, 3)?;
     let angles_vec = parse_line_of_n_f64(lines.next().ok_or(ParseError::IncompleteHeader)?, 3)?;
+    let boxl_arr: [f64; 3] = boxl_vec.as_slice().try_into().unwrap();
+    let angles_arr: [f64; 3] = angles_vec.as_slice().try_into().unwrap();
+    // Line 4 is checked before later lines (CON-error.4). A radicand at or
+    // below -1e-12 is not a cell, with or without validate.
+    crate::types::cell_vectors(boxl_arr, angles_arr)?;
     let postbox1 = lines
         .next()
         .ok_or(ParseError::IncompleteHeader)?
@@ -1366,15 +1407,11 @@ pub fn parse_frame_header<'a>(
         )?;
         (natms_per_type, masses_per_type)
     };
-    let boxl_arr: [f64; 3] = boxl_vec.as_slice().try_into().unwrap();
-    let angles_arr: [f64; 3] = angles_vec.as_slice().try_into().unwrap();
-    // A radicand at or below -1e-12 is not a cell, with or without validate.
-    crate::types::cell_vectors(boxl_arr, angles_arr)?;
     if validate {
         validate_header_geometry(&boxl_vec, &angles_vec)?;
         validate_masses(&masses_per_type)?;
     }
-    Ok(FrameHeader {
+    let header = FrameHeader {
         prebox_header: PreboxHeader {
             user: prebox1,
             metadata_line: prebox2,
@@ -1390,7 +1427,11 @@ pub fn parse_frame_header<'a>(
         sections,
         strict_validation: validate,
         sections_declared,
-    })
+    };
+    // A declared velocities section with no units.time fails on line 2,
+    // before a later label (CON-error.4, CON-units.11).
+    reject_velocities_without_time(&header)?;
+    Ok(header)
 }
 
 /// Parses a complete frame from a `.con` file, including its header and atomic data.
@@ -1487,33 +1528,37 @@ where
     L: LineStream<'a> + Iterator<Item = &'a str>,
 {
     let header = parse_frame_header(lines)?;
-    let validate = header.strict_validation;
     let total_atoms: usize = header.natms_per_type.iter().sum();
-    if let Some(left) = lines.bytes_remaining()
-        && total_atoms > left
-    {
-        return Err(ParseError::InvalidCount(format!(
-            "declared {total_atoms} atoms but only {left} bytes remain"
-        )));
-    }
+    let alloc_atoms = match lines.bytes_remaining() {
+        Some(left) if total_atoms > left => left,
+        _ => total_atoms,
+    };
     use crate::storage_dtype::{ElementKind, FloatArray2, StorageDtypes};
     let dt = StorageDtypes::from_metadata(&header.metadata).unwrap_or_default();
     let f64_positions = dt.positions == ElementKind::Float64;
-    let mut pos_flat = Vec::with_capacity(total_atoms.saturating_mul(3));
+    let mut pos_flat = Vec::with_capacity(alloc_atoms.saturating_mul(3));
     let mut positions_other = if f64_positions {
         None
     } else {
-        Some(FloatArray2::zeros(dt.positions, total_atoms, 3))
+        Some(FloatArray2::zeros(dt.positions, alloc_atoms, 3))
     };
-    let mut ids = Vec::with_capacity(total_atoms);
-    let mut atom_data: Vec<AtomDatum> = Vec::with_capacity(total_atoms);
+    let mut ids = Vec::with_capacity(alloc_atoms);
+    let mut atom_data: Vec<AtomDatum> = Vec::with_capacity(alloc_atoms);
 
     let mut global_atom_idx: u64 = 0;
     for (type_idx, num_atoms) in header.natms_per_type.iter().enumerate() {
         let symbol_line = lines.next().ok_or(ParseError::IncompleteFrame)?;
         let symbol: Arc<str> = Arc::from(symbol_line.trim());
         let coord_label = lines.next().ok_or(ParseError::IncompleteFrame)?;
-        if validate {
+        // The recorded reading checks a coordinate label in every mode.
+        // The symbol check is CON-validate.4 and runs only in that mode.
+        let expected_label = format!("Coordinates of Component {}", type_idx + 1);
+        if !labels_equal(coord_label, &expected_label) {
+            return Err(ParseError::ValidationError(format!(
+                "expected coordinate label {expected_label:?}, found {coord_label:?}"
+            )));
+        }
+        if header.strict_validation {
             validate_coordinate_component(type_idx, symbol.as_ref(), coord_label)?;
         }
         global_atom_idx = ingest_coord_rows(
@@ -1823,12 +1868,30 @@ pub fn parse_velocity_section<'a>(
             .next_line()
             .ok_or(ParseError::IncompleteSection(SECTION_VELOCITIES.into()))?
             .trim();
+        if validate {
+            let expected_symbol = atom_data
+                .get(atom_idx)
+                .map(|atom| atom.symbol.as_ref())
+                .unwrap_or("");
+            if symbol != expected_symbol {
+                return Err(ParseError::ValidationError(format!(
+                    "Velocities component {} symbol mismatch: expected {expected_symbol}, found {symbol}",
+                    type_idx + 1
+                )));
+            }
+        }
 
         // "Velocities of Component N" line
         let comp_line = lines
             .next_line()
             .ok_or(ParseError::IncompleteSection(SECTION_VELOCITIES.into()))?;
-        if !label_has_prefix(comp_line, "Velocities of Component") {
+        let expected = format!("Velocities of Component {}", type_idx + 1);
+        if !labels_equal(comp_line, &expected) {
+            if validate {
+                return Err(ParseError::ValidationError(format!(
+                    "expected section label {expected:?}, found {comp_line:?}"
+                )));
+            }
             return Err(ParseError::IncompleteSection(SECTION_VELOCITIES.into()));
         }
         if validate {
@@ -2341,14 +2404,17 @@ mod tests {
     fn a_declared_type_count_past_the_line_is_invalid_count() {
         let text = frame_with_count("1", false).replacen("\n1\n1\n1.0\n", "\n184467441616\n2\n195.084\n", 1);
         let err = ConFrameIterator::new(&text).next().unwrap().unwrap_err();
-        assert!(matches!(err, ParseError::InvalidCount(_)), "{err}");
+        assert!(
+            matches!(err, ParseError::InvalidVectorLength { .. }),
+            "{err}"
+        );
     }
 
     #[test]
     fn a_declared_count_past_the_file_is_invalid_count() {
         let text = frame_with_count("1000000000000", false);
         let err = ConFrameIterator::new(&text).next().unwrap().unwrap_err();
-        assert!(matches!(err, ParseError::InvalidCount(_)), "{err}");
+        assert!(matches!(err, ParseError::IncompleteFrame), "{err}");
     }
 
     #[test]

@@ -78,17 +78,24 @@ impl<'a> MemchrLines<'a> {
             match std::str::from_utf8(trimmed) {
                 Ok(s) => {
                     self.pos += advance;
+                    self.line_no += 1;
                     Some(s)
                 }
                 Err(_) => {
                     // Stay on the rejected line. Moving past it makes a
                     // whitespace tail look like a clean end of file.
                     self.utf8_bad = true;
+                    self.line_no = self.bytes[..self.pos]
+                        .iter()
+                        .filter(|byte| **byte == b'\n')
+                        .count()
+                        + 1;
                     None
                 }
             }
         } else {
             self.pos += advance;
+            self.line_no += 1;
             // SAFETY: source was `&str`; line is a UTF-8 prefix cut on ASCII `\n`/`\r`.
             Some(unsafe { std::str::from_utf8_unchecked(trimmed) })
         }
@@ -200,13 +207,40 @@ impl<'a> LineStream<'a> for MemchrLines<'a> {
         default_id: u64,
     ) -> Result<([f64; 3], [bool; 3], u64), crate::error::ParseError> {
         if let Some(p) = self.peeked.take() {
+            self.line_no += 1;
             return crate::parser::parse_coord_row_at(p.as_bytes(), 0, spec_version, default_id)
                 .map(|(row, _)| row);
         }
-        let (row, pos) =
-            crate::parser::parse_coord_row_at(self.bytes, self.pos, spec_version, default_id)?;
-        self.pos = pos;
-        Ok(row)
+        let rest = &self.bytes[self.pos..];
+        let nl = memchr::memchr(b'\n', rest);
+        let mut end = nl.unwrap_or(rest.len());
+        if end > 0 && rest[end - 1] == b'\r' {
+            end -= 1;
+        }
+        let line = &rest[..end];
+        if line.iter().all(|b| *b == b' ' || *b == b'\t') {
+            self.line_no += 1;
+            return Err(crate::error::ParseError::IncompleteFrame);
+        }
+        let parsed =
+            crate::parser::parse_coord_fields(line, 0, spec_version, Some(default_id));
+        self.line_no += 1;
+        match parsed {
+            Ok((row, at))
+                if at == line.len()
+                    || line[at..]
+                        .iter()
+                        .all(|b| *b == b' ' || *b == b'\t') =>
+            {
+                self.pos += nl.map(|i| i + 1).unwrap_or(rest.len());
+                Ok(row)
+            }
+            Ok((_, at)) => {
+                let found = 5 + crate::parser::token_count(std::str::from_utf8(&line[at..]).unwrap_or(""));
+                Err(crate::error::ParseError::InvalidVectorLength { expected: 5, found })
+            }
+            Err(err) => Err(err),
+        }
     }
     fn bytes_remaining(&mut self) -> Option<usize> {
         if !self.input_complete {
@@ -293,7 +327,19 @@ fn probe_section(after_blank: &[u8]) -> SectionProbe {
     };
     let line1 = strip_cr(raw1);
     if line1.iter().all(|b| matches!(b, b' ' | b'\t')) {
-        return SectionProbe::Closed;
+        // A blank symbol line still opens the block when the next line is
+        // the component label.
+        let Some((raw_label, _)) = split_raw_line(after1) else {
+            return SectionProbe::Closed;
+        };
+        let Ok(label) = std::str::from_utf8(strip_cr(raw_label)) else {
+            return SectionProbe::InvalidUtf8;
+        };
+        return if crate::parser::line_has_component_label(label) {
+            SectionProbe::Opens
+        } else {
+            SectionProbe::Closed
+        };
     }
     let Ok(text1) = std::str::from_utf8(line1) else {
         return SectionProbe::InvalidUtf8;
@@ -330,9 +376,15 @@ fn blank_opens_section(after_blank: &[u8]) -> bool {
 /// robust error handling for each frame.
 pub struct ConFrameIterator<'a> {
     pub(crate) lines: MemchrLines<'a>,
+    check_bom: bool,
 }
 
 impl<'a> ConFrameIterator<'a> {
+    /// 1-based line of the cursor after the last line this iterator consumed.
+    pub fn cursor_line(&self) -> u32 {
+        self.lines.line_no as u32
+    }
+
     /// Creates a new `ConFrameIterator` from a string slice of the entire file.
     ///
     /// # Arguments
@@ -341,6 +393,7 @@ impl<'a> ConFrameIterator<'a> {
     pub fn new(file_contents: &'a str) -> Self {
         ConFrameIterator {
             lines: MemchrLines::new(file_contents),
+            check_bom: true,
         }
     }
 
@@ -363,6 +416,7 @@ impl<'a> ConFrameIterator<'a> {
     pub fn from_bytes(bytes: &'a [u8]) -> Self {
         ConFrameIterator {
             lines: MemchrLines::from_bytes(bytes),
+            check_bom: true,
         }
     }
 
@@ -371,7 +425,10 @@ impl<'a> ConFrameIterator<'a> {
     pub fn from_prefix(bytes: &'a [u8]) -> Self {
         let mut lines = MemchrLines::from_bytes(bytes);
         lines.input_complete = false;
-        ConFrameIterator { lines }
+        ConFrameIterator {
+            lines,
+            check_bom: true,
+        }
     }
 
     /// Bulk-skips `n` lines from the shared memchr cursor.
@@ -545,9 +602,7 @@ impl<'a> ConFrameIterator<'a> {
         let total_atoms: usize = natms_per_type.iter().sum();
         let left = self.lines.bytes.len().saturating_sub(self.lines.pos);
         if self.lines.input_complete && total_atoms > left {
-            return Some(Err(error::ParseError::InvalidCount(format!(
-                "declared {total_atoms} atoms but only {left} bytes remain"
-            ))));
+            return Some(Err(error::ParseError::IncompleteFrame));
         }
         let coord_block_lines = total_atoms + natm_types * 2;
         if let Err(e) = self.advance_lines_to(coord_block_lines, end) {
@@ -691,6 +746,19 @@ impl<'a> Iterator for ConFrameIterator<'a> {
     /// `Some(Err(ParseError::...))`. Invalid UTF-8 is a validation error, not
     /// the end of the stream.
     fn next(&mut self) -> Option<Self::Item> {
+        // A byte-order mark is rejected only at the start of the file
+        // (CON-file.2), before any peek moves the cursor. On a later
+        // frame it is text of that line.
+        if self.check_bom
+            && self.lines.pos == 0
+            && self.lines.peeked.is_none()
+            && self.lines.bytes.starts_with("\u{feff}".as_bytes())
+        {
+            self.lines.line_no = 1;
+            return Some(Err(error::ParseError::ValidationError(
+                "file begins with a byte-order mark".into(),
+            )));
+        }
         // A line rejected earlier in this cursor (for example while probing
         // for a velocity block) must not be reported as a clean EOF.
         if let Some(err) = self.lines.utf8_error() {
@@ -1011,6 +1079,11 @@ pub fn frames_from_bytes(
     bytes: &[u8],
     num_threads: Option<usize>,
 ) -> Result<Vec<types::ConFrame>, error::ParseError> {
+    if bytes.starts_with("\u{feff}".as_bytes()) {
+        return Err(error::ParseError::ValidationError(
+            "file begins with a byte-order mark".into(),
+        ));
+    }
     #[cfg(feature = "parallel")]
     {
         if let Some(n) = num_threads.filter(|n| *n >= 2) {
@@ -1283,6 +1356,9 @@ where
             let byte_start = boundaries[start];
             let byte_end = span_end(boundaries, end - 1, len);
             let mut iter = ConFrameIterator::from_bytes(&bytes[byte_start..byte_end]);
+            if byte_start > 0 {
+                iter.check_bom = false;
+            }
             for i in start..end {
                 let frame = match iter.next() {
                     Some(result) => result,
@@ -1372,6 +1448,11 @@ fn parse_byte_span(
     end: usize,
 ) -> Result<types::ConFrame, error::ParseError> {
     let mut iter = ConFrameIterator::from_bytes(&bytes[start..end]);
+    // A byte-order mark is rejected at the start of the file only.
+    // A later frame's span begins at 0 of that slice.
+    if start > 0 {
+        iter.check_bom = false;
+    }
     match iter.next() {
         Some(result) => result,
         None => Err(error::ParseError::IncompleteFrame),
@@ -1385,6 +1466,9 @@ fn parse_text_span(
     end: usize,
 ) -> Result<types::ConFrame, error::ParseError> {
     let mut iter = ConFrameIterator::new(&text[start..end]);
+    if start > 0 {
+        iter.check_bom = false;
+    }
     match iter.next() {
         Some(result) => result,
         None => Err(error::ParseError::IncompleteFrame),
@@ -1719,21 +1803,12 @@ fn parse_bytes_timed(bytes: &[u8], num_threads: Option<usize>) -> TimedParse {
     let run = || {
         let fault0 = process_minflt();
         let t_scan = std::time::Instant::now();
-        let (boundaries, scan_kind) =
-            if let Some(bounds) = equal_span_boundaries(bytes, parse_workers) {
-                (bounds, SCAN_EQUAL_SPAN)
-            } else {
+        let (boundaries, scan_kind) = {
                 let mut scanner = ConFrameIterator::from_bytes(bytes);
-                let scan_kind = if threads >= 2 {
-                    // Same pool as the parse, so the newline chunks do not start
-                    // a second set of workers. The header walk stays serial:
-                    // unequal frames do not share a span to split on.
-                    scanner.lines.newlines = Some(newline_positions(bytes, threads));
-                    scanner.lines.line_no = 0;
-                    SCAN_INDEXED
-                } else {
-                    SCAN_SERIAL
-                };
+                // The frame bounds are the serial cursor's. An indexed scan
+                // ended these corpus frames before the line the serial parser
+                // rejects, so the workers accepted a prefix.
+                let scan_kind = SCAN_SERIAL;
                 // Whitespace after the final frame does not open another frame.
                 (collect_frame_starts(scanner, true), scan_kind)
             };

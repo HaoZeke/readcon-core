@@ -624,6 +624,27 @@ python3 paper/cpc/scripts/clause_coverage.py                    # cpc-clauses
 % A digital object identifier in the reference list stays on one line.
 \DeclareUrlCommand\path{\def\UrlFont{\footnotesize\ttfamily}\mathchardef\UrlBreakPenalty=10000 \mathchardef\UrlBigBreakPenalty=10000 }
 
+\section{Generated records}
+The binary-format, DLPack, ordering and head-to-head tables, and the layout figures, are generated with the records they name.
+\begingroup
+\input{figures/generated/bf_ratios}
+\input{figures/generated/bf_table}
+\input{figures/generated/dlpack_table}
+\input{figures/generated/h2h_cpp}
+\input{figures/generated/h2h_python}
+\input{figures/generated/ordering_table}
+\input{figures/generated/r0174_cachegrind}
+\input{figures/generated/r0174_cpp}
+\input{figures/generated/r0174_macros}
+\input{figures/generated/r0174_table}
+\begin{center}
+\includegraphics[width=\linewidth]{figures/generated/layout.pdf}\\
+\includegraphics[width=\linewidth]{figures/generated/matrix.pdf}\\
+\includegraphics[width=\linewidth]{figures/generated/pipeline.pdf}\\
+\includegraphics[width=\linewidth]{figures/generated/threads.pdf}
+\end{center}
+\endgroup
+
 \raggedright
 
 \bibliographystyle{elsarticle-num}
