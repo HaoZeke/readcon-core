@@ -920,6 +920,108 @@ mod tests {
             None,
         );
         assert!(err.is_err(), "a directory path must fail the gather");
+
+        // A chunk larger than the file takes the single Gatherv path.
+        unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "1048576") };
+        let gathered = dir.join("gatherv.con");
+        let n = crate::distrib_write::write_block(
+            &comm,
+            &gathered,
+            &frames,
+            crate::distrib_write::WriteMode::Gather,
+            None,
+        )
+        .expect("gatherv");
+        assert!(n > 16, "{n}");
+        let text = std::fs::read_to_string(&gathered).unwrap();
+        assert!(text.contains("H") || text.contains("Cu"), "{text}");
+
+        // Rank 1 contributes no frames, so its write rounds are empty.
+        unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "64") };
+        let mine = if comm.rank() == 0 {
+            frames.clone()
+        } else {
+            Vec::new()
+        };
+        let partial = dir.join("partial.con");
+        let n = crate::distrib_write::write_block(
+            &comm,
+            &partial,
+            &mine,
+            crate::distrib_write::WriteMode::MpiIo,
+            None,
+        )
+        .expect("partial");
+        assert!(n > 16, "{n}");
+        let back = read_block(&comm, &partial, ReadMode::Shared, None).expect("reread");
+        assert_eq!(back.n_total, frames.len(), "rank {}", comm.rank());
+
+        let mut bad = frames[0].clone();
+        bad.header.natm_types = 0;
+        bad.header.natms_per_type.clear();
+        bad.header.masses_per_type.clear();
+        let mine = if comm.rank() == 0 {
+            frames.clone()
+        } else {
+            vec![bad]
+        };
+        let err = crate::distrib_write::write_block(
+            &comm,
+            &dir.join("bad.con"),
+            &mine,
+            crate::distrib_write::WriteMode::Gather,
+            None,
+        )
+        .expect_err("a zero type count must fail");
+        let msg = err.to_string();
+        if comm.rank() == 0 {
+            assert!(msg.contains("another rank"), "{msg}");
+        } else {
+            assert!(msg.contains("per-type"), "{msg}");
+        }
+
+        let full = std::path::Path::new("/dev/full");
+        let err = crate::distrib_write::write_block(
+            &comm,
+            full,
+            &frames,
+            crate::distrib_write::WriteMode::Gather,
+            None,
+        )
+        .expect_err("a full device must reject the write");
+        assert!(
+            err.to_string().contains("space") || err.to_string().contains("28"),
+            "{err}"
+        );
+
+        let bad_name = {
+            use std::os::unix::ffi::OsStringExt;
+            std::ffi::OsString::from_vec(b"nul\0name".to_vec())
+        };
+        let err = crate::distrib_write::write_block(
+            &comm,
+            std::path::Path::new(&bad_name),
+            &frames,
+            crate::distrib_write::WriteMode::MpiIo,
+            None,
+        )
+        .expect_err("a name with an interior nul must fail");
+        assert!(
+            err.to_string().to_lowercase().contains("nul"),
+            "{err}"
+        );
+
+        let err = crate::distrib_write::write_block(
+            &comm,
+            &dir,
+            &frames,
+            crate::distrib_write::WriteMode::MpiIo,
+            None,
+        )
+        .expect_err("MPI-IO on a directory must fail");
+        assert!(err.to_string().contains("MPI"), "{err}");
+
+        unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "64") };
         flush_coverage_profile();
         drop(comm);
         drop(universe);
