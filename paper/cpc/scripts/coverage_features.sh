@@ -36,6 +36,20 @@ if [ -z "${LIBRARY_PATH:-}" ]; then
     fi
   done
 fi
+# clang with a custom --target does not search the gcc C++ headers.
+if [ -z "${CPLUS_INCLUDE_PATH:-}" ]; then
+  for inc in /usr/include/c++/*; do
+    if [ -e "$inc/cassert" ]; then
+      multi=/usr/include/x86_64-linux-gnu/c++/$(basename "$inc")
+      export CPLUS_INCLUDE_PATH="$inc:$multi"
+      break
+    fi
+  done
+fi
+if [ -z "${CXX:-}" ] && [ -x /usr/bin/g++ ]; then
+  export CC=/usr/bin/gcc
+  export CXX=/usr/bin/g++
+fi
 
 mkdir -p "$CARGO_TARGET_DIR"
 OUT="${COVERAGE_JSON:-$CARGO_TARGET_DIR/coverage.json}"
@@ -52,6 +66,10 @@ RUST_STATUS=$?
 set -e
 if [ "$RUST_STATUS" -ne 0 ]; then
   echo "workspace tests exited $RUST_STATUS" >&2
+fi
+if ! find "$CARGO_TARGET_DIR/llvm-cov-target" -maxdepth 1 -name '*.profraw' | grep -q .; then
+  echo "the feature build produced no profiles" >&2
+  exit 1
 fi
 
 PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
