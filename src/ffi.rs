@@ -10105,4 +10105,391 @@ mod tests {
         assert_eq!(written, 0);
         unsafe { rkr_selection_result_free(result) };
     }
+
+    #[test]
+    fn null_arguments_and_missing_sections_take_each_guard() {
+        let null_status = RKRStatus::RKR_STATUS_NULL_POINTER;
+        let absent = RKRStatus::RKR_STATUS_SECTION_ABSENT;
+        unsafe { free_c_frame(std::ptr::null_mut()) };
+        unsafe { rkr_free_string(std::ptr::null_mut()) };
+        assert!(unsafe { rkr_frame_builder_build(std::ptr::null_mut()) }.is_null());
+        assert!(unsafe { rkr_frame_builder_clone(std::ptr::null()) }.is_null());
+        unsafe { free_rkr_frame_array(std::ptr::null_mut(), 0) };
+        unsafe { free_rkr_frame_ptr_array(std::ptr::null_mut(), 0) };
+        assert!(unsafe { rkr_frame_binding_rewrite(std::ptr::null()) }.is_null());
+
+        let bare = test_frame_handle();
+        let mut header = [0 as c_char; 32];
+        assert_eq!(
+            unsafe { rkr_frame_get_header_line(bare, false, 0, header.as_mut_ptr(), header.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let path = CString::new("resources/test/tiny_cuh2.con").unwrap();
+        let traj = unsafe { rkr_trajectory_open(path.as_ptr(), 0) };
+        assert!(!traj.is_null());
+        assert_eq!(
+            unsafe { rkr_trajectory_read_frame(traj, 0, std::ptr::null_mut()) },
+            null_status
+        );
+        unsafe { rkr_trajectory_free(traj) };
+
+        let mut view = RKRArrayView {
+            data: std::ptr::null(),
+            n: 0,
+            cols: 0,
+            dtype_code: 0,
+            dtype_bits: 0,
+        };
+        let present: &[unsafe extern "C" fn(*const RKRConFrame, *mut RKRArrayView) -> RKRStatus] = &[
+            rkr_frame_xyz_view,
+            rkr_frame_masses_view,
+            rkr_frame_atom_ids_view,
+        ];
+        let missing: &[unsafe extern "C" fn(*const RKRConFrame, *mut RKRArrayView) -> RKRStatus] = &[
+            rkr_frame_velocities_view,
+            rkr_frame_forces_view,
+            rkr_frame_displacements_view,
+            rkr_frame_spreads_view,
+            rkr_frame_energies_view,
+        ];
+        for view_fn in present.iter().chain(missing.iter()) {
+            assert_eq!(unsafe { view_fn(std::ptr::null(), &mut view) }, null_status);
+            assert_eq!(unsafe { view_fn(bare, std::ptr::null_mut()) }, null_status);
+        }
+        for view_fn in present {
+            assert_eq!(
+                unsafe { view_fn(bare, &mut view) },
+                RKRStatus::RKR_STATUS_SUCCESS
+            );
+        }
+        for view_fn in missing {
+            assert_eq!(unsafe { view_fn(bare, &mut view) }, absent);
+        }
+        let mut n = 0usize;
+        assert!(unsafe { rkr_frame_xyz_f64(std::ptr::null(), &mut n) }.is_null());
+        assert!(unsafe { rkr_frame_velocities_f64(std::ptr::null(), std::ptr::null_mut()) }.is_null());
+        assert!(unsafe { rkr_frame_forces_f64(bare, std::ptr::null_mut()) }.is_null());
+        assert!(unsafe { rkr_frame_displacements_f64(bare, &mut n) }.is_null());
+        assert!(unsafe { rkr_frame_spreads_f64(bare, std::ptr::null_mut()) }.is_null());
+        assert!(!unsafe { rkr_frame_xyz_f64(bare, &mut n) }.is_null());
+        assert_eq!(n, 1);
+
+        let mut buf = [0.0f64; 3];
+        let copy_present: &[unsafe extern "C" fn(
+            *const RKRConFrame,
+            *mut f64,
+            usize,
+        ) -> RKRStatus] = &[rkr_frame_copy_positions, rkr_frame_copy_masses];
+        let copy_missing: &[unsafe extern "C" fn(
+            *const RKRConFrame,
+            *mut f64,
+            usize,
+        ) -> RKRStatus] = &[
+            rkr_frame_copy_velocities,
+            rkr_frame_copy_forces,
+            rkr_frame_copy_displacements,
+            rkr_frame_copy_spreads,
+            rkr_frame_copy_atom_energies,
+        ];
+        for copy in copy_present.iter().chain(copy_missing.iter()) {
+            assert_eq!(
+                unsafe { copy(std::ptr::null(), buf.as_mut_ptr(), buf.len()) },
+                null_status
+            );
+            assert_eq!(
+                unsafe { copy(bare, std::ptr::null_mut(), buf.len()) },
+                null_status
+            );
+        }
+        for copy in copy_present {
+            assert_eq!(
+                unsafe { copy(bare, buf.as_mut_ptr(), 0) },
+                RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+            );
+            assert_eq!(
+                unsafe { copy(bare, buf.as_mut_ptr(), buf.len()) },
+                RKRStatus::RKR_STATUS_SUCCESS
+            );
+        }
+        for copy in copy_missing {
+            assert_eq!(unsafe { copy(bare, buf.as_mut_ptr(), buf.len()) }, absent);
+        }
+        let mut ids = [0u64; 1];
+        assert_eq!(
+            unsafe { rkr_frame_copy_atom_ids(std::ptr::null(), ids.as_mut_ptr(), ids.len()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_atom_ids(bare, std::ptr::null_mut(), ids.len()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_atom_ids(bare, ids.as_mut_ptr(), 0) },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_atom_ids(bare, ids.as_mut_ptr(), ids.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+
+        let mut tensor = std::ptr::null_mut();
+        let frame_dlpacks: &[unsafe extern "C" fn(
+            *const RKRConFrame,
+            *mut *mut RKRDLManagedTensorVersioned,
+        ) -> RKRStatus] = &[
+            rkr_frame_positions_dlpack,
+            rkr_frame_velocities_dlpack,
+            rkr_frame_forces_dlpack,
+            rkr_frame_displacements_dlpack,
+            rkr_frame_spreads_dlpack,
+            rkr_frame_atom_energies_dlpack,
+        ];
+        for export in frame_dlpacks {
+            assert_eq!(unsafe { export(std::ptr::null(), &mut tensor) }, null_status);
+        }
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_positions_block(bare, std::ptr::null_mut()) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_velocities_block(bare, std::ptr::null_mut()) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_forces_block(bare, std::ptr::null_mut()) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            unsafe { rkr_frame_metatensor_atom_energies_block(bare, std::ptr::null_mut()) },
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+
+        let symbol = c_string("Cu");
+        let builder = test_builder_handle();
+        let v = [0.1f64, 0.2, 0.3];
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_velocity(std::ptr::null_mut(), v.as_ptr()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_velocity(builder, std::ptr::null()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_force(builder, std::ptr::null()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_displacement(builder, std::ptr::null()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_add_atom(std::ptr::null_mut(), symbol.as_ptr(), 0.0, 0.0, 0.0, false, 1, 63.5) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_atom_count(std::ptr::null()) },
+            0
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_position(builder, 0, std::ptr::null_mut()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_add_atom(builder, symbol.as_ptr(), 1.0, 2.0, 3.0, false, 1, 63.5) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_velocity(builder, v.as_ptr()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_force(builder, v.as_ptr()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_displacement(builder, v.as_ptr()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_last_spread(builder, v.as_ptr()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_set_atom_energy(builder, 0, 1.5) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!unsafe { rkr_frame_builder_displacements_data(builder) }.is_null());
+        assert!(!unsafe { rkr_frame_builder_spreads_data(builder) }.is_null());
+        assert!(!unsafe { rkr_frame_builder_atom_energies_data(builder) }.is_null());
+        assert!(!unsafe { rkr_frame_builder_forces_data(builder) }.is_null());
+        assert!(!unsafe { rkr_frame_builder_velocities_data(builder) }.is_null());
+        let float_opts = RKRDlpackExportOptions {
+            dtype: RKRDLDataType {
+                code: rkr_dl_type_code::RKR_DL_FLOAT,
+                bits: 64,
+                lanes: 1,
+            },
+            device: RKRDLDevice {
+                device_type: rkr_dl_device_type::RKR_DL_CPU,
+                device_id: 0,
+            },
+        };
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_atom_ids_dlpack_ex(builder, &float_opts, &mut tensor)
+            },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        unsafe { rkr_dlpack_delete(tensor) };
+        assert_eq!(
+            unsafe { rkr_frame_builder_positions_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_velocities_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_forces_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_displacements_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_spreads_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_atom_energies_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_masses_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_atom_ids_dlpack_ex(std::ptr::null(), std::ptr::null(), &mut tensor) },
+            null_status
+        );
+
+        let built = unsafe { rkr_frame_builder_build(builder) };
+        assert!(!built.is_null());
+        assert!(!unsafe { rkr_frame_displacements_f64(built, &mut n) }.is_null());
+        assert!(!unsafe { rkr_frame_spreads_f64(built, &mut n) }.is_null());
+        assert_eq!(
+            unsafe { rkr_frame_displacements_view(built, &mut view) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_displacements(built, buf.as_mut_ptr(), buf.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_spreads(built, buf.as_mut_ptr(), buf.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let mut energy = [0.0f64; 1];
+        assert_eq!(
+            unsafe { rkr_frame_copy_atom_energies(built, energy.as_mut_ptr(), energy.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_displacements_dlpack(std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_spreads_dlpack(std::ptr::null(), &mut tensor) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_displacements_dlpack(built, &mut tensor) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        unsafe { rkr_dlpack_delete(tensor) };
+
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("dup.con");
+        let out_c = CString::new(out.to_str().unwrap()).unwrap();
+        let writer = unsafe { create_writer_from_path_c(out_c.as_ptr()) };
+        assert!(!writer.is_null());
+        let owned = unsafe { &mut *(built as *mut ConFrame) };
+        owned.atom_data.push(owned.atom_data[0].clone());
+        assert_eq!(
+            unsafe { rkr_writer_extend_binding(writer, &built, 1) },
+            RKRStatus::RKR_STATUS_IO_ERROR
+        );
+        let message = unsafe { CStr::from_ptr(rkr_last_error_message()) };
+        assert!(!message.to_bytes().is_empty());
+        unsafe {
+            free_rkr_writer(writer);
+            free_rkr_frame(built);
+            free_rkr_frame(bare);
+        }
+
+        let mut nat = 0u32;
+        let mut dest = [0.0f64; 3];
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_positions(std::ptr::null(), 0, dest.as_mut_ptr(), 1) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_forces(std::ptr::null(), 0, dest.as_mut_ptr(), 1) },
+            null_status
+        );
+        let forces = CString::new("resources/test/tiny_cuh2_forces.con").unwrap();
+        let forced = unsafe { rkr_read_nth_frame(forces.as_ptr(), 0) };
+        assert!(!forced.is_null());
+        let mut need = 0usize;
+        assert_eq!(
+            unsafe { rkr_pack_rcso(forced, std::ptr::null_mut(), 0, &mut need) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let mut packed = vec![0u8; need];
+        assert_eq!(
+            unsafe { rkr_pack_rcso(forced, packed.as_mut_ptr(), packed.len(), &mut need) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_natoms(packed.as_ptr(), packed.len(), &mut nat) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe {
+                rkr_unpack_rcso_positions(packed.as_ptr(), packed.len(), dest.as_mut_ptr(), nat + 1)
+            },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            unsafe {
+                rkr_unpack_rcso_forces(packed.as_ptr(), packed.len(), dest.as_mut_ptr(), nat + 1)
+            },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        unsafe { free_rkr_frame(forced) };
+
+        assert_eq!(unsafe { rkr_selection_result_match_count(std::ptr::null()) }, 0);
+        assert_eq!(
+            unsafe { rkr_selection_result_context_size(std::ptr::null()) },
+            0
+        );
+        let mut atoms = [0u64; 2];
+        let mut size = 0u32;
+        let mut written = 0u64;
+        assert_eq!(
+            unsafe { rkr_selection_result_match_at(std::ptr::null(), 0, atoms.as_mut_ptr(), &mut size) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_selection_result_primary_indices(std::ptr::null(), atoms.as_mut_ptr(), 2, &mut written) },
+            null_status
+        );
+        unsafe { rkr_selection_result_free(std::ptr::null_mut()) };
+        let mut count = 0usize;
+        assert!(
+            unsafe { rkr_read_chemfiles_memory(std::ptr::null(), c"XYZ".as_ptr(), &mut count) }.is_null()
+        );
+    }
 }
