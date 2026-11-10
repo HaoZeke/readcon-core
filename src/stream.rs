@@ -38,6 +38,9 @@ pub struct ConFrameReader<R> {
     buf: Vec<u8>,
     start: usize,
     end: usize,
+    /// Bytes dropped from the front of the buffer. `start` is zero after
+    /// a refill, so this is what says the cursor is past the file start.
+    abs_pos: u64,
     read_size: usize,
     eof: bool,
     failed: Option<io::Error>,
@@ -66,6 +69,7 @@ impl<R: Read> ConFrameReader<R> {
             buf: Vec::new(),
             start: 0,
             end: 0,
+            abs_pos: 0,
             read_size: read_size.max(1),
             eof: false,
             failed: None,
@@ -106,7 +110,7 @@ impl<R: Read> ConFrameReader<R> {
             // not parsed in full once per read.
             if ended || !cut || {
                 let mut probe = ConFrameIterator::from_bytes(text);
-                if self.start > 0 {
+                if self.abs_pos + self.start as u64 > 0 {
                     probe.allow_mid_file_bom();
                 }
                 probe.forward();
@@ -117,7 +121,7 @@ impl<R: Read> ConFrameReader<R> {
                 } else {
                     ConFrameIterator::from_prefix(text)
                 };
-                if self.start > 0 {
+                if self.abs_pos + self.start as u64 > 0 {
                     it.allow_mid_file_bom();
                 }
                 let result = op(&mut it);
@@ -162,6 +166,7 @@ impl<R: Read> ConFrameReader<R> {
     /// The bytes read before a failure are kept.
     fn fill(&mut self) {
         self.buf.copy_within(self.start..self.end, 0);
+        self.abs_pos += self.start as u64;
         self.end -= self.start;
         self.start = 0;
         let target = self.end + self.read_size.max(self.end / 8);
@@ -378,6 +383,25 @@ mod tests {
             .expect("a result")
             .expect_err("source error");
         assert!(err.to_string().contains("source failed"), "{err}");
+    }
+
+    #[test]
+    fn a_cut_second_frame_keeps_a_mid_file_bom_as_text() {
+        let first = zero_atom_frame(180);
+        let second = zero_atom_frame(700);
+        let mut bytes = first.clone();
+        bytes.extend_from_slice("\u{feff}".as_bytes());
+        bytes.extend_from_slice(&second);
+        let expect: Vec<_> = ConFrameIterator::from_bytes(&bytes)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(expect.len(), 2);
+        let user = expect[1].header.prebox_header.user.as_str();
+        assert!(user.starts_with('\u{feff}'), "{user:?}");
+        let got: Vec<_> = ConFrameReader::with_read_size(std::io::Cursor::new(bytes), 64)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(got, expect);
     }
 
     /// The second frame of a small read is probed after the first frame
