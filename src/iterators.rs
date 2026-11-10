@@ -4890,4 +4890,16 @@ H";
         assert_eq!(buffer.len() % span, 0);
         assert!(super::equal_span_boundaries(buffer.as_bytes(), 2).is_none());
     }
+
+    #[test]
+    fn an_empty_list_packs_no_slab_and_one_frame_packs_its_row() {
+        use crate::types::ConFrameBuilder;
+        assert!(pack_position_slab(&[], 1).is_none());
+        let mut builder = ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+        builder.add_atom("H", 0.1, 0.2, 0.3, [false, false, false], 1, 1.0);
+        let frame = builder.build().unwrap();
+        let packed = pack_position_slab(std::slice::from_ref(&frame), 1).expect("one frame");
+        assert_eq!(packed.len(), 3);
+        assert!((packed[0] - 0.1).abs() < 1e-12);
+    }
 }

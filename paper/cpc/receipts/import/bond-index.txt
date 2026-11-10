@@ -1,0 +1,148 @@
+broken-side: bond-index
+test: guess_bonds_adds_water_topology
+needle: left == right
+exit: 101
+restored: True
+----- test output -----
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling readcon-core v0.18.1 (.)
+warning: variable does not need to be mutable
+    --> src/conbin.rs:3053:17
+     |
+3053 | ...   let mut advise_map = unsafe { memmap2::MmapMut::map_mut(&advise_...
+     |           ----^^^^^^^^^^
+     |           |
+     |           help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> src/ffi.rs:6577:17
+     |
+6577 |         let mut bare = test_builder_handle();
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7223:23
+     |
+7223 |             let msg = unsafe { rkr_status_message(status) };
+     |                       ^^^^^^ unnecessary `unsafe` block
+     |
+     = note: `#[warn(unused_unsafe)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7230:17
+     |
+7230 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7241:17
+     |
+7241 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: value assigned to `flat_shape` is never read
+    --> src/ffi.rs:8635:9
+     |
+8635 |         flat_shape[0] = 3;
+     |         ^^^^^^^^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:9373:18
+     |
+9373 |         assert!(!unsafe { rkr_last_error_message() }.is_null());
+     |                  ^^^^^^ unnecessary `unsafe` block
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:1508:13
+     |
+1508 |     let mut attr = PerfEventAttr {
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4667:17
+     |
+4667 |         let mut it = ConFrameIterator::from_bytes(b"\n");
+     |             ----^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4673:17
+     |
+4673 |         let mut bare = ConFrameIterator::from_bytes(b"");
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: function `perf_open_os` is never used
+    --> src/iterators.rs:1500:4
+     |
+1500 | fn perf_open_os() -> i64 {
+     |    ^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `perf_read_os` is never used
+    --> src/iterators.rs:1527:4
+     |
+1527 | fn perf_read_os(fd: i32, value: &mut u64) -> isize {
+     |    ^^^^^^^^^^^^
+
+warning: function `perf_close_os` is never used
+    --> src/iterators.rs:1531:4
+     |
+1531 | fn perf_close_os(fd: i32) {
+     |    ^^^^^^^^^^^^^
+
+warning: `readcon-core` (lib test) generated 13 warnings (run `cargo fix --lib -p readcon-core --tests` to apply 5 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.36s
+     Running unittests src/lib.rs (target/chfl2/debug/build/readcon-core/d829aec61ca2bbc3/out/readcon_core-d829aec61ca2bbc3)
+
+running 1 test
+test chemfiles_import::imp::tests::guess_bonds_adds_water_topology ... FAILED
+
+failures:
+
+---- chemfiles_import::imp::tests::guess_bonds_adds_water_topology stdout ----
+
+thread 'chemfiles_import::imp::tests::guess_bonds_adds_water_topology' (1846011) panicked at src/chemfiles_import_imp.rs:1171:13:
+assertion `left == right` failed: ["O", "H", "H"] Bond { i: 1, j: 1, order: Some(0) }
+  left: ["H", "H"]
+ right: ["H", "O"]
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/std/src/panicking.rs:676:5
+   1: core::panicking::panic_fmt
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/panicking.rs:80:14
+   2: core::panicking::assert_failed_inner
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/panicking.rs:447:23
+   3: core::panicking::assert_failed::<[&str; 2], [&str; 2]>
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/panicking.rs:407:5
+   4: readcon_core::chemfiles_import::imp::tests::guess_bonds_adds_water_topology
+             at ./src/chemfiles_import_imp.rs:1171:13
+   5: readcon_core::chemfiles_import::imp::tests::guess_bonds_adds_water_topology::{closure#0}
+             at ./src/chemfiles_import_imp.rs:1141:41
+   6: <readcon_core::chemfiles_import::imp::tests::guess_bonds_adds_water_topology::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
+   7: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    chemfiles_import::imp::tests::guess_bonds_adds_water_topology
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 380 filtered out; finished in 0.08s
+
+error: test failed, to rerun pass `--lib`

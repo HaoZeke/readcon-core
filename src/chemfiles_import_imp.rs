@@ -914,10 +914,19 @@ O  0.000  0.000  0.000
         let con = con_frame_from_trajectory_path(&path).expect("read xyz path");
         assert_eq!(con.atom_data.len(), 4);
         assert_eq!(con.header.natm_types, 2);
-        let positions_ok = con.atom_data.iter().any(|a| {
-            a.symbol.as_ref() == "O" && a.x.abs() < 1e-6 && a.y.abs() < 1e-6 && a.z.abs() < 1e-6
-        });
-        assert!(positions_ok, "expected O at origin in converted frame");
+        let mut origin = false;
+        let mut raised = false;
+        for a in &con.atom_data {
+            if a.symbol.as_ref() == "O" && a.x.abs() < 1e-6 && a.y.abs() < 1e-6 && a.z.abs() < 1e-6
+            {
+                origin = true;
+            }
+            if a.symbol.as_ref() == "O" && a.z > 0.5 {
+                raised = true;
+            }
+        }
+        assert!(origin, "expected O at the origin");
+        assert!(raised, "expected O with z above 0.5");
     }
 
     #[test]
@@ -1149,6 +1158,79 @@ H -0.240  0.927  0.000
         let guessed = con_frames_from_memory_with(xyz, "XYZ", &opts).expect("guess");
         let bonds = guessed[0].header.bonds();
         assert_eq!(bonds.len(), 2, "water should guess 2 O-H bonds");
+        let symbols: Vec<&str> = guessed[0]
+            .atom_data
+            .iter()
+            .map(|atom| atom.symbol.as_ref())
+            .collect();
+        for bond in bonds {
+            let left = symbols[bond.i as usize];
+            let right = symbols[bond.j as usize];
+            let mut pair = [left, right];
+            pair.sort();
+            assert_eq!(pair, ["H", "O"], "{symbols:?} {bond:?}");
+        }
+    }
+
+    #[test]
+    fn imported_lengths_match_the_chemfiles_frame() {
+        use chemfiles::Residue;
+        let mut frame = Frame::new();
+        frame.add_velocities();
+        frame.add_atom(
+            &Atom::new("O"),
+            [0.0, 0.0, 0.0],
+            Some([0.1, 0.2, 0.3]),
+        );
+        frame.add_atom(
+            &Atom::new("H"),
+            [1.0, 0.0, 0.0],
+            Some([0.4, 0.5, 0.6]),
+        );
+        frame.add_bond(0, 1);
+        let mut residue = Residue::new("WAT");
+        residue.add_atom(0);
+        residue.add_atom(1);
+        frame.add_residue(&residue).expect("residue");
+        let con = con_frame_from_chemfiles(&frame).expect("import");
+        assert_eq!(con.atom_data.len(), frame.size());
+        let missing: Vec<&str> = con
+            .atom_data
+            .iter()
+            .filter(|atom| atom.velocity().is_none())
+            .map(|atom| atom.symbol.as_ref())
+            .collect();
+        assert!(missing.is_empty(), "no velocity on {missing:?}");
+        assert_eq!(con.header.bonds().len(), frame.topology().bonds().len());
+        let stored = con
+            .header
+            .metadata
+            .get(CHEMFILES_RESIDUES_KEY)
+            .and_then(|value| value.as_array())
+            .expect("residues");
+        assert_eq!(stored.len(), frame.topology().residues_count() as usize);
+        assert_eq!(
+            stored[0].get("name").and_then(|value| value.as_str()),
+            Some("WAT")
+        );
+        let oxygen = con
+            .atom_data
+            .iter()
+            .find(|atom| atom.symbol.as_ref() == "O")
+            .expect("oxygen");
+        let velocity = oxygen.velocity().expect("oxygen velocity");
+        assert!((velocity[0] - 0.1).abs() < 1e-12);
+        assert!((velocity[1] - 0.2).abs() < 1e-12);
+        assert!((velocity[2] - 0.3).abs() < 1e-12);
+        let hydrogen = con
+            .atom_data
+            .iter()
+            .find(|atom| atom.symbol.as_ref() == "H")
+            .expect("hydrogen");
+        let hydrogen_velocity = hydrogen.velocity().expect("hydrogen velocity");
+        assert!((hydrogen_velocity[0] - 0.4).abs() < 1e-12);
+        assert!((hydrogen_velocity[1] - 0.5).abs() < 1e-12);
+        assert!((hydrogen_velocity[2] - 0.6).abs() < 1e-12);
     }
 
     #[test]

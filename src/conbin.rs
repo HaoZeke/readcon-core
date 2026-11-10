@@ -2954,15 +2954,25 @@ Coordinates of Component 1
 
         set_case("");
         drop_pages(&reopen);
-        set_case("open-fail-seq");
         let mut seq_err = None;
-        for _ in 0..8 {
+        let mut saw_ok = false;
+        for step in 0..8 {
             drop_pages(&reopen);
-            if let Err(err) = sequential_resident_sum(&reopen, 1, &limits) {
-                seq_err = Some(err);
-                break;
+            if step == 1 {
+                set_case("open-fail-seq");
+            }
+            match sequential_resident_sum(&reopen, 1, &limits) {
+                Ok(sum) => {
+                    saw_ok = true;
+                    assert!(sum.is_finite(), "{sum}");
+                }
+                Err(err) => {
+                    seq_err = Some(err);
+                    break;
+                }
             }
         }
+        assert!(saw_ok, "one resident sum succeeds before the open failure");
         assert_has(
             seq_err.as_ref().expect("open-fail-seq must fail"),
             "os error 13",
@@ -3310,11 +3320,25 @@ Coordinates of Component 1
                 let rc = unsafe { libc::umount(std::ffi::CString::new(held.1.to_str().unwrap()).unwrap().as_ptr()) };
                 assert_eq!(rc, 0, "{}", std::io::Error::last_os_error());
                 let _ = std::fs::remove_dir_all(&held.1);
+                unsafe { std::env::remove_var("LLVM_PROFILE_FILE") };
+                run_namespace_suite();
+                let case_dir = live.join(format!("case-{}", std::process::id()));
+                let _ = std::fs::remove_dir_all(&case_dir);
+                std::fs::create_dir_all(&case_dir).unwrap();
+                unsafe {
+                    std::env::set_var(
+                        "LLVM_PROFILE_FILE",
+                        case_dir.join("profile.profraw"),
+                    );
+                }
+                run_namespace_suite();
+                std::fs::write(case_dir.join("marker"), b"held").unwrap();
+                run_namespace_suite();
+                let _ = std::fs::remove_dir_all(&case_dir);
                 match saved {
                     Some(value) => unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) },
                     None => unsafe { std::env::remove_var("LLVM_PROFILE_FILE") },
                 }
-                run_namespace_suite();
                 println!("CASE_OK namespace");
             }
             Err(err) => assert_eq!(err, std::env::VarError::NotPresent),
