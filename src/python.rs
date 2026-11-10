@@ -324,10 +324,12 @@ fn json_value_to_py(py: Python<'_>, value: &Value) -> PyResult<Py<PyAny>> {
                 value.into_py_any(py)
             } else if let Some(value) = value.as_u64() {
                 value.into_py_any(py)
-            } else if let Some(value) = value.as_f64() {
-                value.into_py_any(py)
             } else {
-                Err(PyValueError::new_err("unsupported metadata number"))
+                // serde_json 1.0.149 Number is PosInt, NegInt, or Float
+                // (number.rs:28-34) unless arbitrary_precision is on.
+                // This crate does not enable that feature. as_f64 returns
+                // Some for every one of those three (number.rs:162-168).
+                value.as_f64().unwrap().into_py_any(py)
             }
         }
         Value::String(value) => value.into_py_any(py),
