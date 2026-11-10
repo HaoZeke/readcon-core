@@ -10,6 +10,7 @@ program test_iterator_stream
   call assert_truncated_last_frame()
   call assert_public_readers()
   call assert_remaining_procedures()
+  call assert_failure_returns()
 contains
 
   subroutine assert_missing_file()
@@ -409,5 +410,70 @@ contains
     call built%free()
     status = status + i + j + order
     has_order = has_order
+  end subroutine
+
+  subroutine assert_failure_returns()
+    type(frame_t) :: blank, loaded
+    type(builder_t) :: builder, bblank
+    type(writer_t) :: wblank
+    type(iterator_t) :: iblank
+    real(real64) :: cell(3), angles(3), one(3, 1), none(3, 0), masses(0), energy
+    integer :: status, nmatch, nwritten, ndim, bits, i, j, order
+    integer(int64) :: s0, s1, z, indices(1)
+    logical :: ok, has_order
+    type(c_ptr) :: tensor, data
+    character(len=:), allocatable :: text
+    cell = [4.0_real64, 4.0_real64, 4.0_real64]
+    angles = [90.0_real64, 90.0_real64, 90.0_real64]
+    energy = blank%energy()
+    text = blank%metadata_json()
+    text = blank%composition_formula()
+    text = blank%potential_type()
+    text = blank%index_projection_json()
+    status = int(blank%atom_count())
+    status = blank%copy_positions(one)
+    status = blank%copy_velocities(one)
+    status = blank%copy_forces(one)
+    status = blank%copy_masses(masses)
+    status = blank%bond_count()
+    status = blank%bond_at(0, i, j, order, has_order)
+    status = blank%select("name Cu", nmatch)
+    status = blank%select_primary("name Cu", indices, nwritten)
+    status = blank%spec_version()
+    status = int(blank%frame_index())
+    if (blank%valid()) status = 1
+    status = bblank%add_atom("Cu", 0.0_real64, 0.0_real64, 0.0_real64, &
+         1_int64, 1.0_real64, .false., .false., .false.)
+    status = bblank%set_energy(1.0_real64)
+    status = bblank%copy_positions(one)
+    if (wblank%valid()) status = 1
+    if (iblank%valid()) status = 1
+    status = iblank%forward()
+    z = symbol_to_z("Cu")
+    text = z_to_symbol(z)
+    loaded = read_first_frame("no-such-readcon-frame.con")
+    if (loaded%valid()) error stop "missing frame"
+    status = count_frames("no-such-readcon-frame.con")
+    call dlpack_inspect(c_null_ptr, ndim, s0, s1, bits, ok)
+    data = dlpack_data_ptr(c_null_ptr)
+    builder = new_builder(cell, angles)
+    status = builder%add_atom("Cu", 0.1_real64, 0.0_real64, 0.0_real64, &
+         1_int64, 63.5_real64, .false., .false., .false.)
+    status = builder%add_atom("H", 0.2_real64, 0.0_real64, 0.0_real64, &
+         2_int64, 1.0_real64, .false., .false., .false.)
+    status = builder%positions_dlpack(tensor)
+    call dlpack_inspect(tensor, ndim, s0, s1, bits, ok)
+    data = dlpack_data_ptr(tensor)
+    call builder%dlpack_delete(tensor)
+    loaded = builder%build()
+    status = loaded%copy_positions(none)
+    energy = loaded%energy()
+    status = loaded%bond_count()
+    status = loaded%bond_at(0, i, j, order, has_order)
+    call loaded%free()
+    call builder%free()
+    if (z < 0) status = status + ndim + bits
+    status = status + int(energy)
+    ok = ok .or. has_order
   end subroutine
 end program
