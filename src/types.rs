@@ -3065,14 +3065,11 @@ impl ConFrameBuilder {
             pos.set_f64_row(i, [a.x, a.y, a.z]);
             ids_arr[i] = a.atom_id;
             if has_vel {
-                if let Some(v) = a.velocity() {
-                    vel.set_f64_row(i, v);
-                }
+                // The builder stored a velocity on every atom when the section is on.
+                vel.set_f64_row(i, a.velocity().unwrap());
             }
             if has_frc {
-                if let Some(f) = a.force() {
-                    frc.set_f64_row(i, f);
-                }
+                frc.set_f64_row(i, a.force().unwrap());
             }
             if has_eng {
                 eng.set_f64(i, a.energy().unwrap_or(0.0));
@@ -3084,15 +3081,13 @@ impl ConFrameBuilder {
                 spn.set_f64(i, a.spin().unwrap_or(0.0));
             }
             if has_mag {
-                if let Some(m) = a.magmom() {
-                    mag.set_f64_row(i, m);
-                }
+                mag.set_f64_row(i, a.magmom().unwrap());
             }
-            if has_dsp && let Some(d) = a.displacement() {
-                dsp.set_f64_row(i, d);
+            if has_dsp {
+                dsp.set_f64_row(i, a.displacement().unwrap());
             }
-            if has_spr && let Some(d) = a.spread() {
-                spr.set_f64_row(i, d);
+            if has_spr {
+                spr.set_f64_row(i, a.spread().unwrap());
             }
         }
         // Each atom increments one type count, so the counts sum to `n`
