@@ -111,14 +111,16 @@ SOURCES=(
 "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" \
   --ignore-filename-regex='/rustc/|/cargo/registry/' \
   "${OBJECTS[@]}" > "$OUT/show-branches.txt"
-"$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
-  > "$OUT/branch.json"
+"$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" \
+  --ignore-filename-regex='/rustc/|/cargo/registry/' \
+  "${OBJECTS[@]}" "${SOURCES[@]}" > "$OUT/branch.json"
 
 if [[ -n "${SO:-}" && ${#PYRAW[@]} -gt 0 ]]; then
   pydata="$wheel_dir/python.profdata"
   "$LLVM/llvm-profdata" merge -sparse "${PYRAW[@]}" -o "$pydata"
-  "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "$SO" \
-    "$dir_src/python.rs" > "$OUT/python.json"
+  "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" \
+    --ignore-filename-regex='/rustc/|/cargo/registry/' \
+    "$SO" "$dir_src/python.rs" > "$OUT/python.json"
   "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" \
     --ignore-filename-regex='/rustc/|/cargo/registry/' \
     "$SO" > "$OUT/python-branches.txt"
