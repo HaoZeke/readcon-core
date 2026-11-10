@@ -43,3 +43,21 @@ Files still under 98 percent on lines or branches:
 | writer.rs | 97.75 | 92.35 |
 
 Every other source file is at or above 98 percent on both bars.
+
+## Run after the writer and unit tests
+
+Files still under 98 percent on lines or branches:
+
+| File | Lines | Branches |
+| --- | --- | --- |
+| conbin.rs | 94.88 | 92.19 |
+| ffi.rs | 96.53 | 76.20 |
+| frame_index.rs | 99.84 | 93.33 |
+| iterators.rs | 98.76 | 93.88 |
+| parser.rs | 98.15 | 91.96 |
+| python.rs | 89.39 | 77.14 |
+| stream.rs | 98.66 | 92.86 |
+| types.rs | 99.70 | 97.87 |
+| writer.rs | 97.93 | 97.02 |
+
+Nineteen source files are at or above 98 percent on both bars.
