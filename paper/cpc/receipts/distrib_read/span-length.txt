@@ -1,0 +1,161 @@
+broken-side: span-length
+test: one_rank_reads_each_mode_and_the_export
+needle: a shorter frame in the next span is not one tile
+exit: 101
+restored: True
+----- test output -----
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling readcon-core v0.18.1 (.)
+warning: unexpected `cfg` condition name: `coverage`
+   --> src/distrib_read.rs:525:15
+    |
+525 |         #[cfg(coverage)]
+    |               ^^^^^^^^
+    |
+    = help: expected names are: `docsrs`, `feature`, and `test` and 34 more
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(coverage)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: variable does not need to be mutable
+    --> src/conbin.rs:3053:17
+     |
+3053 | ...   let mut advise_map = unsafe { memmap2::MmapMut::map_mut(&advise_...
+     |           ----^^^^^^^^^^
+     |           |
+     |           help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> src/ffi.rs:6577:17
+     |
+6577 |         let mut bare = test_builder_handle();
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7223:23
+     |
+7223 |             let msg = unsafe { rkr_status_message(status) };
+     |                       ^^^^^^ unnecessary `unsafe` block
+     |
+     = note: `#[warn(unused_unsafe)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7230:17
+     |
+7230 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7241:17
+     |
+7241 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: value assigned to `flat_shape` is never read
+    --> src/ffi.rs:8635:9
+     |
+8635 |         flat_shape[0] = 3;
+     |         ^^^^^^^^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:9373:18
+     |
+9373 |         assert!(!unsafe { rkr_last_error_message() }.is_null());
+     |                  ^^^^^^ unnecessary `unsafe` block
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:1508:13
+     |
+1508 |     let mut attr = PerfEventAttr {
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:2187:25
+     |
+2187 |                 let mut scanner = ConFrameIterator::from_bytes(bytes);
+     |                     ----^^^^^^^
+     |                     |
+     |                     help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4185:17
+     |
+4185 |         let mut iter = super::ConFrameIterator::from_bytes(&bytes);
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4667:17
+     |
+4667 |         let mut it = ConFrameIterator::from_bytes(b"\n");
+     |             ----^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4673:17
+     |
+4673 |         let mut bare = ConFrameIterator::from_bytes(b"");
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: `readcon-core` (lib test) generated 13 warnings (run `cargo fix --lib -p readcon-core --tests` to apply 7 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.53s
+     Running unittests src/lib.rs (target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876)
+
+running 1 test
+test distrib_read::tests::one_rank_reads_each_mode_and_the_export ... Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+FAILED
+
+failures:
+
+---- distrib_read::tests::one_rank_reads_each_mode_and_the_export stdout ----
+
+thread 'distrib_read::tests::one_rank_reads_each_mode_and_the_export' (1846125) panicked at src/distrib_read.rs:654:9:
+a shorter frame in the next span is not one tile
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/std/src/panicking.rs:676:5
+   1: core::panicking::panic_fmt
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/panicking.rs:80:14
+   2: readcon_core::distrib_read::tests::one_rank_reads_each_mode_and_the_export
+             at ./src/distrib_read.rs:654:9
+   3: readcon_core::distrib_read::tests::one_rank_reads_each_mode_and_the_export::{closure#0}
+             at ./src/distrib_read.rs:597:49
+   4: <readcon_core::distrib_read::tests::one_rank_reads_each_mode_and_the_export::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    distrib_read::tests::one_rank_reads_each_mode_and_the_export
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 353 filtered out; finished in 0.37s
+
+error: test failed, to rerun pass `--lib`

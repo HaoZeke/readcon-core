@@ -1,0 +1,217 @@
+broken-side: null-frame-count
+test: two_ranks_read_and_write_every_mode
+needle: a null frame count must fail the C reader
+exit: 101
+restored: True
+----- test output -----
+   Compiling readcon-core v0.18.1 (.)
+warning: unexpected `cfg` condition name: `coverage`
+   --> src/distrib_read.rs:525:15
+    |
+525 |         #[cfg(coverage)]
+    |               ^^^^^^^^
+    |
+    = help: expected names are: `docsrs`, `feature`, and `test` and 34 more
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(coverage)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: variable does not need to be mutable
+    --> src/conbin.rs:3053:17
+     |
+3053 | ...   let mut advise_map = unsafe { memmap2::MmapMut::map_mut(&advise_...
+     |           ----^^^^^^^^^^
+     |           |
+     |           help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> src/ffi.rs:6577:17
+     |
+6577 |         let mut bare = test_builder_handle();
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7223:23
+     |
+7223 |             let msg = unsafe { rkr_status_message(status) };
+     |                       ^^^^^^ unnecessary `unsafe` block
+     |
+     = note: `#[warn(unused_unsafe)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7230:17
+     |
+7230 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7241:17
+     |
+7241 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: value assigned to `flat_shape` is never read
+    --> src/ffi.rs:8635:9
+     |
+8635 |         flat_shape[0] = 3;
+     |         ^^^^^^^^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:9373:18
+     |
+9373 |         assert!(!unsafe { rkr_last_error_message() }.is_null());
+     |                  ^^^^^^ unnecessary `unsafe` block
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:1508:13
+     |
+1508 |     let mut attr = PerfEventAttr {
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:2187:25
+     |
+2187 |                 let mut scanner = ConFrameIterator::from_bytes(bytes);
+     |                     ----^^^^^^^
+     |                     |
+     |                     help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4185:17
+     |
+4185 |         let mut iter = super::ConFrameIterator::from_bytes(&bytes);
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4667:17
+     |
+4667 |         let mut it = ConFrameIterator::from_bytes(b"\n");
+     |             ----^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4673:17
+     |
+4673 |         let mut bare = ConFrameIterator::from_bytes(b"");
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: `readcon-core` (lib test) generated 13 warnings (run `cargo fix --lib -p readcon-core --tests` to apply 7 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.22s
+     Running unittests src/lib.rs (target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876)
+
+running 1 test
+test distrib_read::tests::two_ranks_read_and_write_every_mode ... FAILED
+
+failures:
+
+---- distrib_read::tests::two_ranks_read_and_write_every_mode stdout ----
+
+thread 'distrib_read::tests::two_ranks_read_and_write_every_mode' (1847453) panicked at src/distrib_read.rs:1059:13:
+two-rank job failed (ExitStatus(unix_wait_status(34304, "exit status: 134")))
+
+running 1 test
+test distrib_read::tests::two_ranks_read_and_write_every_mode ... 
+running 1 test
+test distrib_read::tests::two_ranks_read_and_write_every_mode ... 
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+,mca_io_ompio_file_set_size: error in fs->set_size
+,mca_io_ompio_file_set_size: error in fs->set_size
+[bench:1847457] *** Process received signal ***
+[bench:1847457] Signal: Aborted (6)
+[bench:1847457] Signal code: User function (kill, sigsend, abort, etc.) (0)
+[bench:1847458] *** Process received signal ***
+[bench:1847458] Signal: Aborted (6)
+[bench:1847458] Signal code: User function (kill, sigsend, abort, etc.) (0)
+[bench:1847457] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f54f3045330]
+[bench:1847457] [ 1] /lib/x86_64-linux-gnu/libc.so.6(syscall+0x1d)[0x7f54f312752d]
+[bench:1847457] [ 2] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8c5e06)[0x5627518a2e06]
+[bench:1847457] [ 3] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7e69e5)[0x5627517c39e5]
+[bench:1847457] [ 4] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7f1da5)[0x5627517ceda5]
+[bench:1847457] [ 5] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7fe81c)[0x5627517db81c]
+[bench:1847457] [ 6] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7ea1ea)[0x5627517c71ea]
+[bench:1847457] [ 7] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7eade8)[0x5627517c7de8]
+[bench:1847457] [ 8] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x6466c8)[0x5627516236c8]
+[bench:1847457] [ 9] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x36124b)[0x56275133e24b]
+[bench:1847457] [10] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x5188ae)[0x5627514f58ae]
+[bench:1847457] [11] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d47b1)[0x5627512b17b1]
+[bench:1847457] [12] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8d40cf)[0x5627518b10cf]
+[bench:1847457] [13] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d4567)[0x5627512b1567]
+[bench:1847457] [14] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x6466ee)[0x5627516236ee]
+[bench:1847457] [15] /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca)[0x7f54f302a1ca]
+[bench:1847457] [16] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b)[0x7f54f302a28b]
+[bench:1847457] [17] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x20ce55)[0x5627511e9e55]
+[bench:1847457] *** End of error message ***
+[bench:1847458] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f2564445330]
+[bench:1847458] [ 1] /lib/x86_64-linux-gnu/libc.so.6(syscall+0x1d)[0x7f256452752d]
+[bench:1847458] [ 2] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8c5e06)[0x55cfb3a84e06]
+[bench:1847458] [ 3] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7e69e5)[0x55cfb39a59e5]
+[bench:1847458] [ 4] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7f1da5)[0x55cfb39b0da5]
+[bench:1847458] [ 5] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7fe81c)[0x55cfb39bd81c]
+[bench:1847458] [ 6] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7ea1ea)[0x55cfb39a91ea]
+[bench:1847458] [ 7] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7eade8)[0x55cfb39a9de8]
+[bench:1847458] [ 8] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x6466c8)[0x55cfb38056c8]
+[bench:1847458] [ 9] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x36124b)[0x55cfb352024b]
+[bench:1847458] [10] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x5188ae)[0x55cfb36d78ae]
+[bench:1847458] [11] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d47b1)[0x55cfb34937b1]
+[bench:1847458] [12] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8d40cf)[0x55cfb3a930cf]
+[bench:1847458] [13] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d4567)[0x55cfb3493567]
+[bench:1847458] [14] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x6466ee)[0x55cfb38056ee]
+[bench:1847458] [15] /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca)[0x7f256442a1ca]
+[bench:1847458] [16] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b)[0x7f256442a28b]
+[bench:1847458] [17] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x20ce55)[0x55cfb33cbe55]
+[bench:1847458] *** End of error message ***
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun noticed that process rank 1 with PID 0 on node bench exited on signal 6 (Aborted).
+--------------------------------------------------------------------------
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/std/src/panicking.rs:676:5
+   1: core::panicking::panic_fmt
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/panicking.rs:80:14
+   2: readcon_core::distrib_read::tests::two_ranks_read_and_write_every_mode
+             at ./src/distrib_read.rs:1059:13
+   3: readcon_core::distrib_read::tests::two_ranks_read_and_write_every_mode::{closure#0}
+             at ./src/distrib_read.rs:839:45
+   4: <readcon_core::distrib_read::tests::two_ranks_read_and_write_every_mode::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    distrib_read::tests::two_ranks_read_and_write_every_mode
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 353 filtered out; finished in 246.88s
+
+error: test failed, to rerun pass `--lib`
