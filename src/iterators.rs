@@ -4852,6 +4852,13 @@ H";
             held_text.contains("InvalidNumberFormat"),
             "{held_text}"
         );
+
+        let mut bad = ConFrameIterator::from_bytes(b"ok\n\xff\n");
+        assert_eq!(bad.lines.next_line(), Some("ok"));
+        assert!(bad.lines.next_line().is_none());
+        let utf8_err = bad.next().unwrap().unwrap_err();
+        let utf8_text = format!("{utf8_err:?}");
+        assert!(utf8_text.contains("UTF-8") || utf8_text.contains("utf8"), "{utf8_text}");
     }
 
     #[cfg(feature = "parallel")]

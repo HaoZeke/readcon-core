@@ -52,3 +52,14 @@ fn a_cut_legacy_row_stays_after_the_blank() {
     let tail = &bytes[it.byte_pos()..];
     assert_eq!(tail, b"\nH");
 }
+
+#[test]
+fn a_legacy_label_without_a_newline_stays_put() {
+    let mut text = coords(false);
+    text.push('\n');
+    text.push_str("H\nVelocities of Component 1");
+    let bytes = text.into_bytes();
+    let mut it = ConFrameIterator::from_bytes(&bytes);
+    assert!(it.forward_fast().unwrap().is_ok());
+    assert_eq!(&bytes[it.byte_pos()..], b"\nH\nVelocities of Component 1");
+}
