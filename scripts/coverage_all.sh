@@ -82,7 +82,7 @@ for path in gcov:
     never = len(re.findall(r"never executed", body))
     outcomes = taken + not_taken + never
     text.append(
-        f"{path.name} lines {pct:.1f} executed {executed} missed {missed} branches_taken {taken} branches_outcomes {outcomes}"
+        f"{path.name} lines {pct:.1f} executed {executed} missed {missed} branches_taken_at_least_once {taken} branches_outcomes {outcomes}"
     )
 (out / "per-file.txt").write_text("\n".join(text) + ("\n" if text else ""), encoding="utf-8")
 print("\n".join(text))
