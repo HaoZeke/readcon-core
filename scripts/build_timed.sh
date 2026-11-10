@@ -87,7 +87,7 @@ SYSROOT="$(rustc --print sysroot)"
 export RUSTFLAGS="-C link-arg=-fuse-ld=bfd --remap-path-prefix=${SYSROOT}=/rustc --remap-path-prefix=/work/cargo=/cargo"
 printf "%s\n" "--remap-path-prefix=<sysroot>=/rustc --remap-path-prefix=<cargo-home>=/cargo" > /work/out/rustflags-ci.txt
 rustc -vV > /work/out/rustc-ci.txt
-PY="$(find / -path "*cp312-cp312/bin/python" -type f -print -quit)"
+PY="$(find / -path "*cp312-cp312/bin/python3.12" -type f -print -quit)"
 "$PY" -m pip install -q maturin
 "$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out /work/out/wheels-ci
 cargo build --release --lib --locked
