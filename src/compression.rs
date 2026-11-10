@@ -408,6 +408,11 @@ pub fn zstd_writer(
     Ok(encoder.auto_finish())
 }
 
+/// The error when a caller asks for a zstd writer and this build has no zstd.
+pub fn compression_not_built() -> io::Error {
+    io::Error::new(io::ErrorKind::Unsupported, "compression not built")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

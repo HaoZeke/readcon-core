@@ -4212,6 +4212,7 @@ pub unsafe extern "C" fn rkr_frame_metatensor_atom_energies_block(
 pub unsafe extern "C" fn create_writer_zstd_c(
     _filename_c: *const c_char,
 ) -> *mut RKRConFrameWriter {
+    set_last_error("compression not built");
     ptr::null_mut()
 }
 /// # Safety
@@ -4224,6 +4225,7 @@ pub unsafe extern "C" fn create_writer_zstd_with_precision_c(
     _filename_c: *const c_char,
     _precision: u8,
 ) -> *mut RKRConFrameWriter {
+    set_last_error("compression not built");
     ptr::null_mut()
 }
 //=============================================================================
@@ -10215,11 +10217,32 @@ mod tests {
         unsafe { free_rkr_writer(gzip) };
         assert!(std::fs::metadata(&gz).unwrap().len() > 0);
         let zst = dir.path().join("live.con.zst");
-        let zst_c = CString::new(zst.to_str().unwrap()).unwrap();
-        let zstd = unsafe { create_writer_zstd_with_precision_c(zst_c.as_ptr(), 8) };
-        assert!(!zstd.is_null());
-        unsafe { free_rkr_writer(zstd) };
-        assert!(std::fs::metadata(&zst).unwrap().len() > 0);
+        #[cfg(not(feature = "zstd"))]
+        {
+            let err = crate::compression::compression_not_built();
+            assert_eq!(err.to_string(), "compression not built");
+            let zst_c = CString::new(zst.to_str().unwrap()).unwrap();
+            clear_last_error();
+            let zstd = unsafe { create_writer_zstd_with_precision_c(zst_c.as_ptr(), 8) };
+            assert!(zstd.is_null());
+            let message = unsafe { CStr::from_ptr(rkr_last_error_message()) };
+            assert_eq!(message.to_str().unwrap(), "compression not built");
+        }
+        #[cfg(feature = "zstd")]
+        {
+            let mut zstd_frame =
+                crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+            zstd_frame.add_atom("H", 0.1, 0.2, 0.3, [false; 3], 1, 1.0);
+            let zstd_frame = zstd_frame.build().unwrap();
+            let mut writer =
+                crate::writer::ConFrameWriter::from_path_zstd_with_precision(&zst, 8).unwrap();
+            writer.write_frame(&zstd_frame).unwrap();
+            drop(writer);
+            let back = crate::compression::read_file_contents(&zst).unwrap();
+            let text = back.as_str().unwrap();
+            assert!(text.contains("H"), "{text}");
+            assert!(text.contains("0.1") || text.contains("0.100"), "{text}");
+        }
 
         let mut owned = {
             let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);

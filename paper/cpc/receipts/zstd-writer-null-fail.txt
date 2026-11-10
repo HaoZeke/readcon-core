@@ -1,0 +1,157 @@
+test-log: zstd-writer-null-fail.txt
+exit: 0
+----- test output -----
+   Compiling serde v1.0.228
+   Compiling zerocopy v0.8.42
+   Compiling potential_utf v0.1.5
+   Compiling icu_locale_core v2.2.0
+   Compiling fraction v0.15.4
+   Compiling walkdir v2.5.0
+   Compiling rayon v1.11.0
+   Compiling ndarray v0.17.2
+   Compiling icu_collections v2.2.0
+   Compiling crc32fast v1.5.0
+   Compiling fluent-uri v0.4.1
+   Compiling tinytemplate v1.2.1
+   Compiling email_address v0.2.9
+   Compiling icu_provider v2.2.0
+   Compiling unicode-general-category v1.1.0
+   Compiling getrandom v0.4.2
+   Compiling icu_properties v2.2.0
+   Compiling icu_normalizer v2.2.0
+   Compiling plotters v0.3.7
+   Compiling itertools v0.13.0
+   Compiling jsonschema-regex v0.46.10
+   Compiling anes v0.1.6
+   Compiling half v1.8.3
+   Compiling data-encoding v2.11.0
+   Compiling readcon-core v0.18.1 (.)
+   Compiling idna_adapter v1.2.2
+   Compiling idna v1.1.0
+   Compiling rustc-serialize v0.3.25
+   Compiling bytecount v0.6.9
+   Compiling num-cmp v0.1.0
+   Compiling oorandom v11.1.5
+   Compiling fastrand v2.3.0
+   Compiling flate2 v1.1.9
+   Compiling pest_derive v2.8.7
+   Compiling memmap2 v0.9.10
+   Compiling tempfile v3.27.0
+   Compiling ryu v1.0.23
+   Compiling rustc-hash v2.1.2
+   Compiling fast-float2 v0.2.3
+   Compiling dlpk v0.1.5
+   Compiling cog v0.1.0
+   Compiling half v2.7.1
+   Compiling ahash v0.8.12
+   Compiling referencing v0.46.10
+   Compiling ciborium-ll v0.2.2
+   Compiling ciborium v0.2.2
+   Compiling criterion v0.6.0
+   Compiling jsonschema v0.46.10
+warning: variable does not need to be mutable
+    --> src/conbin.rs:3053:17
+     |
+3053 | ...   let mut advise_map = unsafe { memmap2::MmapMut::map_mut(&advise_...
+     |           ----^^^^^^^^^^
+     |           |
+     |           help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> src/ffi.rs:6577:17
+     |
+6577 |         let mut bare = test_builder_handle();
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7223:23
+     |
+7223 |             let msg = unsafe { rkr_status_message(status) };
+     |                       ^^^^^^ unnecessary `unsafe` block
+     |
+     = note: `#[warn(unused_unsafe)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7230:17
+     |
+7230 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:7241:17
+     |
+7241 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+     |                 ^^^^^^ unnecessary `unsafe` block
+
+warning: value assigned to `flat_shape` is never read
+    --> src/ffi.rs:8635:9
+     |
+8635 |         flat_shape[0] = 3;
+     |         ^^^^^^^^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unnecessary `unsafe` block
+    --> src/ffi.rs:9373:18
+     |
+9373 |         assert!(!unsafe { rkr_last_error_message() }.is_null());
+     |                  ^^^^^^ unnecessary `unsafe` block
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:1508:13
+     |
+1508 |     let mut attr = PerfEventAttr {
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4667:17
+     |
+4667 |         let mut it = ConFrameIterator::from_bytes(b"\n");
+     |             ----^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/iterators.rs:4673:17
+     |
+4673 |         let mut bare = ConFrameIterator::from_bytes(b"");
+     |             ----^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: function `perf_open_os` is never used
+    --> src/iterators.rs:1500:4
+     |
+1500 | fn perf_open_os() -> i64 {
+     |    ^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `perf_read_os` is never used
+    --> src/iterators.rs:1527:4
+     |
+1527 | fn perf_read_os(fd: i32, value: &mut u64) -> isize {
+     |    ^^^^^^^^^^^^
+
+warning: function `perf_close_os` is never used
+    --> src/iterators.rs:1531:4
+     |
+1531 | fn perf_close_os(fd: i32) {
+     |    ^^^^^^^^^^^^^
+
+warning: `readcon-core` (lib test) generated 13 warnings (run `cargo fix --lib -p readcon-core --tests` to apply 5 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.77s
+     Running unittests src/lib.rs (target/zstd-off/debug/build/readcon-core/844bfb8ec073d5db/out/readcon_core-844bfb8ec073d5db)
+
+running 1 test
+test ffi::tests::writers_dlpack_ingest_and_selection_edges ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 326 filtered out; finished in 0.00s
+
