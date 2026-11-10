@@ -907,5 +907,26 @@ mod chemfiles_selection_cpp_regression {
         let projected = chemfiles_frame_from_con_frame(&skewed).expect("skew");
         assert_eq!(projected.cell().shape(), CellShape::Triclinic);
         assert_eq!(projected.topology().bonds().len(), 1);
+        let mut with_energy = skewed;
+        with_energy.header.set_energy(-1.25);
+        assert_eq!(
+            meta_f64(&with_energy, crate::types::meta::ENERGY),
+            Some(-1.25)
+        );
+        assert_eq!(meta_f64(&with_energy, "no-such-key"), None);
+        let chfl = chemfiles_frame_from_con_frame(&with_energy).expect("energy frame");
+        let caught = std::panic::catch_unwind(|| {
+            assert_selection_parity_remapped("not a selection $$$", &chfl, &with_energy);
+        });
+        let message = caught.expect_err("a bad selection must panic");
+        let text = message
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| message.downcast_ref::<&str>().copied())
+            .unwrap_or("");
+        assert!(
+            text.contains("not a selection $$$"),
+            "{text}"
+        );
     }
 }

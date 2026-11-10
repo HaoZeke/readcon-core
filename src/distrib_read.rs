@@ -557,6 +557,16 @@ mod tests {
     use mpi::raw::AsRaw;
     use std::ffi::CString;
 
+    fn flush_coverage_profile() {
+        #[cfg(coverage)]
+        unsafe {
+            unsafe extern "C" {
+                fn __llvm_profile_write_file() -> i32;
+            }
+            let _ = __llvm_profile_write_file();
+        }
+    }
+
     fn world_comm() -> Comm {
         Comm::dup_of(&test_universe().world())
     }
@@ -624,6 +634,57 @@ mod tests {
         }
         assert!(read_block(&comm, &dir.path().join("missing.con"), ReadMode::Auto, None).is_err());
         assert!(read_block(&comm, &garbage, ReadMode::Shared, None).is_err());
+        assert_eq!(ReadMode::from_i32(2), Some(ReadMode::Scatter));
+        assert_eq!(
+            crate::distrib_write::WriteMode::from_i32(0),
+            Some(crate::distrib_write::WriteMode::Auto)
+        );
+        assert_eq!(
+            crate::distrib_write::WriteMode::from_i32(1),
+            Some(crate::distrib_write::WriteMode::MpiIo)
+        );
+        assert!(!flock_wait(-1, libc::LOCK_SH));
+        let lock_a = std::fs::File::open(&one).unwrap();
+        let lock_b = std::fs::File::open(&one).unwrap();
+        assert!(flock_wait(
+            std::os::fd::AsRawFd::as_raw_fd(&lock_a),
+            libc::LOCK_EX
+        ));
+        assert!(flock_sees_exclusive(std::os::fd::AsRawFd::as_raw_fd(
+            &lock_b
+        )));
+        unsafe {
+            libc::flock(
+                std::os::fd::AsRawFd::as_raw_fd(&lock_a),
+                libc::LOCK_UN,
+            );
+        }
+        assert!(!flock_sees_exclusive(std::os::fd::AsRawFd::as_raw_fd(
+            &lock_b
+        )));
+        let mut one_atom = crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+        one_atom.add_atom("H", 0.0, 0.0, 0.0, [false; 3], 1, 1.0);
+        let one_atom = one_atom.build().unwrap();
+        let mut raw = Vec::new();
+        {
+            let mut writer = crate::writer::ConFrameWriter::new(&mut raw);
+            writer.write_frame(&one_atom).unwrap();
+        }
+        let mixed = dir.path().join("mixed.con");
+        std::fs::write(&mixed, format!("{text}{}", String::from_utf8(raw).unwrap())).unwrap();
+        for mode in [ReadMode::Shared, ReadMode::Scatter] {
+            let got = read_block(&comm, &mixed, mode, None).expect("unequal frames");
+            assert_eq!(got.n_total, 2, "{mode:?}");
+            assert_eq!(got.frames.len(), 2, "{mode:?}");
+        }
+        let mut bulky = String::new();
+        while bulky.len() < 70_000 {
+            bulky.push_str(&text);
+        }
+        let bulky_path = dir.path().join("bulky.con");
+        std::fs::write(&bulky_path, bulky).unwrap();
+        let mapped = read_block(&comm, &bulky_path, ReadMode::Scatter, Some(1)).expect("mapped");
+        assert!(mapped.n_total > 2);
 
         let path_c = CString::new(two.to_str().unwrap()).unwrap();
         let fint = unsafe { mpi::ffi::RSMPI_Comm_c2f(test_universe().world().as_raw()) };
@@ -759,14 +820,18 @@ mod tests {
                 "READCON_TWO_RANK_DIR",
                 "-x",
                 "READCON_MPI_TEST_CHUNK",
-            ])
-            .arg(&exe)
+            ]);
+            if std::env::var_os("LLVM_PROFILE_FILE").is_some() {
+                cmd.args(["-x", "LLVM_PROFILE_FILE"]);
+            }
+            cmd.arg(&exe)
             .args([
                 "distrib_read::tests::two_ranks_read_and_write_every_mode",
                 "--exact",
                 "--test-threads=1",
                 "--nocapture",
-            ])
+            ]);
+            cmd
             .env(CHILD, "1")
             .env("READCON_MPI_TEST_CHUNK", "64")
             .env("READCON_TWO_RANK_DIR", dir.path())
@@ -832,6 +897,7 @@ mod tests {
             None,
         );
         assert!(err.is_err(), "a directory path must fail the gather");
+        flush_coverage_profile();
         drop(comm);
         drop(universe);
     }

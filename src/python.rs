@@ -4356,4 +4356,50 @@ comm = C()
             }
         });
     }
+
+    #[test]
+    fn metadata_numbers_keys_and_a_short_ase_cell() {
+        Python::initialize();
+        Python::attach(|py| {
+            let keyed = pyo3::types::PyDict::new(py);
+            keyed.set_item(1_i64, "x").unwrap();
+            let err = py_to_json_value(&keyed).unwrap_err();
+            assert!(err.to_string().contains("metadata keys"), "{err}");
+
+            let module = py.import("sys").unwrap();
+            let err = py_to_json_value(&module).unwrap_err();
+            assert!(err.to_string().contains("JSON-compatible"), "{err}");
+
+            let mut builder = crate::types::ConFrameBuilder::new([2.0, 2.0, 2.0], [90.0; 3]);
+            builder.add_atom("Cu", 0.1, 0.2, 0.3, [false; 3], 1, 63.5);
+            let mut frame = PyConFrame::from_owned(py, builder.build().unwrap()).unwrap();
+            assert!(frame.set_metadata_json(py, "{").is_err());
+
+            let locals = pyo3::types::PyDict::new(py);
+            py.run(
+                cr#"
+class Cell:
+    def tolist(self):
+        return [[1.0, 0.0], [0.0, 1.0]]
+class Atoms:
+    def get_chemical_symbols(self):
+        return ["Cu"]
+    def get_positions(self):
+        import numpy
+        return numpy.array([[0.1, 0.2, 0.3]])
+    def get_cell(self):
+        return Cell()
+atoms = Atoms()
+"#,
+                Some(&locals),
+                Some(&locals),
+            )
+            .unwrap();
+            let atoms = locals.get_item("atoms").unwrap().unwrap();
+            match pyconframe_from_ase(py, &atoms) {
+                Err(err) => assert!(err.to_string().contains("3x3"), "{err}"),
+                Ok(_) => panic!("a short cell must be rejected"),
+            }
+        });
+    }
 }
