@@ -7311,4 +7311,27 @@ mod tests {
             free_rkr_frame(frame);
         }
     }
+
+    #[test]
+    fn copying_f32_storage_still_returns_f64() {
+        use crate::storage_dtype::{ElementKind, StorageDtypes};
+        let mut frame = {
+            let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+            builder.add_atom("Cu", 1.5, 2.5, 3.5, [false, false, false], 1, 63.546);
+            builder.build().unwrap()
+        };
+        let mut dtypes = StorageDtypes::default();
+        dtypes.positions = ElementKind::Float32;
+        frame.project_storage_dtypes(&dtypes);
+        let handle = Box::into_raw(Box::new(frame)) as *mut RKRConFrame;
+        let mut xyz = [0.0f64; 3];
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(handle, xyz.as_mut_ptr(), xyz.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!((xyz[0] - 1.5).abs() < 1e-5);
+        assert!((xyz[1] - 2.5).abs() < 1e-5);
+        assert!((xyz[2] - 3.5).abs() < 1e-5);
+        unsafe { free_rkr_frame(handle) };
+    }
 }

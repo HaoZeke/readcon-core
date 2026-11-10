@@ -4279,6 +4279,40 @@ mod tests {
     }
 
     #[test]
+    fn header_bonds_and_dlpack_views_round_trip() {
+        let mut frame = three_atom_builder().build().unwrap();
+        frame.header.add_bond(Bond::new(0, 1).with_order(1));
+        assert!(frame.header.has_bonds());
+        assert_eq!(frame.header.bonds().len(), 1);
+        frame.header.clear_bonds();
+        assert!(!frame.header.has_bonds());
+        let mut meta = std::collections::BTreeMap::new();
+        meta.insert(meta::BONDS.into(), serde_json::json!("nope"));
+        assert!(parse_bonds_from_metadata(&meta).is_empty());
+
+        let mut builder = three_atom_builder();
+        builder.set_atom_velocity(0, [0.1, 0.0, 0.0]).unwrap();
+        builder.set_atom_force(0, [0.0, 0.2, 0.0]).unwrap();
+        builder.set_atom_energy(0, 1.5).unwrap();
+        let positions = builder.positions_dlpack().unwrap();
+        assert_eq!(positions.shape(), &[3, 3]);
+        let velocities = builder.velocities_dlpack().unwrap().expect("velocities");
+        assert_eq!(velocities.shape()[0], 3);
+        let forces = builder.forces_dlpack().unwrap().expect("forces");
+        assert_eq!(forces.shape()[0], 3);
+        let energies = builder.atom_energies_dlpack().unwrap().expect("energies");
+        assert_eq!(energies.shape(), &[3]);
+        let masses = builder.masses_dlpack().unwrap();
+        assert_eq!(masses.shape(), &[3]);
+        let ids = builder.atom_ids_dlpack().unwrap();
+        assert_eq!(ids.shape(), &[3]);
+        builder.clear_forces_section();
+        assert!(builder.forces_dlpack().unwrap().is_none());
+        builder.clear_energies_section();
+        assert!(builder.atom_energies_dlpack().unwrap().is_none());
+    }
+
+    #[test]
     fn section_slices_are_empty_until_written() {
         let bond = Bond::new(1, 0).with_order(2);
         assert_eq!(bond.order, Some(2));

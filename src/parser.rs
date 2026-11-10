@@ -3745,6 +3745,30 @@ Coordinates of Component 1
         super::validate_bonds_metadata(&ok).unwrap();
     }
 
+    struct BareStream;
+    impl<'a> super::LineStream<'a> for BareStream {
+        fn next_line(&mut self) -> Option<&'a str> {
+            None
+        }
+        fn peek_line(&mut self) -> Option<&'a str> {
+            None
+        }
+    }
+
+    #[test]
+    fn a_stream_without_lookahead_uses_the_trait_defaults() {
+        let mut bare = BareStream;
+        assert!(!bare.remainder_is_whitespace());
+        assert!(!bare.blank_line_opens_section());
+        assert!(bare.blank_opens_velocity_block());
+        assert!(bare.legacy_velocity_rows_complete(&[5, 5]));
+        assert!(bare.bytes_remaining().is_none());
+        assert!(matches!(
+            bare.next_coord_row(2, 0),
+            Err(ParseError::IncompleteFrame)
+        ));
+    }
+
     #[test]
     fn a_peekable_reports_the_bytes_still_ahead() {
         use super::LineStream;
