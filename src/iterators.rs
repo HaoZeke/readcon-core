@@ -1458,6 +1458,32 @@ fn thread_minflt() -> i64 {
 /// per-worker minor faults instead.
 #[cfg(feature = "parallel")]
 fn sample_llc_misses() -> i64 {
+    sample_llc_from(perf_open_os, perf_read_os, perf_close_os)
+}
+
+/// Last-level cache misses, using the three OS calls the caller supplies.
+///
+/// `open` returns a file descriptor, or a negative value when the kernel
+/// refuses the event. `read` writes one `u64` and returns the byte count.
+/// Production always passes [`perf_open_os`], [`perf_read_os`], and
+/// [`perf_close_os`]. There is no environment switch.
+fn sample_llc_from(
+    open: impl FnOnce() -> i64,
+    read: impl FnOnce(i32, &mut u64) -> isize,
+    close: impl FnOnce(i32),
+) -> i64 {
+    let fd = open();
+    if fd < 0 {
+        return -1;
+    }
+    let fd = fd as i32;
+    let mut value = 0u64;
+    let n = read(fd, &mut value);
+    close(fd);
+    if n == 8 { value as i64 } else { -1 }
+}
+
+fn perf_open_os() -> i64 {
     #[repr(C)]
     struct PerfEventAttr {
         typ: u32,
@@ -1472,7 +1498,7 @@ fn sample_llc_misses() -> i64 {
         config: 2 | (1 << 16),
         rest: [0; 14],
     };
-    let fd = unsafe {
+    unsafe {
         libc::syscall(
             libc::SYS_perf_event_open,
             &attr as *const PerfEventAttr,
@@ -1481,17 +1507,17 @@ fn sample_llc_misses() -> i64 {
             -1i32,
             0u64,
         )
-    };
-    if fd < 0 {
-        return -1;
     }
-    let fd = fd as libc::c_int;
-    let mut value = 0u64;
-    let n = unsafe { libc::read(fd, &mut value as *mut u64 as *mut libc::c_void, 8) };
+}
+
+fn perf_read_os(fd: i32, value: &mut u64) -> isize {
+    unsafe { libc::read(fd, value as *mut u64 as *mut libc::c_void, 8) }
+}
+
+fn perf_close_os(fd: i32) {
     unsafe {
         libc::close(fd);
     }
-    if n == 8 { value as i64 } else { -1 }
 }
 
 /// Pages that do not sit on node 0.
@@ -4027,8 +4053,8 @@ mod differential_entry_points {
 mod one_thread_and_numa {
     use super::{
         error, frames_from_bytes, line_count, line_no_for_pos, line_start_pos, numa_remote_from,
-        parse_byte_span, parse_bytes_timed, parse_text_span, read_all_frames_indexed,
-        sample_llc_misses,
+        parse_byte_span, parse_bytes_timed, parse_text_span, perf_close_os, perf_open_os,
+        read_all_frames_indexed, sample_llc_from, sample_llc_misses,
     };
 
     #[test]
@@ -4086,6 +4112,46 @@ mod one_thread_and_numa {
         assert_eq!(line_start_pos(&nl, 8, 9), 8);
         let sample = sample_llc_misses();
         assert!(sample >= -1);
+    }
+
+    #[test]
+    fn llc_reads_follow_the_supplied_descriptor() {
+        assert_eq!(sample_llc_from(|| -1, |_, _| 8, |_| {}), -1);
+        let mut closed = false;
+        let value = sample_llc_from(
+            || 7,
+            |fd, slot| {
+                assert_eq!(fd, 7);
+                *slot = 42;
+                8
+            },
+            |fd| {
+                assert_eq!(fd, 7);
+                closed = true;
+            },
+        );
+        assert_eq!(value, 42);
+        assert!(closed);
+        assert_eq!(sample_llc_from(|| 4, |_, _| 3, |_| {}), -1);
+        assert_eq!(sample_llc_from(|| 4, |_, _| -1, |_| {}), -1);
+    }
+
+    #[test]
+    fn this_kernel_denies_the_real_perf_open() {
+        let fd = perf_open_os();
+        let err = std::io::Error::last_os_error();
+        if fd >= 0 {
+            perf_close_os(fd as i32);
+            let value = sample_llc_misses();
+            assert!(value >= -1);
+        } else {
+            let errno = err.raw_os_error();
+            assert!(
+                matches!(errno, Some(libc::EPERM | libc::EACCES)),
+                "perf_event_open failed with {errno:?}"
+            );
+            assert_eq!(sample_llc_misses(), -1);
+        }
     }
 
     #[test]

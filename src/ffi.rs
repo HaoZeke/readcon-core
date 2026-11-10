@@ -7334,4 +7334,44 @@ mod tests {
         assert!((xyz[2] - 3.5).abs() < 1e-5);
         unsafe { free_rkr_frame(handle) };
     }
+
+    #[test]
+    fn copy_positions_covers_layout_and_rejected_buffers() {
+        let mut frame = {
+            let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+            builder.add_atom("Cu", 1.0, 2.0, 3.0, [false, false, false], 4, 63.546);
+            builder.add_atom("H", 4.0, 5.0, 6.0, [false, false, false], 5, 1.0);
+            builder.build().unwrap()
+        };
+        let handle = &mut frame as *mut ConFrame as *mut RKRConFrame;
+        let mut xyz = [0.0f64; 6];
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(std::ptr::null(), xyz.as_mut_ptr(), xyz.len()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(handle, std::ptr::null_mut(), xyz.len()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(handle, xyz.as_mut_ptr(), 5) },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(handle, xyz.as_mut_ptr(), xyz.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(xyz, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+        frame.positions = crate::storage_dtype::FloatArray2::zeros_f64(0, 3);
+        let mut from_atoms = [0.0f64; 6];
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(handle, from_atoms.as_mut_ptr(), from_atoms.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(from_atoms, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+        assert_eq!(
+            unsafe { rkr_frame_copy_velocities(handle, xyz.as_mut_ptr(), xyz.len()) },
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+    }
 }
