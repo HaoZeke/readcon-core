@@ -4600,6 +4600,23 @@ Coordinates of Component 1
         assert!(!line_has_component_label("velocities of component 1 extra", 1));
         assert!(line_has_component_label("Velocities of Component 1", 1));
 
+        let mut labelled = ["Cu", "Velocities of Component 1"].into_iter().peekable();
+        assert!(section_follows(&mut labelled));
+        assert!(!section_follows(&mut labelled));
+        let mut short = ["only-symbol", "ignored"].into_iter().peekable();
+        assert!(short.next().is_some());
+        assert!(!section_follows(&mut short));
+        let blank_lines = ["", "Cu", "Velocities of Component 1"];
+        let mut blanks = blank_lines.iter().copied().peekable();
+        assert!(blanks.blank_line_opens_section());
+        let words = ["not blank", "Cu"];
+        let mut words = words.iter().copied().peekable();
+        assert!(!words.blank_line_opens_section());
+        let none: &[&str] = &[];
+        let mut none = none.iter().copied().peekable();
+        assert!(!none.blank_line_opens_section());
+        assert!(none.blank_opens_velocity_block());
+
         let three = parse_line_of_range_f64("1 2 3", 3, 3, &[0.0; 3]).unwrap();
         assert_eq!(three, vec![1.0, 2.0, 3.0]);
         let six = parse_line_of_range_f64("1 2 3 4 5 6", 6, 6, &[0.0; 6]).unwrap();

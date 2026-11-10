@@ -50,6 +50,11 @@ if [ -z "${CXX:-}" ] && [ -x /usr/bin/g++ ]; then
   export CC=/usr/bin/gcc
   export CXX=/usr/bin/g++
 fi
+# An old cmake_minimum_required resets the install prefix to /usr/local.
+# These two files put the build script's prefix back after project().
+export CMAKE_TOOLCHAIN_FILE="$ROOT/paper/cpc/scripts/cmake/save-prefix.cmake"
+export CMAKE_PROJECT_TOP_LEVEL_INCLUDES="$ROOT/paper/cpc/scripts/cmake/restore-prefix.cmake"
+unset CMAKE_INSTALL_PREFIX || true
 
 mkdir -p "$CARGO_TARGET_DIR"
 OUT="${COVERAGE_JSON:-$CARGO_TARGET_DIR/coverage.json}"
