@@ -246,6 +246,28 @@ mod tests {
         assert_eq!(blob, b"frame");
         let empty = comm.bcast_bytes(0, b"");
         assert!(empty.is_empty());
+        unsafe {
+            ::mpi::ffi::MPI_Comm_set_errhandler(
+                ::mpi::ffi::RSMPI_COMM_WORLD,
+                ::mpi::ffi::RSMPI_ERRORS_RETURN,
+            );
+        }
+        let mut size = -1i32;
+        let mut rank = -1i32;
+        let rc = unsafe {
+            with_mpi::rkr_mpi_comm_info_f(
+                ::mpi::ffi::RSMPI_Comm_c2f(::mpi::ffi::RSMPI_COMM_NULL),
+                &mut size,
+                &mut rank,
+            )
+        };
+        unsafe {
+            ::mpi::ffi::MPI_Comm_set_errhandler(
+                ::mpi::ffi::RSMPI_COMM_WORLD,
+                ::mpi::ffi::RSMPI_ERRORS_ARE_FATAL,
+            );
+        }
+        assert_ne!(rc, 0, "a null communicator must not report a rank");
         let mut size = -1i32;
         let mut rank = -1i32;
         let raw = world.as_raw();

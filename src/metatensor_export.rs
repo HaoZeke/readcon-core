@@ -221,6 +221,16 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_atom_ids_fall_back_to_a_free_index() {
+        let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+        builder.add_atom("Cu", 0.0, 0.0, 0.0, [false; 3], 1, 63.5);
+        builder.add_atom("Cu", 1.0, 0.0, 0.0, [false; 3], 1, 63.5);
+        let frame = builder.build().unwrap();
+        let labels = build_atom_id_samples(&frame).unwrap();
+        assert_eq!(labels.count(), 2);
+    }
+
+    #[test]
     fn velocities_block_is_none_when_data_absent() {
         let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
         builder.add_atom("Cu", 0.1, 0.2, 0.3, [false, false, false], 0, 63.546);
