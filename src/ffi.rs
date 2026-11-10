@@ -8106,6 +8106,40 @@ mod tests {
             unsafe { free_rkr_frame(nth) };
         }
         let topo = CString::new("resources/test/water_min.xyz").unwrap();
+        let frame = test_frame_handle();
+        let mut need = 0usize;
+        assert_eq!(
+            unsafe { rkr_pack_rcso(frame, std::ptr::null_mut(), 0, std::ptr::null_mut()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_pack_rcso(std::ptr::null(), std::ptr::null_mut(), 0, &mut need) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_pack_rcso(frame, std::ptr::null_mut(), 0, &mut need) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let mut tiny = [0u8; 4];
+        assert_eq!(
+            unsafe { rkr_pack_rcso(frame, tiny.as_mut_ptr(), tiny.len(), &mut need) },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        let mut natoms = 0u32;
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_natoms(tiny.as_ptr(), tiny.len(), &mut natoms) },
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        let mut dest = [0.0f64; 3];
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_positions(tiny.as_ptr(), tiny.len(), dest.as_mut_ptr(), 1) },
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        assert_eq!(
+            unsafe { rkr_unpack_rcso_forces(tiny.as_ptr(), tiny.len(), dest.as_mut_ptr(), 1) },
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        unsafe { free_rkr_frame(frame) };
         let ranged = unsafe {
             rkr_read_chemfiles_range(xyz_path.as_ptr(), 0, 1, 1, topo.as_ptr(), 0, &mut nchem)
         };

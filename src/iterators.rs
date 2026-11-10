@@ -3322,11 +3322,7 @@ mod parallel_strong_scale_tests {
                 .output()
                 .unwrap();
             let stdout = String::from_utf8_lossy(&out.stdout);
-            assert!(
-                out.status.success() && stdout.contains("test result: ok. 1 passed;"),
-                "{stdout}{}",
-                String::from_utf8_lossy(&out.stderr)
-            );
+            assert!(out.status.success() && stdout.contains("test result: ok. 1 passed;"));
             return;
         }
         let dir = tempfile::tempdir().unwrap();
@@ -3345,10 +3341,7 @@ mod parallel_strong_scale_tests {
         let text = std::fs::read_to_string(&path).unwrap();
         let sequential = super::frames_from_text(&text, None).unwrap();
         assert_eq!(sequential.len(), frames.len());
-        assert_eq!(
-            sequential[0].atom_data[0].x, frames[0].atom_data[0].x,
-            "default read changed a coordinate"
-        );
+        assert_eq!(sequential[0].atom_data[0].x, frames[0].atom_data[0].x);
     }
 }
 
@@ -3701,10 +3694,7 @@ zero-atom frame
                     let byte_err = frames_from_bytes(broken.as_bytes(), Some(workers))
                         .err()
                         .map(|e| format!("{e:?}"));
-                    assert_eq!(
-                        byte_err, serial_err,
-                        "{name} chopped bytes workers {workers}"
-                    );
+                    assert_eq!(byte_err, serial_err);
                 }
             }
         }
@@ -3735,11 +3725,7 @@ mod phased_read_tests {
                 phased.scan_s >= 0.0 && phased.slot_alloc_s >= 0.0 && phased.worker_parse_s >= 0.0
             );
             assert_eq!(parallel[0], serial[0], "workers={workers} first");
-            assert_eq!(
-                parallel.last().unwrap(),
-                serial.last().unwrap(),
-                "workers={workers} last"
-            );
+            assert_eq!(parallel.last().unwrap(), serial.last().unwrap());
             let slab = pack_position_slab(&serial, workers).expect("slab");
             let stride = serial[0].positions.nrows() * 3;
             let src = serial[0].positions.f64_slice().expect("f64");
@@ -3791,11 +3777,7 @@ mod phased_read_tests {
             let serial = outcome(frames_from_bytes(&bytes, None));
             for threads in [2usize, 8] {
                 let parallel = outcome(frames_from_bytes(&bytes, Some(threads)));
-                assert_eq!(
-                    serial, parallel,
-                    "{} at {threads} threads",
-                    path.display()
-                );
+                assert_eq!(serial, parallel);
             }
         }
     }
@@ -4215,6 +4197,10 @@ mod one_thread_and_numa {
         let doubled = format!("{text}\n{text}");
         let bytes = doubled.as_bytes();
         assert!(super::parse_byte_span(bytes, 0, bytes.len()).is_err());
+        let parse = |start: usize, end: usize| super::parse_byte_span(bytes, start, end);
+        let _ = parse(0, bytes.len());
+        let parsed = super::parse_into_slots_timed(bytes, bytes.len(), &[0], 2, parse);
+        assert!(parsed.slots[0].is_err());
         let bad = text.replacen("0.63940000000000108", "notanumber", 1);
         assert!(super::read_nth_frame_from_text(&bad, 0).is_err());
         let mut other = frame.clone();
@@ -4270,10 +4256,7 @@ mod one_thread_and_numa {
             assert!(value >= -1);
         } else {
             let errno = err.raw_os_error();
-            assert!(
-                matches!(errno, Some(libc::EPERM | libc::EACCES)),
-                "perf_event_open failed with {errno:?}"
-            );
+            assert!(matches!(errno, Some(libc::EPERM | libc::EACCES)));
             assert_eq!(sample_llc_misses(), -1);
         }
     }
