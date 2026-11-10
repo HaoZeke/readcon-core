@@ -4152,6 +4152,23 @@ mod one_thread_and_numa {
         assert!(parse_text_span(&bad, 0, bad.len()).is_err());
         let mut iter = super::ConFrameIterator::from_bytes(&bytes);
         assert_eq!(iter.cursor_line(), iter.lines_read());
+
+        let raw = b"ok\n\xff\n";
+        let mut indexed = super::MemchrLines::from_bytes(raw);
+        indexed.newlines = Some(vec![2, 4]);
+        assert_eq!(indexed.next_line(), Some("ok"));
+        assert!(indexed.next_line().is_none());
+        let mut named = super::MemchrLines::new("Velocities of Component 1\n");
+        assert!(crate::parser::LineStream::blank_opens_velocity_block(
+            &mut named
+        ));
+
+        let mut stored = frame.clone();
+        let mut dtypes = crate::storage_dtype::StorageDtypes::default();
+        dtypes.positions = crate::storage_dtype::ElementKind::Float32;
+        stored.project_storage_dtypes(&dtypes);
+        let packed = super::pack_position_slab(&[stored], 1).unwrap();
+        assert_eq!(packed.len(), block.n_atoms * 3);
     }
 
     #[test]

@@ -4344,4 +4344,96 @@ mod tests {
         assert!(!builder.velocities_view().is_empty());
         assert!(!builder.forces_view().is_empty());
     }
+
+    #[test]
+    fn empty_sections_and_bad_indexes_are_rejected() {
+        let frames = crate::iterators::frames_from_text(
+            &std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap(),
+            Some(1),
+        )
+        .unwrap();
+        let mut header = frames[0].header.clone();
+        header.metadata.insert(
+            meta::LATTICE_VECTORS.into(),
+            serde_json::json!([[1.0, 0.0]]),
+        );
+        assert!(header.lattice_vectors().is_none());
+        assert!(bond_from_json_value(&serde_json::json!("no")).is_none());
+        assert!(bond_from_json_value(&serde_json::json!([1])).is_none());
+        assert_eq!(decode_fixed_bitmask_for_spec(0, 2), [false, false, false]);
+
+        let mut empty = ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+        assert!(empty.symbols.is_empty());
+        let _ = empty.with_velocity([1.0, 0.0, 0.0]);
+        let _ = empty.with_force([0.0, 1.0, 0.0]);
+        let _ = empty.with_energy(1.0);
+        let _ = empty.with_charge(0.1);
+        let _ = empty.with_spin(0.5);
+        let _ = empty.with_magmom([0.0, 0.0, 1.0]);
+        let _ = empty.with_displacement([0.1, 0.0, 0.0]);
+        let _ = empty.with_spread([0.2, 0.0, 0.0]);
+        assert!(empty.symbols.is_empty());
+        assert!(empty.set_atom_spread(3, [0.0, 0.0, 0.0]).is_err());
+        assert!(empty.set_atom_energy(3, 1.0).is_err());
+        assert!(empty.set_atom_fixed(3, [true, false, false]).is_err());
+        assert!(empty.clear_atom_velocity(3).is_err());
+        assert!(empty.clear_atom_force(3).is_err());
+        assert!(empty.clear_atom_displacement(3).is_err());
+        assert!(empty.clear_atom_energy(3).is_err());
+        assert!(empty.get_atom_position(3).is_err());
+        assert!(empty.get_atom_force(3).is_err());
+        assert!(empty.get_atom_energy(3).is_err());
+        assert!(empty.get_atom_mass(3).is_err());
+
+        let frames = crate::iterators::frames_from_text(
+            &std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap(),
+            Some(1),
+        )
+        .unwrap();
+        let mut frame = frames.into_iter().next().unwrap();
+        let cpu = dlpk::sys::DLDevice {
+            device_type: dlpk::sys::DLDeviceType::kDLCPU,
+            device_id: 0,
+        };
+        assert!(frame.velocities_as_dlpack(cpu).unwrap().is_none());
+        assert!(frame.forces_as_dlpack(cpu).unwrap().is_none());
+        assert!(frame.atom_energies_as_dlpack(cpu).unwrap().is_none());
+        frame.atom_data.clear();
+        frame.sync_atom_data_from_arrays();
+        frame.sync_arrays_from_atom_data();
+
+        let mut again = crate::iterators::frames_from_text(
+            &std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap(),
+            Some(1),
+        )
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
+        let n = again.atom_data.len();
+        again.positions = crate::storage_dtype::FloatArray2::zeros_f64(0, 3);
+        again.velocities = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        again.forces = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        again.atom_energies = crate::storage_dtype::FloatArray1::from_f64_vec(vec![1.0]);
+        again.charges = crate::storage_dtype::FloatArray1::from_f64_vec(vec![1.0]);
+        again.spins = crate::storage_dtype::FloatArray1::from_f64_vec(vec![1.0]);
+        again.magmoms = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        again.displacements = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        again.spreads = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+        again.atom_ids = ndarray::ArcArray1::zeros(0);
+        again.sync_arrays_from_atom_data();
+        assert_eq!(again.positions.nrows(), n);
+        assert_eq!(again.velocities.nrows(), 0);
+        assert_eq!(again.atom_ids.len(), n);
+
+        again.velocities = crate::storage_dtype::FloatArray2::zeros_f64(n, 3);
+        again.forces = crate::storage_dtype::FloatArray2::zeros_f64(n, 3);
+        again.atom_energies = crate::storage_dtype::FloatArray1::from_f64_vec(vec![0.0; n]);
+        let mut dtypes = crate::storage_dtype::StorageDtypes::default();
+        dtypes.velocities = crate::storage_dtype::ElementKind::Float32;
+        dtypes.forces = crate::storage_dtype::ElementKind::Float32;
+        dtypes.energies = crate::storage_dtype::ElementKind::Float32;
+        again.project_storage_dtypes(&dtypes);
+        assert_eq!(again.atom_data.len(), n);
+    }
 }

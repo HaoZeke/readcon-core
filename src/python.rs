@@ -3934,4 +3934,109 @@ mod api_coverage {
         clear_packed_positions(&mut frames, 1);
         assert_eq!(frames[0].positions.nrows(), 0);
     }
+
+    #[test]
+    fn rejected_python_inputs_use_the_error_branches() {
+        Python::initialize();
+        Python::attach(|py| {
+            let text = std::fs::read_to_string("resources/test/tiny_cuh2.con").unwrap();
+            let frame = crate::iterators::frames_from_text(&text, Some(1))
+                .unwrap()
+                .into_iter()
+                .next()
+                .unwrap();
+            let mut wide = frame.clone();
+            let mut dtypes = crate::storage_dtype::StorageDtypes::default();
+            dtypes.positions = crate::storage_dtype::ElementKind::Float32;
+            dtypes.velocities = crate::storage_dtype::ElementKind::Float32;
+            dtypes.forces = crate::storage_dtype::ElementKind::Float32;
+            wide.velocities = crate::storage_dtype::FloatArray2::zeros_f64(wide.atom_data.len(), 3);
+            wide.forces = crate::storage_dtype::FloatArray2::zeros_f64(wide.atom_data.len(), 3);
+            wide.project_storage_dtypes(&dtypes);
+            wide.header.metadata.insert(
+                crate::types::meta::BONDS.into(),
+                serde_json::json!([{"i": 0, "j": 1, "order": 1}]),
+            );
+            let py_frame = PyConFrame::from_owned(py, wide).unwrap();
+            assert!(py_frame.vel(py).unwrap().is_some());
+            assert!(py_frame.frc(py).unwrap().is_some());
+            assert!(py_frame.__getitem__(py, 99).is_err());
+            assert_eq!(py_frame.bonds(py).unwrap().len(), 1);
+
+            let mut stepped = ndarray::Array2::from_shape_vec(
+                (2, 3),
+                vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            )
+            .unwrap();
+            stepped.invert_axis(ndarray::Axis(0));
+            assert!(stepped.as_slice().is_none());
+            let mut flat = Vec::new();
+            push_positions(
+                crate::storage_dtype::Array2Storage::F64(stepped.into_shared()),
+                &mut flat,
+            );
+            push_positions(
+                crate::storage_dtype::Array2Storage::F32(ndarray::Array2::zeros((1, 3)).into_shared()),
+                &mut flat,
+            );
+            assert_eq!(flat.len(), 9);
+
+            let mut narrow = frame.clone();
+            narrow.atom_data.pop();
+            narrow.positions = crate::storage_dtype::FloatArray2::zeros_f64(narrow.atom_data.len(), 3);
+            let uneven = frames_from_parsed(py, vec![frame.clone(), narrow]).unwrap();
+            assert_eq!(uneven.len(), 2);
+            let mut stored = frame.clone();
+            stored.project_storage_dtypes(&dtypes);
+            let copied = stored.clone();
+            let same = frames_from_parsed(py, vec![stored, copied]).unwrap();
+            assert_eq!(same.len(), 2);
+
+            let tuple = pyo3::types::PyTuple::new(py, [1_i64, 2_i64]).unwrap();
+            let value = py_to_json_value(tuple.as_any()).unwrap();
+            assert!(value.as_array().unwrap().len() == 2);
+            let numpy = py.import("numpy").unwrap();
+            let scalar = numpy.call_method1("array", (7_usize,)).unwrap();
+            assert_eq!(py_usize_values(&scalar).unwrap(), vec![7]);
+
+            let mut other = frame.clone();
+            other.positions = crate::storage_dtype::FloatArray2::zeros_f64(0, 3);
+            let list = con_frame_list(
+                py,
+                vec![frame, other],
+                crate::iterators::ReadPhaseTimes::default(),
+                0,
+                Some(2),
+                "lazy",
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                "serial",
+                None,
+            )
+            .unwrap();
+            assert!(list.borrow(py).touch_checksum(py).is_err());
+            let iter = Py::new(py, ConFrameList::__iter__(list.clone_ref(py))).unwrap();
+            let _ = ConFrameListIter::__iter__(iter.borrow(py));
+
+            let dir = tempfile::tempdir().unwrap();
+            let empty = dir.path().join("empty.con");
+            std::fs::write(&empty, "").unwrap();
+            let bin = dir.path().join("empty.conbin");
+            write_conbin(py, empty.to_str().unwrap(), bin.to_str().unwrap(), false).unwrap();
+            let (_pos, _vel, atoms) = read_conbin(py, bin.to_str().unwrap(), 1).unwrap();
+            assert_eq!(atoms, 0);
+            let tiny = dir.path().join("tiny.con");
+            std::fs::write(&tiny, &text).unwrap();
+            let f32_path = dir.path().join("tiny.f32.conbin");
+            write_conbin(py, tiny.to_str().unwrap(), f32_path.to_str().unwrap(), true).unwrap();
+            assert!(read_conbin(py, f32_path.to_str().unwrap(), 1).is_err());
+
+            let opened = crate::trajectory::ConTrajectory::open(tiny.as_path(), false).unwrap();
+            let traj = Py::new(py, PyConTrajectory { inner: opened }).unwrap();
+            let traj_iter = Py::new(py, PyConTrajectory::__iter__(traj)).unwrap();
+            let _ = PyConTrajectoryIter::__iter__(traj_iter.borrow(py));
+        });
+    }
 }
