@@ -6666,5 +6666,5 @@ mod exported_calls {
     use std::ffi::CString;
     use std::ptr;
 
-    include!("../tests/ffi_null_body.rs");
+    include!("ffi_calls.rs");
 }
