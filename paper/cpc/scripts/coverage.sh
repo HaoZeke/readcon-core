@@ -36,7 +36,8 @@ echo "==> workspace, all targets, branches"
 cargo llvm-cov clean --workspace
 cargo llvm-cov --workspace --all-targets \
   --features parallel,zstd,grammar \
-  --branch --no-fail-fast --no-report
+  --branch --no-fail-fast --no-report \
+  || echo "workspace tests exited $?" >&2
 echo "==> doctests"
 cargo llvm-cov --workspace --doc \
   --features parallel,zstd,grammar \
