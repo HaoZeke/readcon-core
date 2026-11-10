@@ -596,18 +596,21 @@ mod tests {
         // Each filler takes the highest gap that fits the file map. The first
         // one below the region shows that no such gap is left above it.
         let mut fillers = Vec::new();
-        let mut use_hint = true;
+        let mut phase = 0u8;
         let mut saw_plain = false;
+        let mut saw_rejected = false;
+        let mut saw_accepted = false;
         loop {
-            let filler = if use_hint {
-                use_hint = false;
-                // A zero-length request is rejected. The anonymous map that
-                // replaces it is the filler, and the next pass asks for a
-                // plain map.
+            let filler = if phase < 2 {
+                // The zero-length request is rejected. A real length is
+                // accepted, so both answers of the hint check are observed,
+                // and the accepted map is the filler for that pass.
+                let length = if phase == 0 { 0 } else { map_len };
+                phase += 1;
                 let hinted = unsafe {
                     libc::mmap(
                         std::ptr::null_mut(),
-                        0,
+                        length,
                         libc::PROT_READ | libc::PROT_WRITE,
                         libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
                         -1,
@@ -615,8 +618,10 @@ mod tests {
                     )
                 };
                 if hinted == libc::MAP_FAILED {
+                    saw_rejected = true;
                     anonymous(map_len)
                 } else {
+                    saw_accepted = true;
                     hinted
                 }
             } else {
@@ -630,6 +635,8 @@ mod tests {
             fillers.push(filler);
             assert!(fillers.len() < 64, "the address space did not yield a lower map");
         }
+        assert!(saw_rejected, "a zero-length map was accepted");
+        assert!(saw_accepted, "a real-length map was rejected");
         unsafe { libc::munmap(region, map_len) };
         let mut text = ForwardText::open(&path, true).unwrap();
         assert!(
