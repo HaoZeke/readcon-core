@@ -63,15 +63,26 @@ def rounds() -> int:
     return n
 
 
+def type7(value: float) -> float:
+    """A type-7 quartile shown at 17 significant digits."""
+    return float(format(value, ".17g"))
+
+
 def summary(values: list[float], suffix: str = "_s") -> dict:
-    """Median, quartiles and interquartile range of ``values``, each key ending in ``suffix``."""
+    """Median, quartiles and interquartile range of ``values``, each key ending in ``suffix``.
+
+    Quartiles use ``statistics.quantiles`` with method ``inclusive``, which is
+    type 7. Each reported value is ``format(value, ".17g")`` parsed back to
+    float.
+    """
     q1, _, q3 = statistics.quantiles(values, n=4, method="inclusive")
+    median = statistics.median(values)
     return {
         "n": len(values),
-        f"median{suffix}": statistics.median(values),
-        f"q1{suffix}": q1,
-        f"q3{suffix}": q3,
-        f"iqr{suffix}": q3 - q1,
+        f"median{suffix}": type7(median),
+        f"q1{suffix}": type7(q1),
+        f"q3{suffix}": type7(q3),
+        f"iqr{suffix}": type7(q3 - q1),
     }
 
 
