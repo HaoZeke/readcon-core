@@ -988,9 +988,8 @@ mod tests {
             let mut launch = None;
             for present in [true, false, saved_profile.is_some()] {
                 if present {
-                    let value = saved_profile.clone().unwrap_or_else(|| {
-                        std::ffi::OsString::from("target/cov-live/held.profraw")
-                    });
+                    let dummy = std::ffi::OsString::from("target/cov-live/held.profraw");
+                    let value = saved_profile.clone().unwrap_or(dummy);
                     unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) };
                 } else {
                     unsafe { std::env::remove_var("LLVM_PROFILE_FILE") };
