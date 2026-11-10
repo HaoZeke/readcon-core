@@ -279,6 +279,22 @@ def test_lean_selection_and_bad_indexes_fail():
         readcon.read_con_phases(_resource("tiny_cuh2.con"), build="sideways")
 
 
+def test_iterator_skip_and_past_the_end():
+    path = _resource("tiny_multi_cuh2.con")
+    it = readcon.iter_con(path)
+    assert it.forward() is True
+    assert it.skip(1) == 1
+    assert it.nth(0) is None
+    assert it.forward() is False
+    streamed = readcon.iter_con(path, stream=True)
+    assert streamed.forward() is True
+    assert streamed.skip(10) == 1
+    with pytest.raises(ValueError, match="mmap and stream"):
+        readcon.iter_con(path, mmap=True, stream=True)
+    with pytest.raises(OSError):
+        readcon.read_nth_frame(path, 50)
+
+
 def test_symbol_table_and_conbin(tmp_path):
     assert readcon.symbol_to_atomic_number("Fe") == 26
     assert readcon.atomic_number_to_symbol(1) == "H"

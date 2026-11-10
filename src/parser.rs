@@ -3720,4 +3720,40 @@ Coordinates of Component 1
         assert_eq!(fixed, [true, false, false]);
         assert_eq!(id, 7);
     }
+
+    #[test]
+    fn bonds_metadata_rejects_each_bad_shape() {
+        let cases = [
+            (r#""no""#, "array"),
+            (r#"[[1]]"#, "exactly two"),
+            (r#"[[-1,0]]"#, "non-negative"),
+            (r#"[[4294967296,0]]"#, "exceeds u32"),
+            (r#"[{"i":1}]"#, "include \"j\""),
+            (r#"[{"i":"x","j":0}]"#, "non-negative"),
+            (r#"[{"i":4294967296,"j":0}]"#, "exceeds u32"),
+            (r#"[{"i":0,"j":1,"order":"no"}]"#, "order must be an integer"),
+            (r#"[true]"#, "[i, j]"),
+        ];
+        for (raw, needle) in cases {
+            let value: serde_json::Value = serde_json::from_str(raw).unwrap();
+            let err = super::validate_bonds_metadata(&value).expect_err(raw);
+            let text = err.to_string();
+            assert!(text.contains(needle), "{raw}: {text}");
+        }
+        let ok: serde_json::Value =
+            serde_json::from_str(r#"[[0,0],{"i":0,"j":0,"order":1}]"#).unwrap();
+        super::validate_bonds_metadata(&ok).unwrap();
+    }
+
+    #[test]
+    fn a_peekable_reports_the_bytes_still_ahead() {
+        use super::LineStream;
+        let lines = ["a", "bb", ""];
+        let mut peek = lines.iter().copied().peekable();
+        assert_eq!(peek.bytes_remaining(), Some(1 + 1 + 2 + 1 + 0 + 1));
+        assert!(peek.blank_opens_velocity_block());
+        let mut empty = std::iter::empty().peekable();
+        assert_eq!(empty.bytes_remaining(), Some(0));
+        assert!(empty.blank_opens_velocity_block());
+    }
 }

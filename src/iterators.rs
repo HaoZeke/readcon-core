@@ -4025,7 +4025,11 @@ mod differential_entry_points {
 
 #[cfg(all(test, feature = "parallel"))]
 mod one_thread_and_numa {
-    use super::{frames_from_bytes, numa_remote_from, parse_bytes_timed};
+    use super::{
+        error, frames_from_bytes, line_count, line_no_for_pos, line_start_pos, numa_remote_from,
+        parse_byte_span, parse_bytes_timed, parse_text_span, read_all_frames_indexed,
+        sample_llc_misses,
+    };
 
     #[test]
     fn one_worker_and_the_default_stay_on_the_caller() {
@@ -4037,6 +4041,51 @@ mod one_thread_and_numa {
             assert_eq!(got, serial);
             assert!(timed.pool.is_none());
         }
+    }
+
+    #[test]
+    fn a_span_reports_an_empty_slice_a_tail_and_a_second_frame() {
+        let bytes = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+        let frame = parse_byte_span(&bytes, 0, bytes.len()).unwrap();
+        assert!(frame.atom_data.len() >= 1);
+        let err = parse_byte_span(&bytes, 0, 0).unwrap_err();
+        assert!(matches!(err, error::ParseError::IncompleteFrame));
+        let mut two = bytes.clone();
+        two.extend_from_slice(&bytes);
+        let err = parse_byte_span(&two, 0, two.len()).unwrap_err();
+        assert!(matches!(err, error::ParseError::ValidationError(_)));
+        let mut tail = bytes.clone();
+        tail.extend_from_slice(b"\nnot-a-frame\n");
+        assert!(parse_byte_span(&tail, 0, tail.len()).is_err());
+        let text = std::str::from_utf8(&bytes).unwrap();
+        assert!(parse_text_span(text, 0, text.len()).is_ok());
+        assert!(matches!(
+            parse_text_span(text, 0, 0),
+            Err(error::ParseError::IncompleteFrame)
+        ));
+    }
+
+    #[test]
+    fn indexed_reads_and_line_positions_follow_the_newlines() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("tiny.con");
+        std::fs::copy("resources/test/tiny_cuh2.con", &path).unwrap();
+        let frames = read_all_frames_indexed(&path, Some(1)).unwrap();
+        assert!(!frames.is_empty());
+        let again = read_all_frames_indexed(&path, None).unwrap();
+        assert_eq!(again.len(), frames.len());
+        let nl = [3usize, 7];
+        assert_eq!(line_count(&nl, 0), 0);
+        assert_eq!(line_count(&nl, 8), 2);
+        assert_eq!(line_count(&nl, 9), 3);
+        assert_eq!(line_no_for_pos(&nl, 8, 8), 2);
+        assert_eq!(line_no_for_pos(&nl, 8, 0), 0);
+        assert_eq!(line_no_for_pos(&nl, 8, 4), 1);
+        assert_eq!(line_start_pos(&nl, 8, 0), 0);
+        assert_eq!(line_start_pos(&nl, 8, 1), 4);
+        assert_eq!(line_start_pos(&nl, 8, 9), 8);
+        let sample = sample_llc_misses();
+        assert!(sample >= -1);
     }
 
     #[test]

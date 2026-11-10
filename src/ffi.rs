@@ -7227,4 +7227,88 @@ mod tests {
             RKRStatus::RKR_STATUS_NULL_POINTER
         );
     }
+
+    #[test]
+    fn absent_sections_and_float32_dlpack_round_trip() {
+        let builder = test_builder_handle();
+        let sym = CString::new("Cu").unwrap();
+        assert_eq!(
+            unsafe { rkr_frame_add_atom(builder, sym.as_ptr(), 0.1, 0.2, 0.3, false, 1, 63.546) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let mut xyz = [0.0f64; 3];
+        let mut has = true;
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_velocity(builder, 0, xyz.as_mut_ptr(), &mut has) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!has);
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_force(builder, 0, xyz.as_mut_ptr(), &mut has) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!has);
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_get_atom_displacement(builder, 0, xyz.as_mut_ptr(), &mut has)
+            },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!has);
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_spread(builder, 0, xyz.as_mut_ptr(), &mut has) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!has);
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_energy(builder, 0, &mut xyz[0], &mut has) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!has);
+        assert_eq!(
+            unsafe { rkr_frame_builder_get_atom_velocity(builder, 4, xyz.as_mut_ptr(), &mut has) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_get_atom_velocity(
+                    builder,
+                    0,
+                    xyz.as_mut_ptr(),
+                    std::ptr::null_mut(),
+                )
+            },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let frame = unsafe { rkr_frame_builder_build(builder) };
+        assert!(!frame.is_null());
+        let mut tensor = std::ptr::null_mut();
+        let opts = RKRDlpackExportOptions {
+            dtype: RKRDLDataType {
+                code: rkr_dl_type_code::RKR_DL_FLOAT,
+                bits: 32,
+                lanes: 1,
+            },
+            device: RKRDLDevice {
+                device_type: rkr_dl_device_type::RKR_DL_CPU,
+                device_id: 0,
+            },
+        };
+        assert_eq!(
+            unsafe { rkr_frame_positions_dlpack_ex(frame, &opts, &mut tensor) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_positions_from_dlpack(frame, tensor) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_positions_from_dlpack(std::ptr::null_mut(), tensor) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        unsafe {
+            rkr_dlpack_delete(tensor);
+            free_rkr_frame(frame);
+        }
+    }
 }
