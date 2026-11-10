@@ -568,25 +568,22 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
     // via `atom_id` (set to the chemfiles index above) into `atom_data` order.
     let chfl_bonds = bonds_from_chemfiles_frame(frame);
     if !chfl_bonds.is_empty() {
-        let mut id_to_data_idx: BTreeMap<u64, u32> = BTreeMap::new();
+        let mut id_to_data_idx = vec![0u32; n];
         for (data_idx, atom) in con.atom_data.iter().enumerate() {
-            id_to_data_idx.insert(atom.atom_id, data_idx as u32);
+            // atom_id is the chemfiles index assigned above, in 0..n.
+            id_to_data_idx[atom.atom_id as usize] = data_idx as u32;
         }
         let mut remapped = Vec::with_capacity(chfl_bonds.len());
-        for b in chfl_bonds {
-            let Some(&i) = id_to_data_idx.get(&(b.i as u64)) else {
-                continue;
-            };
-            let Some(&j) = id_to_data_idx.get(&(b.j as u64)) else {
-                continue;
-            };
+        for b in &chfl_bonds {
+            // Topology::add_bond rejects an index past the atom count
+            // (Topology.cpp:40-46), so both endpoints are inside this table.
+            let i = unsafe { *id_to_data_idx.get_unchecked(b.i as usize) };
+            let j = unsafe { *id_to_data_idx.get_unchecked(b.j as usize) };
             let mut bond = Bond::new(i, j);
             bond.order = b.order;
             remapped.push(bond);
         }
-        if !remapped.is_empty() {
-            con.header.set_bonds(&remapped);
-        }
+        con.header.set_bonds(&remapped);
     }
 
     let chfl_residues = residues_from_chemfiles_frame(frame);
