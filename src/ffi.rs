@@ -10067,6 +10067,43 @@ mod tests {
         assert!(unsafe { rkr_frame_builder_positions_data(null_b) }.is_null());
         let builder = test_builder_handle();
         assert!(!unsafe { rkr_frame_builder_positions_data(builder) }.is_null());
+        let b = builder as *const RKRConFrameBuilder;
+        assert_eq!(
+            unsafe { rkr_frame_builder_positions_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_velocities_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_forces_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_displacements_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut())
+            },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_spreads_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe {
+                rkr_frame_builder_atom_energies_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut())
+            },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_masses_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut()) },
+            null_status
+        );
+        assert_eq!(
+            unsafe { rkr_frame_builder_atom_ids_dlpack_ex(b, std::ptr::null(), std::ptr::null_mut()) },
+            null_status
+        );
         unsafe { free_rkr_frame_builder(builder) };
         assert_eq!(unsafe { rkr_frame_atom_count(std::ptr::null()) }, 0);
         assert_eq!(
@@ -10093,6 +10130,12 @@ mod tests {
         assert!(
             unsafe { rkr_read_chemfiles_memory(std::ptr::null(), std::ptr::null(), &mut nframes) }
                 .is_null()
+        );
+        assert!(
+            unsafe {
+                rkr_read_chemfiles_memory(c"H 0 0 0\n".as_ptr(), c"XYZ".as_ptr(), std::ptr::null_mut())
+            }
+            .is_null()
         );
     }
 

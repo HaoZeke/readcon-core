@@ -2202,10 +2202,14 @@ pub fn parse_declared_sections<'a>(
                     "legacy velocity block without units.time".into(),
                 ));
             }
-            if parse_velocity_section(lines, header, atom_data)? {
-                header.sections.push(SECTION_VELOCITIES.into());
-                applied = 1;
-            }
+            // `opens` already required a blank line, a velocity label, and
+            // a complete row. parse_velocity_section returns Ok(false) only
+            // when that blank is absent, is only whitespace, or is not a
+            // velocity label, which contradicts `opens`. The Err path still
+            // stops the frame. Ok(true) is the only result that remains.
+            parse_velocity_section(lines, header, atom_data)?;
+            header.sections.push(SECTION_VELOCITIES.into());
+            applied = 1;
         }
     } else {
         let sections = std::mem::take(&mut header.sections);

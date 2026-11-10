@@ -2506,8 +2506,8 @@ Coordinates of Component 1
             cold_expect
         );
         let wide = dir.path().join("wide-cold.conbin");
-        write_known(&wide, 4, 80_000);
-        let wide_n = 4 * 80_000 * 3;
+        write_known(&wide, 4, 400_000);
+        let wide_n = 4 * 400_000 * 3;
         let wide_expect = series_sum(wide_n);
         let deep = QueueLimits {
             page: limits.page,
