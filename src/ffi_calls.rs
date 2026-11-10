@@ -702,3 +702,605 @@ fn bonds_dlpack_import_rcso_and_force_errors() {
         free_rkr_frame(frame);
     }
 }
+
+#[test]
+fn section_copies_and_selection_check_status() {
+    let cell = [4.0_f64, 5.0, 6.0];
+    let angles = [90.0_f64, 90.0, 90.0];
+    let copper = CString::new("Cu").unwrap();
+    let hydrogen = CString::new("H").unwrap();
+    let bare = unsafe {
+        rkr_frame_new(
+            cell.as_ptr(),
+            angles.as_ptr(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+        )
+    };
+    assert!(!bare.is_null());
+    unsafe {
+        assert_eq!(
+            rkr_frame_add_atom(bare, copper.as_ptr(), 0.1, 0.2, 0.3, false, 1, 63.546),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_add_atom(bare, hydrogen.as_ptr(), 1.0, 0.0, 0.0, false, 2, 1.008),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+    }
+    let plain = unsafe { rkr_frame_builder_build(bare) };
+    assert!(!plain.is_null());
+    let mut buf = [0.0_f64; 12];
+    let mut small = [0.0_f64; 1];
+    unsafe {
+        assert_eq!(
+            rkr_frame_copy_positions(ptr::null(), buf.as_mut_ptr(), 6),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_copy_positions(plain, ptr::null_mut(), 6),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_copy_positions(plain, small.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            rkr_frame_copy_positions(plain, buf.as_mut_ptr(), 6),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!((buf[0] - 0.1).abs() < 1e-12);
+        for copy in [
+            rkr_frame_copy_velocities,
+            rkr_frame_copy_forces,
+            rkr_frame_copy_displacements,
+            rkr_frame_copy_spreads,
+        ] {
+            assert_eq!(
+                copy(ptr::null(), buf.as_mut_ptr(), 6),
+                RKRStatus::RKR_STATUS_NULL_POINTER
+            );
+            assert_eq!(
+                copy(plain, ptr::null_mut(), 6),
+                RKRStatus::RKR_STATUS_NULL_POINTER
+            );
+            assert_eq!(
+                copy(plain, buf.as_mut_ptr(), 6),
+                RKRStatus::RKR_STATUS_SECTION_ABSENT
+            );
+        }
+        assert_eq!(
+            rkr_frame_copy_atom_energies(plain, buf.as_mut_ptr(), 2),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            rkr_frame_copy_masses(plain, buf.as_mut_ptr(), 2),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!((buf[0] - 63.546).abs() < 1e-9);
+        assert_eq!(
+            rkr_frame_copy_masses(plain, small.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+    }
+    let mut view = RKRArrayView {
+        data: ptr::null(),
+        n: 0,
+        cols: 0,
+        dtype_code: 0,
+        dtype_bits: 0,
+    };
+    unsafe {
+        assert_eq!(
+            rkr_frame_velocities_view(plain, &mut view),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            rkr_frame_forces_view(plain, &mut view),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            rkr_frame_xyz_view(ptr::null(), &mut view),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_xyz_view(plain, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_xyz_view(plain, &mut view),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(view.n, 2);
+        let mut n = 9_usize;
+        assert!(rkr_frame_velocities_f64(plain, &mut n).is_null());
+        assert_eq!(n, 0);
+        assert!(!rkr_frame_xyz_f64(plain, &mut n).is_null());
+        assert_eq!(n, 2);
+        assert!(rkr_frame_xyz_f64(ptr::null(), &mut n).is_null());
+        assert_eq!(n, 0);
+    }
+    let selection = CString::new("name Cu").unwrap();
+    let mut rejected = ptr::null_mut();
+    unsafe {
+        assert_eq!(
+            rkr_frame_select(plain, selection.as_ptr(), &mut rejected),
+            RKRStatus::RKR_STATUS_SELECTION_ERROR
+        );
+        assert!(rejected.is_null());
+        let bad = [0xff_u8, 0];
+        assert_eq!(
+            rkr_frame_select(plain, bad.as_ptr().cast(), &mut rejected),
+            RKRStatus::RKR_STATUS_INVALID_UTF8
+        );
+        assert_eq!(
+            rkr_frame_select(ptr::null(), selection.as_ptr(), &mut rejected),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+    }
+    let owned = crate::chemfiles_selection::SelectionResult {
+        selection: "name Cu".to_string(),
+        context_size: 1,
+        matches: vec![crate::chemfiles_selection::SelectionMatch {
+            size: 1,
+            atoms: [0, 0, 0, 0],
+        }],
+    };
+    let result = Box::into_raw(Box::new(owned)) as *mut RKRSelectionResult;
+    unsafe {
+        assert_eq!(rkr_selection_result_match_count(result), 1);
+        assert_eq!(rkr_selection_result_context_size(result), 1);
+        let mut atoms = [9_u64; 4];
+        let mut size = 0_u32;
+        assert_eq!(
+            rkr_selection_result_match_at(result, 0, atoms.as_mut_ptr(), &mut size),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(size, 1);
+        assert_eq!(atoms[0], 0);
+        assert_eq!(
+            rkr_selection_result_match_at(result, 1, atoms.as_mut_ptr(), &mut size),
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            rkr_selection_result_match_at(ptr::null(), 0, atoms.as_mut_ptr(), &mut size),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let mut written = 0_u64;
+        let mut too_small = [0_u64; 1];
+        assert_eq!(
+            rkr_selection_result_primary_indices(result, too_small.as_mut_ptr(), 0, &mut written),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(written, 1);
+        assert_eq!(
+            rkr_selection_result_primary_indices(result, ptr::null_mut(), 1, &mut written),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let mut indices = [9_u64; 1];
+        assert_eq!(
+            rkr_selection_result_primary_indices(result, indices.as_mut_ptr(), 1, &mut written),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(indices[0], 0);
+        rkr_selection_result_free(result);
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("one.con");
+    let name = CString::new(path.to_str().unwrap()).unwrap();
+    unsafe {
+        let writer = create_writer_from_path_c(name.as_ptr());
+        assert!(!writer.is_null());
+        assert_eq!(rkr_writer_is_canonical(ptr::null()), 0);
+        assert_eq!(
+            rkr_writer_set_canonical(writer, 1),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(rkr_writer_is_canonical(writer), 1);
+        let frame_ptr = plain as *const RKRConFrame;
+        assert_eq!(
+            rkr_writer_extend(writer, &frame_ptr, 1),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_writer_extend(writer, ptr::null(), 1),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let null_frame: *mut RKRConFrame = ptr::null_mut();
+        assert_eq!(
+            rkr_writer_extend_binding(writer, &null_frame, 1),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_writer_extend_binding(ptr::null_mut(), &null_frame, 1),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(rkr_writer_flush(writer), RKRStatus::RKR_STATUS_SUCCESS);
+        free_rkr_writer(writer);
+        assert!(rkr_last_error_message().is_null());
+        let mut ids = [0_u64; 2];
+        assert_eq!(
+            rkr_frame_copy_atom_ids(ptr::null(), ids.as_mut_ptr(), 2),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_copy_atom_ids(plain, ids.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            rkr_frame_copy_atom_ids(plain, ids.as_mut_ptr(), 2),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(ids[0], 1);
+        let mut tensor = ptr::null_mut();
+        assert_eq!(
+            rkr_frame_positions_as_dlpack(
+                plain,
+                rkr_dl_device_type::RKR_DL_CPU,
+                0,
+                0,
+                0,
+                0,
+                &mut tensor
+            ),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!tensor.is_null());
+        rkr_dlpack_delete(tensor);
+        assert_eq!(
+            rkr_frame_positions_as_dlpack(
+                plain,
+                rkr_dl_device_type::RKR_DL_CUDA,
+                0,
+                0,
+                0,
+                0,
+                &mut tensor
+            ),
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            rkr_frame_positions_as_dlpack(plain, 99, 0, 0, 0, 0, &mut tensor),
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert_eq!(
+            rkr_frame_displacements_dlpack(plain, &mut tensor),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            rkr_frame_spreads_dlpack(plain, &mut tensor),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            rkr_frame_displacements_dlpack(ptr::null(), &mut tensor),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let mut n_frames = 0_usize;
+        let path = CString::new("resources/test/tiny_cuh2.con").unwrap();
+        let bad = [0xff_u8, 0];
+        assert!(rkr_read_chemfiles_range(
+            path.as_ptr(),
+            0,
+            1,
+            usize::MAX,
+            ptr::null(),
+            0,
+            &mut n_frames
+        )
+        .is_null());
+        assert!(rkr_read_chemfiles_range(
+            bad.as_ptr().cast(),
+            0,
+            1,
+            4,
+            path.as_ptr(),
+            1,
+            &mut n_frames
+        )
+        .is_null());
+        let data = CString::new("2\n\nCu 0 0 0\nH 1 0 0\n").unwrap();
+        let format = CString::new("XYZ").unwrap();
+        assert!(rkr_read_chemfiles_memory(data.as_ptr(), format.as_ptr(), &mut n_frames).is_null());
+        assert!(rkr_read_chemfiles_memory(bad.as_ptr().cast(), format.as_ptr(), &mut n_frames).is_null());
+        assert!(rkr_read_chemfiles_memory(data.as_ptr(), bad.as_ptr().cast(), &mut n_frames).is_null());
+        assert!(rkr_read_chemfiles(path.as_ptr(), &mut n_frames).is_null());
+        assert!(rkr_read_chemfiles(bad.as_ptr().cast(), &mut n_frames).is_null());
+        assert_eq!(rkr_chemfiles_nsteps(path.as_ptr()), usize::MAX);
+        assert_eq!(rkr_chemfiles_nsteps(bad.as_ptr().cast()), usize::MAX);
+        let topology = CString::new("").unwrap();
+        assert!(rkr_read_chemfiles_range(
+            path.as_ptr(),
+            0,
+            1,
+            4,
+            topology.as_ptr(),
+            0,
+            &mut n_frames
+        )
+        .is_null());
+        let mut left = 0_u32;
+        let mut right = 0_u32;
+        let mut has_order = 0_u8;
+        let mut order = 0_i32;
+        assert_eq!(
+            rkr_frame_bond_at(plain, 0, &mut left, ptr::null_mut(), &mut has_order, &mut order),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_bond_at(plain, 0, &mut left, &mut right, ptr::null_mut(), &mut order),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_bond_at(plain, 0, &mut left, &mut right, &mut has_order, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let force = [0.1_f64, 0.0, 0.0];
+        let builder = rkr_frame_new(
+            cell.as_ptr(),
+            angles.as_ptr(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+        );
+        assert!(!builder.is_null());
+        assert_eq!(
+            rkr_frame_add_atom(builder, ptr::null(), 0.0, 0.0, 0.0, false, 1, 1.0),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_force(builder, ptr::null()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_velocity(builder, ptr::null()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_displacement(builder, ptr::null()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_spread(builder, ptr::null()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_add_atom(builder, copper.as_ptr(), 0.0, 0.0, 0.0, false, 1, 63.5),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_force(builder, force.as_ptr()),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_builder_set_forces_from_flat(builder, ptr::null(), 3),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_set_positions_from_flat(builder, ptr::null(), 3),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_set_metadata_json(builder, ptr::null()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_set_units(builder, ptr::null()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let mut tensor = ptr::null_mut();
+        assert_eq!(
+            rkr_frame_builder_forces_dlpack(builder, &mut tensor),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        rkr_dlpack_delete(tensor);
+        assert_eq!(
+            rkr_frame_builder_displacements_dlpack(builder, &mut tensor),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            rkr_frame_builder_spreads_dlpack(builder, &mut tensor),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        assert_eq!(
+            rkr_frame_builder_atom_energies_dlpack(builder, &mut tensor),
+            RKRStatus::RKR_STATUS_SECTION_ABSENT
+        );
+        let lanes = RKRDlpackExportOptions {
+            dtype: RKRDLDataType {
+                code: rkr_dl_type_code::RKR_DL_FLOAT,
+                bits: 64,
+                lanes: 2,
+            },
+            device: RKRDLDevice {
+                device_type: rkr_dl_device_type::RKR_DL_CPU,
+                device_id: 0,
+            },
+        };
+        assert_eq!(
+            rkr_frame_builder_positions_dlpack_ex(builder, &lanes, &mut tensor),
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR
+        );
+        let cuda = RKRDlpackExportOptions {
+            dtype: RKRDLDataType {
+                code: rkr_dl_type_code::RKR_DL_FLOAT,
+                bits: 64,
+                lanes: 1,
+            },
+            device: RKRDLDevice {
+                device_type: rkr_dl_device_type::RKR_DL_CUDA,
+                device_id: 0,
+            },
+        };
+        assert_eq!(
+            rkr_frame_builder_positions_dlpack_ex(builder, &cuda, &mut tensor),
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED
+        );
+        assert!(rkr_frame_builder_velocities_data(builder).is_null());
+        assert!(!rkr_frame_builder_positions_data(builder).is_null());
+        let mut has = false;
+        assert_eq!(
+            rkr_frame_builder_get_atom_position(builder, 0, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_get_atom_velocity(builder, 0, ptr::null_mut(), &mut has),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_get_atom_force(builder, 0, ptr::null_mut(), &mut has),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_get_atom_mass(builder, 0, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_positions_dlpack(builder, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_velocities_dlpack(builder, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_builder_forces_dlpack(builder, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_xyz_view(plain, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_atom_ids_view(plain, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_positions_dlpack(plain, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            rkr_frame_velocities_dlpack(plain, ptr::null_mut()),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let mut sel = ptr::null_mut();
+        assert_eq!(
+            rkr_frame_select(plain, ptr::null(), &mut sel),
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        let header = rkr_frame_get_header_line_cpp(plain, true, 0);
+        assert!(!header.is_null());
+        rkr_free_string(header);
+        let absent = rkr_frame_new(cell.as_ptr(), ptr::null(), ptr::null(), ptr::null(), ptr::null(), ptr::null());
+        assert!(absent.is_null());
+        let rich = rkr_frame_new(
+            cell.as_ptr(),
+            angles.as_ptr(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+        );
+        assert!(!rich.is_null());
+        let velocity = [0.2_f64, 0.0, 0.0];
+        let disp = [0.01_f64, 0.0, 0.0];
+        assert_eq!(
+            rkr_frame_add_atom_with_velocity(
+                rich,
+                copper.as_ptr(),
+                0.4,
+                0.0,
+                0.0,
+                false,
+                3,
+                63.5,
+                velocity[0],
+                velocity[1],
+                velocity[2]
+            ),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_force(rich, force.as_ptr()),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_displacement(rich, disp.as_ptr()),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_spread(rich, disp.as_ptr()),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_builder_set_last_energy(rich, 0.3),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let rich_frame = rkr_frame_builder_build(rich);
+        assert!(!rich_frame.is_null());
+        let mut wide = [0.0_f64; 6];
+        let mut narrow = [0.0_f64; 1];
+        assert_eq!(
+            rkr_frame_copy_velocities(rich_frame, narrow.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            rkr_frame_copy_velocities(rich_frame, wide.as_mut_ptr(), 3),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!((wide[0] - 0.2).abs() < 1e-12);
+        assert_eq!(
+            rkr_frame_copy_forces(rich_frame, narrow.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            rkr_frame_copy_forces(rich_frame, wide.as_mut_ptr(), 3),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_copy_displacements(rich_frame, narrow.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            rkr_frame_copy_displacements(rich_frame, wide.as_mut_ptr(), 3),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_copy_spreads(rich_frame, narrow.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            rkr_frame_copy_spreads(rich_frame, wide.as_mut_ptr(), 3),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_copy_atom_energies(rich_frame, narrow.as_mut_ptr(), 0),
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        assert_eq!(
+            rkr_frame_copy_atom_energies(rich_frame, wide.as_mut_ptr(), 1),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!((wide[0] - 0.3).abs() < 1e-12);
+        let mut count = 0_usize;
+        assert!(!rkr_frame_velocities_f64(rich_frame, &mut count).is_null());
+        assert_eq!(count, 1);
+        assert!(!rkr_frame_forces_f64(rich_frame, &mut count).is_null());
+        assert!(!rkr_frame_displacements_f64(rich_frame, &mut count).is_null());
+        assert!(!rkr_frame_spreads_f64(rich_frame, &mut count).is_null());
+        assert!(rkr_frame_velocities_f64(rich_frame, ptr::null_mut()).is_null() == false);
+        free_rkr_frame(rich_frame);
+        free_rkr_frame_builder(builder);
+        assert_eq!(
+            rkr_read_all_frames(path.as_ptr(), ptr::null_mut()),
+            ptr::null_mut()
+        );
+        assert_eq!(
+            rkr_read_all_frames_n_threads(path.as_ptr(), ptr::null_mut(), 1),
+            ptr::null_mut()
+        );
+    }
+    unsafe { free_rkr_frame(plain) };
+}
