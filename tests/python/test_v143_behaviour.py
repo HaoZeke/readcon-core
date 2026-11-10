@@ -158,10 +158,22 @@ def test_ase_constraints_and_repeated_tags_convert_both_ways():
         [FixAtoms(indices=[0, 9]), FixCartesian(a=[1], mask=[True, False, True])]
     )
     atoms.set_tags([3, 3])
+    atoms.set_array("atom_id", np.array([-1, 4], dtype=np.int64))
     frame = readcon.ConFrame.from_ase(atoms)
     assert frame.atoms[0].symbol == "Cu"
-    assert frame.atoms[0].fixed[0] is True
-    assert frame.atoms[1].fixed == (False, False, False) or frame.atoms[1].atom_id == 1
+    bare = readcon.read_first_frame(resource("tiny_cuh2.con"))
+    assert bare.potential_type is None
+    bare.metadata = {"time": None, "frame_index": None, "timestep": None}
+    assert bare.time is None
+    assert bare.frame_index is None
+    assert bare.timestep is None
+    bare.metadata = {"time": 1.25, "frame_index": 3, "timestep": 0.5}
+    assert bare.time == 1.25
+    assert bare.frame_index == 3
+    assert bare.timestep == 0.5
+    assert list(frame.atoms[0].fixed) == [True, True, True]
+    assert list(frame.atoms[1].fixed) == [True, False, True]
+    assert frame.atoms[1].atom_id == 4
     back = frame.to_ase()
     assert list(back.get_chemical_symbols())[0] == "Cu"
     assert len(back) == 2

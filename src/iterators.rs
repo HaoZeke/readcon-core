@@ -4688,6 +4688,9 @@ mod missed_branch_tests {
         let frame = ConFrameIterator::new(&text).next().unwrap().unwrap();
         assert_eq!(touch_frame_checksum(&[], &[], 1), Some(0));
         assert!(touch_frame_checksum(std::slice::from_ref(&frame), &[], 1).is_none());
+        let mut empty = frame.clone();
+        empty.atom_data.clear();
+        assert!(touch_frame_checksum(std::slice::from_ref(&empty), &[], 1).is_none());
         let stride = frame.atom_data.len() * 3;
         let coords = vec![0.0; stride];
         let one = touch_frame_checksum(std::slice::from_ref(&frame), &coords, 1).unwrap();
