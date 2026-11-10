@@ -156,6 +156,27 @@ Residual arms from that measurement:
   `hold_coverage_profile` from the suite is `run_namespace_suite`.
   The child no longer builds a profile on those prefixes.
 
+## Prefix sides that left conbin.rs
+
+The run 84 export was replaced in place by the run 85 export, so the
+branch lists below are the open regions recorded from each export.
+Run 84 left four open regions: 594, 690, 2811 and 3213. Run 85 leaves
+those and four more. The four that went from covered to open are the
+temporary-prefix sides. `conbin_namespace_child` used to call
+`run_namespace_suite` with a profile under `/tmp` and one under
+`/var/tmp`. An in-tree path does not start with either prefix, so
+those sides are not taken now.
+
+- `src/conbin.rs:3138` column 12. `!dir.starts_with` the temporary
+  prefix is false only when the profile directory is under that prefix.
+  Caller: `hold_coverage_profile`, from `run_namespace_suite` and from
+  `conbin_namespace_child`.
+- `src/conbin.rs:3138` column 38. The same for the `/var` temporary prefix.
+- `src/conbin.rs:3214` column 16. `run_namespace_suite` skips a tmpfs
+  on the profile directory when it is already under the temporary prefix.
+  Caller: `conbin_namespace_child`.
+- `src/conbin.rs:3214` column 42. The same for the second prefix.
+
 ## Python arms that a caller cannot reach
 
 These lines stay at a zero count unless the function builds a vector
