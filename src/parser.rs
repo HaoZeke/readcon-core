@@ -4590,10 +4590,7 @@ Coordinates of Component 1
             ),
         ] {
             let err = ConFrameIterator::new(text).next().unwrap().unwrap_err();
-            assert!(
-                err.to_string().contains(needle) || format!("{err:?}").contains(needle),
-                "{text} -> {err}"
-            );
+            assert!(err.to_string().contains(needle), "{text} -> {err}");
         }
         assert!(!line_has_component_label("", 1));
         assert!(!line_has_component_label("speed of component 1", 1));
@@ -4608,7 +4605,7 @@ Coordinates of Component 1
         let six = parse_line_of_range_f64("1 2 3 4 5 6", 6, 6, &[0.0; 6]).unwrap();
         assert_eq!(six, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
 
-        let short = b"\n";
+        let short = b"";
         let err = parse_coord_fields_detailed(short, 0, 2, Some(1)).unwrap_err();
         assert!(matches!(err, ParseError::InvalidVectorLength { found: 0, .. }), "{err}");
     }

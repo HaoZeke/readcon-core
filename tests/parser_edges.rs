@@ -5,6 +5,13 @@ use readcon_core::iterators::ConFrameIterator;
 use readcon_core::parser::parse_line_of_range_f64;
 
 #[test]
+#[test]
+fn a_zero_section_arity_is_rejected() {
+    let err = parse("user\n{\"con_spec_version\":2,\"section_arity\":{\"widgets\":0}}\n")
+        .expect_err("arity");
+    assert!(err.to_string().contains(">= 1"), "{err}");
+}
+
 fn a_short_float_line_uses_the_stack_buffer() {
     let three = parse_line_of_range_f64("1.5 2.5 3.5", 3, 3, &[0.0; 3]).unwrap();
     assert_eq!(three, vec![1.5, 2.5, 3.5]);

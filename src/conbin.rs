@@ -2636,21 +2636,40 @@ Coordinates of Component 1
         };
         assert_ne!(ptr, libc::MAP_FAILED);
         unsafe { libc::munmap(ptr, page) };
-        let unmapped = stream_one_span(
-            &path,
-            SpanGeom {
-                base: ptr as usize,
-                span: 0,
-                end: page,
-                page,
-                payload_off: 0,
-                payload_end: page,
-                request: page,
-                depth: 1,
-            },
-        )
-        ;
-        let message = unmapped.err().expect("unmapped populate");
+        let mut message = None;
+        for _ in 0..8 {
+            let again = unsafe {
+                libc::mmap(
+                    ptr,
+                    page,
+                    libc::PROT_READ,
+                    libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
+                    -1,
+                    0,
+                )
+            };
+            if again != libc::MAP_FAILED {
+                unsafe { libc::munmap(again, page) };
+            }
+            let unmapped = stream_one_span(
+                &path,
+                SpanGeom {
+                    base: ptr as usize,
+                    span: 0,
+                    end: page,
+                    page,
+                    payload_off: 0,
+                    payload_end: page,
+                    request: page,
+                    depth: 1,
+                },
+            );
+            if let Err(err) = unmapped {
+                message = Some(err);
+                break;
+            }
+        }
+        let message = message.expect("unmapped populate");
         assert!(message.contains("os error"), "{message}");
     }
 
@@ -3044,6 +3063,18 @@ Coordinates of Component 1
 
     #[cfg(target_os = "linux")]
     #[test]
+    fn a_profile_outside_temporary_directories_is_not_moved() {
+        let previous = std::env::var("LLVM_PROFILE_FILE").ok();
+        unsafe { std::env::set_var("LLVM_PROFILE_FILE", "/var/cov/profile.profraw") };
+        assert!(hold_coverage_profile().is_none());
+        match previous {
+            Some(value) => unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) },
+            None => unsafe { std::env::remove_var("LLVM_PROFILE_FILE") },
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
     fn conbin_fault_child() {
         match std::env::var("CONBIN_CASE") {
             Ok(case) => {
@@ -3061,6 +3092,16 @@ Coordinates of Component 1
         match std::env::var("CONBIN_CASE") {
             Ok(case) => {
                 assert_eq!(case, "namespace");
+                let saved = std::env::var("LLVM_PROFILE_FILE").ok();
+                unsafe { std::env::set_var("LLVM_PROFILE_FILE", "/var/tmp/cov-profile.profraw") };
+                let held = hold_coverage_profile().expect("a profile under /var/tmp is held");
+                let rc = unsafe { libc::umount(std::ffi::CString::new(held.1.to_str().unwrap()).unwrap().as_ptr()) };
+                assert_eq!(rc, 0, "{}", std::io::Error::last_os_error());
+                let _ = std::fs::remove_dir_all(&held.1);
+                match saved {
+                    Some(value) => unsafe { std::env::set_var("LLVM_PROFILE_FILE", value) },
+                    None => unsafe { std::env::remove_var("LLVM_PROFILE_FILE") },
+                }
                 run_namespace_suite();
                 println!("CASE_OK namespace");
             }
