@@ -30,22 +30,15 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[3]
 PAPER = Path(__file__).resolve().parents[1]
-LOG = PAPER / "logs" / "reader-exchange.log"
+LOG = Path(os.environ.get("BENCH_LOG", PAPER / "logs" / "reader-exchange.log"))
 WORK = PAPER / "logs" / "reader-work" / "large"
 BASE_COMMIT = "ac4f437989dea5aad9f75ff045af09ccf7127eba"
 BASE_DIR = PAPER / "build" / "baseline-readcon"
 RELEASE_COMMIT = "12ca800bc2212c565941e04094cba6b4d99a62e0"
-
-
-def _cargo_version() -> str:
-    text = (ROOT / "Cargo.toml").read_text(encoding="utf-8")
-    for line in text.splitlines():
-        if line.startswith('version = "'):
-            return line.split('"', 2)[1]
-    raise SystemExit("Cargo.toml has no version")
-
-
-RELEASE_DIR = PAPER / "build" / f"readcon-{_cargo_version()}"
+RELEASE_DIR = PAPER / "build" / "readcon-0.17.3"
+PUBLIC_COMMIT = "d5e77f997438557c72c3b3e360d446310f85d6b7"
+PUBLIC_DIR = PAPER / "build" / "readcon-0.18.0"
+VARIANT = os.environ.get("BENCH_VARIANT", "tip")
 EON_PY = PAPER / "bench" / "work" / "peers" / "eon" / "client" / "python"
 EON_PKG = PAPER / "bench" / "work" / "peers" / "eon"
 EON_LIB = (
@@ -266,12 +259,44 @@ READCON_ARMS = {
     "readcon_v0173": ("read_con", 1),
     "readcon_first": ("read_first_frame", 1),
 }
+def module_identity(mod):
+    import hashlib
+    path = getattr(mod, "__file__", "") or ""
+    folder = os.path.dirname(path)
+    parent = os.path.dirname(folder)
+    shown = path
+    root = os.environ.get("READCON_ROOT", "")
+    if root and path.startswith(root + os.sep):
+        shown = path[len(root) + 1 :]
+    elif "site-packages/" in path:
+        shown = path[path.index("site-packages/") :]
+    so = path
+    if os.path.isdir(folder):
+        found = [name for name in os.listdir(folder) if name.endswith(".so")]
+        if found:
+            so = os.path.join(folder, sorted(found)[0])
+    digest = ""
+    if os.path.isfile(so):
+        digest = hashlib.sha256(open(so, "rb").read()).hexdigest()
+    version = getattr(mod, "__version__", "") or ""
+    if os.path.isdir(parent):
+        for name in os.listdir(parent):
+            meta = os.path.join(parent, name, "METADATA")
+            if name.endswith(".dist-info") and os.path.isfile(meta):
+                for line in open(meta, encoding="utf-8"):
+                    if line.startswith("Version:"):
+                        version = line.split(":", 1)[1].strip()
+    return version, shown, digest
+
 if arm in READCON_ARMS:
     if arm == "readcon_base":
         sys.path.insert(0, os.environ["READCON_BASE"])
     if arm == "readcon_v0173":
         sys.path.insert(0, os.environ["READCON_V0173"])
+    if os.environ.get("BENCH_VARIANT") == "public" and arm.startswith("readcon_full") or os.environ.get("BENCH_VARIANT") == "public" and arm.startswith("readcon_pos"):
+        sys.path.insert(0, os.environ["READCON_PUBLIC"])
     import readcon
+    module_version, module_file, module_sha = module_identity(readcon)
     call, threads = READCON_ARMS[arm]
     def parse():
         if call == "read_first_frame":
@@ -407,8 +432,29 @@ if arr is not None and arr.ndim == 3:
     if arr.shape[1:] == (n_atoms, 3) and ref.shape[0] >= 1:
         take = min(got_n, requested, ref.shape[0])
         matched = int(np.sum(np.max(np.abs(arr[:take] - ref[:take]), axis=(1, 2)) <= 1e-5))
-print(json.dumps({"seconds": dt, "hwm_before": before, "hwm_after": after, "matched": matched, "got": got_n, "requested": requested, "error": error}))
+print(json.dumps({"seconds": dt, "hwm_before": before, "hwm_after": after, "matched": matched, "got": got_n, "requested": requested, "error": error, "module_version": globals().get("module_version", ""), "module_file": globals().get("module_file", ""), "module_sha256": globals().get("module_sha", "")}))
 """
+
+
+def sha256_file(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def binary_lines() -> list[str]:
+    files = (
+        ("eon_allframes", EON_BIN),
+        ("libeonclib", EON_LIB / "libeonclib.so"),
+        ("libreadcon_core", EON_LIB / "libreadcon_core.so"),
+    )
+    lines = []
+    for name, path in files:
+        if not path.is_file():
+            lines.append(f"binary name={name} sha256=missing")
+            continue
+        lines.append(f"binary name={name} sha256={sha256_file(path)}")
+    return lines
 
 
 def thread_count(arm: str) -> int:
@@ -422,6 +468,9 @@ def one(arm: str, path: Path) -> dict:
     env = os.environ.copy()
     env["READCON_BASE"] = str(BASE_DIR)
     env["READCON_V0173"] = str(RELEASE_DIR)
+    env["READCON_PUBLIC"] = str(PUBLIC_DIR)
+    env["READCON_ROOT"] = str(ROOT)
+    env["BENCH_VARIANT"] = VARIANT
     env.pop("TMPDIR", None)
     threads = str(thread_count(arm))
     for key in (
@@ -540,6 +589,11 @@ def main() -> int:
         "arm_api h5py dataset slice 1 positions",
         "arm_api mdanalysis Universe.atoms.positions 1 positions",
         "threads_env OMP_NUM_THREADS OPENBLAS_NUM_THREADS MKL_NUM_THREADS NUMEXPR_NUM_THREADS RAYON_NUM_THREADS",
+        f"variant {VARIANT}",
+        "release_dir paper/cpc/build/readcon-0.17.3",
+        "public_dir paper/cpc/build/readcon-0.18.0",
+        f"public_commit {PUBLIC_COMMIT}",
+        *binary_lines(),
     ]
     frames = reference(N_FRAMES, N_ATOMS)
     write_files(frames)
@@ -616,10 +670,32 @@ def main() -> int:
             "h5py": "positions",
             "mdanalysis": "positions",
         }.get(name, "all_frames")
+        version = got[0].get("module_version") or ""
+        if name == "readcon_v0173" and version != "0.17.3":
+            lines.append(
+                f"summary arm={name} error=module readback {version or 'missing'} is not 0.17.3 exit=1"
+            )
+            continue
+        if (
+            VARIANT == "public"
+            and name.startswith(("readcon_full", "readcon_pos"))
+            and version != "0.18.0"
+        ):
+            lines.append(
+                f"summary arm={name} error=module readback {version or 'missing'} is not 0.18.0 exit=1"
+            )
+            continue
+        identity = ""
+        if version:
+            identity = (
+                f" module_version={version} module_file={got[0].get('module_file', '')} "
+                f"module_sha256={got[0].get('module_sha256', '')}"
+            )
         lines.append(
             f"summary arm={name} scope={scope} threads={thread_count(name)} n_rep={len(got)} median_s={med:.9e} iqr_s={iqr:.9e} "
             f"mib_median={mib:.6f} mib_iqr={mib_iqr:.6f} "
             f"requested={requested} matched={matched} failed={requested - matched} exit=0"
+            f"{identity}"
         )
     lines.append("exit_code 0")
     LOG.parent.mkdir(parents=True, exist_ok=True)

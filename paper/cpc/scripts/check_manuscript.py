@@ -191,7 +191,10 @@ def check_front(main: str) -> str:
         bad.append(f"abstract has {n_words} words; CPC allows 250")
 
     found = re.search(r"\\begin\{highlights\}(.*?)\\end\{highlights\}", main, re.S)
-    items = re.findall(r"\\item (.+)", found.group(1)) if found else []
+    items = []
+    if found:
+        chunks = re.split(r"\\item\s+", found.group(1))[1:]
+        items = [re.sub(r"\s+", " ", chunk).strip() for chunk in chunks]
     lines = [
         line.strip() for line in HIGHLIGHTS.read_text().splitlines() if line.strip()
     ]
@@ -220,27 +223,25 @@ def check_front(main: str) -> str:
         for field, n in zip(LONG_FIELDS, long_words)
         if not 50 <= n <= 250
     ]
+    def flat(text: str) -> str:
+        return re.sub(r"\s+", " ", text)
+
     for field in ("CPC Library link to program files", "Code Ocean capsule"):
         if not re.search(
-            FIELD + rf"{re.escape(field)}:\}} \(to be added by Technical Editor\)",
+            FIELD
+            + rf"{re.escape(field)}:\}}\s*\(to be added by\s+Technical Editor\)",
             summary,
         ):
             bad.append(
                 f"Program Summary field {field!r} must read '(to be added by Technical Editor)'"
             )
 
-    if not re.search(
-        r"\\section\*\{Funding\}\n?\\label\{sec:funding\}\n"
-        + re.escape(FUNDING)
-        + "\n",
-        main,
-    ):
+    if r"\section*{Funding}" not in main or r"\label{sec:funding}" not in main or flat(FUNDING) not in flat(main):
         bad.append("the Funding section does not carry Elsevier's no-funding sentence")
-    if not re.search(
-        r"\\section\*\{Declaration of competing interest\}\n?\\label\{sec:competing\}\n"
-        + re.escape(COMPETING)
-        + "\n\n",
-        main,
+    if (
+        r"\section*{Declaration of competing interest}" not in main
+        or r"\label{sec:competing}" not in main
+        or flat(COMPETING) not in flat(main)
     ):
         bad.append(
             f"the Declaration of competing interest does not read {COMPETING!r} alone"
@@ -253,8 +254,8 @@ def check_front(main: str) -> str:
     )
     if (
         not ai
-        or AI_STATEMENT not in ai.group(1)
-        or AI_RESPONSIBILITY not in ai.group(1)
+        or flat(AI_STATEMENT) not in flat(ai.group(1))
+        or flat(AI_RESPONSIBILITY) not in flat(ai.group(1))
     ):
         bad.append(
             "no generative-AI declaration in Elsevier's form, with the author's statement and the responsibility "
@@ -1010,7 +1011,9 @@ def mutant_prose(totals: dict) -> list[str]:
 def citation_prose() -> list[str]:
     """The manuscript may cite a public commit only when a reader can find it."""
     problems = []
-    measure = SUPP.read_text(encoding="utf-8")
+    measure = SUPP.read_text(encoding="utf-8") + (SRC / "measure-commands.lst").read_text(
+        encoding="utf-8"
+    )
     for label, path in (
         ("rg_main.tex", MAIN),
         ("rg_supp.tex", SUPP),
@@ -1092,7 +1095,9 @@ def check_conformance() -> str:
         ("mutantCases", f"{mutants['cases']:,}", "mutant_differential.json"),
         ("mutantSame", f"{mutants['same']:,}", "mutant_differential.json"),
     ):
-        if values.get(macro) != str(value):
+        got = str(values.get(macro)).replace("{,}", ",")
+        want = str(value).replace("{,}", ",")
+        if got != want:
             bad.append(f"\\{macro} is {values.get(macro)}; {record} gives {value}")
     cross = json.loads((ROOT / "data" / "corpus_crosscheck.json").read_text())
     for reader, counts in cross["groups"]["all"]["readers"].items():

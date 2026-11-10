@@ -25,7 +25,7 @@ build of the paper, for readcon-core ${version}, ${commit_role} `${commit}`, lib
 | Article type | CPiP: programs archived in the CPC Program Library on Mendeley Data under an approved licence | GFA | Computer Programs in Physics: the paper has a Program Summary and describes a program. |
 | Licence | One of MIT, Apache-2.0, BSD 2/3-clause, GPLv2/3, LGPL, MPL-2.0, CeCILL, CeCILL-B, CC BY 4.0, CC0 1.0, CC BY-NC 3.0 | GFA | ${licence}, the Program Summary's licensing provision. |
 | Program Summary | Immediately after the abstract. Fields: Program title; CPC Library link (Technical Editor); Developer's repository link; Licensing provisions; Programming language; Supplementary material; Nature of problem, Solution method, Additional comments (each in the 50 to 250 word range the guide gives); References | GFA, TPL | All fields, in the CPC order, after the abstract. Word counts: ${summary_words}. |
-| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the git bundle that holds the ${commit_role} `${commit}` with its whole history (`git clone readcon-core.bundle` checks it out), and `patches/`, a patch series that `git am --keep-cr` applies on commit `${base}` in that clone to give the tree of that commit. The commit descends from `${base}`, the head of pull request ${base_pr} to the main branch after the published release ${published} (tag v${published} at commit `${published_commit}`), and its change log lists every change since ${published} under ${version}. ${tag_state} |
+| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the complete git bundle that contains the ${commit_role} `${commit}` and its whole history (`git clone readcon-core.bundle` checks it out with no prerequisite commit), and `patches/`, a patch series that `git am --keep-cr` applies on commit `${base}` in that clone to give the tree of that commit. The commit descends from `${base}`, the head of pull request ${base_pr} to the main branch after the published release ${published} (tag v${published} at commit `${published_commit}`), and its change log lists every change since ${published} under ${version}. ${tag_state} |
 | Source format | Editable source, `.tex` for LaTeX. A PDF is not a source file. | GFA | The LaTeX sources of `paper/cpc/src`. |
 | EM LaTeX build | No subfolders. `.tex`, `.bbl` and support files as item type Manuscript, images as Figure. Order: `.tex`, bibliography, styles, figures. | EMTEX | `make_em_flat.py` writes the flat set (Packet files below). |
 | Abstract | At most 250 words, stands alone, define uncommon abbreviations at first use | GFA | ${abstract_words} words by `check_manuscript.py`'s count. |
@@ -60,7 +60,7 @@ build of the paper, for readcon-core ${version}, ${commit_role} `${commit}`, lib
 `\bibliographystyle{elsarticle-num}\bibliography{rg_main}` becomes `\input{rg_main.bbl}` (method B in EMTEX).
 
 Data availability names readcon-core ${version}, ${commit_role} `${commit}`, which
-`readcon-core.bundle` holds with its whole history, and links the concept record https://doi.org/${concept_doi}
+`readcon-core.bundle` contains the commit with its whole history, and links the concept record https://doi.org/${concept_doi}
 of readcon-core. ${tag_state}
 `rg_main.pdf` has ${main_pages} pages, sha256 `${main_sha256}`.
 
@@ -105,7 +105,7 @@ Upload the `.docx` the tool produces.
 
 **Generative AI declaration question:** AI tools were used, as Section "${ai_heading}" states: "${ai}"
 
-**Data statement:** "The software is readcon-core ${version}, ${commit_role} ${commit}, which the git bundle readcon-core.bundle of the supplementary material holds with its whole history. ${tag_state} Every record of the paper names the library of that commit by its digest, ${digest}. The concept record of readcon-core is https://doi.org/${concept_doi}. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: ${links}
+**Data statement:** "The software is readcon-core ${version}, ${commit_role} ${commit}, which the complete git bundle readcon-core.bundle of the supplementary material contains with its whole history. ${tag_state} Every record of the paper names the library of that commit by its digest, ${digest}. The concept record of readcon-core is https://doi.org/${concept_doi}. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: ${links}
 
 **Preprint:** the arXiv identifier of the preprint. Decline the SSRN option, since the preprint is on arXiv.
 

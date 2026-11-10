@@ -43,6 +43,7 @@ Elsevier%
 \usepackage{longtable}
 \usepackage{listings}
 \usepackage{xurl}
+\input{readcon-url}
 \usepackage{seqsplit}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -131,15 +132,18 @@ times an explicit copy, the median of eight repeats.
 \sep conformance corpus \sep nudged elastic band
  \end{keyword}
 
-% snapper:off
 \begin{highlights}
-\item CON 3.1 states the eOn saddle-search checkpoint as a versioned text grammar.
-\item The format defines per-component masks, atom identifiers and velocity time units.
-\item Two corpora of legal and illegal files decide what a conforming reader accepts.
-\item A climbing-image band resumed from CON 3.1 repeats the uninterrupted run bit for bit.
-\item Read times are measured against ASE, chemfiles, h5py and native trajectory readers.
+\item CON 3.1 states the eOn saddle-search checkpoint as a versioned
+      text grammar.
+\item The format defines per-component masks, atom identifiers and
+      velocity time units.
+\item Two corpora of legal and illegal files decide what a conforming
+      reader accepts.
+\item A climbing-image band resumed from CON 3.1 repeats the
+      uninterrupted run bit for bit.
+\item Read times are measured against ASE, chemfiles, h5py and native
+      trajectory readers.
 \end{highlights}
-% snapper:on
 
 \begin{graphicalabstract} \includegraphics[width=5cm]{figures/generated/toc.pdf}
  \end{graphicalabstract}
@@ -153,9 +157,8 @@ times an explicit copy, the median of eight repeats.
 
 \begin{small} \noindent\textit{Program Title:} readcon-core
 
-% snapper:off
-\noindent\textit{CPC Library link to program files:} (to be added by Technical Editor)
-% snapper:on
+\noindent\textit{CPC Library link to program files:} (to be added by
+Technical Editor)
 
 \noindent\textit{Developer's repository link:}
 \url{https://github.com/lode-org/readcon-core}
@@ -1175,15 +1178,15 @@ The other bars are 1 thread.
 The log is \texttt{paper/cpc/logs/reader-exchange.log}.}
 \label{fig:timing} \end{figure*}
 
-\begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/ratios.pdf} \caption{Matched ratios on one 100000-frame file, six repeats.
-Left: a full-frame reader at 1 thread, divided by \texttt{read\_con} at
-1 thread.
-Right: a positions path at 1 thread, divided by \texttt{read\_positions}
-at 1 thread.
+\begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/ratios.pdf} \caption{Full-frame readers at 1 thread, each divided by \texttt{read\_con} at 1
+thread, on one 100000-frame file.
+Each point is the median of the six per-repeat ratios, and the whisker
+is their type 7 interquartile range.
+The text quotes the ratio of the medians.
 The horizontal line is 1.
-A point above the line means that readcon call is that many times as
-fast.
-The 8-thread calls are not on this figure.}
+A point above the line means \texttt{read\_con} at 1 thread is that many
+times as fast.
+\texttt{read\_positions} is not on this figure.}
 \label{fig:ratios} \end{figure}
 
 \begin{figure}[tbp] \centering \includegraphics[width=\textwidth]{figures/generated/memory.pdf} \caption{MiB added to the high-water mark by the read, after the import, six
@@ -1210,8 +1213,7 @@ The baseline arm is readcon-core \rcBaselineVersion, commit
 \texttt{\rcBaselineCommit}, \texttt{read\_con} at 1 thread.
 CON readers read the CON file, XYZ readers read the XYZ file, and HDF5
 readers read the same HDF5 file.
-readcon does not read XYZ.
-readcon does not read HDF5.
+readcon reads neither XYZ nor HDF5.
 Memory is the VmHWM after the read minus the VmHWM after the import.
 \texttt{OMP\_NUM\_THREADS}, \texttt{OPENBLAS\_NUM\_THREADS},
 \texttt{MKL\_NUM\_THREADS}, \texttt{NUMEXPR\_NUM\_THREADS} and
@@ -1219,7 +1221,7 @@ Memory is the VmHWM after the read minus the VmHWM after the import.
 
 \subsection{Results}\label{sec:results} On the coordinate file, \texttt{read\_con} at 1 thread takes \rcFullOneMedian~s.
 The same call at 8 threads takes \rcFullEightMedian~s, which is
-\rcFullThreads{} times the 1-thread \texttt{read\_con} time.
+\rcFullThreads{} times as fast as the 1-thread call.
 readcon-core \rcReleaseVersion{} \texttt{read\_con} at 1 thread takes
 \rcReleaseMedian~s.
 At 1 thread, \texttt{read\_con} on the measurement checkout is
@@ -1232,13 +1234,13 @@ eOn 3.6.0 \texttt{loadcons} reads every frame at 1 thread and takes
 \rcEonMedian~s.
 \texttt{read\_con} at 1 thread is \rcTipOverEon{} times as fast as
 \texttt{loadcons}.
-\texttt{read\_positions} at 1 thread takes \rcPosOneMedian~s, and the
-same call at 8 threads takes \rcPosEightMedian~s.
-At 1 thread, \texttt{read\_positions} is \rcPosOverAse{} times as fast
-as ASE \texttt{get\_positions}, and \rcPosOverEon{} times as fast as
-\texttt{loadcons}.
-Those two ratios use the positions path on both sides, both at 1 thread.
-The 8-thread times above are not ratios against a 1-thread reader.
+\texttt{read\_positions} returns one coordinate array and builds no
+per-frame object.
+At 1 thread it takes \rcPosOneMedian~s, and at 8 threads it takes
+\rcPosEightMedian~s.
+Those are absolute times.
+They are not ratios against ASE or \texttt{loadcons}, which build a
+frame object per record.
 The C++ row calls \texttt{read\_all\_frames} and then
 \texttt{con2matter} on every frame.
 It takes \rcApiMedian~s.
@@ -1410,11 +1412,13 @@ The public main branch is
 \begin{center} \texttt{df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff}
  \end{center}
 The measured commit is not on that branch.
-\path{readcon-library.bundle} contains the library change and requires
-only the public main branch named above, so a maintainer can apply it
-after approval.
-Until that landing, the measured commit is available in
-\path{readcon-core.bundle} and in \path{readcon-library.bundle}.
+\path{readcon-core.bundle} is a complete bundle of branch
+paper/pipeline-v10.
+\texttt{git clone readcon-core.bundle} needs no other commit.
+\path{readcon-library.bundle} contains one commit whose parent is the
+public base above.
+The library files of that commit have digest \texttt{\readcondigest}.
+That bundle does not contain the measured commit.
 The latest public release tag is \readconlatesttag{} at
 \begin{center} \texttt{\readconlatesttagcommit}
  \end{center}
@@ -1482,16 +1486,14 @@ release, the commit, the compiler and the host it was measured on.
 Rohit Goswami: Conceptualization, Methodology, Software, Visualization,
 Writing -- original draft, Writing -- review and editing.
 
-% snapper:off
 \section*{Funding}
-\label{sec:funding}
-This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
+\label{sec:funding} This research did not receive any specific grant
+from funding agencies in the public, commercial, or not-for-profit
+sectors.
 
 \section*{Declaration of competing interest}
-\label{sec:competing}
-The author declares no competing interests.
+\label{sec:competing} The author declares no competing interests.
 
-% snapper:on
 
 \section*{Acknowledgements}\label{sec:acknowledgements} The author thanks his family, Amrita Goswami, Ruhila Goswami, Sonaly Goswami, Debabrata Goswami, Moritz Sallermann, and Nagaselvamani and Sankaranarayan, for their love and patience.
 Ruhila Goswami designed the colour palette used for every figure.
@@ -1500,18 +1502,14 @@ their company, and TuiTui and Snoopy in memoriam.
 Dedicated, with love, to the memory of Cosmo, a baby bird.
 He also thanks Ami the cactus.
 
-% snapper:off
 % Elsevier prescribes this heading word for word.
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}\label{sec:ai-declaration}
-Chatbots were used to refine certain turns of phrase and to speed through some implementation details; all the work is the author's own.
-The author reviewed and edited all tool output as needed and takes full responsibility for the content of the published article.
-% snapper:on
+Chatbots were used to refine certain turns of phrase and to speed
+through some implementation details; all the work is the author's own.
+The author reviewed and edited all tool output as needed and takes full
+responsibility for the content of the published article.
 
-\FloatBarrier % A digital object identifier in the reference list stays on one line.
-\DeclareUrlCommand\path{\def\UrlFont{\footnotesize\ttfamily}\mathchardef\UrlBreakPenalty=10000
-\mathchardef\UrlBigBreakPenalty=10000 }
-
-\raggedright
+\FloatBarrier \raggedright
 
 \bibliographystyle{elsarticle-num}
 

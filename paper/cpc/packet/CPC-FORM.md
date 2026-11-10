@@ -26,7 +26,7 @@ build of the paper, for readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d29
 | Article type | CPiP: programs archived in the CPC Program Library on Mendeley Data under an approved licence | GFA | Computer Programs in Physics: the paper has a Program Summary and describes a program. |
 | Licence | One of MIT, Apache-2.0, BSD 2/3-clause, GPLv2/3, LGPL, MPL-2.0, CeCILL, CeCILL-B, CC BY 4.0, CC0 1.0, CC BY-NC 3.0 | GFA | MIT, the Program Summary's licensing provision. |
 | Program Summary | Immediately after the abstract. Fields: Program title; CPC Library link (Technical Editor); Developer's repository link; Licensing provisions; Programming language; Supplementary material; Nature of problem, Solution method, Additional comments (each in the 50 to 250 word range the guide gives); References | GFA, TPL | All fields, in the CPC order, after the abstract. Word counts: Nature of problem 161, Solution method 211, Additional comments 121. |
-| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the git bundle that holds the untagged commit `f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e` with its whole history (`git clone readcon-core.bundle` checks it out), and `patches/`, a patch series that `git am --keep-cr` applies on commit `d0b7d3c7` in that clone to give the tree of that commit. The commit descends from `d0b7d3c7`, the head of pull request 80 to the main branch after the published release 0.17.3 (tag v0.17.3 at commit `12ca800b`), and its change log lists every change since 0.17.3 under 0.18.1. No tag names this commit. The latest release tag is v0.18.0. |
+| Program files | Compressed archive with source, README (file layout, install, run), sample input and output of one full test run, manual if needed. Upload at "Attach Files". | GFA, TPL | `readcon-core.bundle`, the complete git bundle that contains the untagged commit `f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e` and its whole history (`git clone readcon-core.bundle` checks it out with no prerequisite commit), and `patches/`, a patch series that `git am --keep-cr` applies on commit `d0b7d3c7` in that clone to give the tree of that commit. The commit descends from `d0b7d3c7`, the head of pull request 80 to the main branch after the published release 0.17.3 (tag v0.17.3 at commit `12ca800b`), and its change log lists every change since 0.17.3 under 0.18.1. No tag names this commit. The latest release tag is v0.18.0. |
 | Source format | Editable source, `.tex` for LaTeX. A PDF is not a source file. | GFA | The LaTeX sources of `paper/cpc/src`. |
 | EM LaTeX build | No subfolders. `.tex`, `.bbl` and support files as item type Manuscript, images as Figure. Order: `.tex`, bibliography, styles, figures. | EMTEX | `make_em_flat.py` writes the flat set (Packet files below). |
 | Abstract | At most 250 words, stands alone, define uncommon abbreviations at first use | GFA | 125 words by `check_manuscript.py`'s count. |
@@ -52,7 +52,7 @@ build of the paper, for readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d29
 |---|---|
 | `DIR/em-flat/` from `python3 paper/cpc/scripts/make_em_flat.py --out DIR` (TeX Live 2025) | `rg_main.tex` first, then `rg_main.bbl`, then every other file of the set, then the figure PDFs |
 | `paper/cpc/highlights.txt` | Highlights |
-| `paper/cpc/src/rg_supp.pdf` (77 pages, sha256 `fd172d5ab1050a954d2b12bf4189d3310cb4367f928ffe181f09ce30dbddf40c`) | Supplementary material |
+| `paper/cpc/src/rg_supp.pdf` (77 pages, sha256 `73535d769d3990337d661a3259d49947d8f5f224089d35daa9d4b43bddebd36a`) | Supplementary material |
 | `paper-cpc.tar.gz`, the directory `paper/cpc` (`paper/cpc/REPRO-ARCHIVE.md`) | Supplementary material |
 | `readcon-core.bundle` and `patches/` | Program files |
 | The author's cover letter | Cover letter |
@@ -61,9 +61,9 @@ build of the paper, for readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d29
 `\bibliographystyle{elsarticle-num}\bibliography{rg_main}` becomes `\input{rg_main.bbl}` (method B in EMTEX).
 
 Data availability names readcon-core 0.18.1, untagged commit `f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e`, which
-`readcon-core.bundle` holds with its whole history, and links the concept record https://doi.org/10.5281/zenodo.18753567
+`readcon-core.bundle` contains the commit with its whole history, and links the concept record https://doi.org/10.5281/zenodo.18753567
 of readcon-core. No tag names this commit. The latest release tag is v0.18.0.
-`rg_main.pdf` has 54 pages, sha256 `929f2c642987f53548a22be40af7694f924c5609b3d3925689cde7178932cb0f`.
+`rg_main.pdf` has 53 pages, sha256 `8de5d587b93fc751dcc8a0ad488900f0fa8a00d9def0fb4916e5a989162c83e1`.
 
 ## Form answers
 
@@ -106,7 +106,7 @@ Upload the `.docx` the tool produces.
 
 **Generative AI declaration question:** AI tools were used, as Section "Declaration of generative AI and AI-assisted technologies in the manuscript preparation process" states: "Chatbots were used to refine certain turns of phrase and to speed through some implementation details; all the work is the author's own. The author reviewed and edited all tool output as needed and takes full responsibility for the content of the published article."
 
-**Data statement:** "The software is readcon-core 0.18.1, untagged commit f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e, which the git bundle readcon-core.bundle of the supplementary material holds with its whole history. No tag names this commit. The latest release tag is v0.18.0. Every record of the paper names the library of that commit by its digest, d94b6ad922e9. The concept record of readcon-core is https://doi.org/10.5281/zenodo.18753567. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: https://doi.org/10.5281/zenodo.18753567
+**Data statement:** "The software is readcon-core 0.18.1, untagged commit f2cea7e88390cd6d295e0f455d8faf2a3fcdc68e, which the complete git bundle readcon-core.bundle of the supplementary material contains with its whole history. No tag names this commit. The latest release tag is v0.18.0. Every record of the paper names the library of that commit by its digest, d94b6ad922e9. The concept record of readcon-core is https://doi.org/10.5281/zenodo.18753567. The scripts, records and sources of the paper are the directory paper/cpc of the supplementary material." Links: https://doi.org/10.5281/zenodo.18753567
 
 **Preprint:** the arXiv identifier of the preprint. Decline the SSRN option, since the preprint is on arXiv.
 

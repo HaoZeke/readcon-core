@@ -259,26 +259,18 @@ def _ratio_panel(ax, tip: list[float], arms: dict[str, list[float]], order: list
 
 
 def ratios(theme) -> None:
-    """Matched ratios. Left: full frames at 1 thread. Right: positions at 1 thread."""
+    """Full-frame ratios at 1 thread. Each point is the median of the per-repeat ratios."""
     arms = _reader_samples()
-    fig, axes = plt.subplots(1, 2, figsize=(7.4, 3.6))
+    fig, ax = plt.subplots(figsize=(7.2, 3.2))
     _ratio_panel(
-        axes[0],
+        ax,
         arms["readcon_full_t1"],
         arms,
         [name for name in FULL_RATIO if name in arms],
         CON_LABELS,
         "full-frame time / read_con at 1 thread",
     )
-    _ratio_panel(
-        axes[1],
-        arms["readcon_pos_t1"],
-        arms,
-        [name for name in POS_RATIO if name in arms],
-        POS_LABELS,
-        "positions time / read_positions at 1 thread",
-    )
-    pf._theme_axes(list(axes), theme)
+    pf._theme_axes([ax], theme)
     pf._save(fig, "ratios", None)
 
 

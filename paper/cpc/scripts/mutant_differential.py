@@ -324,13 +324,13 @@ def comparable(record: dict) -> dict:
 def macros(record: dict) -> str:
     t = record["totals"]
     values = {
-        "mutantCases": f"{t['cases']:,}",
+        "mutantCases": f"{t['cases']:,}".replace(",", "{,}"),
         "mutantSeeds": len(record["seeds"]),
-        "mutantPerSeed": f"{record['cases_per_seed']:,}",
+        "mutantPerSeed": f"{record['cases_per_seed']:,}".replace(",", "{,}"),
         "mutantFiles": record["seed_files"],
-        "mutantMaxBytes": f"{record['max_bytes']:,}",
-        "mutantSame": f"{t['same']:,}",
-        "mutantDiffer": f"{t['differ']:,}",
+        "mutantMaxBytes": f"{record['max_bytes']:,}".replace(",", "{,}"),
+        "mutantSame": f"{t['same']:,}".replace(",", "{,}"),
+        "mutantDiffer": f"{t['differ']:,}".replace(",", "{,}"),
         "mutantGroups": sum(1 for g in record["groups"] if g["group"] != "unexplained"),
         "mutantUnexplained": t["unexplained"],
     }
