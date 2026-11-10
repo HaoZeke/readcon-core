@@ -105,6 +105,8 @@ if [ -n "$EXT" ]; then
 fi
 
 unset RUSTC_WRAPPER || true
+unset CARGO_LLVM_COV_TARGET_DIR || true
+unset CARGO_LLVM_COV_BUILD_DIR || true
 echo "==> report"
 cargo llvm-cov report --branch --summary-only | tee "$OUT/summary.txt"
 cargo llvm-cov report --branch --lcov --output-path "$OUT/coverage.lcov"
