@@ -48,22 +48,40 @@ def _branch_sides(record: dict) -> dict[tuple, list[int]]:
     return sides
 
 
-def _apply_summary(record: dict, before_lines: dict[int, int], before_sides: dict) -> None:
+def _sync_branch_records(record: dict, sides: dict[tuple, list[int]]) -> None:
+    """Write the highest count back onto every copy of a region.
+
+    One export can list the same region twice. A later copy must not keep
+    a zero that an earlier copy already raised.
+    """
+    for branch in record["branches"]:
+        key = (branch[0], branch[1], branch[2], branch[3])
+        current = sides.get(key)
+        if current is None:
+            continue
+        branch[4] = current[0]
+        branch[5] = current[1]
+
+
+def _apply_summary(record: dict, before_lines: dict[int, int], _before_sides: dict) -> None:
     lines = line_counts(record)
     flipped = [n for n, count in before_lines.items() if count == 0 and lines.get(n, 0) > 0]
     summary = record["summary"]["lines"]
     summary["covered"] = min(summary["count"], summary["covered"] + len(flipped))
     summary["percent"] = 100.0 * summary["covered"] / summary["count"] if summary["count"] else 0.0
 
+    # llvm-cov's own branch summary counts one copy of a duplicated region.
+    # The other copy can hold the side the first one missed. The summary
+    # below counts a side when any copy recorded it, and counts each region
+    # once. The merged map already includes the first document.
     after = _branch_sides(record)
-    gained = 0
+    _sync_branch_records(record, after)
     branches = record["summary"]["branches"]
-    for key, sides in after.items():
-        if key not in before_sides:
-            branches["count"] += 2
-        previous = before_sides.get(key, [0, 0])
-        gained += (previous[0] == 0 and sides[0] > 0) + (previous[1] == 0 and sides[1] > 0)
-    branches["covered"] = min(branches["count"], branches["covered"] + gained)
+    covered = 0
+    for sides in after.values():
+        covered += (sides[0] > 0) + (sides[1] > 0)
+    branches["count"] = len(after) * 2
+    branches["covered"] = covered
     branches["notcovered"] = branches["count"] - branches["covered"]
     branches["percent"] = (
         100.0 * branches["covered"] / branches["count"] if branches["count"] else 0.0
