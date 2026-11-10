@@ -10,10 +10,7 @@ use crate::types::{
 };
 
 /// Fill one `ConFrameData` builder from a [`ConFrame`].
-pub fn fill_frame_builder(
-    mut fb: con_frame_data::Builder<'_>,
-    frame: &ConFrame,
-) -> Result<(), String> {
+pub fn fill_frame_builder(mut fb: con_frame_data::Builder<'_>, frame: &ConFrame) {
     let mut cell = fb.reborrow().init_cell(3);
     for (j, &v) in frame.header.boxl.iter().enumerate() {
         cell.set(j as u32, v);
@@ -61,8 +58,14 @@ pub fn fill_frame_builder(
         sections.set(i as u32, s.as_str());
     }
 
-    let meta_json =
-        serde_json::to_string(&frame.header.metadata).map_err(|e| format!("metadata json: {e}"))?;
+    // A JSON value cannot hold a non-finite number, so formatting the
+    // object cannot fail. The error used to return from this function and
+    // was never produced.
+    let mut object = serde_json::Map::new();
+    for (key, value) in &frame.header.metadata {
+        object.insert(key.clone(), value.clone());
+    }
+    let meta_json = serde_json::Value::Object(object).to_string();
     fb.set_metadata_json(&meta_json);
     fb.set_strict_validation(frame.header.strict_validation);
     fb.set_sections_declared(frame.header.sections_declared);
@@ -137,7 +140,6 @@ pub fn fill_frame_builder(
             ab.set_has_spread(false);
         }
     }
-    Ok(())
 }
 
 /// Rebuild a [`ConFrame`] from a Cap'n Proto reader.
@@ -371,7 +373,7 @@ mod tests {
         let mut message = Builder::new_default();
         {
             let root = message.init_root::<con_frame_data::Builder>();
-            fill_frame_builder(root, &frame).unwrap();
+            fill_frame_builder(root, &frame);
         }
         let reader = message
             .get_root_as_reader::<con_frame_data::Reader>()
@@ -400,7 +402,7 @@ mod tests {
         let mut message = Builder::new_default();
         {
             let root = message.init_root::<con_frame_data::Builder>();
-            fill_frame_builder(root, &frame).unwrap();
+            fill_frame_builder(root, &frame);
         }
         let reader = message
             .get_root_as_reader::<con_frame_data::Reader>()
@@ -424,7 +426,7 @@ mod tests {
         let mut message = Builder::new_default();
         {
             let root = message.init_root::<con_frame_data::Builder>();
-            fill_frame_builder(root, &frame).unwrap();
+            fill_frame_builder(root, &frame);
         }
         let reader = message
             .get_root_as_reader::<con_frame_data::Reader>()
@@ -448,7 +450,7 @@ mod tests {
         let mut message = Builder::new_default();
         {
             let root = message.init_root::<con_frame_data::Builder>();
-            fill_frame_builder(root, &frame).unwrap();
+            fill_frame_builder(root, &frame);
         }
         let reader = message
             .get_root_as_reader::<con_frame_data::Reader>()
@@ -477,7 +479,7 @@ mod tests {
         let mut message = Builder::new_default();
         {
             let root = message.init_root::<con_frame_data::Builder>();
-            fill_frame_builder(root, &frame).unwrap();
+            fill_frame_builder(root, &frame);
         }
         let back = finish(&message).unwrap();
         assert_eq!(back.atom_data[0].energy(), Some(-1.5));

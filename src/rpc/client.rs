@@ -111,8 +111,7 @@ impl RpcClient {
                         set_compatibility_stamp(wr.reborrow().init_compatibility());
                         let mut list = wr.reborrow().init_frames(frames.len() as u32);
                         for (i, frame) in frames.iter().enumerate() {
-                            fill_frame_builder(list.reborrow().get(i as u32), frame)
-                                .map_err(|e| -> Box<dyn std::error::Error> { e.into() })?;
+                            fill_frame_builder(list.reborrow().get(i as u32), frame);
                         }
                     }
                     let response = request.send().promise.await?;

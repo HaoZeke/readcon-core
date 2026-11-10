@@ -40,9 +40,7 @@ impl read_con_service::Server for ReadConServiceImpl {
 
         for (i, frame) in frames.iter().enumerate() {
             let fb = frames_builder.reborrow().get(i as u32);
-            if let Err(e) = fill_frame_builder(fb, frame) {
-                return Promise::err(capnp::Error::failed(e));
-            }
+            fill_frame_builder(fb, frame);
         }
 
         Promise::ok(())
