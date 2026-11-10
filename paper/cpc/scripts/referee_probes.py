@@ -950,10 +950,9 @@ def c_verdict(it) -> str:
     # -14 is the end of the file in src/ffi.rs. The header enum does not name it.
     if statuses[-1] == -14:
         return f"accept {frames}"
-    if statuses[-1] != STATUS["RKR_STATUS_SUCCESS"]:
-        text = message or ""
-        return f"reject {error_class(text)}: {clean(CONTEXT.sub('', text.strip()))}"
-    return f"{STATUS_NAME.get(statuses[-1], statuses[-1])} after {plural(frames, 'frame')}: {message}"
+    # c_frames stops only on a status other than success, so this status is an error.
+    text = message or ""
+    return f"reject {error_class(text)}: {clean(CONTEXT.sub('', text.strip()))}"
 
 
 def c_frame(id_a: int, id_b: int):
