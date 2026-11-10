@@ -129,8 +129,18 @@ fn convert_reads_native_con_and_refuses_xyz_without_chemfiles() {
         ])
         .output()
         .unwrap();
-    assert_eq!(foreign.status.code(), Some(1));
-    assert!(output_text(&foreign).1.contains("Error:"));
+    let (_, foreign_err) = output_text(&foreign);
+    if cfg!(feature = "chemfiles") {
+        assert!(
+            foreign.status.success(),
+            "xyz convert failed: {foreign_err}"
+        );
+        let written = std::fs::read_to_string(&out_path).unwrap();
+        assert!(written.contains("H2O") || written.contains("O"), "{written}");
+    } else {
+        assert_eq!(foreign.status.code(), Some(1));
+        assert!(foreign_err.contains("Error:"), "{foreign_err}");
+    }
 
     let empty = dir.join("empty.con");
     std::fs::write(&empty, b"").unwrap();
