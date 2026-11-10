@@ -538,3 +538,167 @@ fn a_builder_round_trip_covers_the_frame_accessors() {
         free_rkr_frame(frame);
     }
 }
+
+#[test]
+fn bonds_dlpack_import_rcso_and_force_errors() {
+    let cell = [4.0_f64, 4.0, 4.0];
+    let angles = [90.0_f64, 90.0, 90.0];
+    let symbol = CString::new("Cu").expect("symbol");
+    let hydrogen = CString::new("H").expect("symbol");
+    let bonds = CString::new(
+        r#"{"bonds":[[0,1],{"i":1,"j":0,"order":2}]}"#,
+    )
+    .expect("bonds");
+    let bad_json = CString::new("{").expect("json");
+    unsafe {
+        let builder = rkr_frame_new(
+            cell.as_ptr(),
+            angles.as_ptr(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+        );
+        assert!(!builder.is_null());
+        let force = [0.2_f64, 0.0, 0.0];
+        assert_eq!(
+            rkr_frame_add_atom_with_forces(
+                builder,
+                symbol.as_ptr(),
+                0.1,
+                0.0,
+                0.0,
+                false,
+                1,
+                63.546,
+                force[0],
+                force[1],
+                force[2]
+            ),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            rkr_frame_add_atom(
+                builder,
+                hydrogen.as_ptr(),
+                1.0,
+                0.0,
+                0.0,
+                false,
+                2,
+                1.008
+            ),
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let _ = rkr_frame_builder_set_last_force(builder, force.as_ptr());
+        let _ = rkr_frame_builder_set_atom_force(builder, 0, force.as_ptr());
+        let _ = rkr_frame_builder_set_atom_force(builder, 9, force.as_ptr());
+        let _ = rkr_frame_builder_set_atom_force(builder, 0, ptr::null());
+        let _ = rkr_frame_builder_clear_atom_force(builder, 0);
+        let _ = rkr_frame_builder_clear_atom_force(builder, 9);
+        let _ = rkr_frame_builder_set_metadata_json(builder, bonds.as_ptr());
+        let _ = rkr_frame_builder_set_metadata_json(builder, bad_json.as_ptr());
+        let bad_utf = [0xff_u8, 0];
+        let _ = rkr_frame_builder_set_metadata_json(builder, bad_utf.as_ptr().cast());
+        let _ = rkr_frame_builder_set_metadata_json(builder, bonds.as_ptr());
+        let frame = rkr_frame_builder_build(builder);
+        assert!(!frame.is_null());
+        let _ = rkr_frame_bond_count(frame);
+        let mut left = 0_u32;
+        let mut right = 0_u32;
+        let mut has_order = 0_u8;
+        let mut order = 0_i32;
+        let _ = rkr_frame_bond_at(
+            frame,
+            0,
+            &mut left,
+            &mut right,
+            &mut has_order,
+            &mut order,
+        );
+        let _ = rkr_frame_bond_at(
+            frame,
+            1,
+            &mut left,
+            &mut right,
+            &mut has_order,
+            &mut order,
+        );
+        let _ = rkr_frame_bond_at(
+            frame,
+            8,
+            &mut left,
+            &mut right,
+            &mut has_order,
+            &mut order,
+        );
+        let _ = rkr_frame_bond_at(
+            frame,
+            0,
+            ptr::null_mut(),
+            &mut right,
+            &mut has_order,
+            &mut order,
+        );
+        let mut tensor = ptr::null_mut();
+        let _ = rkr_frame_positions_dlpack(frame, &mut tensor);
+        let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+        let _ = rkr_frame_positions_from_dlpack(ptr::null_mut(), tensor);
+        let _ = rkr_frame_positions_from_dlpack(frame, ptr::null());
+        if !tensor.is_null() {
+            let managed = &mut *tensor;
+            let saved_device = managed.dl_tensor.device.device_type;
+            managed.dl_tensor.device.device_type = dlpk::sys::DLDeviceType::kDLCUDA;
+            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+            managed.dl_tensor.device.device_type = saved_device;
+            let saved_shape = managed.dl_tensor.shape;
+            managed.dl_tensor.shape = ptr::null_mut();
+            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+            managed.dl_tensor.shape = saved_shape;
+            if !saved_shape.is_null() {
+                let saved_ndim = managed.dl_tensor.ndim;
+                let saved_first = *saved_shape;
+                managed.dl_tensor.ndim = 1;
+                *saved_shape = 1;
+                let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+                managed.dl_tensor.ndim = saved_ndim;
+                *saved_shape = saved_first;
+            }
+            let saved_bits = managed.dl_tensor.dtype.bits;
+            managed.dl_tensor.dtype.bits = 32;
+            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+            managed.dl_tensor.dtype.bits = saved_bits;
+            let saved_code = managed.dl_tensor.dtype.code;
+            managed.dl_tensor.dtype.code = dlpk::sys::DLDataTypeCode::kDLInt;
+            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+            managed.dl_tensor.dtype.code = saved_code;
+            let saved_data = managed.dl_tensor.data;
+            managed.dl_tensor.data = ptr::null_mut();
+            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+            managed.dl_tensor.data = saved_data;
+            rkr_dlpack_delete(tensor);
+        }
+        let mut need = 0_usize;
+        let _ = rkr_pack_rcso(frame, ptr::null_mut(), 0, &mut need);
+        let _ = rkr_pack_rcso(ptr::null(), ptr::null_mut(), 0, &mut need);
+        let _ = rkr_pack_rcso(frame, ptr::null_mut(), 0, ptr::null_mut());
+        let mut short = [0_u8; 4];
+        let _ = rkr_pack_rcso(frame, short.as_mut_ptr(), short.len(), &mut need);
+        let mut buf = vec![0_u8; need.max(1)];
+        let _ = rkr_pack_rcso(frame, buf.as_mut_ptr(), buf.len(), &mut need);
+        let mut natoms = 0_u32;
+        let _ = rkr_unpack_rcso_natoms(buf.as_ptr(), need, &mut natoms);
+        let _ = rkr_unpack_rcso_natoms(ptr::null(), need, &mut natoms);
+        let _ = rkr_unpack_rcso_natoms(buf.as_ptr(), 4, &mut natoms);
+        let mut dest = vec![0.0_f64; (natoms.max(1) as usize) * 3];
+        let _ = rkr_unpack_rcso_positions(buf.as_ptr(), need, dest.as_mut_ptr(), natoms);
+        let _ = rkr_unpack_rcso_positions(buf.as_ptr(), need, dest.as_mut_ptr(), natoms.saturating_add(1));
+        let _ = rkr_unpack_rcso_positions(ptr::null(), need, dest.as_mut_ptr(), natoms);
+        let _ = rkr_unpack_rcso_forces(buf.as_ptr(), need, dest.as_mut_ptr(), natoms);
+        let _ = rkr_unpack_rcso_forces(buf.as_ptr(), need, dest.as_mut_ptr(), natoms.saturating_add(1));
+        let _ = rkr_unpack_rcso_forces(ptr::null(), need, dest.as_mut_ptr(), natoms);
+        let junk = [0_u8; 8];
+        let _ = rkr_unpack_rcso_natoms(junk.as_ptr(), junk.len(), &mut natoms);
+        free_rkr_frame(frame);
+    }
+}
