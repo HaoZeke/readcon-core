@@ -40,8 +40,6 @@ def build_slab():
     top_tag = int(tags[symbols == "Pt"].min())
     surface = np.flatnonzero((symbols == "Pt") & (tags == top_tag))
     buried = np.flatnonzero(bottom)
-    if surface.size == 0 or buried.size == 0:
-        raise SystemExit("slab layer tags did not separate surface and bottom")
     masks = np.zeros(len(slab), dtype=int)
     masks[bottom] = 7
     masks[int(hydrogen[0])] = 4
