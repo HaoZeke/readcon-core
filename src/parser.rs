@@ -3686,4 +3686,38 @@ Coordinates of Component 1
         assert_eq!(frame.atom_data[2].atom_id, 2);
         assert!(frame.atom_data[2].is_fixed());
     }
+
+    #[test]
+    fn coord_row_and_fixed_flag_reject_the_short_forms() {
+        let err = parse_coord_row_at(b"", 0, 2, 0).unwrap_err();
+        assert!(matches!(err, ParseError::IncompleteFrame));
+        let err = parse_fixed_flag("", 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidFixedFlag(_)));
+        let err = parse_fixed_flag("-1", 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidFixedFlag(_)));
+        let err = parse_fixed_flag("8", 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidFixedFlag(_)));
+        let err = parse_fixed_flag("2", 1).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidFixedFlag(_)));
+        assert_eq!(parse_fixed_flag("0", 1).unwrap(), [false, false, false]);
+        assert_eq!(parse_fixed_flag("1", 1).unwrap(), [true, true, true]);
+        assert_eq!(parse_fixed_flag("5", 2).unwrap(), [true, false, true]);
+        let err = parse_scalar_section_row("1.0", 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { .. }));
+        let err = parse_scalar_section_row("1.0 0", 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidVectorLength { .. }));
+        let err = parse_scalar_section_row("nope 0 1", 2).unwrap_err();
+        assert!(matches!(err, ParseError::InvalidNumberFormat(_)));
+        let err = parse_scalar_section_row("inf 0 1", 2).unwrap_err();
+        assert!(matches!(err, ParseError::NonFiniteValue(_)));
+        let err = parse_scalar_section_row("1.5 1 7 extra", 2).unwrap_err();
+        assert!(matches!(
+            err,
+            ParseError::InvalidVectorLength { expected: 3, .. }
+        ));
+        let (value, fixed, id) = parse_scalar_section_row("1.5 1 7", 2).unwrap();
+        assert_eq!(value, 1.5);
+        assert_eq!(fixed, [true, false, false]);
+        assert_eq!(id, 7);
+    }
 }

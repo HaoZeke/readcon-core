@@ -648,4 +648,32 @@ mod tests {
         std::fs::write(&mid, &between).unwrap();
         assert_eq!(read_file_text(&mid).unwrap(), format!("{text}{text}"));
     }
+
+    #[test]
+    fn utf8_message_names_a_valid_buffer_and_a_bad_byte() {
+        assert_eq!(
+            invalid_utf8_message(b"plain"),
+            "stream did not contain valid UTF-8"
+        );
+        assert!(invalid_utf8_message(&[0xff]).contains("invalid utf-8"));
+    }
+
+    #[test]
+    fn dontneed_covers_one_worker_and_a_private_scope() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("pages.bin");
+        let bytes = vec![b'a'; 128 * 1024];
+        std::fs::write(&path, &bytes).unwrap();
+        let file = std::fs::File::open(&path).unwrap();
+        let map = unsafe { memmap2::Mmap::map(&file).unwrap() };
+        advise_dontneed_parallel(&map, 0);
+        advise_dontneed_parallel(&map, 1);
+        advise_dontneed_parallel(&map, map.len() + 1);
+        release(&map, 0, 1).unwrap();
+        release(&map, 0, map.len()).unwrap();
+        let text = ForwardText::open(&path, true).unwrap();
+        assert_eq!(text.as_str().len(), bytes.len());
+        let mut text = text;
+        text.release_before(0).unwrap();
+    }
 }

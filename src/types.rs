@@ -4233,4 +4233,23 @@ mod tests {
         assert_eq!(v[[1, 1]], 43.0);
         assert_eq!(v[[1, 2]], 44.0);
     }
+
+    #[test]
+    fn section_slices_are_empty_until_written() {
+        let bond = Bond::new(1, 0).with_order(2);
+        assert_eq!(bond.order, Some(2));
+        assert_eq!(bond.i, 1);
+        let mut builder = three_atom_builder();
+        assert!(builder.velocities().is_empty());
+        assert!(builder.forces().is_empty());
+        assert!(builder.atom_energies().is_empty());
+        builder.velocities_mut()[0] = 0.25;
+        builder.forces_mut()[1] = -0.5;
+        builder.atom_energies_mut()[2] = 1.5;
+        assert_eq!(builder.velocities()[0], 0.25);
+        assert_eq!(builder.forces()[1], -0.5);
+        assert_eq!(builder.atom_energies()[2], 1.5);
+        assert!(!builder.velocities_view().is_empty());
+        assert!(!builder.forces_view().is_empty());
+    }
 }

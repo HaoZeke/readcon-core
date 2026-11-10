@@ -7005,4 +7005,226 @@ mod tests {
         );
         assert!(unsafe { rkr_frame_builder_build(mismatch) }.is_null());
     }
+
+    #[test]
+    fn entry_points_report_null_eof_and_a_live_frame() {
+        use crate::types::Bond;
+        let bad = [0xffu8, 0];
+        let bad_ptr = bad.as_ptr() as *const c_char;
+        let missing = CString::new("resources/test/no-such-readcon.con").unwrap();
+        let path = CString::new("resources/test/tiny_cuh2.con").unwrap();
+        let multi = CString::new("resources/test/tiny_multi_cuh2.con").unwrap();
+
+        for status in [
+            RKRStatus::RKR_STATUS_SUCCESS,
+            RKRStatus::RKR_STATUS_NULL_POINTER,
+            RKRStatus::RKR_STATUS_INVALID_UTF8,
+            RKRStatus::RKR_STATUS_INVALID_JSON,
+            RKRStatus::RKR_STATUS_IO_ERROR,
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS,
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL,
+            RKRStatus::RKR_STATUS_INTERNAL_ERROR,
+            RKRStatus::RKR_STATUS_SECTION_ABSENT,
+            RKRStatus::RKR_STATUS_VALIDATION_ERROR,
+            RKRStatus::RKR_STATUS_SELECTION_ERROR,
+            RKRStatus::RKR_STATUS_FEATURE_DISABLED,
+            RKRStatus::RKR_STATUS_DEVICE_MISMATCH,
+            RKRStatus::RKR_STATUS_DEVICE_ALLOC_UNSUPPORTED,
+        ] {
+            let msg = unsafe { rkr_status_message(status) };
+            assert!(!unsafe { CStr::from_ptr(msg) }.to_bytes().is_empty());
+        }
+
+        assert_eq!(unsafe { rkr_count_frames(std::ptr::null()) }, usize::MAX);
+        assert_eq!(unsafe { rkr_count_frames(bad_ptr) }, usize::MAX);
+        assert_eq!(unsafe { rkr_count_frames(missing.as_ptr()) }, usize::MAX);
+        assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+        let n = unsafe { rkr_count_frames(path.as_ptr()) };
+        assert!(n >= 1);
+        assert!(unsafe { rkr_read_nth_frame(std::ptr::null(), 0) }.is_null());
+        assert!(unsafe { rkr_read_nth_frame(bad_ptr, 0) }.is_null());
+        assert!(unsafe { rkr_read_nth_frame(path.as_ptr(), 99) }.is_null());
+        let nth = unsafe { rkr_read_nth_frame(path.as_ptr(), 0) };
+        assert!(!nth.is_null());
+        unsafe { free_rkr_frame(nth) };
+
+        assert!(unsafe { rkr_trajectory_open(std::ptr::null(), 0) }.is_null());
+        assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+        assert!(unsafe { rkr_trajectory_open(bad_ptr, 0) }.is_null());
+        assert!(unsafe { rkr_trajectory_open(missing.as_ptr(), 0) }.is_null());
+        let traj = unsafe { rkr_trajectory_open(multi.as_ptr(), 0) };
+        assert!(!traj.is_null(), "trajectory open");
+        let len = unsafe { rkr_trajectory_len(traj) };
+        assert!(len >= 1);
+        assert_eq!(unsafe { rkr_trajectory_len(std::ptr::null()) }, usize::MAX);
+        let mut out = std::ptr::null_mut();
+        assert_eq!(
+            unsafe { rkr_trajectory_read_frame(std::ptr::null(), 0, &mut out) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_trajectory_read_frame(traj, len, &mut out) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        assert_eq!(
+            unsafe { rkr_trajectory_read_frame(traj, 0, &mut out) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert!(!out.is_null());
+        unsafe { free_rkr_frame(out) };
+        unsafe { rkr_trajectory_free(traj) };
+        unsafe { rkr_trajectory_free(std::ptr::null_mut()) };
+
+        let text = std::fs::read_to_string("resources/test/tiny_multi_cuh2.con").unwrap();
+        let c_text = CString::new(text).unwrap();
+        let it = unsafe { read_con_string_iterator(c_text.as_ptr()) };
+        assert_eq!(
+            unsafe { con_frame_iterator_forward(std::ptr::null_mut()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { con_frame_iterator_forward(it) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(unsafe { con_frame_iterator_skip(std::ptr::null_mut(), 1) }, usize::MAX);
+        let skipped = unsafe { con_frame_iterator_skip(it, 0) };
+        assert_eq!(skipped, 0);
+        assert!(unsafe { con_frame_iterator_nth(std::ptr::null_mut(), 0) }.is_null());
+        let frame = unsafe { con_frame_iterator_nth(it, 0) };
+        if !frame.is_null() {
+            unsafe { free_rkr_frame(frame) };
+        }
+        unsafe { free_con_frame_iterator(it) };
+
+        let mut builder = ConFrameBuilder::new([10.0, 10.0, 10.0], [90.0, 90.0, 90.0]);
+        builder.add_atom("H", 0.0, 0.0, 0.0, [false, false, false], 0, 1.0);
+        builder.add_atom("H", 1.0, 0.0, 0.0, [false, false, false], 1, 1.0);
+        builder.set_bonds(&[Bond::new(0, 1).with_order(2), Bond::new(1, 0)]);
+        let handle = Box::into_raw(Box::new(builder.build().unwrap())) as *mut RKRConFrame;
+        assert_eq!(unsafe { rkr_frame_bond_count(std::ptr::null()) }, 0);
+        assert!(unsafe { rkr_frame_bond_count(handle) } >= 1);
+        let mut bi = 0u32;
+        let mut bj = 0u32;
+        let mut has = 0u8;
+        let mut order = 0i32;
+        assert_eq!(
+            unsafe {
+                rkr_frame_bond_at(
+                    std::ptr::null(),
+                    0,
+                    &mut bi,
+                    &mut bj,
+                    &mut has,
+                    &mut order,
+                )
+            },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        assert_eq!(
+            unsafe { rkr_frame_bond_at(handle, 0, &mut bi, &mut bj, &mut has, &mut order) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(has, 1);
+        assert_eq!(order, 2);
+        assert_eq!(
+            unsafe { rkr_frame_bond_at(handle, 1, &mut bi, &mut bj, &mut has, &mut order) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(has, 0);
+        assert_eq!(
+            unsafe { rkr_frame_bond_at(handle, 9, &mut bi, &mut bj, &mut has, &mut order) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        let mut buf = [0 as c_char; 8];
+        assert_eq!(
+            unsafe { rkr_frame_get_header_line(handle, true, 2, buf.as_mut_ptr(), buf.len()) },
+            RKRStatus::RKR_STATUS_INDEX_OUT_OF_BOUNDS
+        );
+        let line = unsafe { rkr_frame_get_header_line_cpp(handle, true, 0) };
+        assert!(!line.is_null());
+        unsafe { rkr_free_string(line) };
+        assert!(unsafe { rkr_frame_get_header_line_cpp(handle, true, 4) }.is_null());
+        assert!(unsafe { rkr_frame_get_header_line_cpp(std::ptr::null(), true, 0) }.is_null());
+        let mut xyz = [0.0f64; 3];
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(handle, xyz.as_mut_ptr(), 1) },
+            RKRStatus::RKR_STATUS_BUFFER_TOO_SMALL
+        );
+        let mut xyz = [0.0f64; 6];
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(handle, xyz.as_mut_ptr(), xyz.len()) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        assert_eq!(
+            unsafe { rkr_frame_copy_positions(std::ptr::null(), xyz.as_mut_ptr(), xyz.len()) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+        unsafe { free_rkr_frame(handle) };
+
+        let mut nframes = 0usize;
+        assert!(unsafe { rkr_read_chemfiles_first(std::ptr::null()) }.is_null());
+        assert!(unsafe { rkr_read_chemfiles_first(bad_ptr) }.is_null());
+        assert!(unsafe { rkr_read_chemfiles_first(path.as_ptr()) }.is_null());
+        assert!(unsafe { rkr_read_chemfiles(std::ptr::null(), &mut nframes) }.is_null());
+        assert!(unsafe { rkr_read_chemfiles(bad_ptr, &mut nframes) }.is_null());
+        assert!(unsafe { rkr_read_chemfiles(path.as_ptr(), &mut nframes) }.is_null());
+        assert!(unsafe { rkr_read_chemfiles_nth(std::ptr::null(), 0) }.is_null());
+        assert!(unsafe { rkr_read_chemfiles_nth(path.as_ptr(), 0) }.is_null());
+        assert_eq!(unsafe { rkr_chemfiles_nsteps(std::ptr::null()) }, usize::MAX);
+        assert_eq!(unsafe { rkr_chemfiles_nsteps(bad_ptr) }, usize::MAX);
+        assert_eq!(unsafe { rkr_chemfiles_nsteps(path.as_ptr()) }, usize::MAX);
+        assert!(
+            unsafe {
+                rkr_read_chemfiles_range(
+                    std::ptr::null(),
+                    0,
+                    1,
+                    1,
+                    std::ptr::null(),
+                    0,
+                    &mut nframes,
+                )
+            }
+            .is_null()
+        );
+        assert!(
+            unsafe {
+                rkr_read_chemfiles_range(bad_ptr, 0, 1, usize::MAX, bad_ptr, 1, &mut nframes)
+            }
+            .is_null()
+        );
+        assert!(
+            unsafe {
+                rkr_read_chemfiles_range(
+                    path.as_ptr(),
+                    0,
+                    1,
+                    usize::MAX,
+                    std::ptr::null(),
+                    0,
+                    &mut nframes,
+                )
+            }
+            .is_null()
+        );
+        let xyz_txt = CString::new("H 0 0 0\n").unwrap();
+        let fmt = CString::new("XYZ").unwrap();
+        assert!(
+            unsafe { rkr_read_chemfiles_memory(std::ptr::null(), fmt.as_ptr(), &mut nframes) }
+                .is_null()
+        );
+        assert!(unsafe { rkr_read_chemfiles_memory(bad_ptr, fmt.as_ptr(), &mut nframes) }.is_null());
+        assert!(
+            unsafe { rkr_read_chemfiles_memory(xyz_txt.as_ptr(), bad_ptr, &mut nframes) }.is_null()
+        );
+        assert!(
+            unsafe { rkr_read_chemfiles_memory(xyz_txt.as_ptr(), fmt.as_ptr(), &mut nframes) }
+                .is_null()
+        );
+        let mut selected = std::ptr::null_mut();
+        assert_eq!(
+            unsafe { rkr_frame_select(std::ptr::null(), fmt.as_ptr(), &mut selected) },
+            RKRStatus::RKR_STATUS_NULL_POINTER
+        );
+    }
 }
