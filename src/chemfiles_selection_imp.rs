@@ -883,6 +883,18 @@ mod chemfiles_selection_cpp_regression {
         assert_eq!(chfl.cell().shape(), CellShape::Orthorhombic);
         assert!(chfl.has_velocities());
         assert_eq!(chfl.step(), 4);
+        let speeds = chfl.velocities().expect("velocity array");
+        let mut hydrogen = None;
+        let mut oxygen = None;
+        for i in 0..chfl.size() {
+            match chfl.atom(i).name().as_str() {
+                "H" => hydrogen = Some(speeds[i]),
+                "O" => oxygen = Some(speeds[i]),
+                _ => {}
+            }
+        }
+        assert_eq!(hydrogen, Some([0.1, 0.0, 0.0]));
+        assert_eq!(oxygen, Some([0.0, 0.0, 0.0]));
 
         let empty = select_atom_positions_on_frames("name H", &[]).expect("empty");
         assert!(empty.frames.is_empty());
