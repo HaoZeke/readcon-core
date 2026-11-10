@@ -21,7 +21,8 @@ esac
 
 unset RUSTC_WRAPPER || true
 export CARGO_INCREMENTAL=0
-export RUSTFLAGS="${RUSTFLAGS:--A dangerous_implicit_autorefs}"
+# No lint suppression. A nightly deny stops the run.
+unset RUSTFLAGS || true
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/coverage}"
 
 mkdir -p "$CARGO_TARGET_DIR"
@@ -36,13 +37,11 @@ echo "==> workspace, all targets, branches"
 cargo llvm-cov clean --workspace
 cargo llvm-cov --workspace --all-targets \
   --features parallel,zstd,grammar \
-  --branch --no-fail-fast --no-report \
-  || echo "workspace tests exited $?" >&2
+  --branch --no-fail-fast --no-report
 echo "==> doctests"
 cargo llvm-cov --workspace --doc \
   --features parallel,zstd,grammar \
-  --branch --no-fail-fast --no-report \
-  || echo "doctests exited $?" >&2
+  --branch --no-fail-fast --no-report
 
 PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
 
@@ -54,7 +53,6 @@ if [ -f tests/c/ffi_coverage.c ] && [ -f include/readcon-core.h ]; then
       -Iinclude -lm -lpthread -ldl
     LLVM_PROFILE_FILE="$PROFDIR/ffi-%p.profraw" \
       "$OUT/ffi_coverage" "$ROOT" "$OUT" \
-      || echo "C driver exited $?" >&2
   fi
 fi
 
@@ -67,7 +65,7 @@ if command -v fpm >/dev/null 2>&1 && [ -d fortran/ReadCon ]; then
       LLVM_PROFILE_FILE="$PROFDIR/fortran-%p.profraw" \
         fpm test --flag "-L$STATIC_DIR" \
         --link-flag "-L$STATIC_DIR -lreadcon_core -ldl -lpthread -lm"
-    ) || echo "Fortran driver exited $?" >&2
+    )
   fi
 fi
 
@@ -92,7 +90,7 @@ fi
 python -m pip install -U pip -q
 python -m pip install maturin pytest numpy ase zstandard -q
 maturin develop --features python,zstd
-python -m pytest tests/python -q --tb=line || echo "pytest exited $?" >&2
+python -m pytest tests/python --tb=short
 
 # The report keeps an object only when its file name is the package
 # name plus an optional hex suffix. The extension's own name does not

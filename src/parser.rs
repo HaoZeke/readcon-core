@@ -682,7 +682,6 @@ fn parse_flag_fast(bytes: &[u8], i: usize, spec_version: u32) -> Option<([bool; 
 }
 
 #[cold]
-#[inline(never)]
 fn parse_coord_fields_detailed(
     bytes: &[u8],
     i: usize,

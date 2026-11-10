@@ -28,7 +28,8 @@ esac
 
 unset RUSTC_WRAPPER || true
 export CARGO_INCREMENTAL=0
-export RUSTFLAGS="${RUSTFLAGS:--A dangerous_implicit_autorefs} -C link-arg=-lpython3.12"
+# Link libpython. Do not pass a lint allow. Remap is added below.
+export RUSTFLAGS="-C link-arg=-lpython3.12"
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/coverage-features}"
 if [ -z "${LIBRARY_PATH:-}" ]; then
   LIBRARY_PATH=""
@@ -70,15 +71,9 @@ FEATURES=parallel,zstd,grammar,python,chemfiles-from-sources
 
 echo "==> workspace, all targets, merged features"
 cargo llvm-cov clean --workspace
-set +e
 cargo llvm-cov --workspace --all-targets \
   --features "$FEATURES" \
   --branch --no-fail-fast --no-report --remap-path-prefix
-RUST_STATUS=$?
-set -e
-if [ "$RUST_STATUS" -ne 0 ]; then
-  echo "workspace tests exited $RUST_STATUS" >&2
-fi
 PROFDIR="$CARGO_TARGET_DIR/llvm-cov-target"
 if ! find "$PROFDIR" -maxdepth 1 -name '*.profraw' | grep -q .; then
   echo "the feature build produced no profiles" >&2
@@ -110,7 +105,6 @@ fi
 . "$VENV/bin/activate"
 python -m pip install -q maturin pytest numpy
 maturin develop --features python,zstd,chemfiles-from-sources
-set +e
 python -m pytest \
   tests/python/test_v143_arms.py \
   tests/python/test_v143_behaviour.py \
@@ -133,12 +127,7 @@ python -m pytest \
   tests/python/test_line_coverage.py \
   tests/python/test_physical_coverage.py \
   tests/python/test_helpers.py \
-  -q --tb=line
-PY_STATUS=$?
-set -e
-if [ "$PY_STATUS" -ne 0 ]; then
-  echo "pytest exited $PY_STATUS" >&2
-fi
+  --tb=short
 
 EXT=$(find "$VENV" -path '*/site-packages/readcon/*.so' -type f | head -n 1)
 if [ -z "$EXT" ]; then

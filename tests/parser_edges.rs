@@ -5,7 +5,6 @@ use readcon_core::iterators::ConFrameIterator;
 use readcon_core::parser::parse_line_of_range_f64;
 
 #[test]
-#[test]
 fn a_zero_section_arity_is_rejected() {
     let err = parse("user\n{\"con_spec_version\":2,\"section_arity\":{\"widgets\":0}}\n")
         .expect_err("arity");

@@ -88,7 +88,12 @@ def test_read_con_as_ase_and_feature_flags():
     assert atoms[0].get_chemical_symbols()[0] == "Cu"
     assert readcon.has_parallel_support() is True
     assert readcon.has_mpi_support() is False
-    assert readcon.has_chemfiles_support() in (True, False)
+    if readcon.has_chemfiles_support():
+        loaded = readcon.read_chemfiles(_resource("water_min.xyz"))
+        assert len(loaded) == 1
+    else:
+        with pytest.raises(RuntimeError):
+            readcon.read_chemfiles(_resource("water_min.xyz"))
 
 
 def test_chemfiles_and_selection_report_the_build():
@@ -302,6 +307,49 @@ def test_from_ase_branches():
     nan_par.cellpar = lambda: _Arr([10.0, 10.0, 10.0, float("nan"), 90.0, 90.0])
     nan_frame = readcon.ConFrame.from_ase(_StubAtoms(cell=nan_par))
     assert nan_frame.angles[0] == pytest.approx(90.0)
+    middle = _Cell([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    middle_frame = readcon.ConFrame.from_ase(_StubAtoms(cell=middle))
+    assert middle_frame.angles[1] == pytest.approx(90.0)
+    negative = readcon.ConFrame.from_ase(_StubAtoms(tags=[-1, 4]))
+    assert [atom.atom_id for atom in negative.atoms] == [0, 1]
+
+
+def test_partial_fix_and_a_lone_moment_round_trip(tmp_path):
+    atom = readcon.Atom(
+        symbol="Cu",
+        x=0.1,
+        y=0.2,
+        z=0.3,
+        atom_id=7,
+        mass=63.5,
+        fx=0.4,
+        fy=0.0,
+        fz=-0.1,
+        fixed=[True, False, True],
+        mx=0.2,
+    )
+    frame = readcon.ConFrame(cell=[3.0, 4.0, 5.0], angles=[90.0, 90.0, 90.0], atoms=[atom])
+    frame.metadata = {"pbc": [True, True, False]}
+    projection = frame.index_projection()
+    assert list(projection["pbc"]) == [True, True, False]
+    ase_atoms = frame.to_ase()
+    assert len(ase_atoms.constraints) == 1
+    assert ase_atoms.constraints[0].index == 0
+    plain = tmp_path / "partial.con"
+    readcon.write_con(str(plain), [frame])
+    back = readcon.read_con(str(plain))[0]
+    assert back.atoms[0].fixed == [True, False, True]
+    assert back.atoms[0].mx is None
+    missing = tmp_path / "absent" / "out.con"
+    with pytest.raises(OSError):
+        readcon.write_con(str(missing), [frame])
+    with pytest.raises(OSError):
+        readcon.write_con(str(tmp_path / "absent" / "out.con.gz"), [frame], compression="gzip")
+    positions = np.zeros((1, 1, 3))
+    masses = np.zeros((1, 2))
+    cell = np.array([[3.0, 4.0, 5.0, 90.0, 90.0, 90.0]])
+    with pytest.raises(ValueError, match="disagree"):
+        readcon.write_coords(str(tmp_path / "bad.con"), positions, masses, cell)
 
 
 def test_bonds_release_and_indexes(tmp_path):

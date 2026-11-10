@@ -71,7 +71,7 @@ def test_metadata_none_list_tuple_and_skipped_keys():
             atoms=[atom],
             metadata={"bad": object()},
         )
-    assert "JSON" in str(bad.value) or "metadata" in str(bad.value)
+    assert "JSON" in str(bad.value)
 
 
 def test_negative_frame_index_and_a_slice():
@@ -83,13 +83,13 @@ def test_negative_frame_index_and_a_slice():
         frames[-len(frames) - 1]
     chunk = frames[0:2]
     assert len(chunk) == 2
-    assert chunk[0].atoms[0].symbol
+    assert chunk[0].atoms[0].symbol == frames[0].atoms[0].symbol
 
 
 def test_forces_file_exposes_force_rows_and_a_missing_velocity():
     path = os.path.join(RESOURCES, "tiny_cuh2_forces.con")
     frame = readcon.read_con(path)[0]
-    assert frame.vel is None or frame.frc is not None
+    assert frame.vel is None
     frc = frame.frc
     assert frc is not None
     assert frc.shape[0] == len(frame.atoms)

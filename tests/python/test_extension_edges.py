@@ -62,13 +62,12 @@ def test_extxyz_without_a_lattice_is_rejected_and_ase_reads_con():
     assert atoms[0].get_chemical_symbols()[0] == "Cu"
 
 
-def test_convert_and_index_errors_name_the_cause():
+def test_convert_and_index_errors_name_the_cause(tmp_path):
     if readcon.has_chemfiles_support():
-        report = readcon.convert_to_con(
-            "resources/test/water_min.xyz", "resources/test/out-water.con"
-        )
+        out = tmp_path / "out-water.con"
+        report = readcon.convert_to_con("resources/test/water_min.xyz", str(out))
         assert report["n_frames"] >= 1
-        os.remove("resources/test/out-water.con")
+        assert out.is_file()
     else:
         with pytest.raises(OSError):
             readcon.convert_to_con("resources/test/water_min.xyz", "out-unused.con")

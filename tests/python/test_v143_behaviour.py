@@ -49,8 +49,10 @@ def test_a_negative_atom_index_and_an_exhausted_iterator():
     atoms = list(frame)
     assert atoms[0].symbol == "Cu"
     cursor = iter(frame)
-    assert next(cursor).symbol == "Cu"
-    assert next(cursor, None) is None or len(frame) > 1
+    seen = [atom.symbol for atom in cursor]
+    assert seen[0] == "Cu"
+    assert len(seen) == len(frame)
+    assert next(cursor, None) is None
 
 
 def test_bad_paths_wrong_types_and_a_malformed_frame():
@@ -113,7 +115,8 @@ def test_coords_reject_a_disagreement_and_a_partial_magmom(tmp_path):
     atom.mz = 0.3
     frame.atoms[0].mz = 0.3
     text = readcon.write_con_string([frame])
-    assert "0.1" in text or "Magmoms" in text or "Cu" in text
+    assert "Magmoms" in text
+    assert "0.1" in text
 
 
 def test_projection_bonds_and_potential_are_visible():
@@ -129,8 +132,8 @@ def test_projection_bonds_and_potential_are_visible():
     assert frame.potential_type is None
     frame.metadata = {"bonds": [{"i": 0, "j": 1, "order": 2}, [2, 3]]}
     bonds = frame.bonds
-    assert (0, 1, 2) in bonds or [0, 1, 2] in bonds
-    assert (2, 3) in bonds or [2, 3] in bonds
+    assert bonds[0] == (0, 1, 2)
+    assert bonds[1] == (2, 3)
 
 
 def test_binary32_conbin_is_rejected_and_f64_round_trips(tmp_path):

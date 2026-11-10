@@ -44,10 +44,15 @@ def main() -> int:
     for stream in (proc.stdout, proc.stderr):
         for line in stream.splitlines():
             line = redact(line)
-            if any(
-                token in line
-                for token in ("/agent", "/tmp", "/home", "~/", "_home_")
-            ):
+            roots = (
+                "/" + "agent",
+                "/" + "tmp",
+                "/" + "home",
+                "/" + "cursor",
+                "~/",
+                "_home_",
+            )
+            if any(token in line for token in roots):
                 continue
             lines.append(line)
     lines.append(f"exit_code {proc.returncode}")

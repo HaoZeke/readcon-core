@@ -715,7 +715,6 @@ impl<'a> ConFrameIterator<'a> {
     /// memchr-backed equivalent of [`Self::forward`]. Skips the next
     /// frame without fully parsing its atom data. Shares the same line
     /// cursor as [`Iterator::next`], so skip and full parse interleave safely.
-    #[inline(never)]
     pub fn forward_fast(&mut self) -> Option<Result<(), error::ParseError>> {
         self.forward_fast_to(None)
     }
@@ -956,7 +955,6 @@ impl<'a> ConFrameIterator<'a> {
     ///
     /// See also [`crate::index_proj::frame_byte_spans`] and
     /// [`crate::index_proj::spans_cover_buffer`].
-    #[inline(never)]
     pub fn next_with_raw_span(
         &mut self,
         file_contents: &'a str,
@@ -1016,7 +1014,6 @@ impl<'a> Iterator for ConFrameIterator<'a> {
     /// If there are lines but they do not form a complete frame, it will return
     /// `Some(Err(ParseError::...))`. Invalid UTF-8 is a validation error, not
     /// the end of the stream.
-    #[inline(never)]
     fn next(&mut self) -> Option<Self::Item> {
         // A byte-order mark is rejected only at the start of the file
         // (CON-file.2), before any peek moves the cursor. On a later
@@ -1484,7 +1481,6 @@ fn sample_llc_misses() -> i64 {
 /// refuses the event. `read` writes one `u64` and returns the byte count.
 /// Production always passes [`perf_open_os`], [`perf_read_os`], and
 /// [`perf_close_os`]. There is no environment switch.
-#[inline(never)]
 fn sample_llc_from(
     open: impl FnOnce() -> i64,
     read: impl FnOnce(i32, &mut u64) -> isize,
@@ -1921,7 +1917,6 @@ fn take_slot_buf(
 }
 
 #[cfg(feature = "parallel")]
-#[inline(never)]
 fn recycle_slot_buf(
     mut buf: Vec<std::mem::MaybeUninit<Result<types::ConFrame, error::ParseError>>>,
 ) {
@@ -2035,7 +2030,6 @@ fn first_touch_f64(values: &mut [f64], workers: usize) {
 /// pool that parsed the frames does this move. One thread still walks
 /// the slots when that pool is absent.
 #[cfg(feature = "parallel")]
-#[inline(never)]
 fn finish_results(
     pool: Option<&rayon::ThreadPool>,
     slots: Vec<Result<types::ConFrame, error::ParseError>>,
@@ -2086,7 +2080,6 @@ pub const SCAN_EQUAL_SPAN: u8 = 2;
 /// `None` and the caller keeps the serial walk. The starts are
 /// `0, span, 2*span, ...` and match [`collect_frame_starts`].
 #[cfg(feature = "parallel")]
-#[inline(never)]
 fn equal_span_boundaries(bytes: &[u8], workers: usize) -> Option<Vec<usize>> {
     if workers < 2 || bytes.len() < 2 {
         return None;
@@ -2139,7 +2132,6 @@ fn equal_span_boundaries(bytes: &[u8], workers: usize) -> Option<Vec<usize>> {
 static START_CACHE: std::sync::Mutex<Vec<usize>> = std::sync::Mutex::new(Vec::new());
 
 #[cfg(feature = "parallel")]
-#[inline(never)]
 fn arithmetic_starts(span: usize, n: usize) -> Vec<usize> {
     let mut starts = START_CACHE
         .lock()
@@ -2155,7 +2147,6 @@ fn arithmetic_starts(span: usize, n: usize) -> Vec<usize> {
 }
 
 #[cfg(feature = "parallel")]
-#[inline(never)]
 fn recycle_starts(starts: Vec<usize>) {
     if let Ok(mut slot) = START_CACHE.lock() {
         if starts.capacity() >= slot.capacity() {
@@ -3152,7 +3143,6 @@ pub fn touch_frame_checksum(
 /// [`touch_frame_checksum`] for frames still sitting in optional slots.
 ///
 /// `None` means a slot is empty or the position slice does not match.
-#[inline(never)]
 pub fn touch_option_checksum(
     frames: &[Option<types::ConFrame>],
     positions: &[f64],

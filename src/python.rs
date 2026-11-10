@@ -4031,7 +4031,58 @@ mod api_coverage {
             std::fs::write(&tiny, &text).unwrap();
             let f32_path = dir.path().join("tiny.f32.conbin");
             write_conbin(py, tiny.to_str().unwrap(), f32_path.to_str().unwrap(), true).unwrap();
-            assert!(read_conbin(py, f32_path.to_str().unwrap(), 1).is_err());
+            let binary32 = read_conbin(py, f32_path.to_str().unwrap(), 1).unwrap_err();
+            assert!(
+                binary32.to_string().contains("binary32"),
+                "{binary32}"
+            );
+
+            let bad_count = frame_from_arrays(&[], &[], &[1.0, 2.0, 3.0, 90.0, 90.0, 90.0], "Cu");
+            assert!(bad_count.unwrap_err().contains("disagree"));
+            let bad_positions = frame_from_arrays(&[0.0, 0.0], &[1.0], &[1.0, 2.0, 3.0, 90.0, 90.0, 90.0], "Cu");
+            assert!(bad_positions.unwrap_err().contains("disagree"));
+            let bad_cell = frame_from_arrays(&[0.1, 0.2, 0.3], &[4.0], &[1.0, 2.0, 3.0], "Cu");
+            assert!(bad_cell.unwrap_err().contains("disagree"));
+            let built = frame_from_arrays(
+                &[0.1, 0.2, 0.3],
+                &[4.0],
+                &[2.0, 3.0, 4.0, 90.0, 90.0, 90.0],
+                "Cu",
+            )
+            .unwrap();
+            assert_eq!(built.atom_data.len(), 1);
+            assert!((built.atom_data[0].x - 0.1).abs() < 1e-9);
+
+            let (teardown_s, join_s) = list.borrow_mut(py).teardown();
+            assert!(teardown_s >= 0.0);
+            assert!(join_s >= 0.0);
+            let second = con_frame_list(
+                py,
+                vec![frame.clone(), frame.clone()],
+                crate::iterators::ReadPhaseTimes::default(),
+                0,
+                Some(2),
+                "lazy",
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                "serial",
+                None,
+            )
+            .unwrap();
+            {
+                let mut bare = second.borrow_mut(py);
+                *bare.pool.lock().expect("pool") = None;
+                bare.workers = 2;
+                let (again_s, no_pool) = bare.teardown();
+                assert!(again_s >= 0.0);
+                assert_eq!(no_pool, 0.0);
+            }
+            let mut packed = vec![frame.clone(), frame.clone()];
+            let pool = rayon::ThreadPoolBuilder::new().num_threads(2).build().unwrap();
+            pool.install(|| clear_packed_positions(&mut packed, 2));
+            assert_eq!(packed[0].positions.nrows(), 0);
 
             let opened = crate::trajectory::ConTrajectory::open(tiny.as_path(), false).unwrap();
             let traj = Py::new(py, PyConTrajectory { inner: opened }).unwrap();

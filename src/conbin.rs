@@ -536,11 +536,12 @@ fn sequential_resident_sum(
     let addr = owned.ptr as usize;
     let found = std::thread::scope(|scope| {
         let queued = pieces.clone();
+        let err_tx_worker = err_tx.clone();
         scope.spawn(move || {
             let fd = match File::open(path) {
                 Ok(fd) => fd,
                 Err(err) => {
-                    let _ = err_tx.send(err.to_string());
+                    let _ = err_tx_worker.send(err.to_string());
                     return;
                 }
             };
@@ -550,7 +551,7 @@ fn sequential_resident_sum(
             let mut submitted = 0usize;
             while submitted < depth.min(queued.len()) {
                 if let Err(err) = advise_readahead(&fd, queued[submitted].0, queued[submitted].1) {
-                    let _ = err_tx.send(err);
+                    let _ = err_tx_worker.send(err);
                     return;
                 }
                 submitted += 1;
@@ -558,7 +559,7 @@ fn sequential_resident_sum(
             for i in 0..queued.len() {
                 let (off, n) = queued[i];
                 if let Err(err) = wait_resident(addr, off, n, page) {
-                    let _ = err_tx.send(err);
+                    let _ = err_tx_worker.send(err);
                     return;
                 }
                 let _ = tx.send(i);
@@ -566,7 +567,7 @@ fn sequential_resident_sum(
                     if let Err(err) =
                         advise_readahead(&fd, queued[submitted].0, queued[submitted].1)
                     {
-                        let _ = err_tx.send(err);
+                        let _ = err_tx_worker.send(err);
                         return;
                     }
                     submitted += 1;
@@ -590,7 +591,9 @@ fn sequential_resident_sum(
             }));
         }
         for handle in handles {
-            handle.join().expect("column sum");
+            if handle.join().is_err() {
+                let _ = err_tx.send("column sum worker panicked".to_string());
+            }
         }
         let slots = slots.lock().expect("piece sums");
         slots.iter().copied().sum::<f64>()
@@ -671,11 +674,18 @@ fn split_stream_sum(path: &Path, threads: usize, limits: &QueueLimits) -> Result
                 }
             }));
         }
-        drop(err_tx);
-        handles
+        let parts: Vec<f64> = handles
             .into_iter()
-            .map(|handle| handle.join().expect("split stream"))
-            .sum::<f64>()
+            .map(|handle| match handle.join() {
+                Ok(part) => part,
+                Err(_) => {
+                    let _ = err_tx.send("split stream worker panicked".to_string());
+                    0.0
+                }
+            })
+            .collect();
+        drop(err_tx);
+        parts.into_iter().sum::<f64>()
     });
     if let Ok(err) = err_rx.try_recv() {
         return Err(ParseError::ValidationError(err));
@@ -2722,21 +2732,34 @@ Coordinates of Component 1
     }
 
     #[cfg(target_os = "linux")]
+    fn ensure_scratch() {
+        if std::env::var_os("TMPDIR").is_none() {
+            unsafe { std::env::set_var("TMPDIR", std::env::temp_dir()) };
+        }
+    }
+
+    #[cfg(target_os = "linux")]
     fn set_case(name: &str) {
-        let path = format!("/tmp/conbin-active-{}", std::process::id());
+        ensure_scratch();
+        let path = std::env::temp_dir().join(format!("conbin-active-{}", std::process::id()));
         std::fs::write(path, name).unwrap();
     }
 
     #[cfg(target_os = "linux")]
     fn injected(name: &str) -> bool {
-        Path::new(&format!("/tmp/conbin-mark-{}-{name}", std::process::id())).is_file()
+        ensure_scratch();
+        std::env::temp_dir()
+            .join(format!("conbin-mark-{}-{name}", std::process::id()))
+            .is_file()
     }
 
     #[cfg(target_os = "linux")]
-    fn compile_preload() -> &'static str {
+    fn compile_preload() -> String {
         static ONCE: std::sync::Once = std::sync::Once::new();
         ONCE.call_once(|| {
-            std::fs::write("/tmp/conbin_cov_preload.c", PRELOAD_C).unwrap();
+            let source = std::env::temp_dir().join("conbin_cov_preload.c");
+            let object = std::env::temp_dir().join("conbin_cov_preload.so");
+            std::fs::write(&source, PRELOAD_C).unwrap();
             let out = std::process::Command::new("gcc")
                 .args([
                     "-shared",
@@ -2744,8 +2767,8 @@ Coordinates of Component 1
                     "-Wall",
                     "-Werror",
                     "-o",
-                    "/tmp/conbin_cov_preload.so",
-                    "/tmp/conbin_cov_preload.c",
+                    object.to_str().unwrap(),
+                    source.to_str().unwrap(),
                     "-ldl",
                 ])
                 .output()
@@ -2756,11 +2779,15 @@ Coordinates of Component 1
                 String::from_utf8_lossy(&out.stderr)
             );
         });
-        "/tmp/conbin_cov_preload.so"
+        std::env::temp_dir()
+            .join("conbin_cov_preload.so")
+            .to_string_lossy()
+            .into_owned()
     }
 
     #[cfg(target_os = "linux")]
     fn spawn_case(test: &str, case: &str, unshare_mount: bool, preload: bool) {
+        ensure_scratch();
         let exe = std::env::current_exe().unwrap();
         let mut cmd = if unshare_mount {
             let mut command = std::process::Command::new("unshare");
@@ -2874,10 +2901,21 @@ Coordinates of Component 1
         set_case("");
         drop_pages(&reopen);
         set_case("readahead-fail-2");
-        match sequential_resident_sum(&reopen, 1, &limits) {
-            Err(err) => assert!(err.to_string().contains("Invalid"), "{err}"),
-            Ok(sum) => assert!(sum.is_finite(), "{sum}"),
+        let mut readahead_err = None;
+        for _ in 0..8 {
+            drop_pages(&reopen);
+            match sequential_resident_sum(&reopen, 1, &limits) {
+                Err(err) => {
+                    readahead_err = Some(err);
+                    break;
+                }
+                Ok(_) => continue,
+            }
         }
+        assert_has(
+            &readahead_err.expect("readahead-fail-2 did not fail"),
+            "Invalid",
+        );
         set_case("");
         drop_pages(&reopen);
         set_case("madvise-eio");
@@ -3101,7 +3139,8 @@ Coordinates of Component 1
         assert!(!got.starts_with(&ro), "{got:?}");
         assert_eq!(std::fs::read_dir(&ro).unwrap().count(), 0);
 
-        let gone = std::path::PathBuf::from(format!("/tmp/conbin-cwd-{}", std::process::id()));
+        unsafe { std::env::remove_var("TMPDIR") };
+        let gone = std::env::temp_dir().join(format!("conbin-cwd-{}", std::process::id()));
         std::fs::create_dir_all(&gone).unwrap();
         std::env::set_current_dir(&gone).unwrap();
         std::fs::remove_dir(&gone).unwrap();
@@ -3201,6 +3240,7 @@ Coordinates of Component 1
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -3226,7 +3266,11 @@ static void refresh(void) {
         return;
     }
     char path[128];
-    snprintf(path, sizeof path, "/tmp/conbin-active-%d", (int)getpid());
+    const char *dir = getenv("TMPDIR");
+    if (!dir || !dir[0]) {
+        dir = ".";
+    }
+    snprintf(path, sizeof path, "%s/conbin-active-%d", dir, (int)getpid());
     int fd = real_open64(path, O_RDONLY, 0);
     char buf[80];
     memset(buf, 0, sizeof buf);
@@ -3266,7 +3310,11 @@ static int marked(int fd, const char *path) {
 
 static void mark(const char *name) {
     char path[160];
-    snprintf(path, sizeof path, "/tmp/conbin-mark-%d-%s", (int)getpid(), name);
+    const char *dir = getenv("TMPDIR");
+    if (!dir || !dir[0]) {
+        dir = ".";
+    }
+    snprintf(path, sizeof path, "%s/conbin-mark-%d-%s", dir, (int)getpid(), name);
     if (!real_open64) {
         return;
     }
