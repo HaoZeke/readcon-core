@@ -4410,4 +4410,63 @@ atoms = Atoms()
             }
         });
     }
+
+    #[test]
+    fn a_one_worker_pool_keeps_the_symbol_and_a_stable_checksum() {
+        Python::initialize();
+        Python::attach(|py| {
+            let mut builder =
+                crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+            builder.add_atom("H", 0.1, 0.2, 0.3, [false; 3], 1, 1.0);
+            let frame = builder.build().unwrap();
+            let pool = std::sync::Arc::new(
+                rayon::ThreadPoolBuilder::new()
+                    .num_threads(2)
+                    .build()
+                    .unwrap(),
+            );
+            let list = con_frame_list(
+                py,
+                vec![frame],
+                crate::iterators::ReadPhaseTimes::default(),
+                4,
+                Some(1),
+                "lazy",
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                "serial",
+                Some(pool),
+            )
+            .unwrap();
+            let borrowed = list.borrow(py);
+            assert_eq!(borrowed.workers, 1);
+            let (digest, seconds) = borrowed.touch_checksum(py).unwrap();
+            assert!(seconds >= 0.0);
+            let (again, _) = borrowed.touch_checksum(py).unwrap();
+            assert_eq!(digest, again, "a second walk changed the checksum");
+            let stored = borrowed.frames.lock().expect("frames");
+            assert_eq!(stored[0].as_ref().unwrap().atom_data[0].symbol.as_ref(), "H");
+        });
+    }
+
+    #[test]
+    fn uneven_frames_keep_their_own_atom_counts() {
+        Python::initialize();
+        Python::attach(|py| {
+            let mut wide =
+                crate::types::ConFrameBuilder::new([1.0, 1.0, 1.0], [90.0, 90.0, 90.0]);
+            wide.add_atom("Cu", 0.0, 0.0, 0.0, [true; 3], 1, 63.5);
+            wide.add_atom("H", 1.0, 0.0, 0.0, [false; 3], 1, 1.0);
+            let wide = wide.build().unwrap();
+            let mut narrow = wide.clone();
+            narrow.atom_data.pop();
+            narrow.positions = crate::storage_dtype::FloatArray2::zeros_f64(1, 3);
+            let parsed = frames_from_parsed(py, vec![wide, narrow]).unwrap();
+            assert_eq!(parsed.len(), 2);
+            assert_eq!(parsed[0].atom_count(py), 2);
+            assert_eq!(parsed[1].atom_count(py), 1);
+        });
+    }
 }
