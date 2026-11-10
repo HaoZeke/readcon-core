@@ -5689,6 +5689,19 @@ mod tests {
     use super::*;
     use std::ffi::{CStr, CString};
     use std::hint::black_box;
+    use std::sync::Mutex;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    static DELETER_HIT: AtomicBool = AtomicBool::new(false);
+    static DELETER_ORIG: Mutex<Option<unsafe extern "C" fn(*mut RKRDLManagedTensorVersioned)>> =
+        Mutex::new(None);
+
+    unsafe extern "C" fn counting_deleter(tensor: *mut RKRDLManagedTensorVersioned) {
+        DELETER_HIT.store(true, Ordering::SeqCst);
+        if let Some(orig) = DELETER_ORIG.lock().unwrap().take() {
+            unsafe { orig(tensor) };
+        }
+    }
     #[test]
 
     #[test]
@@ -6453,17 +6466,54 @@ mod tests {
         // Invoke the deleter the same way a C consumer would.
         let saved = unsafe { (*t).deleter };
         assert!(saved.is_some());
-        unsafe { (*t).deleter = None };
-        let missing = unsafe { (*t).deleter };
-        if let Some(del) = missing {
-            unsafe { del(t) };
+        DELETER_HIT.store(false, Ordering::SeqCst);
+        {
+            let mut slot = DELETER_ORIG.lock().unwrap();
+            *slot = saved;
         }
-        unsafe { (*t).deleter = saved };
-        let deleter = unsafe { (*t).deleter };
-        if let Some(del) = deleter {
-            unsafe { del(t) };
-        }
+        unsafe { (*t).deleter = Some(counting_deleter) };
+        unsafe { rkr_dlpack_delete(t) };
+        assert!(
+            DELETER_HIT.load(Ordering::SeqCst),
+            "the installed deleter was not called"
+        );
+
+        let mut bare = test_builder_handle();
+        let sym2 = c_string("Cu");
+        assert_eq!(
+            unsafe {
+                rkr_frame_add_atom_full(
+                    bare,
+                    sym2.as_ptr(),
+                    1.0,
+                    2.0,
+                    3.0,
+                    false,
+                    false,
+                    false,
+                    8,
+                    63.5,
+                    ptr::null(),
+                    ptr::null(),
+                )
+            },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let mut plain = ptr::null_mut();
+        assert_eq!(
+            unsafe { rkr_frame_builder_positions_dlpack(bare, &mut plain) },
+            RKRStatus::RKR_STATUS_SUCCESS
+        );
+        let plain_saved = unsafe { (*plain).deleter };
+        assert!(plain_saved.is_some());
+        DELETER_HIT.store(false, Ordering::SeqCst);
+        unsafe { (*plain).deleter = None };
+        unsafe { rkr_dlpack_delete(plain) };
+        assert!(!DELETER_HIT.load(Ordering::SeqCst));
+        unsafe { (*plain).deleter = plain_saved };
+        unsafe { rkr_dlpack_delete(plain) };
         unsafe { free_rkr_frame_builder(handle) };
+        unsafe { free_rkr_frame_builder(bare) };
     }
     #[test]
     fn ffi_velocities_dlpack_section_absent() {
