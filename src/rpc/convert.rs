@@ -597,4 +597,141 @@ mod tests {
         assert_eq!(back.header.natms_per_type, vec![2, 1]);
         assert_eq!(back.header.masses_per_type.len(), 2);
     }
+
+    fn signed30(raw: u64) -> i32 {
+        let v = (raw & 0x3fff_ffff) as i32;
+        if v & 0x2000_0000 != 0 {
+            v - 0x4000_0000
+        } else {
+            v
+        }
+    }
+
+    fn word_at(words: &[capnp::Word], index: usize) -> u64 {
+        let bytes = capnp::Word::words_to_bytes(words);
+        u64::from_le_bytes(bytes[index * 8..index * 8 + 8].try_into().unwrap())
+    }
+
+    fn set_word(words: &mut [capnp::Word], index: usize, value: u64) {
+        let bytes = capnp::Word::words_to_bytes_mut(words);
+        bytes[index * 8..index * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn copy_words(message: &Builder<capnp::message::HeapAllocator>) -> Vec<capnp::Word> {
+        let segments = message.get_segments_for_output();
+        assert_eq!(segments.len(), 1, "a tiny frame fits in one segment");
+        let bytes = segments[0];
+        let mut words = capnp::Word::allocate_zeroed_vec(bytes.len() / 8);
+        capnp::Word::words_to_bytes_mut(&mut words).copy_from_slice(bytes);
+        words
+    }
+
+    fn read_words(words: &[capnp::Word]) -> Result<ConFrame, String> {
+        let bytes = capnp::Word::words_to_bytes(words);
+        let segments: &[&[u8]] = &[bytes];
+        let reader = capnp::message::Reader::new(segments, capnp::message::ReaderOptions::new());
+        let root = reader
+            .get_root::<con_frame_data::Reader>()
+            .map_err(|e| e.to_string())?;
+        frame_from_reader(root)
+    }
+
+    /// The word that holds the field, following one intra-segment far pointer.
+    fn field_word(words: &[capnp::Word], field: usize) -> usize {
+        let root = word_at(words, 0);
+        assert_eq!(root & 3, 0, "the root is a struct pointer");
+        let start = (1 + signed30(root >> 2) as isize) as usize;
+        let data = ((root >> 32) & 0xffff) as usize;
+        let slot = start + data + field;
+        let pointer = word_at(words, slot);
+        if pointer & 3 == 2 {
+            assert_eq!(pointer & 4, 0, "a double far pointer needs two pads");
+            assert_eq!(pointer >> 32, 0, "the field lives in another segment");
+            ((pointer >> 3) & 0x1fff_ffff) as usize
+        } else {
+            slot
+        }
+    }
+
+    fn pointer_list_element(words: &[capnp::Word], field: usize, index: usize) -> usize {
+        let slot = field_word(words, field);
+        let pointer = word_at(words, slot);
+        assert_eq!(pointer & 3, 1, "field {field} is not a list");
+        assert_eq!((pointer >> 32) & 7, 6, "field {field} is not a pointer list");
+        let body = (slot as isize + 1 + signed30(pointer >> 2) as isize) as usize;
+        body + index
+    }
+
+    fn atom_symbol_word(words: &[capnp::Word]) -> usize {
+        let slot = field_word(words, 2);
+        let pointer = word_at(words, slot);
+        assert_eq!(pointer & 3, 1, "atoms is not a list");
+        assert_eq!((pointer >> 32) & 7, 7, "atoms is not a composite list");
+        let body = (slot as isize + 1 + signed30(pointer >> 2) as isize) as usize;
+        let tag = word_at(words, body);
+        assert_eq!(tag & 3, 0, "the composite tag is not a struct pointer");
+        let data = ((tag >> 32) & 0xffff) as usize;
+        body + 1 + data
+    }
+
+    fn expect_bad_pointer(words: &[capnp::Word]) {
+        let err = read_words(words).expect_err("a pointer past the segment is not a field");
+        assert!(
+            err.contains("pointer") || err.contains("text") || err.contains("bounds"),
+            "the reader accepted a pointer past the segment: {err}"
+        );
+    }
+
+    #[test]
+    fn a_struct_pointer_is_rejected_for_every_list_and_text_field() {
+        let frame = load_fixture("tiny_cuh2.con");
+        let mut message = Builder::new_default();
+        {
+            let mut root = message.init_root::<con_frame_data::Builder>();
+            fill_frame_builder(root.reborrow(), &frame);
+            root.reborrow().init_sections(1).set(0, "coordinates");
+        }
+        let clean = copy_words(&message);
+        let back = read_words(&clean).unwrap();
+        assert_eq!(back.atom_data.len(), frame.atom_data.len());
+        assert_eq!(back.header.sections, vec!["coordinates".to_string()]);
+
+        // A list pointer whose body is past the end of the segment.
+        let wrong_kind = 1u64 | (0x1000u64 << 2) | (5u64 << 32) | (3u64 << 35);
+        for field in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
+            let mut words = clean.clone();
+            let slot = field_word(&words, field);
+            set_word(&mut words, slot, wrong_kind);
+            expect_bad_pointer(&words);
+        }
+
+        for (field, index) in [(3, 1), (4, 0), (4, 1), (7, 0)] {
+            let mut words = clean.clone();
+            let slot = pointer_list_element(&words, field, index);
+            set_word(&mut words, slot, wrong_kind);
+            expect_bad_pointer(&words);
+        }
+
+        let mut symbol = clean.clone();
+        let slot = atom_symbol_word(&symbol);
+        set_word(&mut symbol, slot, wrong_kind);
+        expect_bad_pointer(&symbol);
+
+        // An absent type-count list makes the reader group atoms by symbol,
+        // so the same bad symbol is reported from that pass too.
+        let mut grouped = clean.clone();
+        let counts = field_word(&grouped, 6);
+        set_word(&mut grouped, counts, 0);
+        let slot = atom_symbol_word(&grouped);
+        set_word(&mut grouped, slot, wrong_kind);
+        expect_bad_pointer(&grouped);
+
+        // An absent prebox-user text falls through to the header list.
+        let mut from_list = clean.clone();
+        let user = field_word(&from_list, 9);
+        set_word(&mut from_list, user, 0);
+        let slot = pointer_list_element(&from_list, 3, 0);
+        set_word(&mut from_list, slot, wrong_kind);
+        expect_bad_pointer(&from_list);
+    }
 }
