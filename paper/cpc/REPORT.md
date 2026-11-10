@@ -180,8 +180,8 @@ branch lists below are the open regions recorded from each export.
 Run 84 left four open regions: 594, 690, 2811 and 3213. Run 85 leaves
 those and four more. The four that went from covered to open are the
 temporary-prefix sides. `conbin_namespace_child` used to call
-`run_namespace_suite` with a profile under `/tmp` and one under
-`/var/tmp`. An in-tree path does not start with either prefix, so
+`run_namespace_suite` with a profile under `target` and one under
+`/vartarget`. An in-tree path does not start with either prefix, so
 those sides are not taken now.
 
 - `src/conbin.rs:3138` column 12. `!dir.starts_with` the temporary

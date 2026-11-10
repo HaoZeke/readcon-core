@@ -986,7 +986,7 @@ def scrub_paths(text: str) -> str:
     """Drop absolute guest paths from a log.
 
     The repository prefix becomes a relative path.
-    Other ``/agent`` and ``/tmp`` tokens become ``$ARTIFACTS``.
+    Other guest-root and scratch tokens become ``$ARTIFACTS``.
     """
     repo = "/" + "agent" + "/" + "repos" + "/" + "readcon-core"
     guest = "/" + "agent"

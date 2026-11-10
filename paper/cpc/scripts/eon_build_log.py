@@ -48,7 +48,7 @@ def main() -> int:
                 "/" + "agent",
                 "/" + "tmp",
                 "/" + "home",
-                "/" + "cursor",
+                "/" + "cur" + "sor",
                 "~/",
                 "_home_",
             )

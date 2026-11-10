@@ -314,7 +314,7 @@ contains
 
   subroutine make_work_dir(dir)
     character(len=:), allocatable, intent(out) :: dir
-    character(len=*), parameter :: raw = "/tmp/readcon_fortran_add_atom_XXXXXX"
+    character(len=*), parameter :: raw = "target/readcon_fortran_add_atom_XXXXXX"
     character(kind=c_char) :: tmpl(len(raw) + 1)
     type(c_ptr) :: p
     integer :: i

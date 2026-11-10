@@ -235,7 +235,7 @@ contains
       allocate(character(len=n) :: base)
       call get_environment_variable("TMPDIR", value=base)
     else
-      base = "/tmp"
+      base = "target"
     end if
     raw = base // "/readcon_fortran_restart_XXXXXX"
     tmpl = cstr(raw)

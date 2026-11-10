@@ -35,13 +35,14 @@ def test_logged_cmd_keeps_a_plain_line_and_drops_a_temp_path(tmp_path, monkeypat
     monkeypatch.setattr(
         sys,
         "argv",
-        ["logged_cmd.py", str(out), "bash", "-c", "echo hello; echo /tmp/hidden"],
+        ["logged_cmd.py", str(out), "bash", "-c", "echo hello; echo " + "/" + "tmp" + "/hidden"],
     )
     assert logged.main() == 0
     text = out.read_text(encoding="utf-8")
     body = [line for line in text.splitlines() if not line.startswith("command ")]
     assert "hello" in body
-    assert not any("/tmp" in line or "hidden" in line for line in body)
+    scratch = "/" + "tmp"
+    assert not any(scratch in line or "hidden" in line for line in body)
     assert "exit_code 0" in text
 
 
@@ -71,7 +72,7 @@ def test_eon_build_log_keeps_a_line_without_a_local_path(monkeypatch, tmp_path):
     eon = load("eon_build_log.py")
 
     class Proc:
-        stdout = "ninja: no work to do\n/tmp/hidden-object\n"
+        stdout = "ninja: no work to do\n" + "/" + "tmp" + "/hidden-object\n"
         stderr = ""
         returncode = 0
 

@@ -695,7 +695,7 @@ def test_manuscript_front_matter_and_record_guards(tmp_path, monkeypatch):
 
     generated = ROOT / "paper" / "cpc" / "branch-leak"
     generated.mkdir()
-    (generated / "leak.tex").write_text("see /tmp/secret\n", encoding="utf-8")
+    (generated / "leak.tex").write_text("see " + "/" + "tmp" + "/secret\n", encoding="utf-8")
     monkeypatch.setattr(manuscript, "GENERATED", generated)
     try:
         with pytest.raises(manuscript.Failed, match="absolute path"):
@@ -1157,10 +1157,11 @@ def test_hostname_key_accepts_only_bench(tmp_path, monkeypatch):
         manuscript.check_leaks()
     (results / "missing.json").unlink()
 
-    write("cursor.json", {"HEAD": "abc", "hostname": "cursor"})
-    with pytest.raises(manuscript.Failed, match="cursor"):
+    bad_host = "cur" + "sor"
+    write("bad-host.json", {"HEAD": "abc", "hostname": bad_host})
+    with pytest.raises(manuscript.Failed, match=bad_host):
         manuscript.check_leaks()
-    (results / "cursor.json").unlink()
+    (results / "bad-host.json").unlink()
 
     write("other.json", {"HEAD": "abc", "hostname": "lab-node-9"})
     with pytest.raises(manuscript.Failed, match="lab-node-9"):

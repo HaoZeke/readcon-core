@@ -186,7 +186,7 @@ program test_read_con
   print *, "chemfiles_support=", has_chemfiles_support()
 
   ! gzip compressed writer (always exported from C)
-  wg = open_writer_gzip(trim(root) // "/target/tmp_fortran_gzip_test.con.gz")
+  wg = open_writer_gzip(trim(root) // "/target_fortran_gzip_test.con.gz")
   if (.not. wg%valid()) then
     print *, "open_writer_gzip failed"
     nfail = nfail + 1
@@ -194,7 +194,7 @@ program test_read_con
     print *, "open_writer_gzip ok"
     call wg%free()
   end if
-  wg = open_writer_zstd(trim(root) // "/target/tmp_fortran_zstd_test.con.zst")
+  wg = open_writer_zstd(trim(root) // "/target_fortran_zstd_test.con.zst")
   if (wg%valid()) then
     print *, "open_writer_zstd ok (zstd feature)"
     call wg%free()
@@ -251,7 +251,7 @@ program test_read_con
       iat = fr%atom_index_by_id(0_int64)
       print *, "id_index0=", iat
       ! single-frame write helper
-      st4 = fr%write_path(trim(root) // "/target/tmp_fortran_fr_write.con")
+      st4 = fr%write_path(trim(root) // "/target_fortran_fr_write.con")
       print *, "fr_write_path st=", st4
     end if
   end block
@@ -280,7 +280,7 @@ program test_read_con
     end if
     call bd2%free()
     ! open_writer + canonical + extend_one
-    wr = open_writer(trim(root) // "/target/tmp_fortran_plain_write.con")
+    wr = open_writer(trim(root) // "/target_fortran_plain_write.con")
     if (wr%valid()) then
       st5 = wr%set_canonical(.true.)
       print *, "wr_set_canonical st=", st5, " is_can=", wr%is_canonical()
@@ -293,12 +293,12 @@ program test_read_con
     else
       nfail = nfail + 1
     end if
-    wr = open_writer_gzip_with_precision(trim(root) // "/target/tmp_fortran_gz_p.con.gz", 8)
+    wr = open_writer_gzip_with_precision(trim(root) // "/target_fortran_gz_p.con.gz", 8)
     if (wr%valid()) then
       print *, "open_writer_gzip_with_precision ok"
       call wr%free()
     end if
-    wr = open_writer_zstd_with_precision(trim(root) // "/target/tmp_fortran_zst_p.con.zst", 8)
+    wr = open_writer_zstd_with_precision(trim(root) // "/target_fortran_zst_p.con.zst", 8)
     if (wr%valid()) then
       print *, "open_writer_zstd_with_precision ok"
       call wr%free()

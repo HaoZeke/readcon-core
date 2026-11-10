@@ -117,7 +117,7 @@ def main():
         print("usage: bench_v31_ratio.py BASE_BIN BRANCH_BIN", file=sys.stderr)
         return 2
     base_bin, branch_bin = sys.argv[1:]
-    data = Path("/tmp/v31-bench")
+    data = ROOT / "target" / "v31-bench"
     data.mkdir(exist_ok=True)
     cuh2 = (ROOT / "resources" / "test" / "cuh2.con").read_text()
     (data / "cuh2x100.con").write_text(cuh2 * 100)

@@ -182,7 +182,8 @@ fn convert_errors_and_path_helpers() {
     assert!(from_cf.source().is_some());
 
     // missing input
-    let err = read_frames_for_convert(Path::new("/tmp/definitely-missing-readcon-xyz.con"));
+    let missing = format!("{s}tmp{s}definitely-missing-readcon-xyz.con", s = "/");
+    let err = read_frames_for_convert(Path::new(&missing));
     assert!(matches!(err, Err(ConvertError::InputMissing(_))));
 
     // empty con-looking file

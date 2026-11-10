@@ -9,7 +9,7 @@ shipped headers, so wrapdb does **not** need a `packagefiles/` meson patch.
 
 ## Produce the wrap
 
-From the repository root, after `scripts/package-cxx.sh /tmp/cxx --vendor`:
+From the repository root, after `scripts/package-cxx.sh target/cxx --vendor`:
 
 ```bash
 # Record the tarball digest, then restamp. VERSION supplies the release.

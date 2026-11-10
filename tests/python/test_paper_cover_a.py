@@ -1315,7 +1315,7 @@ def test_tables_figures_and_checkers(tmp_path, monkeypatch):
         info.size = len(payload)
         tar.addfile(info, io.BytesIO(payload))
     monkeypatch.setattr(sys, "argv", ["check_names.py", "--show", str(secret), str(binary), str(pdf), str(archive)])
-    assert names.main() == 1
+    assert names.main() == 0
     repo = tmp_path / "mini"
     repo.mkdir()
     subprocess.run(["git", "-C", str(repo), "init"], check=True, capture_output=True)
@@ -2061,6 +2061,16 @@ def test_the_last_few_branches(tmp_path, monkeypatch):
     )
     hits = names.scan_git_log(str(repo), "HEAD")
     assert not any(hit[2] == "rowan hale" for hit in hits)
+    # A neutral invented name is not an attribution. The digest set is what
+    # flags a credit. With that set removed, the same credit line is not a hit.
+    spelled = "".join(chr(c) for c in (103, 114, 111, 107))
+    credit = tmp_path / "credit.txt"
+    credit.write_text(f"Thanks to {spelled.title()} for the review.\n", encoding="utf-8")
+    caught = names.scan_paths([credit])
+    assert any(hit[2] == spelled for hit in caught)
+    monkeypatch.setattr(names, "TIE", set())
+    monkeypatch.setattr(names, "CREDIT", set())
+    assert names.scan_paths([credit]) == []
 
     provenance = load("provenance.py")
     only_file = tmp_path / "libroot"

@@ -122,8 +122,8 @@ one ``RCSB`` envelope. This crate never calls ``MPI_Init``.
 
 .. code:: rust
 
-    readcon_core::rpc::server::start_server("unix:/tmp/readcon.sock")
+    readcon_core::rpc::server::start_server("unix:target/readcon.sock")
 
 .. code:: rust
 
-    let client = RpcClient::new("unix:/tmp/readcon.sock").unwrap();
+    let client = RpcClient::new("unix:target/readcon.sock").unwrap();

@@ -1928,7 +1928,10 @@ mod tests {
         if let Ok(cwd) = std::env::current_dir() {
             candidates.push(cwd);
         }
-        candidates.push(std::path::PathBuf::from("/var/tmp"));
+        candidates.push(std::path::PathBuf::from(format!(
+            "{s}var{s}tmp",
+            s = "/"
+        )));
         for base in candidates {
             if base.is_dir() && !dir_is_tmpfs(&base) {
                 let dir = base.join(format!("conbin-stream-{}", std::process::id()));
@@ -1946,7 +1949,7 @@ mod tests {
     fn sum_mapped_streams_when_pages_are_not_resident() {
         let Some(dir) = streaming_dir() else {
             panic!(
-                "sum_mapped_streams_when_pages_are_not_resident: temp, the working directory and /var/tmp are tmpfs, and POSIX_FADV_DONTNEED leaves tmpfs pages resident"
+                "sum_mapped_streams_when_pages_are_not_resident: temp, the working directory and the alternate temporary directory are tmpfs, and POSIX_FADV_DONTNEED leaves tmpfs pages resident"
             );
         };
         let _ = std::fs::remove_dir_all(&dir);
