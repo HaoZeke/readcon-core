@@ -1022,6 +1022,22 @@ mod tests {
         assert!(err.to_string().contains("MPI"), "{err}");
 
         unsafe { std::env::set_var("READCON_MPI_TEST_CHUNK", "64") };
+        let abi = dir.join("abi.con");
+        let abi_c = std::ffi::CString::new(abi.to_str().unwrap()).unwrap();
+        let fint = unsafe { mpi::ffi::RSMPI_Comm_c2f(comm.raw().as_raw()) };
+        let mut total_bytes = 0u64;
+        let rc = unsafe {
+            crate::distrib_write::rkr_mpi_write_block_f(
+                fint,
+                abi_c.as_ptr(),
+                std::ptr::null(),
+                0,
+                2,
+                -1,
+                &mut total_bytes,
+            )
+        };
+        assert_eq!(rc, 0, "an empty ABI write should succeed");
         flush_coverage_profile();
         drop(comm);
         drop(universe);
