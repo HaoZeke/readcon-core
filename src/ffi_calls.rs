@@ -1984,6 +1984,10 @@ fn dlpack_shape_float32_and_absent_force_block() {
         managed.dl_tensor.data = saved_data;
         managed.dl_tensor.dtype.bits = saved_bits;
         rkr_dlpack_delete(tensor);
+        let rewritten = rkr_frame_binding_rewrite(frame);
+        assert!(!rewritten.is_null());
+        assert!(rkr_frame_binding_rewrite(ptr::null()).is_null());
+        free_rkr_frame(rewritten);
         let mut copied = [0.0_f64; 3];
         assert_eq!(
             rkr_frame_copy_positions(frame, copied.as_mut_ptr(), copied.len()),
