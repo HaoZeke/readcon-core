@@ -5,7 +5,7 @@ version = "0.18.1"
 license = "MIT"
 author = "LODE developers"
 maintainer = "LODE developers"
-copyright = "2025-present LODE developers"
+copyright = "Copyright (c) readcon-core developers"
 description = "Fortran ISO_C_BINDING bindings for readcon-core (CON/convel I/O)"
 
 [library]

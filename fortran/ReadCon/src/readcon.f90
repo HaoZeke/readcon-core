@@ -733,23 +733,29 @@ contains
     c(n+1) = c_null_char
   end subroutine
 
-  function from_c(p, owned) result(s)
+  integer function from_c(p, owned, s)
+    ! A C string with no NUL inside the first 65536 bytes is an error.
+    ! The previous scan copied those 65536 bytes and dropped the rest.
     type(c_ptr), intent(in) :: p
     logical, intent(in) :: owned
-    character(len=:), allocatable :: s
+    character(len=:), allocatable, intent(out) :: s
     character(kind=c_char), pointer :: fp(:)
     integer :: n, i
-    if (.not. c_associated(p)) then
-      s = ""
-      return
-    end if
+    s = ""
+    from_c = 0
+    if (.not. c_associated(p)) return
     call c_f_pointer(p, fp, [65536])
     n = 0
     do i = 1, 65536
       if (fp(i) == c_null_char) exit
       n = n + 1
     end do
-    allocate(character(len=n) :: s)
+    if (n == 65536) then
+      from_c = rkr_status_buffer_too_small
+      if (owned) call c_rkr_free_string(p)
+      return
+    end if
+    s = repeat(" ", n)
     do i = 1, n
       s(i:i) = fp(i)
     end do
@@ -762,7 +768,8 @@ contains
 
   function library_version() result(s)
     character(len=:), allocatable :: s
-    s = from_c(c_rkr_library_version(), .false.)
+    integer :: st
+    st = from_c(c_rkr_library_version(), .false., s)
   end function
 
   logical function has_chemfiles_support()
@@ -772,14 +779,16 @@ contains
   function status_message(st) result(s)
     integer, intent(in) :: st
     character(len=:), allocatable :: s
-    s = from_c(c_rkr_status_message(int(st, c_int)), .false.)
+    integer :: copied
+    copied = from_c(c_rkr_status_message(int(st, c_int)), .false., s)
   end function
 
   ! Underlying text from the most recent failing writer call on this thread.
   ! Empty when that call succeeded. rkr_status_message stays the generic code.
   function last_error_message() result(s)
     character(len=:), allocatable :: s
-    s = from_c(c_rkr_last_error_message(), .false.)
+    integer :: st
+    st = from_c(c_rkr_last_error_message(), .false., s)
   end function
 
   integer(int64) function symbol_to_z(sym)
@@ -792,7 +801,8 @@ contains
   function z_to_symbol(z) result(s)
     integer(int64), intent(in) :: z
     character(len=:), allocatable :: s
-    s = from_c(c_rkr_z_to_symbol(int(z, c_int64_t)), .false.)
+    integer :: st
+    st = from_c(c_rkr_z_to_symbol(int(z, c_int64_t)), .false., s)
   end function
 
   function read_first_frame(path) result(fr)
@@ -1047,12 +1057,17 @@ contains
     fr_has_frc = logical(cf%has_forces)
   end function
 
-  function fr_meta(self) result(s)
+  function fr_meta(self, stat) result(s)
     class(frame_t), intent(in) :: self
+    integer, intent(out), optional :: stat
     character(len=:), allocatable :: s
+    integer :: st
     s = ""
-    if (.not. c_associated(self%handle)) return
-    s = from_c(c_rkr_frame_metadata_json(self%handle), .true.)
+    st = rkr_status_null_pointer
+    if (c_associated(self%handle)) then
+      st = from_c(c_rkr_frame_metadata_json(self%handle), .true., s)
+    end if
+    if (present(stat)) stat = st
   end function
 
   real(real64) function fr_energy(self)
@@ -1072,9 +1087,10 @@ contains
   function fr_composition_formula(self) result(s)
     class(frame_t), intent(in) :: self
     character(len=:), allocatable :: s
+    integer :: st
     s = ""
     if (.not. c_associated(self%handle)) return
-    s = from_c(c_rkr_frame_composition_formula(self%handle), .true.)
+    st = from_c(c_rkr_frame_composition_formula(self%handle), .true., s)
   end function
 
   real(real64) function fr_total_mass(self)
@@ -1115,17 +1131,20 @@ contains
   function fr_index_projection_json(self) result(s)
     class(frame_t), intent(in) :: self
     character(len=:), allocatable :: s
+    integer :: st
     s = "{}"
     if (.not. c_associated(self%handle)) return
-    s = from_c(c_rkr_frame_index_projection_json(self%handle), .true.)
+    st = from_c(c_rkr_frame_index_projection_json(self%handle), .true., s)
+    if (st /= 0) s = "{}"
   end function
 
   function fr_pot(self) result(s)
     class(frame_t), intent(in) :: self
     character(len=:), allocatable :: s
+    integer :: st
     s = ""
     if (.not. c_associated(self%handle)) return
-    s = from_c(c_rkr_frame_potential_type(self%handle), .true.)
+    st = from_c(c_rkr_frame_potential_type(self%handle), .true., s)
   end function
 
   integer(int64) function fr_fidx(self)
@@ -1195,7 +1214,9 @@ contains
     fr_id_index = -1_int64
     if (.not. c_associated(self%handle)) return
     fr_id_index = c_rkr_frame_atom_index_by_id(self%handle, int(atom_id, c_int64_t))
-    if (fr_id_index == huge(0_c_int64_t)) fr_id_index = -1_int64
+    ! The C sentinel is the all-ones bit pattern. gfortran's c_int64_t is
+    ! signed, so that pattern is negative, not huge(int64).
+    if (fr_id_index < 0_int64) fr_id_index = -1_int64
   end function
 
   integer function fr_spec(self)
@@ -1281,7 +1302,9 @@ contains
     integer(c_size_t) :: n
     call to_c(path, c)
     n = c_rkr_count_frames(c)
-    if (n == huge(n)) then
+    ! gfortran's c_size_t is signed. The C error sentinel is usize::MAX,
+    ! which arrives as a negative value, not huge(c_size_t).
+    if (n < 0_c_size_t) then
       count_frames = -1
     else
       count_frames = int(n)
