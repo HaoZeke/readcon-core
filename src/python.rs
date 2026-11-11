@@ -3636,31 +3636,67 @@ fn chemfiles_opts_from_kwargs(
     }
 }
 
-/// Read an extended XYZ file into positions, masses and the cell.
+/// Read an extended XYZ file.
 ///
-/// The comment line gives the lattice and the column order. Positions
-/// have shape `(frames, atoms, 3)`. Masses have shape `(frames, atoms)`.
-/// The cell has shape `(frames, 6)`.
+/// The comment line gives the lattice and the column order. The returned
+/// dict holds ``positions`` with shape `(frames, atoms, 3)`, ``masses``
+/// with shape `(frames, atoms)`, ``cell`` with shape `(frames, 6)`,
+/// ``species`` as one symbol list per frame, and ``arrays``, a dict of
+/// every per-atom `Properties` column. A real column is a float array.
+/// A text column is a list of lists.
 #[pyfunction]
-fn read_extxyz<'py>(
-    py: Python<'py>,
-    path: &str,
-) -> PyResult<(
-    Bound<'py, numpy::PyArray3<f64>>,
-    Bound<'py, numpy::PyArray2<f64>>,
-    Bound<'py, numpy::PyArray2<f64>>,
-)> {
-    let tables = crate::extxyz_scan::tables_from_extxyz_path(std::path::Path::new(path))
+fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>> {
+    let mut tables = crate::extxyz_scan::tables_from_extxyz_path(std::path::Path::new(path))
         .map_err(|err| pyo3::exceptions::PyValueError::new_err(err))?;
-    let positions =
-        ndarray::Array3::from_shape_vec((tables.n_frames, tables.n_atoms, 3), tables.positions).unwrap();
-    let masses = ndarray::Array2::from_shape_vec((tables.n_frames, tables.n_atoms), tables.masses).unwrap();
-    let cell = ndarray::Array2::from_shape_vec((tables.n_frames, 6), tables.cell).unwrap();
-    Ok((
-        positions.into_pyarray(py),
-        masses.into_pyarray(py),
-        cell.into_pyarray(py),
-    ))
+    let n_frames = tables.n_frames;
+    let n_atoms = tables.n_atoms;
+    let positions = ndarray::Array3::from_shape_vec(
+        (n_frames, n_atoms, 3),
+        std::mem::take(&mut tables.positions),
+    )
+    .unwrap();
+    let masses =
+        ndarray::Array2::from_shape_vec((n_frames, n_atoms), std::mem::take(&mut tables.masses))
+            .unwrap();
+    let cell =
+        ndarray::Array2::from_shape_vec((n_frames, 6), std::mem::take(&mut tables.cell)).unwrap();
+    let mut species_frames = Vec::with_capacity(n_frames);
+    for frame in tables.species.chunks(n_atoms) {
+        species_frames.push(frame.to_vec());
+    }
+    let arrays = PyDict::new(py);
+    for column in tables.columns.drain(..) {
+        if column.kind == b'S' && column.width == 1 {
+            let mut frames = Vec::with_capacity(n_frames);
+            for frame in column.text.chunks(n_atoms) {
+                frames.push(frame.to_vec());
+            }
+            arrays.set_item(column.name, frames)?;
+        } else if column.kind == b'S' {
+            let mut frames = Vec::with_capacity(n_frames);
+            for frame in column.text.chunks(n_atoms * column.width) {
+                let rows: Vec<Vec<String>> =
+                    frame.chunks(column.width).map(|row| row.to_vec()).collect();
+                frames.push(rows);
+            }
+            arrays.set_item(column.name, frames)?;
+        } else if column.width == 1 {
+            let values = ndarray::Array2::from_shape_vec((n_frames, n_atoms), column.real).unwrap();
+            arrays.set_item(column.name, values.into_pyarray(py))?;
+        } else {
+            let values =
+                ndarray::Array3::from_shape_vec((n_frames, n_atoms, column.width), column.real)
+                    .unwrap();
+            arrays.set_item(column.name, values.into_pyarray(py))?;
+        }
+    }
+    let dict = PyDict::new(py);
+    dict.set_item("positions", positions.into_pyarray(py))?;
+    dict.set_item("masses", masses.into_pyarray(py))?;
+    dict.set_item("cell", cell.into_pyarray(py))?;
+    dict.set_item("species", species_frames)?;
+    dict.set_item("arrays", arrays)?;
+    Ok(dict)
 }
 
 /// Read a PDB file into positions, masses and the cell.
@@ -3977,10 +4013,25 @@ mod api_coverage {
                 "2\nLattice=\"5.0 0.0 0.0 0.0 5.0 0.0 0.0 0.0 5.0\" Properties=species:S:1:pos:R:3\nH 0.0 0.0 0.0\nH 0.0 0.0 0.7\n",
             )
             .unwrap();
-            let (pos, masses, cell) = read_extxyz(py, xyz.to_str().unwrap()).unwrap();
-            assert_eq!(pos.readonly().as_slice().unwrap().len(), 6);
-            assert_eq!(masses.readonly().as_slice().unwrap().len(), 2);
-            assert_eq!(cell.readonly().as_slice().unwrap().len(), 6);
+            let got = read_extxyz(py, xyz.to_str().unwrap()).unwrap();
+            let pos = got.get_item("positions").unwrap().unwrap();
+            let masses = got.get_item("masses").unwrap().unwrap();
+            let cell = got.get_item("cell").unwrap().unwrap();
+            assert_eq!(
+                pos.cast::<PyArray3<f64>>().unwrap().readonly().as_slice().unwrap().len(),
+                6
+            );
+            assert_eq!(
+                masses.cast::<PyArray2<f64>>().unwrap().readonly().as_slice().unwrap().len(),
+                2
+            );
+            assert_eq!(
+                cell.cast::<PyArray2<f64>>().unwrap().readonly().as_slice().unwrap().len(),
+                6
+            );
+            let species: Vec<Vec<String>> =
+                got.get_item("species").unwrap().unwrap().extract().unwrap();
+            assert_eq!(species, vec![vec!["H".to_string(), "H".to_string()]]);
             let pdb = dir.join("one.pdb");
             std::fs::write(
                 &pdb,

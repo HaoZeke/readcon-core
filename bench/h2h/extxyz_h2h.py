@@ -246,17 +246,19 @@ def read_ng(path: Path) -> dict:
 def read_readcon(path: Path) -> dict:
     import readcon
 
-    positions, masses, cell = readcon.read_extxyz(os.fspath(path))
-    positions = np.asarray(positions, dtype=np.float64)
-    masses = np.asarray(masses, dtype=np.float64)
-    cell = np.asarray(cell, dtype=np.float64)
+    got = readcon.read_extxyz(os.fspath(path))
+    positions = np.asarray(got["positions"], dtype=np.float64)
+    masses = np.asarray(got["masses"], dtype=np.float64)
+    cell = np.asarray(got["cell"], dtype=np.float64)
+    species = [[str(symbol) for symbol in frame] for frame in got["species"]]
+    forces = np.asarray(got["arrays"]["forces"], dtype=np.float64)
     return {
         "n_frames": int(positions.shape[0]),
         "n_atoms": int(positions.shape[1]),
         "positions": positions,
         "masses": masses,
-        "forces": None,
-        "species": None,
+        "forces": forces,
+        "species": species,
         "lengths": cell[:, :3],
         "angles": cell[:, 3:],
     }
@@ -281,7 +283,7 @@ def read_rust(path: Path) -> dict:
             )
         )
     blob = dump.read_bytes()
-    if blob[:4] != b"RCX1":
+    if blob[:4] != b"RCX2":
         raise RuntimeError("rust dump header does not match")
     n_frames, n_atoms = struct.unpack_from("<II", blob, 4)
     offset = 12
@@ -297,13 +299,29 @@ def read_rust(path: Path) -> dict:
     cell = np.frombuffer(blob, dtype="<f8", count=n_frames * 6, offset=offset).reshape(
         n_frames, 6
     )
+    offset += n_frames * 6 * 8
+    (n_species,) = struct.unpack_from("<I", blob, offset)
+    offset += 4
+    flat = []
+    for _ in range(n_species):
+        (nbytes,) = struct.unpack_from("<I", blob, offset)
+        offset += 4
+        flat.append(blob[offset : offset + nbytes].decode("utf-8"))
+        offset += nbytes
+    species = [flat[start : start + n_atoms] for start in range(0, len(flat), n_atoms)]
+    (has_forces,) = struct.unpack_from("<I", blob, offset)
+    offset += 4
+    forces = None
+    if has_forces:
+        raw = blob[offset : offset + n_frames * n_atoms * 3 * 8]
+        forces = np.frombuffer(raw, dtype="<f8").reshape(n_frames, n_atoms, 3).copy()
     return {
         "n_frames": int(n_frames),
         "n_atoms": int(n_atoms),
         "positions": positions.copy(),
         "masses": masses.copy(),
-        "forces": None,
-        "species": None,
+        "forces": forces,
+        "species": species,
         "lengths": cell[:, :3].copy(),
         "angles": cell[:, 3:].copy(),
     }
@@ -411,16 +429,9 @@ def compare(got: dict, expect: dict) -> dict:
         reasons.append("forces not returned")
     elif not forces_ok:
         reasons.append(f"forces max abs {force_delta}")
-    hard_fail = (
-        (not atoms_ok)
-        or (not cell_ok)
-        or (not coords_ok)
-        or (got["masses"] is not None and not masses_ok)
+    hard_fail = not (
+        atoms_ok and cell_ok and coords_ok and masses_ok and species_ok and forces_ok
     )
-    if got["forces"] is not None and not forces_ok:
-        hard_fail = True
-    if got["species"] is not None and not species_ok:
-        hard_fail = True
     cell = np.concatenate([got["lengths"][0], got["angles"][0]])
     return {
         "n_atoms": got["n_atoms"],

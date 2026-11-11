@@ -66,6 +66,15 @@ fn time(path: &str, repeats: usize) {
     black_box(&last);
     let sum_pos: f64 = last.positions.iter().sum();
     let sum_mass: f64 = last.masses.iter().copied().filter(|v| !v.is_nan()).sum();
+    let sum_forces: f64 = last
+        .columns
+        .iter()
+        .find(|column| column.name == "forces")
+        .map(|column| column.real.iter().sum())
+        .unwrap_or(0.0);
+    let species_bytes: usize = last.species.iter().map(|symbol| symbol.len()).sum();
+    black_box(sum_forces);
+    black_box(species_bytes);
     let cell = last
         .cell
         .iter()
@@ -81,7 +90,7 @@ fn time(path: &str, repeats: usize) {
         print!("{sample:.9}");
     }
     println!(
-        "],\"n_frames\":{},\"n_atoms\":{},\"sum_pos\":{sum_pos:.17},\"sum_mass\":{sum_mass:.17},\"cell0\":[{cell}],\"hwm_kib\":{}}}",
+        "],\"n_frames\":{},\"n_atoms\":{},\"sum_pos\":{sum_pos:.17},\"sum_mass\":{sum_mass:.17},\"sum_forces\":{sum_forces:.17},\"species_bytes\":{species_bytes},\"cell0\":[{cell}],\"hwm_kib\":{}}}",
         last.n_frames,
         last.n_atoms,
         hwm_kib()
@@ -91,7 +100,7 @@ fn time(path: &str, repeats: usize) {
 fn check(path: &str, dump: &str) {
     let tables = tables_from_extxyz_path(Path::new(path)).expect("read");
     let mut out = File::create(dump).expect("dump");
-    out.write_all(b"RCX1").unwrap();
+    out.write_all(b"RCX2").unwrap();
     out.write_all(&(tables.n_frames as u32).to_le_bytes())
         .unwrap();
     out.write_all(&(tables.n_atoms as u32).to_le_bytes())
@@ -104,6 +113,21 @@ fn check(path: &str, dump: &str) {
     }
     for value in &tables.cell {
         out.write_all(&value.to_le_bytes()).unwrap();
+    }
+    out.write_all(&(tables.species.len() as u32).to_le_bytes())
+        .unwrap();
+    for symbol in &tables.species {
+        let bytes = symbol.as_bytes();
+        out.write_all(&(bytes.len() as u32).to_le_bytes()).unwrap();
+        out.write_all(bytes).unwrap();
+    }
+    let forces = tables.columns.iter().find(|column| column.name == "forces");
+    out.write_all(&(u32::from(forces.is_some())).to_le_bytes())
+        .unwrap();
+    if let Some(column) = forces {
+        for value in &column.real {
+            out.write_all(&value.to_le_bytes()).unwrap();
+        }
     }
     let name = Path::new(dump)
         .file_name()

@@ -4,10 +4,9 @@ import os
 
 import numpy as np
 import pytest
+import readcon
 from ase import Atoms
 from ase.constraints import FixAtoms, FixCartesian
-
-import readcon
 
 RESOURCES = os.path.join(os.path.dirname(__file__), "..", "..", "resources", "test")
 
@@ -88,7 +87,9 @@ def test_frame_list_iterator_stops_and_a_string_round_trip(tmp_path):
     with pytest.raises(OSError):
         readcon.write_con(str(dest), frames)
     with pytest.raises(ValueError, match="comm="):
-        readcon.write_con(str(tmp_path / "mpi.con.gz"), frames, comm=object(), canonical=True)
+        readcon.write_con(
+            str(tmp_path / "mpi.con.gz"), frames, comm=object(), canonical=True
+        )
 
 
 def test_coords_reject_a_disagreement_and_a_partial_magmom(tmp_path):
@@ -156,7 +157,12 @@ def test_binary32_conbin_is_rejected_and_f64_round_trips(tmp_path):
 
 
 def test_ase_constraints_and_repeated_tags_convert_both_ways():
-    atoms = Atoms("CuH", positions=[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]], cell=[5.0, 5.0, 5.0], pbc=True)
+    atoms = Atoms(
+        "CuH",
+        positions=[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+        cell=[5.0, 5.0, 5.0],
+        pbc=True,
+    )
     atoms.set_constraint(
         [FixAtoms(indices=[0, 9]), FixCartesian(a=[1], mask=[True, False, True])]
     )
@@ -209,7 +215,8 @@ def test_iterators_stop_and_views_follow_the_stored_columns(tmp_path):
     )
     xyz = tmp_path / "two.extxyz"
     xyz.write_text(text)
-    positions, masses, cell = readcon.read_extxyz(str(xyz))
+    loaded = readcon.read_extxyz(str(xyz))
+    positions, masses, cell = loaded["positions"], loaded["masses"], loaded["cell"]
     assert positions.shape == (1, 2, 3)
     assert masses.shape[1] == 2
     assert cell.shape == (1, 6)

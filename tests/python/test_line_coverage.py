@@ -2,11 +2,8 @@
 
 import os
 
-import numpy as np
 import pytest
-
 import readcon
-
 
 RESOURCES = os.path.join(os.path.dirname(__file__), "..", "..", "resources", "test")
 
@@ -135,12 +132,18 @@ def test_readers_writers_and_feature_flags(tmp_path):
     assert isinstance(digest, int)
     assert seconds >= 0.0
     assert single.release_frames() >= 0.0
-    with pytest.raises(NotImplementedError, match="comm= needs readcon built with the mpi feature"):
+    with pytest.raises(
+        NotImplementedError, match="comm= needs readcon built with the mpi feature"
+    ):
         readcon.read_con(path, comm=object())
-    with pytest.raises(NotImplementedError, match="comm= needs readcon built with the mpi feature"):
+    with pytest.raises(
+        NotImplementedError, match="comm= needs readcon built with the mpi feature"
+    ):
         readcon.write_con(str(tmp_path / "mpi.con"), frames, comm=object())
     dest = tmp_path / "plain.con"
-    readcon.write_con(str(dest), frames, precision=6, compression="none", canonical=True)
+    readcon.write_con(
+        str(dest), frames, precision=6, compression="none", canonical=True
+    )
     assert dest.stat().st_size > 0
     gzip = tmp_path / "plain.con.gz"
     readcon.write_con(str(gzip), frames, compression="gzip")
@@ -234,13 +237,14 @@ def test_sections_extxyz_pdb_conbin_and_ase(tmp_path):
         readcon.ConFrame.from_ase(bad)
     ext = tmp_path / "one.extxyz"
     ext.write_text(
-        '2\n'
+        "2\n"
         'Lattice="10 0 0 0 12 0 0 0 14" Properties=species:S:1:pos:R:3:masses:R:1 pbc="T T T"\n'
         "Cu 1.0 2.0 3.0 63.546\n"
         "Cu 4.0 5.0 6.0 63.546\n",
         encoding="utf-8",
     )
-    positions, masses, cell = readcon.read_extxyz(str(ext))
+    loaded = readcon.read_extxyz(str(ext))
+    positions, masses, cell = loaded["positions"], loaded["masses"], loaded["cell"]
     assert positions.shape == (1, 2, 3)
     assert masses.shape == (1, 2)
     assert cell.shape == (1, 6)
@@ -256,7 +260,9 @@ def test_sections_extxyz_pdb_conbin_and_ase(tmp_path):
     positions, masses, cell = readcon.read_pdb(str(pdb))
     assert positions.shape[-1] == 3
     out = tmp_path / "tiny.conbin"
-    n_frames, n_atoms = readcon.write_conbin(resource("tiny_cuh2.con"), str(out), binary32=False)
+    n_frames, n_atoms = readcon.write_conbin(
+        resource("tiny_cuh2.con"), str(out), binary32=False
+    )
     assert n_frames >= 1 and n_atoms >= 1
     pos, velocity, atoms = readcon.read_conbin(str(out))
     assert pos.shape[0] == n_frames

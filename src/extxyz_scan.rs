@@ -8,12 +8,30 @@ use std::fs;
 use std::path::Path;
 
 #[derive(Debug, Clone)]
+pub struct XyzColumn {
+    pub name: String,
+    pub kind: u8,
+    pub width: usize,
+    /// Text values for an `S` column. Empty for a numeric column.
+    pub text: Vec<String>,
+    /// Numeric values for an `R`, `I`, or `L` column, in column-major
+    /// order within each atom. Empty for a text column.
+    pub real: Vec<f64>,
+}
+
+#[derive(Debug, Clone)]
 pub struct XyzTables {
     pub n_frames: usize,
     pub n_atoms: usize,
     pub positions: Vec<f64>,
     pub masses: Vec<f64>,
     pub cell: Vec<f64>,
+    /// One symbol per atom, frame by frame. Empty strings when the file
+    /// has no `species` column.
+    pub species: Vec<String>,
+    /// Every per-atom column named by `Properties`, including species,
+    /// positions, masses and forces.
+    pub columns: Vec<XyzColumn>,
 }
 
 fn trim(bytes: &[u8]) -> &[u8] {
@@ -74,40 +92,74 @@ fn quoted_after<'a>(line: &'a [u8], key: &[u8]) -> Option<&'a [u8]> {
     None
 }
 
-fn column_layout(properties: &[u8]) -> Result<(usize, Option<usize>), String> {
+struct ColumnSpec {
+    name: String,
+    kind: u8,
+    width: usize,
+    offset: usize,
+}
+
+fn property_columns(properties: &[u8]) -> Result<Vec<ColumnSpec>, String> {
     let mut offset = 0;
-    let mut pos = None;
-    let mut mass = None;
+    let mut columns = Vec::new();
     let mut rest = properties;
+    let mut saw_pos = false;
     while !rest.is_empty() {
         let name_end = rest
             .iter()
             .position(|byte| *byte == b':')
             .ok_or("properties")?;
-        let name = &rest[..name_end];
+        let name = std::str::from_utf8(&rest[..name_end]).map_err(|_| "properties")?;
         rest = &rest[name_end + 1..];
         let kind_end = rest
             .iter()
             .position(|byte| *byte == b':')
             .ok_or("properties")?;
+        if kind_end != 1 {
+            return Err("properties".to_string());
+        }
+        let kind = rest[0];
+        if !matches!(kind, b'S' | b'R' | b'I' | b'L') {
+            return Err("properties".to_string());
+        }
         rest = &rest[kind_end + 1..];
         let count_end = rest
             .iter()
             .position(|byte| *byte == b':')
             .unwrap_or(rest.len());
         let count = parse_f64(&rest[..count_end])? as usize;
-        if name == b"pos" {
-            pos = Some(offset);
-        } else if name == b"masses" {
-            mass = Some(offset);
+        if count == 0 {
+            return Err("properties".to_string());
         }
+        if name == "pos" {
+            saw_pos = true;
+            if count != 3 {
+                return Err("pos".to_string());
+            }
+        }
+        columns.push(ColumnSpec {
+            name: name.to_string(),
+            kind,
+            width: count,
+            offset,
+        });
         offset += count;
         if count_end == rest.len() {
             break;
         }
         rest = &rest[count_end + 1..];
     }
-    Ok((pos.ok_or("pos")?, mass))
+    if !saw_pos {
+        return Err("pos".to_string());
+    }
+    Ok(columns)
+}
+
+fn logical_value(token: &[u8]) -> f64 {
+    match token {
+        b"T" | b"t" | b"1" | b"true" | b"True" | b"TRUE" => 1.0,
+        _ => 0.0,
+    }
 }
 
 fn lattice_cell(lattice: &[u8]) -> Result<[f64; 6], String> {
@@ -137,33 +189,38 @@ fn lattice_cell(lattice: &[u8]) -> Result<[f64; 6], String> {
     Ok([la, lb, lc, alpha, beta, gamma])
 }
 
-fn atom_values(
-    line: &[u8],
-    pos_col: usize,
-    mass_col: Option<usize>,
-) -> Result<(f64, f64, f64, f64), String> {
+fn tokens(line: &[u8]) -> Vec<&[u8]> {
+    let mut found = Vec::new();
     let mut index = 0;
-    let mut column = 0;
-    let mut coords = [0.0; 3];
-    let mut mass = f64::NAN;
-    let mut got = 0;
     while let Some((start, end)) = next_token(line, index) {
-        if column >= pos_col && column < pos_col + 3 {
-            coords[column - pos_col] = parse_f64(&line[start..end])?;
-            got += 1;
-        } else if Some(column) == mass_col {
-            mass = parse_f64(&line[start..end])?;
-        }
-        column += 1;
+        found.push(&line[start..end]);
         index = end;
-        if got == 3 && mass_col.map(|item| column > item).unwrap_or(true) {
-            break;
-        }
     }
-    if got != 3 {
+    found
+}
+
+fn push_atom(line: &[u8], specs: &[ColumnSpec], columns: &mut [XyzColumn]) -> Result<(), String> {
+    let words = tokens(line);
+    let need = specs
+        .last()
+        .map(|spec| spec.offset + spec.width)
+        .unwrap_or(0);
+    if words.len() < need {
         return Err("atom".to_string());
     }
-    Ok((coords[0], coords[1], coords[2], mass))
+    for (spec, column) in specs.iter().zip(columns.iter_mut()) {
+        for slot in 0..spec.width {
+            let token = words[spec.offset + slot];
+            match spec.kind {
+                b'S' => column
+                    .text
+                    .push(String::from_utf8_lossy(token).into_owned()),
+                b'L' => column.real.push(logical_value(token)),
+                _ => column.real.push(parse_f64(token)?),
+            }
+        }
+    }
+    Ok(())
 }
 
 pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
@@ -183,9 +240,9 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
             index += 1;
         }
     }
-    let mut positions = Vec::new();
-    let mut masses = Vec::new();
     let mut cell = Vec::new();
+    let mut columns: Vec<XyzColumn> = Vec::new();
+    let mut specs: Vec<ColumnSpec> = Vec::new();
     let mut mark = 0;
     let mut n_atoms = 0;
     let mut n_frames = 0;
@@ -202,26 +259,59 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
         let comment = lines[mark + 1];
         let lattice = quoted_after(comment, b"Lattice=").ok_or("lattice")?;
         let properties = quoted_after(comment, b"Properties=").ok_or("properties")?;
-        let (pos_col, mass_col) = column_layout(properties)?;
+        let frame_specs = property_columns(properties)?;
         let frame_cell = lattice_cell(lattice)?;
+        if n_frames == 0 {
+            columns = frame_specs
+                .iter()
+                .map(|spec| XyzColumn {
+                    name: spec.name.clone(),
+                    kind: spec.kind,
+                    width: spec.width,
+                    text: Vec::new(),
+                    real: Vec::new(),
+                })
+                .collect();
+            specs = frame_specs;
+            n_atoms = count;
+        } else if count != n_atoms
+            || frame_specs.len() != specs.len()
+            || frame_specs.iter().zip(specs.iter()).any(|(left, right)| {
+                left.name != right.name || left.kind != right.kind || left.width != right.width
+            })
+        {
+            return Err("properties".to_string());
+        }
         mark += 2;
         if mark + count > lines.len() {
             return Err("atoms".to_string());
         }
         for line in &lines[mark..mark + count] {
-            let (x, y, z, mass) = atom_values(line, pos_col, mass_col)?;
-            positions.push(x);
-            positions.push(y);
-            positions.push(z);
-            masses.push(mass);
+            push_atom(line, &specs, &mut columns)?;
         }
         cell.extend_from_slice(&frame_cell);
         mark += count;
         n_frames += 1;
-        n_atoms = count;
     }
     if n_frames == 0 {
         return Err("no frames".to_string());
+    }
+    let mut positions = Vec::new();
+    let mut masses = vec![f64::NAN; n_frames * n_atoms];
+    let mut species = vec![String::new(); n_frames * n_atoms];
+    for column in &columns {
+        if column.name == "pos" {
+            positions.clone_from(&column.real);
+        } else if column.name == "masses" || column.name == "mass" {
+            if column.width == 1 {
+                masses.clone_from(&column.real);
+            }
+        } else if column.name == "species" && column.width == 1 {
+            species.clone_from(&column.text);
+        }
+    }
+    if positions.len() != n_frames * n_atoms * 3 {
+        return Err("pos".to_string());
     }
     Ok(XyzTables {
         n_frames,
@@ -229,6 +319,8 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
         positions,
         masses,
         cell,
+        species,
+        columns,
     })
 }
 
@@ -249,10 +341,11 @@ mod tests {
             Some(&b"10 0"[..])
         );
         assert_eq!(quoted_after(b"no key", b"Lattice="), None);
-        assert!(column_layout(b"pos").is_err());
-        let (pos, mass) = column_layout(b"species:S:1:pos:R:3:masses:R:1").unwrap();
-        assert_eq!(pos, 1);
-        assert_eq!(mass, Some(4));
+        assert!(property_columns(b"pos").is_err());
+        let columns = property_columns(b"species:S:1:pos:R:3:masses:R:1").unwrap();
+        assert_eq!(columns[0].name, "species");
+        assert_eq!(columns[1].offset, 1);
+        assert_eq!(columns[2].offset, 4);
     }
 
     #[test]
@@ -268,8 +361,35 @@ Cu 4.0 5.0 6.0 63.546
         assert_eq!(tables.n_atoms, 2);
         assert_eq!(tables.positions, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
         assert_eq!(tables.masses, vec![63.546, 63.546]);
+        assert_eq!(tables.species, vec!["Cu".to_string(), "Cu".to_string()]);
+        assert!(tables.columns.iter().any(|column| column.name == "species"));
         assert!((tables.cell[0] - 10.0).abs() < 1e-12);
         assert!((tables.cell[3] - 90.0).abs() < 1e-8);
+    }
+
+    #[test]
+    fn forces_and_species_round_trip_from_the_small_fixture() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("bench/h2h/fixtures/small-1.extxyz");
+        let tables = tables_from_extxyz_path(&path).unwrap();
+        assert_eq!(tables.n_frames, 1);
+        assert_eq!(tables.n_atoms, 10);
+        assert!(tables.species.iter().all(|symbol| symbol == "Cu"));
+        let forces = tables
+            .columns
+            .iter()
+            .find(|column| column.name == "forces")
+            .unwrap();
+        assert_eq!(forces.width, 3);
+        assert!((forces.real[3] - 0.25).abs() < 1e-12);
+        assert!((forces.real[4] - 0.5).abs() < 1e-12);
+        assert!((forces.real[5] - 1.0).abs() < 1e-12);
+        let names: Vec<_> = tables
+            .columns
+            .iter()
+            .map(|column| column.name.as_str())
+            .collect();
+        assert_eq!(names, vec!["species", "pos", "masses", "forces"]);
     }
 
     #[test]
@@ -289,7 +409,8 @@ Cu 4.0 5.0 6.0 63.546
         assert_eq!(tables.masses[0], 63.546);
         assert!((tables.cell[0] - 10.0).abs() < 1e-9);
 
-        let no_newline = b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nH 0 1 2";
+        let no_newline =
+            b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=species:S:1:pos:R:3\nH 0 1 2";
         let one = tables_from_extxyz_bytes(no_newline).unwrap();
         assert_eq!(one.positions, vec![0.0, 1.0, 2.0]);
         assert!(one.masses[0].is_nan());
@@ -297,8 +418,10 @@ Cu 4.0 5.0 6.0 63.546
         assert_eq!(tables_from_extxyz_bytes(b"\n\n").unwrap_err(), "no frames");
         assert_eq!(tables_from_extxyz_bytes(b"1\n").unwrap_err(), "comment");
         assert_eq!(
-            tables_from_extxyz_bytes(b"2\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos:R:3\nH 0 0 0\n")
-                .unwrap_err(),
+            tables_from_extxyz_bytes(
+                b"2\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos:R:3\nH 0 0 0\n"
+            )
+            .unwrap_err(),
             "atoms"
         );
         assert_eq!(
@@ -317,17 +440,13 @@ Cu 4.0 5.0 6.0 63.546
             "pos"
         );
         assert_eq!(
-            tables_from_extxyz_bytes(
-                b"1\nLattice=\"1 0 0\" Properties=pos:R:3\nH 0 0 0\n"
-            )
-            .unwrap_err(),
+            tables_from_extxyz_bytes(b"1\nLattice=\"1 0 0\" Properties=pos:R:3\nH 0 0 0\n")
+                .unwrap_err(),
             "lattice"
         );
         assert_eq!(
-            tables_from_extxyz_bytes(
-                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos\nH 0 0 0\n"
-            )
-            .unwrap_err(),
+            tables_from_extxyz_bytes(b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=pos\nH 0 0 0\n")
+                .unwrap_err(),
             "properties"
         );
         assert_eq!(
@@ -353,17 +472,13 @@ Cu 4.0 5.0 6.0 63.546
         );
         assert_eq!(tables_from_extxyz_bytes(b"abc\n").unwrap_err(), "float");
         assert_eq!(
-            tables_from_extxyz_bytes(
-                b"1\nLattice=\"1 0 0 Properties=pos:R:3\nH 0 0 0\n"
-            )
-            .unwrap_err(),
+            tables_from_extxyz_bytes(b"1\nLattice=\"1 0 0 Properties=pos:R:3\nH 0 0 0\n")
+                .unwrap_err(),
             "lattice"
         );
         assert_eq!(
-            tables_from_extxyz_bytes(
-                b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=\nH 0 0 0\n"
-            )
-            .unwrap_err(),
+            tables_from_extxyz_bytes(b"1\nLattice=\"1 0 0 0 1 0 0 0 1\" Properties=\nH 0 0 0\n")
+                .unwrap_err(),
             "pos"
         );
         assert_eq!(

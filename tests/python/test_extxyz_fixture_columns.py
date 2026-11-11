@@ -4,7 +4,6 @@
 from pathlib import Path
 
 import pytest
-
 import readcon
 
 FIXTURES = Path(__file__).resolve().parents[2] / "bench" / "h2h" / "fixtures"

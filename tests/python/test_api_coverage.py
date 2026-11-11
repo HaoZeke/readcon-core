@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 import pytest
-
 import readcon
 
 RESOURCES = os.path.join(os.path.dirname(__file__), "..", "..", "resources", "test")
@@ -27,7 +26,9 @@ def _resource(name):
 
 
 def _one():
-    return readcon.read_con_string(open(_resource("tiny_cuh2_vel_forces.con")).read())[0]
+    return readcon.read_con_string(open(_resource("tiny_cuh2_vel_forces.con")).read())[
+        0
+    ]
 
 
 def test_coords_round_trip(tmp_path):
@@ -54,7 +55,8 @@ def test_pdb_and_extxyz(tmp_path):
     assert positions.shape == (1, 2, 3)
     assert masses.shape[1] == 2
     assert cell.shape == (1, 6)
-    positions, masses, cell = readcon.read_extxyz(str(xyz))
+    loaded = readcon.read_extxyz(str(xyz))
+    positions, masses, cell = loaded["positions"], loaded["masses"], loaded["cell"]
     assert positions.shape == (1, 2, 3)
     assert cell.shape == (1, 6)
     with pytest.raises(Exception):
@@ -69,7 +71,9 @@ def test_frame_columns_and_metadata():
     assert frame.frc is not None
     assert frame.velocities_array() is not None
     assert frame.forces_array() is not None
-    assert frame.energies_array() is None or frame.energies_array().shape[0] == len(frame)
+    assert frame.energies_array() is None or frame.energies_array().shape[0] == len(
+        frame
+    )
     assert frame.bonds == []
     frame.metadata["potential"] = {"type": "EMT"}
     frame.metadata["bonds"] = [[0, 1], [1, 2, 1]]
@@ -152,7 +156,9 @@ def test_write_con_compression_and_mpi_stub(tmp_path):
     frames = readcon.read_con(_resource("tiny_cuh2.con"))
     plain = tmp_path / "out.con"
     packed = tmp_path / "out.con.gz"
-    readcon.write_con(str(plain), frames, precision=8, compression="none", canonical=True)
+    readcon.write_con(
+        str(plain), frames, precision=8, compression="none", canonical=True
+    )
     readcon.write_con(str(packed), frames, compression="gzip")
     assert plain.stat().st_size > 0
     assert packed.stat().st_size > 0
@@ -218,7 +224,9 @@ class _StubAtoms:
         return _Arr(self.kw.get("positions", [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
 
     def get_cell(self):
-        return self.kw.get("cell", _Cell([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]]))
+        return self.kw.get(
+            "cell", _Cell([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
+        )
 
     @property
     def constraints(self):
@@ -261,12 +269,20 @@ def test_from_ase_branches():
     tagged = readcon.ConFrame.from_ase(_StubAtoms(tags=[3, 4]))
     assert [atom.atom_id for atom in tagged.atoms] == [3, 4]
     moving = readcon.ConFrame.from_ase(
-        _StubAtoms(velocities=[[0.1, 0.0, 0.0], [0.0, 0.0, 0.0]], forces=[[0.0, 1.0, 0.0], [0.0, 0.0, 0.0]])
+        _StubAtoms(
+            velocities=[[0.1, 0.0, 0.0], [0.0, 0.0, 0.0]],
+            forces=[[0.0, 1.0, 0.0], [0.0, 0.0, 0.0]],
+        )
     )
     assert moving.atoms[0].vx == pytest.approx(0.1)
     assert moving.atoms[0].fy == pytest.approx(1.0)
     fixed = readcon.ConFrame.from_ase(
-        _StubAtoms(constraints=[FixAtoms(indices=[0]), FixCartesian(0, mask=[True, False, True])])
+        _StubAtoms(
+            constraints=[
+                FixAtoms(indices=[0]),
+                FixCartesian(0, mask=[True, False, True]),
+            ]
+        )
     )
     assert fixed.atoms[0].fixed == [True, False, True]
     zero = _Cell([[0.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
@@ -275,6 +291,7 @@ def test_from_ase_branches():
     bad = _Cell([[float("nan"), 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
     with pytest.raises(ValueError):
         readcon.ConFrame.from_ase(_StubAtoms(cell=bad))
+
     class Hold:
         pass
 
@@ -329,7 +346,9 @@ def test_partial_fix_and_a_lone_moment_round_trip(tmp_path):
         fixed=[True, False, True],
         mx=0.2,
     )
-    frame = readcon.ConFrame(cell=[3.0, 4.0, 5.0], angles=[90.0, 90.0, 90.0], atoms=[atom])
+    frame = readcon.ConFrame(
+        cell=[3.0, 4.0, 5.0], angles=[90.0, 90.0, 90.0], atoms=[atom]
+    )
     frame.metadata = {"pbc": [True, True, False]}
     projection = frame.index_projection()
     assert list(projection["pbc"]) == [True, True, False]
@@ -345,7 +364,9 @@ def test_partial_fix_and_a_lone_moment_round_trip(tmp_path):
     with pytest.raises(OSError):
         readcon.write_con(str(missing), [frame])
     with pytest.raises(OSError):
-        readcon.write_con(str(tmp_path / "absent" / "out.con.gz"), [frame], compression="gzip")
+        readcon.write_con(
+            str(tmp_path / "absent" / "out.con.gz"), [frame], compression="gzip"
+        )
     positions = np.zeros((1, 1, 3))
     masses = np.zeros((1, 2))
     cell = np.array([[3.0, 4.0, 5.0, 90.0, 90.0, 90.0]])
@@ -378,7 +399,9 @@ def test_lean_selection_and_bad_indexes_fail():
     if readcon.has_chemfiles_support():
         selected = readcon.select_on_frame(frame, "name Cu")
         assert selected["context_size"] == 1
-        assert readcon.select_atom_indices(frame, "name Cu") == selected["primary_indices"]
+        assert (
+            readcon.select_atom_indices(frame, "name Cu") == selected["primary_indices"]
+        )
         multi = readcon.evaluate_selection_on_frames("name Cu", [frame])
         assert len(multi["frames"]) == 1
         positions = readcon.select_atom_positions_on_frames("name Cu", [frame])
