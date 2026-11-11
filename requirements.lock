@@ -1,6 +1,7 @@
-# readcon is built from this repository by scripts/build_timed.sh.
-# The published 0.18.0 wheel is not pinned, because that wheel is not timed.
-# The hashes that follow are the wheels imported by the other readers.
+# The paired readcon arm is built from this repository.
+# The pin that follows is the published wheel timed as a separate arm.
+readcon==0.18.0 \
+    --hash=sha256:e78e7fc4d7290909a24a2d6a582c960aebf395cc23908be9d43513bdb4190110
 annotated-types==0.8.0 \
     --hash=sha256:f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0
 argparse-dataclass==2.0.0 \
