@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 use readcon_core::compression::gzip_writer;
 use readcon_core::iterators::{ConFrameIterator, read_all_frames};
 use readcon_core::stream::{ConFrameReader, DEFAULT_READ_SIZE};

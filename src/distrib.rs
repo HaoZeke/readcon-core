@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Rank conventions shared by every distributed entry point.
 //!
 //! Frame ownership is a pure function of `(frame index, n_frames,

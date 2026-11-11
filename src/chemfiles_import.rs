@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Chemfiles → CON conversion.
 //!
 //! Real implementation requires the `chemfiles` Cargo feature (links libchemfiles).
@@ -45,6 +45,19 @@ impl Default for ChemfilesReadOpts {
     }
 }
 
+/// A velocity row, or nothing when `index` is past the slice.
+///
+/// A chemfiles `assert` on the C++ side is not a release-build guarantee.
+/// The caller skips a missing row instead of reading past the slice.
+pub(crate) fn velocity_if_present(vels: &[[f64; 3]], index: usize) -> Option<[f64; 3]> {
+    vels.get(index).copied()
+}
+
+/// A remapped bond endpoint, or nothing when `index` is past the table.
+pub(crate) fn bond_end(table: &[u32], index: usize) -> Option<u32> {
+    table.get(index).copied()
+}
+
 impl ChemfilesReadOpts {
     /// Effective stride. Rejects `step == 0`.
     pub fn stride(&self) -> Result<usize, String> {
@@ -69,6 +82,25 @@ pub fn chemfiles_internal_units_json() -> serde_json::Value {
         "mass": "amu",
         "time": "ps"
     })
+}
+
+#[cfg(test)]
+mod bounds_tests {
+    use super::{bond_end, velocity_if_present};
+
+    #[test]
+    fn a_velocity_past_the_slice_is_absent() {
+        let vels = [[0.25, 0.5, 0.75]];
+        assert_eq!(velocity_if_present(&vels, 0), Some([0.25, 0.5, 0.75]));
+        assert!(velocity_if_present(&vels, 1).is_none());
+    }
+
+    #[test]
+    fn a_bond_end_past_the_table_is_absent() {
+        let table = [4u32, 1];
+        assert_eq!(bond_end(&table, 1), Some(1));
+        assert!(bond_end(&table, 2).is_none());
+    }
 }
 
 #[cfg(feature = "chemfiles")]

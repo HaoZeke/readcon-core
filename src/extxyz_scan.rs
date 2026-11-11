@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Sequential extended-XYZ scan.
 //!
 //! One byte buffer, fixed token walks, and plain arrays. The comment

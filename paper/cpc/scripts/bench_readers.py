@@ -160,17 +160,22 @@ def _hardware_lines() -> list[str]:
     for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
         if line.startswith("MemTotal:"):
             mem = line.split()[1]
-    rustc = subprocess.check_output(["rustc", "--version"], text=True).split()[1]
+    rustc = subprocess.check_output(["rustc", "-V"], text=True).strip()
+    cargo = subprocess.check_output(["cargo", "-V"], text=True).strip()
     cxx = subprocess.check_output(["/usr/bin/g++", "--version"], text=True).splitlines()[0]
     cxx_version = next(part for part in cxx.split() if part[0].isdigit())
     return [
         f"cpu_family {family}",
         f"cpu_model_id {model}",
         f"cpu_mhz {mhz}",
+        f"mem_total_kib {mem}",
         f"mem_kib {mem}",
         f"kernel {platform.release()}",
         f"os {_os_name()}",
-        f"rustc {rustc}",
+        "rustc -V",
+        rustc,
+        "cargo -V",
+        cargo,
         f"cxx g++ {cxx_version}",
     ]
 

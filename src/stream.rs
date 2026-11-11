@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Frames parsed from a byte stream with about one frame in memory.
 
 use crate::error::ParseError;

@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! CON-bin: one page of header, then every frame's positions as one run
 //! of little-endian values, then the velocities the same way.
 //!
@@ -3111,6 +3111,41 @@ Coordinates of Component 1
     }
 
     #[cfg(target_os = "linux")]
+    fn path_under_temp_mount(path: &std::path::Path) -> bool {
+        let tmp = std::path::Path::new("/tmp");
+        let var_tmp = std::path::Path::new("/var/tmp");
+        path.starts_with(tmp) || path.starts_with(var_tmp)
+    }
+
+    /// A directory that remains after tmpfs is mounted on /tmp and /var/tmp.
+    #[cfg(target_os = "linux")]
+    fn visible_scratch_dir(name: &str) -> std::path::PathBuf {
+        let run = std::path::PathBuf::from(format!("/run/{name}"));
+        if std::fs::create_dir_all(&run).is_ok() {
+            return run;
+        }
+        let shm = std::path::PathBuf::from(format!("/dev/shm/{name}"));
+        std::fs::create_dir_all(&shm).unwrap();
+        shm
+    }
+
+    #[cfg(target_os = "linux")]
+    fn mount_temp_once(target: &str) {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static TMP_DONE: AtomicBool = AtomicBool::new(false);
+        static VAR_DONE: AtomicBool = AtomicBool::new(false);
+        let flag = if target.ends_with("var/tmp") {
+            &VAR_DONE
+        } else {
+            &TMP_DONE
+        };
+        if flag.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        mount_tmpfs(target);
+    }
+
+    #[cfg(target_os = "linux")]
     fn mount_tmpfs(target: &str) {
         let src = std::ffi::CString::new("tmpfs").unwrap();
         let tgt = std::ffi::CString::new(target).unwrap();
@@ -3159,10 +3194,9 @@ Coordinates of Component 1
         if !dir.starts_with(&live) {
             return None;
         }
-        let hold = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
-            "target/cov-hold-{}",
-            std::process::id()
-        ));
+        // The hold directory must stay visible after a tmpfs is mounted
+        // on /tmp. A checkout under /tmp would hide a hold path there.
+        let hold = visible_scratch_dir(&format!("readcon-cov-hold-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&hold);
         mount_bind(&dir, &hold);
         Some((dir, hold))
@@ -3221,19 +3255,35 @@ Coordinates of Component 1
 
         // Mount the scratch directory, not the repository. A tmpfs on the
         // working directory would hide the coverage profile.
-        let scratch = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
+        // The next mounts cover /tmp and /var/tmp. A scratch path under
+        // either one is gone after that, and the mount returns ENOENT.
+        let manifest_scratch = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
             "target/conbin-cwd-{}",
             std::process::id()
         ));
+        let scratch = if path_under_temp_mount(&manifest_scratch) {
+            visible_scratch_dir(&format!("readcon-conbin-cwd-{}", std::process::id()))
+        } else {
+            manifest_scratch
+        };
         std::fs::create_dir_all(&scratch).unwrap();
         std::env::set_current_dir(&scratch).unwrap();
         let tmp = format!("{}{}", "/", "tmp");
         let var_tmp = format!("{}{}{}{}", "/", "var", "/", "tmp");
-        mount_tmpfs(&tmp);
-        mount_tmpfs(&var_tmp);
+        // A second suite in this process must not mount over /tmp again.
+        // The caller creates profile directories between calls, and a
+        // checkout under /tmp would lose them.
+        mount_temp_once(&tmp);
+        mount_temp_once(&var_tmp);
         if let Some((dir, hold)) = &held {
-            // The held directory is under target/cov-live, so the tmpfs
-            // just mounted on the temporary directories does not cover it.
+            // dir may sit under the tmpfs just mounted on /tmp. Recreate
+            // that path on the new mount, then put the held profile back.
+            if let Some(parent) = dir.parent() {
+                std::fs::create_dir_all(parent).unwrap();
+            }
+            if !dir.exists() {
+                std::fs::create_dir_all(dir).unwrap();
+            }
             mount_tmpfs(dir.to_str().unwrap());
             std::fs::create_dir_all(dir).unwrap();
             mount_bind(hold, dir);

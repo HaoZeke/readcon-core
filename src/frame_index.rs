@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Frame offset index and its checked `.rcidx` sidecar.
 //!
 //! The sidecar stores the byte offset of every frame start in an

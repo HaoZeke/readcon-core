@@ -1,4 +1,4 @@
-/* Copyright (c) readcon developers */
+/* Copyright (c) readcon-core developers */
 // One head-to-head process: read every frame and print seconds, frames and
 // the sum of each x coordinate rounded to 0.01 angstrom.
 //

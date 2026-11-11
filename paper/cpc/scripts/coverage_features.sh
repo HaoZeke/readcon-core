@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) readcon developers
+# Copyright (c) readcon-core developers
 #
 # Branch coverage for one report. The feature set is parallel, zstd,
 # grammar, python, and chemfiles. chemfiles-from-sources turns the

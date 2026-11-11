@@ -1,4 +1,4 @@
-! Copyright (c) readcon developers
+! Copyright (c) readcon-core developers
 program test_read_con
   use readcon
   use, intrinsic :: iso_c_binding

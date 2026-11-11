@@ -199,15 +199,24 @@ def main() -> int:
             return f"{version}, tag {tag}"
         return f"{version}, untagged"
 
+    # summary lines name the arm and the scope. readcon_tip is an
+    # all-frames arm. It is not read_positions. readcon_v0173 is an
+    # all-frames arm. It is not 0.18.0 read_con.
+    tip_scope = found["readcon_tip"]["scope"].replace("_", " ")
+    v0173_scope = found["readcon_v0173"]["scope"].replace("_", " ")
     LABELS["readcon_v0173"] = (
-        f"{measured_version} \\texttt{{read\\_con}}"
+        f"\\texttt{{readcon\\_v0173}}, {v0173_scope}"
     )
     LABELS["readcon_tip"] = (
-        f"{measured_version} \\texttt{{read\\_positions}}"
+        f"\\texttt{{readcon\\_tip}}, {tip_scope}"
     )
     LABELS["readcon_base"] = (
-        f"{arm_label(baseline, baseline_version)} \\texttt{{read\\_con}}, baseline"
+        f"{arm_label(baseline, baseline_version)} \\texttt{{readcon\\_base}}, "
+        f"{found['readcon_base']['scope'].replace('_', ' ')}"
     )
+    for name in ("chemfiles", "ovito", "mdanalysis"):
+        scope = found[name]["scope"].replace("_", " ")
+        LABELS[name] = f"{name}, {scope}"
     full = arm_s(found, "readcon_v0173")
     pos1 = arm_s(found, "readcon_tip")
     base = arm_s(found, "readcon_base")
@@ -229,18 +238,18 @@ def main() -> int:
             f"\\newcommand{{\\rcBaselineVersion}}{{{baseline_version}}}",
             f"\\newcommand{{\\rcFullOneMedian}}{{{full:.4g}}}",
             f"\\newcommand{{\\rcPosOneMedian}}{{{pos1:.4g}}}",
-            f"\\newcommand{{\\rcTipMedian}}{{{full:.4g}}}",
+            f"\\newcommand{{\\rcTipMedian}}{{{pos1:.4g}}}",
             f"\\newcommand{{\\rcReleaseMedian}}{{{base:.4g}}}",
-            f"\\newcommand{{\\rcTipOverRelease}}{{{base / full:.3g}}}",
+            f"\\newcommand{{\\rcTipOverRelease}}{{{base / pos1:.4g}}}",
             f"\\newcommand{{\\rcHdfMedian}}{{{h5:.4g}}}",
             f"\\newcommand{{\\rcConbinMedian}}{{{conbin:.4g}}}",
-            f"\\newcommand{{\\rcTipMib}}{{{arm_mib(found, 'readcon_v0173'):.4g}}}",
+            f"\\newcommand{{\\rcTipMib}}{{{arm_mib(found, 'readcon_tip'):.4g}}}",
             f"\\newcommand{{\\rcAseMedian}}{{{ase:.4g}}}",
-            f"\\newcommand{{\\rcTipOverAse}}{{{ase / full:.3g}}}",
+            f"\\newcommand{{\\rcTipOverAse}}{{{ase / pos1:.4g}}}",
             f"\\newcommand{{\\rcEonMedian}}{{{eon:.4g}}}",
-            f"\\newcommand{{\\rcTipOverEon}}{{{eon / full:.3g}}}",
+            f"\\newcommand{{\\rcTipOverEon}}{{{eon / pos1:.4g}}}",
             f"\\newcommand{{\\rcApiMedian}}{{{api:.4g}}}",
-            f"\\newcommand{{\\rcApiOverRead}}{{{api / full:.3g}}}",
+            f"\\newcommand{{\\rcApiOverRead}}{{{api / pos1:.4g}}}",
             f"\\newcommand{{\\rcDbMedian}}{{{db:.4g}}}",
             f"\\newcommand{{\\rcAseMib}}{{{arm_mib(found, 'ase_eon'):.4g}}}",
             f"\\newcommand{{\\rcChemMib}}{{{arm_mib(found, 'chemfiles'):.4g}}}",
@@ -258,14 +267,15 @@ def main() -> int:
             found,
             CON_ORDER,
             "Coordinate reads of 100000 frames, six fresh processes, type 7 median. "
-            "Each row names the call and the thread count. "
-            "\\texttt{read\\_con} builds a frame per record. "
-            "\\texttt{read\\_positions} returns one coordinate array. "
-            "ASE \\texttt{get\\_positions} and eOn \\texttt{loadcons} build every frame on 1 thread. "
-            "The C++ row is \\texttt{read\\_all\\_frames} and then \\texttt{con2matter} on every frame. "
+            "Each row is one summary arm and the scope on that line. "
+            "\\texttt{readcon\\_tip} and \\texttt{readcon\\_v0173} are all-frames arms. "
+            "The log does not name the first \\texttt{read\\_positions}. "
+            "The log does not name the second 0.18.0 \\texttt{read\\_con}. "
+            "ASE \\texttt{get\\_positions} and eOn \\texttt{loadcons} are all-frames arms. "
+            "The C++ row is \\texttt{read\\_all\\_frames} and then \\texttt{con2matter}. "
             "readcon-db is an ingest of the file followed by a read of that corpus. "
             "The last two rows read one frame. "
-            "A one-frame row is not a ratio against a full read, and the ingest is not a ratio against a read.",
+            "A one-frame row is not a ratio against a full read.",
             "tab:host",
         )
         + "\n",
@@ -275,7 +285,7 @@ def main() -> int:
         table(
             found,
             CONTEXT_ORDER,
-            "Context for choosing a format, each call at 1 thread. These readers open XYZ, HDF5, or the mapped binary coordinate file. readcon does not read XYZ or HDF5.",
+            "Context for choosing a format. Each row uses the scope on its summary line. readcon does not read XYZ or HDF5.",
             "tab:format-context",
         )
         + "\n",

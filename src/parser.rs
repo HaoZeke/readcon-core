@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 use crate::error::ParseError;
 use crate::helpers::symbol_to_atomic_number;
 use crate::types::{

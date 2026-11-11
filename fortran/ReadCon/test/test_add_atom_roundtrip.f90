@@ -1,4 +1,4 @@
-! Copyright (c) readcon developers
+! Copyright (c) readcon-core developers
 ! Write a frame through the public module and read it back with the C reader.
 ! add_atom covers the fixed mask. add_atom_full covers velocities.
 ! A repeated atom id must keep the underlying message, not only status -4.

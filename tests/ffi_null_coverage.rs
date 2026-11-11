@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Calls into the C exports the default suite leaves cold.
 
 use std::ffi::CString;
@@ -823,7 +823,12 @@ fn every_export_accepts_a_null_argument() {
     assert_eq!(unsafe { rkr_has_chemfiles_support() }, 1);
     #[cfg(not(feature = "chemfiles"))]
     assert_eq!(unsafe { rkr_has_chemfiles_support() }, 0);
+    // Default features leave `parallel` off, so the export is 0.
+    // A build with `--features parallel` reports 1.
+    #[cfg(feature = "parallel")]
     assert_eq!(unsafe { rkr_has_parallel_support() }, 1);
+    #[cfg(not(feature = "parallel"))]
+    assert_eq!(unsafe { rkr_has_parallel_support() }, 0);
     assert!(unsafe { rkr_read_chemfiles_first(ptr::null()) }.is_null());
     assert!(unsafe { rkr_read_chemfiles(ptr::null(), ptr::null_mut()) }.is_null());
     assert!(unsafe { rkr_read_chemfiles_nth(ptr::null(), 0usize) }.is_null());
@@ -1148,8 +1153,22 @@ fn live_frame_covers_the_export_bodies() {
     let zst = dir.path().join("out.con.zst");
     let zst_c = CString::new(zst.to_str().unwrap()).unwrap();
     let zstd = unsafe { create_writer_zstd_with_precision_c(zst_c.as_ptr(), 6) };
-    assert!(!zstd.is_null());
-    unsafe { free_rkr_writer(zstd) };
+    // Without the zstd feature the writer is null and the last error
+    // says compression is not built. With the feature the pointer is live.
+    #[cfg(feature = "zstd")]
+    {
+        assert!(!zstd.is_null());
+        unsafe { free_rkr_writer(zstd) };
+    }
+    #[cfg(not(feature = "zstd"))]
+    {
+        assert!(zstd.is_null());
+        let message = unsafe { std::ffi::CStr::from_ptr(rkr_last_error_message()) };
+        assert!(
+            message.to_string_lossy().contains("compression not built"),
+            "{message:?}"
+        );
+    }
     let round = unsafe { create_writer_from_path_round_trip_c(out_c.as_ptr()) };
     assert!(!round.is_null());
     let mut_handles = [frame];

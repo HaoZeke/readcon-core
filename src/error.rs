@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 use std::fmt;
 use std::num::{ParseFloatError, ParseIntError};
 

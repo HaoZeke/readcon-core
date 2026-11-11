@@ -1,4 +1,4 @@
-/* Copyright (c) readcon developers */
+/* Copyright (c) readcon-core developers */
 // readcon-core through its C++ header: read_all_frames(path, n_threads),
 // then one record per frame of the output contract. Positions, velocities and
 // ids stay in the frame's binary64 and u64 columns. Periodicity is the

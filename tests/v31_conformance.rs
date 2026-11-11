@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! v3.1 reader and writer conformance. One case per M-item that the
 //! hand parser owns (M8 and M9 are the ASE adapters).
 //!

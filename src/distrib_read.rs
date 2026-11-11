@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Distributed read: each rank of a caller-supplied communicator parses
 //! only its block of frames (see [`crate::distrib::block_range`]).
 //!

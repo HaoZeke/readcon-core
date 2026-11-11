@@ -240,6 +240,9 @@ skip_prefixes = (
     # Captured command transcripts. The version appears because the
     # program printed it, not because the file pins a release.
     "paper/cpc/receipts/",
+    # Measured campaign records. Each file quotes the package version
+    # that produced that run, the same way the reader-exchange logs do.
+    "paper/cpc/bench/results/",
 )
 bad = []
 listed = subprocess.check_output(["git", "ls-files", "-z"])

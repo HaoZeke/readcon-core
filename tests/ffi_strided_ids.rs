@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Atom ids stored as a matrix column are not one contiguous slice.
 
 use std::ffi::CString;

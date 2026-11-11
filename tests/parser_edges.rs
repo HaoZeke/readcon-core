@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Section and header edges through the library iterator.
 
 use readcon_core::error::ParseError;

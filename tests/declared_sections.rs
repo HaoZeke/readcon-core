@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Declared sections that are missing, unknown, or stored as energies.
 
 use readcon_core::error::ParseError;

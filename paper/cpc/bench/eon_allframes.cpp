@@ -1,4 +1,4 @@
-/* Copyright (c) readcon developers */
+/* Copyright (c) readcon-core developers */
 // Read every frame of a CON file through eOn's ConFileIO.
 // Matter::con2matter(ConFrame) is the per-frame path. The file read is
 // readcon::read_all_frames, the same call ConFileIO uses.

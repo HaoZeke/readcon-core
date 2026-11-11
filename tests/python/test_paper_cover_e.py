@@ -26,11 +26,38 @@ def load(name: str):
     return module
 
 
+def _release_library() -> Path:
+    """The release cdylib. Build it when the tree has not produced one yet."""
+    import os
+    import subprocess
+
+    override = os.environ.get("READCON_LIB")
+    if override:
+        lib = Path(override)
+        if lib.is_file():
+            return lib
+    candidates = [
+        ROOT / "target" / "release" / "libreadcon_core.so",
+        ROOT / "target" / "release" / "libreadcon_core.dylib",
+        ROOT / "target" / "release" / "readcon_core.dll",
+    ]
+    for lib in candidates:
+        if lib.is_file():
+            return lib
+    subprocess.run(
+        ["cargo", "build", "--release", "--locked", "--lib"],
+        cwd=ROOT,
+        check=True,
+    )
+    for lib in candidates:
+        if lib.is_file():
+            return lib
+    raise AssertionError("cargo build --release --lib did not write the release library")
+
+
 def test_c_library_reads_a_real_file_and_rejects_a_missing_one(tmp_path, monkeypatch):
     paths = load("corpus_paths.py")
-    lib = ROOT / "target" / "release" / "libreadcon_core.so"
-    if not lib.is_file():
-        pytest.skip("release library is absent")
+    lib = _release_library()
     plain = tmp_path / "tiny.con"
     plain.write_bytes(TINY.read_bytes())
     mapped = tmp_path / "tiny.mapped.con"

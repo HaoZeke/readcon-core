@@ -1,4 +1,4 @@
-/* Copyright (c) readcon developers */
+/* Copyright (c) readcon-core developers */
 #ifndef READCON_PLUS_PLUS_H
 #define READCON_PLUS_PLUS_H
 

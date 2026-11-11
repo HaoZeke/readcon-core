@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Read every file of a CON 3.1 corpus and print one JSON object.
 //!
 //! `corpus31_report [--threads N] DIR` reads `DIR/manifest.toml` and prints

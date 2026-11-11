@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Optional chemfiles -> readcon conversion (feature = "chemfiles").
 //!
 //! Maps a chemfiles [`Frame`](chemfiles::Frame) (and trajectory readers) into
@@ -487,7 +487,10 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
         builder.add_atom(symbol, pos[0], pos[1], pos[2], fixed, i as u64, mass);
         if let Some(vels) = velocities {
             // Frame.cpp:35-37 asserts velocities_->size() equals positions_.size().
-            builder.with_velocity(unsafe { *vels.get_unchecked(i) });
+            // That assert is absent from a release build of the C++ library.
+            if let Some(velocity) = super::velocity_if_present(vels, i) {
+                builder.with_velocity(velocity);
+            }
         }
 
         let mut atom_props = BTreeMap::new();
@@ -577,14 +580,20 @@ pub fn con_frame_from_chemfiles(frame: &Frame) -> Result<ConFrame, ChemfilesImpo
         let mut remapped = Vec::with_capacity(chfl_bonds.len());
         for b in &chfl_bonds {
             // Topology::add_bond rejects an index past the atom count
-            // (Topology.cpp:40-46), so both endpoints are inside this table.
-            let i = unsafe { *id_to_data_idx.get_unchecked(b.i as usize) };
-            let j = unsafe { *id_to_data_idx.get_unchecked(b.j as usize) };
+            // (Topology.cpp:40-46) only when asserts are compiled in.
+            let Some(i) = super::bond_end(&id_to_data_idx, b.i as usize) else {
+                continue;
+            };
+            let Some(j) = super::bond_end(&id_to_data_idx, b.j as usize) else {
+                continue;
+            };
             let mut bond = Bond::new(i, j);
             bond.order = b.order;
             remapped.push(bond);
         }
-        con.header.set_bonds(&remapped);
+        if !remapped.is_empty() {
+            con.header.set_bonds(&remapped);
+        }
     }
 
     let chfl_residues = residues_from_chemfiles_frame(frame);

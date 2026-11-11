@@ -443,7 +443,9 @@ The tensor exchange sits beside the metatensor layout \cite{bigiMetatensorMetato
 
 Table~\ref{tab:format-context} is context for choosing a format.
 readcon reads neither XYZ nor HDF5.
-\input{figures/generated/host_macros} h5py reads the same frames in \rcHdfMedian~s against readcon's \rcTipMedian~s on the coordinate file.
+\input{figures/generated/host_macros}
+h5py reads the same frames in \rcHdfMedian~s.
+The all-frames tip arm takes \rcTipMedian~s on the coordinate file.
 The mapped binary coordinate file reads those frames in \rcConbinMedian~s.
 The chemfiles row copies each frame out of the trajectory iterator, and that copy matches 100000 of 100000 frames.
 

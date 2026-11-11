@@ -1,4 +1,4 @@
-/* Copyright (c) readcon developers */
+/* Copyright (c) readcon-core developers */
 /* Exercise the C ABI: builders, writers, readers, iterators, and null handles. */
 #include "readcon-core.h"
 

@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Each section copy is its own function. Absent columns error. Present columns match.
 
 use std::ffi::CString;

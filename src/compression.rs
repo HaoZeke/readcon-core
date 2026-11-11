@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //=============================================================================
 // Transparent compression support
 //=============================================================================

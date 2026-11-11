@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Live handles with one null argument, so each later null check runs.
 
 use std::ffi::{CStr, CString};

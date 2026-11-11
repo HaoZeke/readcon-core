@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Prefix and declared-empty edges of the frame skip.
 
 use readcon_core::iterators::ConFrameIterator;

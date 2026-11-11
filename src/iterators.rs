@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //=============================================================================
 // The Public API - A clean iterator for users of our library
 //=============================================================================
@@ -3893,6 +3893,32 @@ mod phased_read_tests {
 ///
 /// Each source file is paired with each mutation. The case count is that
 /// product. Every entry point must agree with a one-thread string read.
+#[cfg(test)]
+mod more_workers_than_frames {
+    use super::frames_from_bytes_phased;
+
+    #[test]
+    fn coordinates_match_the_serial_read() {
+        let text = include_str!("../resources/test/tiny_cuh2.con").repeat(2);
+        let serial = frames_from_bytes_phased(text.as_bytes(), Some(1)).expect("serial");
+        let wide = frames_from_bytes_phased(text.as_bytes(), Some(8)).expect("eight workers");
+        assert_eq!(wide.frames.len(), 2);
+        assert_eq!(serial.frames.len(), 2);
+        for (left, right) in serial.frames.iter().zip(wide.frames.iter()) {
+            assert_eq!(left.atom_data.len(), right.atom_data.len());
+            for (a, b) in left.atom_data.iter().zip(right.atom_data.iter()) {
+                assert_eq!(a.symbol.as_ref(), b.symbol.as_ref());
+                assert_eq!(a.x, b.x);
+                assert_eq!(a.y, b.y);
+                assert_eq!(a.z, b.z);
+                assert_eq!(a.atom_id, b.atom_id);
+            }
+            assert_eq!(left.header.boxl, right.header.boxl);
+            assert_eq!(left.header.angles, right.header.angles);
+        }
+    }
+}
+
 #[cfg(test)]
 mod differential_entry_points {
     use super::{

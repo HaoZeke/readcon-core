@@ -4,6 +4,13 @@ date_utc 2026-11-09T09:33:43Z
 uname_m x86_64
 nproc 8
 cpu_model Intel Xeon Processor
+rustc -V
+rustc 1.88.0 (6b00bc388 2025-06-23)
+cargo -V
+cargo 1.88.0 (873a06493 2025-05-10)
+mem_total_kib 49342816
+os Ubuntu 24.04.5 LTS
+kernel 6.12.113+
 baseline_commit ac4f437989dea5aad9f75ff045af09ccf7127eba
 release_commit 12ca800bc2212c565941e04094cba6b4d99a62e0
 eon_commit 579738a9387e8d0ea55496f45dd057812cfab892

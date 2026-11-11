@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Targeted coverage for modules that dragged the overall rate below 90%.
 //!
 //! Real API exercises only — no reimplementation of the units under test.

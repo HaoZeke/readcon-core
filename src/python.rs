@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 use ndarray::{Array2, Array3, ArrayView2};
 use numpy::{
     IntoPyArray, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyReadonlyArray2, PyReadonlyArray3,
@@ -2929,12 +2929,11 @@ fn ase_from_pyconframe(py: Python<'_>, frame: &PyConFrame) -> PyResult<Py<PyAny>
     let energy_scale = scale("energy", "eV")?;
     let mass_scale = scale("mass", "amu")?;
 
-    // Build symbols list and positions array
+    // Positions come from the coordinate view (`xyz`). That view is the
+    // float32 storage path. The atom list keeps the parsed text, and the
+    // two differ after a float32 projection.
     let symbols: Vec<&str> = frame_atoms.iter().map(|a| a.symbol.as_str()).collect();
-    let positions: Vec<[f64; 3]> = frame_atoms
-        .iter()
-        .map(|a| [a.x * length_scale, a.y * length_scale, a.z * length_scale])
-        .collect();
+    let positions = coordinate_rows_for_ase(py, frame, length_scale)?;
 
     // Full row vectors retain the orientation of a triclinic cell.
     let cell = if let Some(vectors) = metadata.get(meta::LATTICE_VECTORS) {
@@ -3082,6 +3081,27 @@ fn ase_from_pyconframe(py: Python<'_>, frame: &PyConFrame) -> PyResult<Py<PyAny>
     }
 
     Ok(atoms.unbind())
+}
+
+fn coordinate_rows_for_ase(
+    py: Python<'_>,
+    frame: &PyConFrame,
+    length_scale: f64,
+) -> PyResult<Vec<[f64; 3]>> {
+    let xyz = frame.xyz(py)?;
+    let view = xyz.readonly();
+    let array = view.as_array();
+    Ok(array
+        .rows()
+        .into_iter()
+        .map(|row| {
+            [
+                row[0] * length_scale,
+                row[1] * length_scale,
+                row[2] * length_scale,
+            ]
+        })
+        .collect())
 }
 
 fn py_usize_values(obj: &Bound<'_, PyAny>) -> PyResult<Vec<usize>> {
@@ -4132,6 +4152,39 @@ comm = C()
             let mask = pyo3::types::PyList::new(py, [true, false, true]).unwrap();
             assert_eq!(py_bool_mask(&mask).unwrap(), [true, false, true]);
             assert!(py_bool_mask(&bad).is_err());
+        });
+    }
+
+    #[test]
+    fn float32_ase_rows_match_the_coordinate_view() {
+        Python::initialize();
+        Python::attach(|py| {
+            let text = std::fs::read_to_string("resources/test/tiny_cuh2.con")
+                .unwrap()
+                .replace(
+                    r#"{"con_spec_version":2}"#,
+                    r#"{"con_spec_version":2,"storage_dtypes":{"positions":"float32"}}"#,
+                );
+            let frame = crate::iterators::frames_from_text(&text, Some(1))
+                .unwrap()
+                .into_iter()
+                .next()
+                .unwrap();
+            let parsed = frame.atom_data[0].x;
+            assert_eq!(
+                frame.positions.kind(),
+                crate::storage_dtype::ElementKind::Float32
+            );
+            let py_frame = PyConFrame::from_owned(py, frame).unwrap();
+            let rows = coordinate_rows_for_ase(py, &py_frame, 1.0).unwrap();
+            let xyz = py_frame.xyz(py).unwrap();
+            let stored = xyz.readonly().as_array()[[0, 0]];
+            assert_eq!(rows[0][0].to_bits(), stored.to_bits());
+            assert_ne!(
+                stored.to_bits(),
+                parsed.to_bits(),
+                "float32 storage must not keep the parsed f64 bits"
+            );
         });
     }
 

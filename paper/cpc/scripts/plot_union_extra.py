@@ -201,8 +201,8 @@ CON_ARMS = (
     "eon_py",
 )
 CON_LABELS = {
-    "readcon_v0173": "v0.18.0 read_con",
-    "readcon_tip": "read_positions",
+    "readcon_v0173": "readcon_v0173, all frames",
+    "readcon_tip": "readcon_tip, all frames",
     "readcon_base": "baseline read_con",
     "readcon_eon_api": "C++ read_all_frames",
     "ase_eon": "ASE get_positions",

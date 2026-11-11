@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 use capnp::capability::Promise;
 use capnp_rpc::{RpcSystem, pry, rpc_twoparty_capnp, twoparty};
 use futures::AsyncReadExt;

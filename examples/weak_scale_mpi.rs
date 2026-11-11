@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Weak-scaling MPI read.
 //!
 //! The file holds `frames_per_worker * ranks` frames. Each rank parses one

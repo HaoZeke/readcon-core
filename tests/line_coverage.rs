@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Extra calls into library lines the default suite leaves cold.
 //! Behaviour of the library is unchanged.
 

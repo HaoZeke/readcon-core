@@ -1,4 +1,4 @@
-// Copyright (c) readcon developers
+// Copyright (c) readcon-core developers
 //! Sequential PDB scan.
 //!
 //! The reader keeps one byte buffer and fills positions, masses and the
