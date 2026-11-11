@@ -1496,14 +1496,16 @@ eOn v3.6.0 & 1.01 & 0.0597 & 1532.5 & 1488.7 \\
 \end{table}
 
 readcon writes the survey frame as CON and as convel.
-Rust takes \(4.11\times 10^{-4}\)~s and \(2.56\times 10^{-4}\)~s, and
-Python takes \(4.67\times 10^{-4}\)~s and \(5.68\times 10^{-4}\)~s.
+Rust takes \(3.83\times 10^{-4}\)~s and \(3.55\times 10^{-4}\)~s, and
+Python takes \(5.26\times 10^{-4}\)~s and \(2.71\times 10^{-4}\)~s.
 ASE \texttt{format='eon'} raises \texttt{TypeError}:
 \texttt{category must be a Warning subclass, not 'FixCartesian'}.
 Both eOn clients exit with a segmentation fault in \texttt{matter2con}
 and in \texttt{matter2convel}.
 On the 100000-frame file the same two readcon writers and ASE
 \texttt{format='eon'} do write the CON geometry.
+Python streams each frame through the Rust writer, so that write no
+longer keeps a second copy of the trajectory.
 The convel file still stops ASE on line 23 of a velocity title, and
 both eOn clients still segfault.
 
@@ -1514,11 +1516,11 @@ both eOn clients still segfault.
 \toprule
 Writer & File & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
 \midrule
-readcon Rust & CON & 0.528 & 0.0174 & 0.40 & 0.023 \\
-readcon Python & CON & 3.24 & 0.074 & 2044.3 & 721.1 \\
-ASE \texttt{eon} & CON & 14.7 & 0.34 & 6.4 & 0.029 \\
-readcon Rust & convel & 1.05 & 0.250 & 0.40 & 0 \\
-readcon Python & convel & 5.08 & 0.321 & 2820.7 & 1438.8 \\
+readcon Rust & CON & 0.534 & 0.0107 & 0.34 & 0.023 \\
+readcon Python & CON & 0.570 & 0.0178 & 0.26 & 0.025 \\
+ASE \texttt{eon} & CON & 14.2 & 0.559 & 6.4 & 0.026 \\
+readcon Rust & convel & 0.926 & 0.0205 & 0.34 & 0 \\
+readcon Python & convel & 1.12 & 0.0246 & 0.26 & 0.032 \\
 \bottomrule
 \end{tabular}
 \end{table}

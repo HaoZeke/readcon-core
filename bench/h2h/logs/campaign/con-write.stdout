@@ -1,9 +1,9 @@
 git rev-parse HEAD
-e4f0888148d5503770d585b79d92a0bd0518dc03
+87f1c4bfd0484dda300ef87ead7a046ed3e7722b
 git rev-parse HEAD^{tree}
-eff9de05adee17dfdde0dd9f031a427624d49ed0
+532f905f11b214af644af86501ad1637878080fd
 git rev-parse HEAD:src
-5bbd588981812d448e5bf534f7f839d5262b3a9a
+98362b7093c32ebe43f0bb7d8e2615407ea0f8c4
 command
 taskset -c 0 python3 bench/h2h/con_h2h.py con-write
 hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
@@ -11,16 +11,16 @@ pinned taskset -c 0
 repeat 6
 serial 1
 quantile type-7
-sample 0.000131406
-sample 0.000520625
-sample 0.000346809
-sample 0.000484823
-sample 0.000449036
-sample 0.000523929
-median_s 0.000466930
-q25_s 0.000372366
-q75_s 0.000511674
-iqr_s 0.000139309
+sample 0.000538543
+sample 0.000382827
+sample 0.000646400
+sample 0.000702826
+sample 0.000512668
+sample 0.000331550
+median_s 0.000525605
+q25_s 0.000415287
+q75_s 0.000619436
+iqr_s 0.000204148
 n_atoms None
 n_frames None
 cell missing
@@ -33,22 +33,22 @@ reason ok
 arm readcon_py
 op write
 case survey-con
-rss_kib 332
+rss_kib 272
 massif_heap_bytes None
-{"samples": [0.00013140600003680447, 0.0005206249998082058, 0.00034680899989325553, 0.00048482300007890444, 0.00044903600064571947, 0.0005239290003373753], "n": 6, "median_s": 0.00046692950036231196, "q25_s": 0.0003723657500813715, "q75_s": 0.0005116744998758804, "iqr_s": 0.0001393087497945089, "arm": "readcon_py", "op": "write", "case": "survey-con", "correct": true, "reason": "ok", "rss_kib": 332, "massif_heap_bytes": null}
+{"samples": [0.0005385429994930746, 0.0003828270000667544, 0.0006463999998231884, 0.0007028259988146601, 0.0005126679989189142, 0.0003315499998279847], "n": 6, "median_s": 0.0005256054992059944, "q25_s": 0.00041528724977979437, "q75_s": 0.00061943574974066, "iqr_s": 0.0002041484999608656, "arm": "readcon_py", "op": "write", "case": "survey-con", "correct": true, "reason": "ok", "rss_kib": 272, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 0.000068809
-sample 0.000291165
-sample 0.000710563
-sample 0.000413250
-sample 0.000407879
-sample 0.000502076
-median_s 0.000410564
-q25_s 0.000320344
-q75_s 0.000479869
-iqr_s 0.000159526
+sample 0.000331984
+sample 0.000208256
+sample 0.000434579
+sample 0.000308844
+sample 0.000536099
+sample 0.000449175
+median_s 0.000383282
+q25_s 0.000314629
+q75_s 0.000445526
+iqr_s 0.000130897
 n_atoms None
 n_frames None
 cell missing
@@ -61,25 +61,25 @@ reason ok
 arm readcon_rust
 op write
 case survey-con
-rss_kib 348
+rss_kib 212
 massif_heap_bytes None
-{"samples": [6.8809e-05, 0.000291165, 0.000710563, 0.00041325, 0.000407879, 0.000502076], "n": 6, "median_s": 0.0004105645, "q25_s": 0.0003203435, "q75_s": 0.00047986949999999996, "iqr_s": 0.00015952599999999995, "arm": "readcon_rust", "op": "write", "case": "survey-con", "correct": true, "reason": "ok", "rss_kib": 348, "massif_heap_bytes": null}
+{"samples": [0.000331984, 0.000208256, 0.000434579, 0.000308844, 0.000536099, 0.000449175], "n": 6, "median_s": 0.0003832815, "q25_s": 0.000314629, "q75_s": 0.000445526, "iqr_s": 0.000130897, "arm": "readcon_rust", "op": "write", "case": "survey-con", "correct": true, "reason": "ok", "rss_kib": 212, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "TypeError: category must be a Warning subclass, not 'FixCartesian'", "arm": "ase_eon", "op": "write", "case": "survey-con", "rss_kib": null, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "survey-con", "rss_kib": null, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "survey-con", "rss_kib": null, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 0.000115903
-sample 0.000593700
-sample 0.000559626
-sample 0.000618226
-sample 0.000577292
-sample 0.000080944
-median_s 0.000568459
-q25_s 0.000226834
-q75_s 0.000589598
-iqr_s 0.000362764
+sample 0.000504976
+sample 0.000102898
+sample 0.000258711
+sample 0.000088565
+sample 0.000283921
+sample 0.000307614
+median_s 0.000271316
+q25_s 0.000141851
+q75_s 0.000301691
+iqr_s 0.000159839
 n_atoms None
 n_frames None
 cell missing
@@ -92,22 +92,22 @@ reason ok
 arm readcon_py
 op write
 case survey-convel
-rss_kib 332
+rss_kib 268
 massif_heap_bytes None
-{"samples": [0.00011590299982344732, 0.000593700000536046, 0.0005596259998128517, 0.0006182259994602646, 0.0005772920003437321, 8.094400072877761e-05], "n": 6, "median_s": 0.0005684590000782919, "q25_s": 0.0002268337498207984, "q75_s": 0.0005895980004879675, "iqr_s": 0.0003627642506671691, "arm": "readcon_py", "op": "write", "case": "survey-convel", "correct": true, "reason": "ok", "rss_kib": 332, "massif_heap_bytes": null}
+{"samples": [0.0005049760002293624, 0.00010289800047758035, 0.00025871100115182344, 8.856499880494084e-05, 0.0002839210010279203, 0.00030761400012124795], "n": 6, "median_s": 0.00027131600108987186, "q25_s": 0.00014185125064614112, "q75_s": 0.00030169075034791604, "iqr_s": 0.0001598394997017749, "arm": "readcon_py", "op": "write", "case": "survey-convel", "correct": true, "reason": "ok", "rss_kib": 268, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 0.000078110
-sample 0.000235012
-sample 0.000444726
-sample 0.000231899
-sample 0.000277090
-sample 0.000297482
-median_s 0.000256051
-q25_s 0.000232677
-q75_s 0.000292384
-iqr_s 0.000059707
+sample 0.000634181
+sample 0.000505905
+sample 0.000583062
+sample 0.000199799
+sample 0.000202154
+sample 0.000204167
+median_s 0.000355036
+q25_s 0.000202657
+q75_s 0.000563773
+iqr_s 0.000361115
 n_atoms None
 n_frames None
 cell missing
@@ -120,25 +120,25 @@ reason ok
 arm readcon_rust
 op write
 case survey-convel
-rss_kib 216
+rss_kib 212
 massif_heap_bytes None
-{"samples": [7.811e-05, 0.000235012, 0.000444726, 0.000231899, 0.00027709, 0.000297482], "n": 6, "median_s": 0.000256051, "q25_s": 0.00023267725, "q75_s": 0.000292384, "iqr_s": 5.970675000000001e-05, "arm": "readcon_rust", "op": "write", "case": "survey-convel", "correct": true, "reason": "ok", "rss_kib": 216, "massif_heap_bytes": null}
+{"samples": [0.000634181, 0.000505905, 0.000583062, 0.000199799, 0.000202154, 0.000204167], "n": 6, "median_s": 0.000355036, "q25_s": 0.00020265725, "q75_s": 0.00056377275, "iqr_s": 0.00036111549999999997, "arm": "readcon_rust", "op": "write", "case": "survey-convel", "correct": true, "reason": "ok", "rss_kib": 212, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "TypeError: category must be a Warning subclass, not 'FixCartesian'", "arm": "ase_eon", "op": "write", "case": "survey-convel", "rss_kib": null, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "survey-convel", "rss_kib": null, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "survey-convel", "rss_kib": null, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 3.237964575
-sample 3.067671508
-sample 3.254633060
-sample 3.314985807
-sample 3.243836054
-sample 3.157966289
-median_s 3.240900314
-q25_s 3.177965860
-q75_s 3.251933808
-iqr_s 0.073967948
+sample 0.560653186
+sample 0.580671498
+sample 0.563065793
+sample 0.577769867
+sample 0.559447018
+sample 0.579452627
+median_s 0.570417830
+q25_s 0.561256338
+q75_s 0.579031937
+iqr_s 0.017775599
 n_atoms None
 n_frames None
 cell missing
@@ -151,22 +151,22 @@ reason ok
 arm readcon_py
 op write
 case frames-con
-rss_kib 2093316
-massif_heap_bytes 756106740
-{"samples": [3.2379645749997508, 3.0676715079989663, 3.2546330599998328, 3.314985807000994, 3.243836053999985, 3.157966288999887], "n": 6, "median_s": 3.240900314499868, "q25_s": 3.177965860499853, "q75_s": 3.251933808499871, "iqr_s": 0.07396794800001771, "arm": "readcon_py", "op": "write", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": 2093316, "massif_heap_bytes": 756106740}
+rss_kib 268
+massif_heap_bytes 26657
+{"samples": [0.5606531859993993, 0.580671498000811, 0.5630657929996232, 0.5777698669990059, 0.5594470180003555, 0.579452627000137], "n": 6, "median_s": 0.5704178299993146, "q25_s": 0.5612563377494553, "q75_s": 0.5790319369998542, "iqr_s": 0.017775599250398955, "arm": "readcon_py", "op": "write", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": 268, "massif_heap_bytes": 26657}
 repeat 6
 serial 1
 quantile type-7
-sample 0.575429346
-sample 0.544927499
-sample 0.527635001
-sample 0.528627966
-sample 0.522007362
-sample 0.520676670
-median_s 0.528131483
-q25_s 0.523414272
-q75_s 0.540852616
-iqr_s 0.017438344
+sample 0.530143065
+sample 0.539863854
+sample 0.525575956
+sample 0.541785346
+sample 0.527860041
+sample 0.536899635
+median_s 0.533521350
+q25_s 0.528430797
+q75_s 0.539122799
+iqr_s 0.010692002
 n_atoms None
 n_frames None
 cell missing
@@ -179,22 +179,22 @@ reason ok
 arm readcon_rust
 op write
 case frames-con
-rss_kib 412
+rss_kib 348
 massif_heap_bytes 24576
-{"samples": [0.575429346, 0.544927499, 0.527635001, 0.528627966, 0.522007362, 0.52067667], "n": 6, "median_s": 0.5281314834999999, "q25_s": 0.52341427175, "q75_s": 0.54085261575, "iqr_s": 0.017438343999999995, "arm": "readcon_rust", "op": "write", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": 412, "massif_heap_bytes": 24576}
+{"samples": [0.530143065, 0.539863854, 0.525575956, 0.541785346, 0.527860041, 0.536899635], "n": 6, "median_s": 0.53352135, "q25_s": 0.528430797, "q75_s": 0.5391227992500001, "iqr_s": 0.01069200225000011, "arm": "readcon_rust", "op": "write", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": 348, "massif_heap_bytes": 24576}
 repeat 6
 serial 1
 quantile type-7
-sample 15.094627912
-sample 14.572885975
-sample 14.469190360
-sample 14.641641764
-sample 14.999738273
-sample 14.719590297
-median_s 14.680616030
-q25_s 14.590074922
-q75_s 14.929701279
-iqr_s 0.339626357
+sample 14.861904483
+sample 14.825206338
+sample 14.147627163
+sample 14.177244479
+sample 13.923424469
+sample 14.089883874
+median_s 14.162435821
+q25_s 14.104319696
+q75_s 14.663215873
+iqr_s 0.558896177
 n_atoms None
 n_frames None
 cell missing
@@ -207,24 +207,24 @@ reason wrote
 arm ase_eon
 op write
 case frames-con
-rss_kib 6552
-massif_heap_bytes 30375
-{"samples": [15.09462791199985, 14.572885975001554, 14.46919035999963, 14.64164176399936, 14.99973827299982, 14.71959029699974], "n": 6, "median_s": 14.68061603049955, "q25_s": 14.590074922251006, "q75_s": 14.9297012789998, "iqr_s": 0.33962635674879493, "arm": "ase_eon", "op": "write", "case": "frames-con", "correct": true, "reason": "wrote", "rss_kib": 6552, "massif_heap_bytes": 30375}
+rss_kib 6548
+massif_heap_bytes 27723
+{"samples": [14.861904482999307, 14.825206338000498, 14.147627162999925, 14.177244479000365, 13.923424468999656, 14.089883874001316], "n": 6, "median_s": 14.162435821000145, "q25_s": 14.104319696250968, "q75_s": 14.663215873250465, "iqr_s": 0.5588961769994967, "arm": "ase_eon", "op": "write", "case": "frames-con", "correct": true, "reason": "wrote", "rss_kib": 6548, "massif_heap_bytes": 27723}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "frames-con", "rss_kib": null, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "frames-con", "rss_kib": null, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 5.227095254
-sample 4.893614002
-sample 4.656892688
-sample 5.220942514
-sample 4.936688453
-sample 6.037820241
-median_s 5.078815483
-q25_s 4.904382615
-q75_s 5.225557069
-iqr_s 0.321174454
+sample 1.138454270
+sample 1.137144646
+sample 1.111961028
+sample 1.102284990
+sample 1.106665450
+sample 1.119119513
+median_s 1.115540271
+q25_s 1.107989345
+q75_s 1.132638363
+iqr_s 0.024649018
 n_atoms None
 n_frames None
 cell missing
@@ -237,22 +237,22 @@ reason ok
 arm readcon_py
 op write
 case frames-convel
-rss_kib 2888356
-massif_heap_bytes 1508698886
-{"samples": [5.227095253998414, 4.893614002001414, 4.65689268800088, 5.220942513999034, 4.936688452999078, 6.037820240999281], "n": 6, "median_s": 5.078815483499056, "q25_s": 4.90438261475083, "q75_s": 5.225557068998569, "iqr_s": 0.32117445424773905, "arm": "readcon_py", "op": "write", "case": "frames-convel", "correct": true, "reason": "ok", "rss_kib": 2888356, "massif_heap_bytes": 1508698886}
+rss_kib 268
+massif_heap_bytes 33358
+{"samples": [1.1384542699997837, 1.137144645999797, 1.1119610280002235, 1.1022849900000438, 1.1066654500009463, 1.1191195130013512], "n": 6, "median_s": 1.1155402705007873, "q25_s": 1.1079893445007656, "q75_s": 1.1326383627501855, "iqr_s": 0.024649018249419896, "arm": "readcon_py", "op": "write", "case": "frames-convel", "correct": true, "reason": "ok", "rss_kib": 268, "massif_heap_bytes": 33358}
 repeat 6
 serial 1
 quantile type-7
-sample 0.986924450
-sample 1.316435755
-sample 0.999865848
-sample 0.970038317
-sample 1.288036549
-sample 1.095025854
-median_s 1.047445851
-q25_s 0.990159799
-q75_s 1.239783875
-iqr_s 0.249624076
+sample 0.923036388
+sample 0.937205123
+sample 0.911980636
+sample 0.938340325
+sample 0.892972982
+sample 0.929355033
+median_s 0.926195711
+q25_s 0.914744574
+q75_s 0.935242601
+iqr_s 0.020498027
 n_atoms None
 n_frames None
 cell missing
@@ -265,9 +265,9 @@ reason ok
 arm readcon_rust
 op write
 case frames-convel
-rss_kib 408
+rss_kib 344
 massif_heap_bytes 0
-{"samples": [0.98692445, 1.316435755, 0.999865848, 0.970038317, 1.288036549, 1.095025854], "n": 6, "median_s": 1.047445851, "q25_s": 0.9901597995, "q75_s": 1.2397838752500001, "iqr_s": 0.24962407575000012, "arm": "readcon_rust", "op": "write", "case": "frames-convel", "correct": true, "reason": "ok", "rss_kib": 408, "massif_heap_bytes": 0}
+{"samples": [0.923036388, 0.937205123, 0.911980636, 0.938340325, 0.892972982, 0.929355033], "n": 6, "median_s": 0.9261957105, "q25_s": 0.914744574, "q75_s": 0.9352426005000001, "iqr_s": 0.0204980265000001, "arm": "readcon_rust", "op": "write", "case": "frames-convel", "correct": true, "reason": "ok", "rss_kib": 344, "massif_heap_bytes": 0}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "load ValueError: could not convert string to float: 'Velocities'", "arm": "ase_eon", "op": "write", "case": "frames-convel", "rss_kib": null, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "frames-convel", "rss_kib": null, "massif_heap_bytes": null}
 {"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "frames-convel", "rss_kib": null, "massif_heap_bytes": null}
