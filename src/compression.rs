@@ -396,6 +396,7 @@ pub fn zstd_writer(
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::*;
     use std::io::{Read, Write};
@@ -637,7 +638,6 @@ mod tests {
     }
 
     #[test]
-    #[test]
     fn extension_and_byte_readers_cover_plain_and_gzip() {
         assert_eq!(
             detect_compression_from_extension(Path::new("a.gz")),
@@ -666,6 +666,42 @@ mod tests {
         assert_eq!(read_file_bytes(&gz_path).unwrap(), b"gzip-text");
         let contents = read_file_contents(&plain).unwrap();
         assert_eq!(contents.as_str().unwrap(), "plain-text");
+    }
+
+    #[test]
+    fn short_magic_and_parallel_advice_are_detected() {
+        assert_eq!(detect_compression(b""), Compression::None);
+        assert_eq!(detect_compression(&[0x1f]), Compression::None);
+        assert_eq!(detect_compression(&[0x1f, 0x00, 0x00]), Compression::None);
+        assert_eq!(detect_compression(&[0x1f, 0x8b]), Compression::Gzip);
+        assert_eq!(
+            detect_compression(&[0x28, 0xb5, 0x2f, 0xfd]),
+            Compression::Zstd
+        );
+        assert_eq!(
+            detect_compression(&[0x50, 0x2a, 0x4d, 0x18]),
+            Compression::Zstd
+        );
+        assert_eq!(detect_compression(&[0x28, 0xb5, 0x2f]), Compression::None);
+        let dir = tempfile::tempdir().expect("tempdir");
+        let small = dir.path().join("small.txt");
+        std::fs::write(&small, b"abc").expect("write");
+        let mut text = ForwardText::open(&small, true).expect("open");
+        text.release_before(10).expect("release owned");
+        let wide = dir.path().join("wide.bin");
+        std::fs::write(&wide, vec![b'a'; 200_000]).expect("write");
+        let file = std::fs::File::open(&wide).expect("open");
+        let map = unsafe { memmap2::Mmap::map(&file).expect("map") };
+        advise_dontneed_parallel(&map, 0);
+        advise_dontneed_parallel(&map, 1);
+        advise_dontneed_parallel(&map, 4);
+        let empty_path = dir.path().join("empty.bin");
+        std::fs::write(&empty_path, b"").expect("write");
+        if let Ok(empty_file) = std::fs::File::open(&empty_path) {
+            if let Ok(empty_map) = unsafe { memmap2::Mmap::map(&empty_file) } {
+                advise_dontneed_parallel(&empty_map, 2);
+            }
+        }
     }
 
     #[test]
