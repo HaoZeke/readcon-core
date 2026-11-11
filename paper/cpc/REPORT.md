@@ -41,7 +41,7 @@ static library. The script builds the Python extension with
 
 ## Run after the cold-arm tests
 
-We list the files that remain under 98 percent on lines or branches:
+Files still under 98 percent on lines or branches:
 
 | File | Lines | Branches |
 | --- | --- | --- |
@@ -65,7 +65,7 @@ Every other source file is at or above 98 percent on both bars.
 
 ## Run after the writer and unit tests
 
-We list the files that remain under 98 percent on lines or branches:
+Files still under 98 percent on lines or branches:
 
 | File | Lines | Branches |
 | --- | --- | --- |
@@ -83,7 +83,7 @@ Nineteen source files are at or above 98 percent on both bars.
 
 ## Run after the cold wide-file stream
 
-We list the files that remain under 98 percent on lines or branches:
+Files still under 98 percent on lines or branches:
 
 | File | Lines | Branches |
 | --- | --- | --- |
@@ -177,7 +177,6 @@ conbin.rs branches are 205/212 (96.70 percent).
 
 The run 84 export was replaced in place by the run 85 export, so the
 branch lists that follow are the open regions recorded from each export.
-We read those regions from the two exports.
 Run 84 left four open regions: 594, 690, 2811 and 3213. Run 85 leaves
 those and four more. The four that went from covered to open are the
 temporary-prefix sides. `conbin_namespace_child` used to call

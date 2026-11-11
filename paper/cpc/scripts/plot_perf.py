@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""The head-to-head timing figure of the CPC manuscript.
+"""The timing figure checked into the manuscript.
 
-timing.pdf has three panels, each from a deposited record:
+The file ``timing.pdf`` is one panel of six bars. Each bar is a median
+wall time on a logarithmic scale. The arms are ``v0.18.0 read_con``,
+``read_positions``, ``baseline read_con``, ``C++ read_all_frames``,
+``ASE get_positions`` and ``eOn loadcons``.
 
-* top and middle, one-thread Python medians and quartiles of ``reads.json``
-* bottom, one-thread all-frames medians and quartiles of the native-reader campaign
-
-The face is Latin Modern Roman. Bars are Okabe-Ito blue. A time axis that
-spans more than a factor of ten is logarithmic. The canvas width is the
-double-column measure, 17.8 cm.
+The face is Latin Modern Roman. Bars are Okabe-Ito blue. The canvas
+width is the double-column measure, 17.8 cm.
 """
 
 from __future__ import annotations
@@ -41,7 +40,7 @@ FONT_CANDIDATES = (
     / "lmroman10-regular.otf",
 )
 
-# Reader key, axis label. The key is the name in the record.
+# Reader key and the label drawn beside it. The key is the name in the record.
 FULL_FIELDS = (
     ("readcon", "readcon-core, CON 3.1"),
     ("ase_extxyz", "ASE, extended XYZ"),
@@ -109,7 +108,7 @@ def _style(ax, xlabel: str) -> None:
 def _bars(
     ax, labels, medians, lows, highs, xlabel: str, log: bool | None = None
 ) -> None:
-    """Bars of the medians, with whiskers from the first quartile to the third."""
+    """Bars of the medians, with an error span from the low value to the high value."""
     medians = np.asarray(medians, dtype=float)
     lows = np.asarray(lows, dtype=float)
     highs = np.asarray(highs, dtype=float)
@@ -136,7 +135,7 @@ def _bars(
 
 
 def python_cells():
-    """The median and quartiles of each one-thread Python cell of reads.json."""
+    """The median, low value and high value of each one-thread Python cell of reads.json."""
     cells = json.loads((RESULTS / "reads.json").read_text())["cells"]
 
     def at(reader: str):
