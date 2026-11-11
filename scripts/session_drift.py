@@ -141,7 +141,7 @@ def instruction_count(path: Path) -> int:
 
 
 def status_ok_blocks(path: Path) -> int:
-    if path.name.endswith(".tar.xz"):
+    if path.name.endswith((".tar", ".tar.xz")):
         with tarfile.open(path) as archive:
             member = next(
                 item for item in archive.getmembers() if item.name.endswith("run.log")
