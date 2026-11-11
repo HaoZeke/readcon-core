@@ -449,6 +449,32 @@ The all-frames tip arm takes \rcTipMedian~s on the coordinate file.
 The mapped binary coordinate file reads those frames in \rcConbinMedian~s.
 The chemfiles row copies each frame out of the trajectory iterator, and that copy matches 100000 of 100000 frames.
 
+The extended XYZ head-to-head of Section~\ref{sec:h2h} is a separate run from that exchange.
+Table~\ref{tab:extxyz-h2h} is the two large reads.
+Table~\ref{tab:extxyz-small} is the median of the six reads on the four smaller files, in the same order: 10 atoms and 1 frame, 10 atoms and 8 frames, 1000 atoms and 1 frame, 100 atoms and 100 frames.
+extxyz-ng 0.0.2 has no median on the last two of those files.
+On the reads it finishes, the 10-atom medians are \(7.83\times 10^{-5}\)~s and \(4.34\times 10^{-4}\)~s.
+The large writes, where the library has a writer, take 3.891~s and 4.358~s for ASE \texttt{extxyz}, 0.959~s and 1.488~s for ASE \texttt{cextxyz}, and 0.877~s and 1.196~s for extxyz 0.4.6, on the million-atom file and then the 10000-frame file.
+Fresh-process high-water marks for those writes are 652.3 and 214.7~MiB, 418.0 and 157.8~MiB, and 387.0 and 133.8~MiB.
+extxyz-ng 0.0.2 writes the single 10-atom frame and cannot reread the 8-frame file it writes.
+
+\begin{table}[tbp] \centering \scriptsize
+\caption{Extended XYZ read medians, in seconds, on the four smaller files. Six repeats after one warmup, type 7 median. A dash means the reader returned an error.}
+\label{tab:extxyz-small}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Reader & 10\(\times\)1 & 10\(\times\)8 & 1000\(\times\)1 & 100\(\times\)100 \\
+\midrule
+readcon Rust & \(2.83\times 10^{-6}\) & \(1.14\times 10^{-5}\) & \(6.46\times 10^{-5}\) & \(6.41\times 10^{-4}\) \\
+readcon Python & \(5.89\times 10^{-6}\) & \(1.43\times 10^{-5}\) & \(6.59\times 10^{-5}\) & \(6.34\times 10^{-4}\) \\
+ASE \texttt{extxyz} & \(3.15\times 10^{-4}\) & \(1.84\times 10^{-3}\) & \(1.95\times 10^{-3}\) & 0.0341 \\
+ASE \texttt{cextxyz} & \(1.74\times 10^{-4}\) & \(6.43\times 10^{-4}\) & \(3.59\times 10^{-4}\) & 0.0103 \\
+\texttt{extxyz} 0.4.6 & \(8.16\times 10^{-5}\) & \(3.90\times 10^{-4}\) & \(2.88\times 10^{-4}\) & 0.00687 \\
+extxyz-ng 0.0.2 & \(7.83\times 10^{-5}\) & \(4.34\times 10^{-4}\) & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \input{figures/generated/format_context}
 
 \section{Measured versions}\label{sec:supp-versions} The survey of Table~\ref{tab:survey} ran ASE 3.29.0, chemfiles 0.10.4, MDAnalysis 2.10.0, h5py 3.16.0, OVITO 3.16.1 and Open Babel 3.2.1.

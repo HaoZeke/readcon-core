@@ -1023,6 +1023,18 @@ It leaves open whether a comment line that is not key-value pairs makes
 a file plain XYZ or an error, and on such a file the C parser of
 libAtoms departs from the default periodicity while its Python parser
 fails.
+From extxyz 0.4.2 the C reader defaults to a whitespace split, with
+\texttt{use\_regex} false, and extxyz 0.4.6 keeps that default on
+\texttt{read\_dicts} \cite{kermodeExtxyz0422026}.
+The package ase-extxyz 0.1.2 registers that C parser with ASE as the
+format \texttt{cextxyz} \cite{kermodeAseExtxyz0122026}.
+The ASE extended XYZ arm in the stored campaigns calls
+\texttt{format='extxyz'}, the reader shipped in ASE 3.29.0, not
+\texttt{cextxyz}.
+extxyz-ng 0.0.2 is a Rust reader with Python bindings
+\cite{yuExtxyzNg0022026}.
+Section~\ref{sec:h2h} times these readers, and the writers that provide
+a write call, on one set of files.
 
 Table~\ref{tab:drift} is in the supplement.
 
@@ -1388,6 +1400,73 @@ That panel is separate from the con table.
 A row passes only when the atom count, the cell, and the coordinates
 match.
 NumPy has no cell, so that row fails the cell check.
+
+The extended XYZ head-to-head uses one copper grid for every arm.
+The files are 10 atoms in 1 frame and in 8 frames, 1000 atoms in 1
+frame, 100 atoms in 100 frames, \(10^{6}\) atoms in 1 frame, and 100
+atoms in 10000 frames.
+The two 10-atom files are in \path{bench/h2h/fixtures}.
+The others are written by \path{bench/h2h/extxyz_h2h.py} and are not
+committed.
+Each arm is one Snakemake rule and one asv class.
+The run is one process on \texttt{taskset -c 0}, with one thread.
+One warmup call is excluded.
+The six repeats are serial.
+A time in Table~\ref{tab:extxyz-h2h} is the type 7 median, and the
+spread is the type 7 interquartile range.
+The host line in \path{bench/h2h/extxyz-results.json} is Intel Xeon
+Processor, x86\_64, 8 CPUs, 49342816 KiB.
+The build is readcon 0.18.1, rustc 1.91.0, Python 3.12.3, NumPy 2.2.6,
+ASE 3.29.0, ase-extxyz 0.1.2, extxyz 0.4.6 and extxyz-ng 0.0.2.
+Before the clock, every arm is compared with the grid.
+Positions, masses and the cell lengths and angles agree for readcon.
+The largest absolute difference on those fields is 0.
+readcon does not return the species column or the forces column.
+ASE \texttt{extxyz}, ASE \texttt{cextxyz} and extxyz 0.4.6 return
+species, positions, masses, forces and the cell, and those fields
+agree.
+extxyz-ng 0.0.2 agrees on the 10-atom files.
+It reads a 230-atom frame of 8168 bytes and rejects a 231-atom frame
+of 8203 bytes, so it does not read the medium or large files.
+On the million-atom file ASE \texttt{extxyz} takes 1.812~s, ASE
+\texttt{cextxyz} takes 0.283~s, extxyz 0.4.6 takes 0.251~s, and the
+readcon Rust reader takes 0.0787~s.
+The massif heap peaks on that file are 210.5, 188.1, 152.8 and
+92.0~MiB.
+On the 10000-frame file the same four medians are 4.338, 0.930, 0.830
+and 0.0806~s.
+readcon has no extended XYZ writer.
+The writers that do, ASE \texttt{extxyz}, ASE \texttt{cextxyz} and
+extxyz 0.4.6, write every file and the reread matches.
+extxyz-ng 0.0.2 writes the 10-atom frame in \(7.73\times 10^{-5}\)~s.
+Its 8-frame write finishes, and the file is then 11528 bytes, which
+that reader rejects.
+\texttt{write\_frames} rejects a Python iterator of frames, so the
+timed write calls \texttt{write\_frame} once per frame.
+The record is \path{bench/h2h/extxyz-results.json}.
+Raw repeats are the CSV files under \path{bench/h2h/extxyz-logs}.
+
+\begin{table}[tbp] \centering \footnotesize
+\caption{Extended XYZ reads. Six repeats after one warmup, type 7 median and interquartile range. RSS is the fresh-process high-water mark. Massif is the peak \texttt{mem\_heap\_B} from Valgrind 3.22.0. extxyz-ng 0.0.2 does not read these two files.}
+\label{tab:extxyz-h2h}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Reader & File & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
+\midrule
+readcon Rust & \(10^{6}\) atoms & 0.0787 & 0.00571 & 84.2 & 92.0 \\
+readcon Rust & 10000 frames & 0.0806 & 0.00778 & 83.5 & 91.2 \\
+readcon Python & \(10^{6}\) atoms & 0.0779 & 0.00205 & 115.0 & 99.1 \\
+readcon Python & 10000 frames & 0.0817 & 0.00209 & 114.3 & 98.3 \\
+ASE \texttt{extxyz} & \(10^{6}\) atoms & 1.812 & 0.0396 & 653.9 & 210.5 \\
+ASE \texttt{extxyz} & 10000 frames & 4.338 & 0.378 & 319.6 & 218.0 \\
+ASE \texttt{cextxyz} & \(10^{6}\) atoms & 0.283 & 0.0169 & 248.7 & 188.1 \\
+ASE \texttt{cextxyz} & 10000 frames & 0.930 & 0.0237 & 236.7 & 154.2 \\
+\texttt{extxyz} 0.4.6 & \(10^{6}\) atoms & 0.251 & 0.0151 & 225.7 & 152.8 \\
+\texttt{extxyz} 0.4.6 & 10000 frames & 0.830 & 0.0280 & 249.9 & 156.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 The times for XYZ, HDF5 and the mapped binary coordinate file are
 context for choosing a format, in Section~\ref*{sec:supp-timing}.
 h5py reads the HDF5 dataset at 1 thread in \rcHdfMedian~s.
