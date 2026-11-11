@@ -5688,9 +5688,13 @@ mod tests {
         assert!(!arr.is_null() && n >= 1);
         let first = unsafe { *arr };
         // free only outer array; first frame remains owned
-        let rest: Vec<*mut RKRConFrame> = (1..n).map(|i| unsafe { *arr.add(i) }).collect();
+        let mut rest: Vec<*mut RKRConFrame> = (1..n).map(|i| unsafe { *arr.add(i) }).collect();
+        let extra = test_frame_handle();
+        rest.push(extra);
+        rest.push(std::ptr::null_mut());
         unsafe { free_rkr_frame_ptr_array(arr, n) };
         assert!(unsafe { rkr_frame_atom_count(first) } >= 1);
+        assert!(unsafe { rkr_frame_atom_count(extra) } >= 1);
         unsafe { free_rkr_frame(first) };
         for h in rest {
             if !h.is_null() {

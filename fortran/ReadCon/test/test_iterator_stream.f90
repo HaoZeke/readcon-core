@@ -1,5 +1,5 @@
 program test_iterator_stream
-  use, intrinsic :: iso_c_binding, only: c_size_t, c_double, c_ptr, c_null_ptr
+  use, intrinsic :: iso_c_binding, only: c_size_t, c_double, c_ptr, c_null_ptr, c_char, c_null_char, c_associated
   use, intrinsic :: iso_fortran_env, only: real64, int64
   use readcon
   implicit none
@@ -12,6 +12,7 @@ program test_iterator_stream
   call assert_remaining_procedures()
   call assert_failure_returns()
   call assert_every_public_reader()
+  call assert_missing_read_and_handle_array()
 contains
 
   subroutine assert_missing_file()
@@ -539,6 +540,64 @@ contains
     z = symbol_to_z("Cu")
     if (z /= 29_int64) error stop "public symbol"
     call nth%free()
+    call built%free()
+    call builder%free()
+  end subroutine
+
+  subroutine assert_missing_read_and_handle_array()
+    interface
+      function rkr_read_all_frames(fn, nout) bind(C, name="rkr_read_all_frames")
+        import :: c_char, c_ptr, c_size_t
+        character(kind=c_char), intent(in) :: fn(*)
+        integer(c_size_t), intent(out) :: nout
+        type(c_ptr) :: rkr_read_all_frames
+      end function
+    end interface
+    type(builder_t) :: builder
+    type(writer_t) :: writer
+    type(frame_t) :: built
+    type(frame_t), allocatable :: empty(:), owned(:)
+    type(c_ptr) :: arr
+    integer(c_size_t) :: nframes
+    integer :: status, i, n, nwritten
+    integer(int64) :: indices(4)
+    real(real64) :: cell(3), angles(3)
+    character(len=*), parameter :: path = "handle-array.con"
+    character(kind=c_char), allocatable :: cpath(:)
+    cell = [4.0_real64, 5.0_real64, 6.0_real64]
+    angles = [90.0_real64, 90.0_real64, 90.0_real64]
+    empty = read_all_frames("no-such-readcon-all.con")
+    if (size(empty) /= 0) error stop "missing read_all_frames"
+    builder = new_builder(cell, angles)
+    status = builder%add_atom("Cu", 0.1_real64, 0.2_real64, 0.3_real64, &
+         1_int64, 63.546_real64, .false., .false., .false.)
+    if (status /= 0) error stop "handle array add"
+    built = builder%build()
+    if (.not. built%valid()) error stop "handle array build"
+    status = built%select_primary("name Cu", indices, nwritten)
+    if (status == 0) then
+      if (nwritten < 1) error stop "select wrote no indices"
+    else
+      if (nwritten /= 0) error stop "failed select must write nothing"
+    end if
+    writer = open_writer(path)
+    if (.not. writer%valid()) error stop "handle array writer"
+    status = writer%extend_one(built)
+    if (status /= 0) error stop "handle array extend"
+    call writer%free()
+    n = len_trim(path)
+    allocate(cpath(n + 1))
+    do i = 1, n
+      cpath(i) = path(i:i)
+    end do
+    cpath(n + 1) = c_null_char
+    arr = rkr_read_all_frames(cpath, nframes)
+    if (.not. c_associated(arr) .or. nframes /= 1_c_size_t) error stop "c read"
+    owned = frames_from_handle_array(arr, nframes)
+    if (size(owned) /= 1) error stop "owned size"
+    if (.not. owned(1)%valid()) error stop "owned frame"
+    if (int(owned(1)%atom_count()) /= 1) error stop "owned atoms"
+    call owned(1)%free()
     call built%free()
     call builder%free()
   end subroutine

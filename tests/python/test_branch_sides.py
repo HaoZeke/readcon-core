@@ -125,6 +125,14 @@ def test_atom_datum_optional_fields_round_trip(tmp_path: Path):
     assert loaded[0][0].symbol == "Cu"
 
 
+def test_comm_without_mpi_is_not_implemented(tmp_path: Path):
+    frame = readcon.ConFrame.from_ase(_atoms())
+    path = tmp_path / "mpi-off.con"
+    readcon.write_con(str(path), [frame], compression="none")
+    with pytest.raises(NotImplementedError, match="mpi"):
+        readcon.read_all_frames(str(path), comm=object())
+
+
 def test_bad_index_and_empty_metadata():
     frame = readcon.ConFrame.from_ase(_atoms())
     with pytest.raises(IndexError):
