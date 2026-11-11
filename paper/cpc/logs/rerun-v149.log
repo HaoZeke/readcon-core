@@ -12,14 +12,14 @@ os Ubuntu 24.04.5 LTS
 hypervisor_vendor KVM
 virtual_machine yes
 tip v14.9
-commit 4d5df12faf7ae79a2604580a032609701901c27e
+commit 4631d731b0e328bd000aaf17bcb9cfef22a34e44
 workload frames=500 atoms=32 repeats=6 serial read_all_frames
-session_start 2026-11-11T03:54:07Z
+session_start 2026-11-11T04:02:57Z
 command /tmp/rc-time/target/release/rc-time /tmp/frames-500.con 6
-sample arm=readcon_tip repeat=0 frames=500 seconds=3.458366000e-3
-sample arm=readcon_tip repeat=1 frames=500 seconds=2.332786000e-3
-sample arm=readcon_tip repeat=2 frames=500 seconds=2.018950000e-3
-sample arm=readcon_tip repeat=3 frames=500 seconds=1.981126000e-3
-sample arm=readcon_tip repeat=4 frames=500 seconds=1.990430000e-3
-sample arm=readcon_tip repeat=5 frames=500 seconds=2.092031000e-3
-session_end 2026-11-11T03:54:07Z
+sample arm=readcon_tip repeat=0 frames=500 seconds=3.298497000e-3
+sample arm=readcon_tip repeat=1 frames=500 seconds=2.225043000e-3
+sample arm=readcon_tip repeat=2 frames=500 seconds=1.667810000e-3
+sample arm=readcon_tip repeat=3 frames=500 seconds=1.629888000e-3
+sample arm=readcon_tip repeat=4 frames=500 seconds=1.697438000e-3
+sample arm=readcon_tip repeat=5 frames=500 seconds=1.609796000e-3
+session_end 2026-11-11T04:02:57Z

@@ -34,5 +34,5 @@ CON read ASE over readcon ratio of medians	4.4791	paper/cpc/logs/h2h-r233-result
 CON write ASE cu1000_f1k median_s	2.4583374865032965	paper/cpc/logs/h2h-r233-results.json	11723
 CON write readcon_py cu1000_f1k median_s	0.7167300539949792	paper/cpc/logs/h2h-r233-results.json	11708
 CON write ASE over readcon ratio of medians	3.4299	paper/cpc/logs/h2h-r233-results.json	11723/11708
-rerun v14.9 read_all_frames median_s n=6 frames=500	0.002055490	paper/cpc/logs/rerun-v149.log	samples
+rerun v14.9 read_all_frames median_s n=6 frames=500	0.001682624	paper/cpc/logs/rerun-v149.log	samples
 rerun v14.7 read_all_frames median_s n=6 frames=500	0.002226751	paper/cpc/logs/rerun-v147.log	samples
