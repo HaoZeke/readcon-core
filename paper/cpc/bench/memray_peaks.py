@@ -59,7 +59,7 @@ def child(reader: str, threads: int, out: str) -> None:
 def capture(reader: str, threads: int):
     def run() -> dict:
         with tempfile.TemporaryDirectory() as tmp:
-            proc = subprocess.run(
+            proc = subprocess.Popen(
                 [
                     sys.executable,
                     __file__,
@@ -68,11 +68,14 @@ def capture(reader: str, threads: int):
                     str(threads),
                     str(Path(tmp) / "read.bin"),
                 ],
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                check=True,
             )
-        row = json.loads(proc.stdout.strip().splitlines()[-1])
+            stdout, stderr = proc.communicate()
+            if proc.returncode != 0:
+                raise SystemExit(stderr[-2000:])
+        row = json.loads(stdout.strip().splitlines()[-1])
         return interleave.stamp_draw(row, proc.pid)
 
     return run

@@ -384,9 +384,15 @@ CPP_RATIOS = (
 
 def printed_run(binary: Path, mode: str, path: Path):
     def run_once() -> dict:
-        proc = subprocess.run(
-            [str(binary), mode, str(path)], capture_output=True, text=True, check=False
+        proc = subprocess.Popen(
+            [str(binary), mode, str(path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
+        stdout, stderr = proc.communicate()
+        proc.stdout = stdout
+        proc.stderr = stderr
         if proc.returncode != 0:
             raise SystemExit(
                 f"{binary.name} {mode} {path.name} exited {proc.returncode}: {proc.stderr[-2000:]}"

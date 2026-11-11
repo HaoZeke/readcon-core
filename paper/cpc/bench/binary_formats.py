@@ -762,19 +762,20 @@ def check() -> None:
 
 def timed_run(driver: str, mode: str, threads: int, file: str):
     def run_once() -> dict:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             [str(BIN / driver), "time", mode, str(threads), str(PAYLOADS / file)],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            check=False,
         )
+        stdout, stderr = proc.communicate()
         if proc.returncode != 0:
             raise SystemExit(
-                f"{driver} time {mode} {file} exited {proc.returncode}: {proc.stderr[-2000:]}"
+                f"{driver} time {mode} {file} exited {proc.returncode}: {stderr[-2000:]}"
             )
         import interleave
 
-        return interleave.stamp_draw(summary(proc.stdout), proc.pid)
+        return interleave.stamp_draw(summary(stdout), proc.pid)
 
     return run_once
 
