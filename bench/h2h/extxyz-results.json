@@ -10,7 +10,7 @@
     "extxyz": "0.4.6",
     "extxyz-ng": "0.0.2",
     "readcon": "0.18.1",
-    "git": "ec9879000d9b9c7bd97c01752a2a7423b3cab299",
+    "git": "9a301b0cd66ae8d732c95ed3746af16c84664f5e",
     "pin": "taskset -c 0",
     "threads": 1,
     "repeats": 6,
