@@ -339,6 +339,22 @@ trajectory (DCD) format of CHARMM
 generation (TNG) format
 \cite{spangbergTrajectoryNgPortable2011,lundborgEfficientExtensibleFormat2014}
 store molecular dynamics output with neither a mask nor a velocity unit.
+GROMACS deprecates TNG and states that H5MD will replace it, and the
+release of 2026-01-19 writes an experimental H5MD trajectory from
+\texttt{mdrun} \cite{gromacsManual2026}.
+The file handle in that release writes positions, velocities, forces,
+the box, the step and the time, and it reads the group
+\texttt{/particles/system}.
+The H5MD specification it follows still defines no element for a
+per-component constraint.
+% TODO (head-to-head): GROMACS 2026.4, experimental H5MD from mdrun (trajectory type h5md).
+% Manual: https://manual.gromacs.org/2026.4/release-notes/2026/major/highlights.html
+% TNG deprecation text: https://manual.gromacs.org/2026.4/release-notes/2025/major/deprecated-functionality.html
+% Writer: gmx::H5md::writeNextFrame in the 2026.4 API docs, positions, velocities, forces, box, step and time, group /particles/system.
+% Matching settings: one system, the same atoms, cell and coordinates as the survey frame, velocities in the declared H5MD unit attribute, no per-component mask in the file.
+% Read the file with h5py against H5MD 1.1 and with readcon-core from the same geometry written as CON 3.1.
+% Compare the box and the coordinates directly, and the velocities after conversion to the eOn natural unit.
+% Do not score TNG as the trajectory this release writes.
 The ASE trajectory keeps every field in a layout that the Python code of
 ASE defines.
 POSCAR, the structure file of the Vienna Ab initio Simulation Package
