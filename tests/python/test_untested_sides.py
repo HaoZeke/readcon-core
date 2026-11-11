@@ -1,5 +1,8 @@
 """Sides the r2.30 table left at zero because no call built the value."""
 
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import ase
@@ -238,4 +241,273 @@ def test_ase_constraints_tags_and_missing_velocities():
     assert tagged[0].atom_id == 0
     atoms.set_velocities([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     quiet = readcon.ConFrame.from_ase(atoms)
+    assert quiet[0].symbol == "Cu"
+
+
+_F32 = """\
+user
+{"con_spec_version":2,"sections":["velocities","forces"],"storage_dtypes":{"positions":"float32","velocities":"float32","forces":"float32","masses":"float32"},"energy":-1.5}
+10.0 10.0 10.0
+90.0 90.0 90.0
+0 0
+1 0
+1
+1
+63.546
+Cu
+Coordinates of Component 1
+   0.250000    0.500000    0.750000 0    0
+Cu
+Velocities of Component 1
+   0.100000    0.000000    0.000000 0    0
+Cu
+Forces of Component 1
+   0.200000    0.000000    0.000000 0    0
+"""
+
+_ZERO = """\
+user
+{"con_spec_version":2}
+4.0 5.0 6.0
+90.0 90.0 90.0
+0 0
+0 0
+0
+"""
+
+
+def _with_storage(text: str) -> str:
+    needle = '{"con_spec_version":2,'
+    insert = (
+        '{"con_spec_version":2,"storage_dtypes":{"positions":"float32",'
+        '"velocities":"float32","forces":"float32","masses":"float32"},'
+    )
+    return text.replace(needle, insert, 1)
+
+
+def test_float32_storage_reads_back(tmp_path: Path):
+    source = Path(__file__).resolve().parents[2] / "resources" / "test" / "tiny_cuh2_vel_forces.con"
+    path = tmp_path / "f32.con"
+    path.write_text(_with_storage(source.read_text()))
+    frames = readcon.read_con(str(path))
+    assert len(frames) == 1
+    frame = frames[0]
+    assert abs(float(frame.xyz[0, 0]) - 0.6394) < 1e-4
+    assert frame.vel is not None
+    assert abs(float(frame.vel[0, 0]) - 0.001234) < 1e-5
+    assert frame.frc is not None
+    assert abs(float(frame.frc[0, 0]) - 0.123456) < 1e-5
+    eager, _phases = readcon.read_con_phases(str(path), build="eager")
+    assert len(eager) == 1
+
+
+def test_mixed_atom_counts_are_not_rectangular(tmp_path: Path):
+    two = tmp_path / "two.con"
+    one = tmp_path / "one.con"
+    readcon.write_con(str(two), [readcon.ConFrame.from_ase(_atoms())])
+    single = ase.Atoms("Cu", positions=[[0.0, 0.0, 0.0]], cell=[4.0, 5.0, 6.0], pbc=True)
+    readcon.write_con(str(one), [readcon.ConFrame.from_ase(single)])
+    mixed = tmp_path / "mixed.con"
+    mixed.write_text(two.read_text() + one.read_text())
+    eager, _phases = readcon.read_con_phases(str(mixed), build="eager")
+    assert len(eager) == 2
+    assert len(eager[0]) != len(eager[1])
+
+
+def test_null_metadata_energy_and_frame_index(tmp_path: Path):
+    source = Path(__file__).resolve().parents[2] / "resources" / "test" / "tiny_cuh2_vel_forces.con"
+    path = tmp_path / "null.con"
+    path.write_text(source.read_text().replace('"energy":-42.5', '"energy":null,"frame_index":null'))
+    frame = readcon.read_con(str(path))[0]
+    assert frame.energy is None
+    assert frame.frame_index is None
+    frame.metadata["time"] = None
+    assert frame.time is None
+
+
+def test_partial_magmom_is_not_written(tmp_path: Path):
+    frame = readcon.ConFrame.from_ase(_atoms())
+    frame[0].mx = 1.0
+    path = tmp_path / "mx.con"
+    readcon.write_con(str(path), [frame])
+    back = readcon.read_con(str(path))[0]
+    assert back[0].mx is None
+    frame[0].my = 2.0
+    readcon.write_con(str(path), [frame])
+    back = readcon.read_con(str(path))[0]
+    assert back[0].mz is None
+
+
+def test_more_workers_than_frames(tmp_path: Path):
+    path = _two_frames(tmp_path)
+    frames = readcon.read_con(str(path), n_threads=4)
+    assert len(frames) == 2
+    frames.touch_checksum()
+    del frames
+
+
+def test_empty_and_zero_atom_files_do_not_build_a_slab(tmp_path: Path):
+    empty = tmp_path / "empty.con"
+    empty.write_text("")
+    eager, _phases = readcon.read_con_phases(str(empty), build="eager")
+    assert len(eager) == 0
+    lazy = readcon.read_con(str(empty))
+    assert len(lazy) == 0
+    zero = tmp_path / "zero.con"
+    zero.write_text(_ZERO)
+    eager, _phases = readcon.read_con_phases(str(zero), build="eager")
+    assert len(eager) == 1
+    assert len(eager[0]) == 0
+
+
+def test_numpy_missing_keeps_the_parsed_frame(tmp_path: Path):
+    path = _two_frames(tmp_path)
+    script = tmp_path / "nonumpy.py"
+    script.write_text(
+        "import sys\n"
+        "sys.modules['numpy'] = None\n"
+        "import readcon\n"
+        f"frames = readcon.read_con({str(path)!r})\n"
+        "print('N', len(frames))\n"
+        "try:\n"
+        "    frames.touch_checksum()\n"
+        "    print('CHECKSUM ok')\n"
+        "except Exception as exc:\n"
+        "    print('CHECKSUM', type(exc).__name__)\n"
+        "print('OK')\n"
+    )
+    env = os.environ.copy()
+    proc = subprocess.run(
+        [sys.executable, str(script)],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "N 2" in proc.stdout
+    assert "CHECKSUM" in proc.stdout
+    assert "OK" in proc.stdout
+
+
+def test_projection_pbc_and_ase_edges():
+    atoms = _atoms()
+    frame = readcon.ConFrame.from_ase(atoms)
+    projection = frame.index_projection()
+    assert projection["pbc"] == (True, True, True)
+    frame[0].fx = 0.1
+    frame[0].fy = 0.0
+    frame[0].fz = 0.0
+    frame[0].fixed = [True, False, False]
+    copied = frame.to_ase()
+    assert copied.calc is not None
+    assert "energy" not in copied.info
+    assert copied.constraints
+
+
+def test_cell_overflow_and_degenerate_row():
+    huge = ase.Atoms(
+        "Cu",
+        positions=[[0.0, 0.0, 0.0]],
+        cell=[[1e200, 0.0, 0.0], [0.0, 1e200, 0.0], [0.0, 0.0, 1e200]],
+        pbc=True,
+    )
+    with pytest.raises(ValueError, match="finite"):
+        readcon.ConFrame.from_ase(huge)
+    flat = ase.Atoms(
+        "Cu",
+        positions=[[0.0, 0.0, 0.0]],
+        cell=[[0.0, 0.0, 0.0], [0.0, 5.0, 0.0], [0.0, 0.0, 6.0]],
+        pbc=False,
+    )
+    frame = readcon.ConFrame.from_ase(flat)
+    assert len(frame) == 1
+    assert frame[0].symbol == "Cu"
+
+
+class _List:
+    def __init__(self, values):
+        self.values = values
+
+    def tolist(self):
+        return self.values
+
+
+class _Duck:
+    def __init__(self, index, mask=None, tags=None, velocities=None, forces=None):
+        self._index = index
+        self._mask = mask
+        self._tags = tags
+        self._velocities = velocities
+        self._forces = forces
+
+    def get_chemical_symbols(self):
+        return ["Cu"]
+
+    def get_positions(self):
+        return _List([[0.0, 0.0, 0.0]])
+
+    def get_cell(self):
+        return _Cell()
+
+    @property
+    def pbc(self):
+        return _List([True, True, True])
+
+    @property
+    def constraints(self):
+        if self._mask is None:
+            return [_FixAtoms(self._index)]
+        return [_FixCartesian(self._index, self._mask)]
+
+    def get_tags(self):
+        if self._tags is None:
+            raise AttributeError("tags")
+        return self._tags
+
+    def get_velocities(self):
+        return self._velocities
+
+    def get_forces(self):
+        return self._forces
+
+
+class _Cell:
+    def tolist(self):
+        return [[4.0, 0.0, 0.0], [0.0, 5.0, 0.0], [0.0, 0.0, 6.0]]
+
+    def cellpar(self):
+        return _List([4.0, 5.0, 6.0, 90.0, 90.0, 90.0])
+
+
+class _FixAtoms:
+    def __init__(self, index):
+        self.index = index
+
+
+class _FixCartesian:
+    def __init__(self, index, mask):
+        self.index = index
+        self.mask = mask
+
+
+_FixAtoms.__name__ = "FixAtoms"
+_FixCartesian.__name__ = "FixCartesian"
+
+
+def test_duck_typed_constraints_and_optional_arrays():
+    plain = readcon.ConFrame.from_ase(_Duck(0))
+    assert plain[0].symbol == "Cu"
+    assert plain[0].is_fixed
+    scalar = readcon.ConFrame.from_ase(_Duck(_List(0)))
+    assert scalar[0].is_fixed
+    far = readcon.ConFrame.from_ase(_Duck(_List([99])))
+    assert far[0].is_fixed is False
+    with pytest.raises(ValueError, match="length 3"):
+        readcon.ConFrame.from_ase(_Duck(_List([0]), mask=_List([True])))
+    with pytest.raises((ValueError, TypeError)):
+        readcon.ConFrame.from_ase(_Duck(_List([0]), mask=True))
+    tagged = readcon.ConFrame.from_ase(_Duck(0, tags=_List([1, 2])))
+    assert tagged[0].atom_id == 0
+    quiet = readcon.ConFrame.from_ase(_Duck(0, velocities=None, forces=None))
     assert quiet[0].symbol == "Cu"

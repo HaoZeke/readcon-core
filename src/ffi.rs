@@ -1,9 +1,9 @@
 use crate::helpers::symbol_to_atomic_number;
 use crate::iterators;
-use crate::types::{ConFrame, ConFrameBuilder, meta};
-use crate::writer::{ConFrameWriter, binding_rewrite_frame};
+use crate::types::{meta, ConFrame, ConFrameBuilder};
+use crate::writer::{binding_rewrite_frame, ConFrameWriter};
 use std::cell::RefCell;
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 use std::fs::File;
 use std::path::Path;
 use std::ptr;
@@ -1483,28 +1483,78 @@ mod index_proj_ffi_tests {
         let formula = unsafe { CStr::from_ptr(formula_c) }.to_str().unwrap();
         assert_eq!(formula, proj.formula);
         unsafe { rkr_free_string(formula_c) };
-        let ie = rkr_frame_index_energy(handle);
-        match proj.energy {
-            Some(e) => assert!((ie - e).abs() < 1e-12 || (ie.is_nan() && e.is_nan())),
-            None => assert!(ie.is_nan()),
-        }
-        let tm = rkr_frame_total_mass(handle);
-        match proj.total_mass {
-            Some(m) => assert!((tm - m).abs() < 1e-9, "total_mass C={tm} proj={m}"),
-            None => assert!(tm.is_nan()),
-        }
-        let cv = rkr_frame_cell_volume(handle);
-        match proj.cell_volume {
-            Some(v) => assert!(
-                (cv - v).abs() < 1e-6 * v.max(1.0),
-                "cell_volume C={cv} proj={v}"
-            ),
-            None => assert!(cv.is_nan()),
-        }
-        let fm = rkr_frame_fmax(handle);
-        match proj.fmax {
-            Some(f) => assert!((fm - f).abs() < 1e-12 || (fm.is_nan() && f.is_nan())),
-            None => assert!(fm.is_nan()),
+        let check_scalars = |handle: *const RKRConFrame, fr: &ConFrame| {
+            let proj = crate::index_proj::FrameIndexProjection::from_frame(fr);
+            let ie = rkr_frame_index_energy(handle);
+            match proj.energy {
+                Some(e) => assert!((ie - e).abs() < 1e-12 || (ie.is_nan() && e.is_nan())),
+                None => assert!(ie.is_nan()),
+            }
+            let tm = rkr_frame_total_mass(handle);
+            match proj.total_mass {
+                Some(m) => assert!((tm - m).abs() < 1e-9, "total_mass C={tm} proj={m}"),
+                None => assert!(tm.is_nan()),
+            }
+            let cv = rkr_frame_cell_volume(handle);
+            match proj.cell_volume {
+                Some(v) => assert!(
+                    (cv - v).abs() < 1e-6 * v.max(1.0),
+                    "cell_volume C={cv} proj={v}"
+                ),
+                None => assert!(cv.is_nan()),
+            }
+            let fm = rkr_frame_fmax(handle);
+            match proj.fmax {
+                Some(f) => assert!((fm - f).abs() < 1e-12 || (fm.is_nan() && f.is_nan())),
+                None => assert!(fm.is_nan()),
+            }
+            proj
+        };
+        let proj = check_scalars(handle, fr);
+        let cell = [15.3456_f64, 21.702, 100.0];
+        let angles = [90.0_f64, 90.0, 90.0];
+        let symbol = std::ffi::CString::new("Cu").unwrap();
+        let force = [0.3_f64, 0.4, 0.0];
+        for energy in [1.5_f64, f64::NAN] {
+            let builder = unsafe {
+                rkr_frame_new(
+                    cell.as_ptr(),
+                    angles.as_ptr(),
+                    ptr::null(),
+                    ptr::null(),
+                    ptr::null(),
+                    ptr::null(),
+                )
+            };
+            assert!(!builder.is_null());
+            assert_eq!(
+                unsafe {
+                    rkr_frame_add_atom_full(
+                        builder,
+                        symbol.as_ptr(),
+                        0.1,
+                        0.2,
+                        0.3,
+                        false,
+                        false,
+                        false,
+                        1,
+                        63.546,
+                        ptr::null(),
+                        force.as_ptr(),
+                    )
+                },
+                RKRStatus::RKR_STATUS_SUCCESS
+            );
+            assert_eq!(
+                unsafe { rkr_frame_builder_set_energy(builder, energy) },
+                RKRStatus::RKR_STATUS_SUCCESS
+            );
+            let built = unsafe { rkr_frame_builder_build(builder) };
+            assert!(!built.is_null());
+            let built_fr = unsafe { &*(built as *const ConFrame) };
+            let _ = check_scalars(built as *const RKRConFrame, built_fr);
+            unsafe { free_rkr_frame(built) };
         }
         let json_c = unsafe { rkr_frame_index_projection_json(handle) };
         assert!(!json_c.is_null());
@@ -6020,12 +6070,14 @@ mod tests {
         let c_frame_ref = unsafe { &*c_frame };
         assert_eq!(c_frame_ref.num_atoms, 2);
         let atoms = unsafe { std::slice::from_raw_parts(c_frame_ref.atoms, c_frame_ref.num_atoms) };
-        assert_eq!([atoms[0].fixed_x, atoms[0].fixed_y, atoms[0].fixed_z], [
-            true, true, true
-        ]);
-        assert_eq!([atoms[1].fixed_x, atoms[1].fixed_y, atoms[1].fixed_z], [
-            false, false, false
-        ]);
+        assert_eq!(
+            [atoms[0].fixed_x, atoms[0].fixed_y, atoms[0].fixed_z],
+            [true, true, true]
+        );
+        assert_eq!(
+            [atoms[1].fixed_x, atoms[1].fixed_y, atoms[1].fixed_z],
+            [false, false, false]
+        );
         unsafe { free_c_frame(c_frame) };
         unsafe { free_rkr_frame(frame) };
     }
@@ -6359,9 +6411,19 @@ mod tests {
         let data = unsafe { std::slice::from_raw_parts(dl.data as *const f64, 3) };
         assert_eq!(data, &[1.0, 2.0, 3.0]);
         // Invoke the deleter the same way a C consumer would.
-        let deleter = unsafe { (*t).deleter };
-        if let Some(del) = deleter {
-            unsafe { del(t) };
+        // A cleared deleter is the None side; the saved pointer is the Some side.
+        let saved = unsafe { (*t).deleter };
+        for clear in [true, false] {
+            unsafe {
+                (*t).deleter = if clear { None } else { saved };
+            }
+            let deleter = unsafe { (*t).deleter };
+            if let Some(del) = deleter {
+                assert!(!clear);
+                unsafe { del(t) };
+            } else {
+                assert!(clear);
+            }
         }
         unsafe { free_rkr_frame_builder(handle) };
     }
@@ -6616,8 +6678,8 @@ mod tests {
 
     #[test]
     fn file_iterator_reads_gzip_when_present() {
-        use flate2::Compression;
         use flate2::write::GzEncoder;
+        use flate2::Compression;
         use std::io::Write;
         let plain = std::fs::read("resources/test/tiny_cuh2.con").expect("fixture");
         let dir = tempfile::tempdir().expect("tempdir");

@@ -652,23 +652,31 @@ fn a_builder_round_trip_covers_the_frame_accessors() {
         rkr_trajectory_free(traj);
         let gz_path = dir.path().join("round.con.gz");
         let gz_name = CString::new(gz_path.to_str().expect("utf8")).expect("gz");
-        let gzip = create_writer_gzip_c(gz_name.as_ptr());
-        if !gzip.is_null() {
-            let _ = rkr_writer_set_canonical(gzip, 1);
-            let _ = rkr_writer_is_canonical(gzip);
-            let _ = rkr_writer_extend(gzip, &frame_ptr, 1);
-            let _ = rkr_writer_flush(gzip);
-            free_rkr_writer(gzip);
+        for gzip_path in [ptr::null(), gz_name.as_ptr()] {
+            let gzip = create_writer_gzip_c(gzip_path);
+            if !gzip.is_null() {
+                let _ = rkr_writer_set_canonical(gzip, 1);
+                let _ = rkr_writer_is_canonical(gzip);
+                let _ = rkr_writer_extend(gzip, &frame_ptr, 1);
+                let _ = rkr_writer_flush(gzip);
+                free_rkr_writer(gzip);
+            } else {
+                assert!(gzip.is_null());
+            }
         }
         #[cfg(feature = "zstd")]
         {
             let zst_path = dir.path().join("round.con.zst");
             let zst_name = CString::new(zst_path.to_str().expect("utf8")).expect("zst");
-            let zstd = create_writer_zstd_c(zst_name.as_ptr());
-            if !zstd.is_null() {
-                let _ = rkr_writer_extend(zstd, &frame_ptr, 1);
-                let _ = rkr_writer_flush(zstd);
-                free_rkr_writer(zstd);
+            for zstd_path in [ptr::null(), zst_name.as_ptr()] {
+                let zstd = create_writer_zstd_c(zstd_path);
+                if !zstd.is_null() {
+                    let _ = rkr_writer_extend(zstd, &frame_ptr, 1);
+                    let _ = rkr_writer_flush(zstd);
+                    free_rkr_writer(zstd);
+                } else {
+                    assert!(zstd.is_null());
+                }
             }
         }
         let _ = rkr_has_chemfiles_support();
@@ -747,42 +755,53 @@ fn bonds_dlpack_import_rcso_and_force_errors() {
             &mut order,
         );
         let mut tensor = ptr::null_mut();
-        let _ = rkr_frame_positions_dlpack(frame, &mut tensor);
-        let _ = rkr_frame_positions_from_dlpack(frame, tensor);
-        let _ = rkr_frame_positions_from_dlpack(ptr::null_mut(), tensor);
-        let _ = rkr_frame_positions_from_dlpack(frame, ptr::null());
-        if !tensor.is_null() {
-            let managed = &mut *tensor;
-            let saved_device = managed.dl_tensor.device.device_type;
-            managed.dl_tensor.device.device_type = dlpk::sys::DLDeviceType::kDLCUDA;
-            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
-            managed.dl_tensor.device.device_type = saved_device;
-            let saved_shape = managed.dl_tensor.shape;
-            managed.dl_tensor.shape = ptr::null_mut();
-            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
-            managed.dl_tensor.shape = saved_shape;
-            if !saved_shape.is_null() {
-                let saved_ndim = managed.dl_tensor.ndim;
-                let saved_first = *saved_shape;
-                managed.dl_tensor.ndim = 1;
-                *saved_shape = 1;
+        for live in [false, true] {
+            if live {
+                let _ = rkr_frame_positions_dlpack(frame, &mut tensor);
                 let _ = rkr_frame_positions_from_dlpack(frame, tensor);
-                managed.dl_tensor.ndim = saved_ndim;
-                *saved_shape = saved_first;
+                let _ = rkr_frame_positions_from_dlpack(ptr::null_mut(), tensor);
+                let _ = rkr_frame_positions_from_dlpack(frame, ptr::null());
             }
-            let saved_bits = managed.dl_tensor.dtype.bits;
-            managed.dl_tensor.dtype.bits = 32;
-            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
-            managed.dl_tensor.dtype.bits = saved_bits;
-            let saved_code = managed.dl_tensor.dtype.code;
-            managed.dl_tensor.dtype.code = dlpk::sys::DLDataTypeCode::kDLInt;
-            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
-            managed.dl_tensor.dtype.code = saved_code;
-            let saved_data = managed.dl_tensor.data;
-            managed.dl_tensor.data = ptr::null_mut();
-            let _ = rkr_frame_positions_from_dlpack(frame, tensor);
-            managed.dl_tensor.data = saved_data;
-            rkr_dlpack_delete(tensor);
+            if !tensor.is_null() {
+                let managed = &mut *tensor;
+                let saved_device = managed.dl_tensor.device.device_type;
+                managed.dl_tensor.device.device_type = dlpk::sys::DLDeviceType::kDLCUDA;
+                let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+                managed.dl_tensor.device.device_type = saved_device;
+                let saved_shape = managed.dl_tensor.shape;
+                managed.dl_tensor.shape = ptr::null_mut();
+                let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+                managed.dl_tensor.shape = saved_shape;
+                for shape in [ptr::null_mut(), saved_shape] {
+                    if !shape.is_null() {
+                        let saved_ndim = managed.dl_tensor.ndim;
+                        let saved_first = *saved_shape;
+                        managed.dl_tensor.ndim = 1;
+                        *saved_shape = 1;
+                        let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+                        managed.dl_tensor.ndim = saved_ndim;
+                        *saved_shape = saved_first;
+                    } else {
+                        assert!(shape.is_null());
+                    }
+                }
+                let saved_bits = managed.dl_tensor.dtype.bits;
+                managed.dl_tensor.dtype.bits = 32;
+                let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+                managed.dl_tensor.dtype.bits = saved_bits;
+                let saved_code = managed.dl_tensor.dtype.code;
+                managed.dl_tensor.dtype.code = dlpk::sys::DLDataTypeCode::kDLInt;
+                let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+                managed.dl_tensor.dtype.code = saved_code;
+                let saved_data = managed.dl_tensor.data;
+                managed.dl_tensor.data = ptr::null_mut();
+                let _ = rkr_frame_positions_from_dlpack(frame, tensor);
+                managed.dl_tensor.data = saved_data;
+                rkr_dlpack_delete(tensor);
+                tensor = ptr::null_mut();
+            } else {
+                assert!(tensor.is_null());
+            }
         }
         let mut need = 0_usize;
         let _ = rkr_pack_rcso(frame, ptr::null_mut(), 0, &mut need);
@@ -2015,26 +2034,32 @@ fn dlpack_shape_float32_and_absent_force_block() {
         let mut nframes = 0_usize;
         assert!(rkr_read_chemfiles_memory(data.as_ptr(), ptr::null(), &mut nframes).is_null());
         let format = CString::new("XYZ").unwrap();
-        assert!(rkr_read_chemfiles_memory(data.as_ptr(), format.as_ptr(), ptr::null_mut()).is_null());
+        assert!(
+            rkr_read_chemfiles_memory(data.as_ptr(), format.as_ptr(), ptr::null_mut()).is_null()
+        );
         let missing = CString::new("missing-topology.xyz").unwrap();
         let empty_topology = CString::new("").unwrap();
         let topology = CString::new("topology.xyz").unwrap();
-        assert!(
-            rkr_read_chemfiles_range(
-                missing.as_ptr(),
-                0,
-                1,
-                2,
-                empty_topology.as_ptr(),
-                0,
-                &mut nframes
-            )
-            .is_null()
-        );
-        assert!(
-            rkr_read_chemfiles_range(missing.as_ptr(), 0, 1, 2, topology.as_ptr(), 0, &mut nframes)
-                .is_null()
-        );
+        assert!(rkr_read_chemfiles_range(
+            missing.as_ptr(),
+            0,
+            1,
+            2,
+            empty_topology.as_ptr(),
+            0,
+            &mut nframes
+        )
+        .is_null());
+        assert!(rkr_read_chemfiles_range(
+            missing.as_ptr(),
+            0,
+            1,
+            2,
+            topology.as_ptr(),
+            0,
+            &mut nframes
+        )
+        .is_null());
         let empty = crate::chemfiles_selection::SelectionResult {
             selection: "name Cu".to_string(),
             context_size: 1,
@@ -2074,4 +2099,109 @@ fn dlpack_shape_float32_and_absent_force_block() {
         rkr_selection_result_free(hit_ptr);
         free_rkr_frame(frame);
     }
+}
+
+#[test]
+fn empty_builder_float_storage_and_null_deleter() {
+    let cell = [10.0_f64, 10.0, 10.0];
+    let angles = [90.0_f64, 90.0, 90.0];
+    let builder = unsafe {
+        rkr_frame_new(
+            cell.as_ptr(),
+            angles.as_ptr(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+        )
+    };
+    assert!(!builder.is_null());
+    assert!(unsafe { rkr_frame_builder_masses_data(builder) }.is_null());
+    assert!(unsafe { rkr_frame_builder_atom_ids_data(builder) }.is_null());
+    unsafe { free_rkr_frame_builder(builder) };
+
+    let path =
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/test/tiny_cuh2.con");
+    let name = CString::new(path.to_str().unwrap()).unwrap();
+    let frame = unsafe { rkr_read_first_frame(name.as_ptr()) };
+    assert!(!frame.is_null());
+    let mut view = RKRArrayView {
+        data: ptr::null(),
+        n: 1,
+        cols: 1,
+        dtype_code: 1,
+        dtype_bits: 1,
+    };
+    assert_eq!(
+        unsafe { rkr_frame_energies_view(frame, &mut view) },
+        RKRStatus::RKR_STATUS_SECTION_ABSENT
+    );
+    assert_eq!(view.n, 0);
+    unsafe { free_rkr_frame(frame) };
+
+    let dir = tempfile::tempdir().unwrap();
+    let con = dir.path().join("f32.con");
+    std::fs::write(
+        &con,
+        "\
+user
+{\"con_spec_version\":2,\"storage_dtypes\":{\"positions\":\"float32\",\"masses\":\"float32\"}}
+10.0 10.0 10.0
+90.0 90.0 90.0
+0 0
+1 0
+1
+1
+63.546
+Cu
+Coordinates of Component 1
+   0.250000   0.500000   0.750000 0  0
+",
+    )
+    .unwrap();
+    let con_name = CString::new(con.to_str().unwrap()).unwrap();
+    let stored = unsafe { rkr_read_first_frame(con_name.as_ptr()) };
+    assert!(!stored.is_null());
+    let mut pos = [0.0_f64; 3];
+    let mut mass = [0.0_f64; 1];
+    assert_eq!(
+        unsafe { rkr_frame_copy_positions(stored, pos.as_mut_ptr(), pos.len()) },
+        RKRStatus::RKR_STATUS_SUCCESS
+    );
+    assert!((pos[0] - 0.25).abs() < 1e-5);
+    assert_eq!(
+        unsafe { rkr_frame_copy_masses(stored, mass.as_mut_ptr(), mass.len()) },
+        RKRStatus::RKR_STATUS_SUCCESS
+    );
+    assert!((mass[0] - 63.546).abs() < 1e-3);
+    unsafe { free_rkr_frame(stored) };
+
+    let symbol = CString::new("Cu").unwrap();
+    let owned = unsafe {
+        rkr_frame_new(
+            cell.as_ptr(),
+            angles.as_ptr(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+            ptr::null(),
+        )
+    };
+    assert_eq!(
+        unsafe { rkr_frame_add_atom(owned, symbol.as_ptr(), 0.0, 0.0, 0.0, false, 1, 63.546,) },
+        RKRStatus::RKR_STATUS_SUCCESS
+    );
+    let mut tensor = ptr::null_mut();
+    assert_eq!(
+        unsafe { rkr_frame_builder_positions_dlpack(owned, &mut tensor) },
+        RKRStatus::RKR_STATUS_SUCCESS
+    );
+    assert!(!tensor.is_null());
+    let saved = unsafe { (*tensor).deleter };
+    unsafe { (*tensor).deleter = None };
+    unsafe { rkr_dlpack_delete(tensor) };
+    unsafe { (*tensor).deleter = saved };
+    unsafe { rkr_dlpack_delete(tensor) };
+    unsafe { rkr_dlpack_delete(ptr::null_mut()) };
+    unsafe { free_rkr_frame_builder(owned) };
 }

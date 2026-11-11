@@ -14,6 +14,7 @@ program test_iterator_stream
   call assert_every_public_reader()
   call assert_missing_read_and_handle_array()
   call assert_blank_handles()
+  call assert_source_conditions()
 contains
 
   subroutine assert_missing_file()
@@ -734,5 +735,137 @@ contains
     if (wblank%valid()) error stop "freed blank writer"
     if (count_frames("no-such-blank-count.con") /= -1) error stop "missing count"
     call iblank%free()
+  end subroutine
+
+  subroutine assert_source_conditions()
+    interface
+      function rkr_read_all_frames(fn, nout) bind(C, name="rkr_read_all_frames")
+        import :: c_char, c_ptr, c_size_t
+        character(kind=c_char), intent(in) :: fn(*)
+        integer(c_size_t), intent(out) :: nout
+        type(c_ptr) :: rkr_read_all_frames
+      end function
+    end interface
+    type(frame_t) :: built, empty_frame, plain
+    type(frame_t), allocatable :: owned(:)
+    type(builder_t) :: live, empty_b, with_atom
+    type(writer_t) :: writer
+    type(catom_t) :: atom
+    type(c_ptr) :: arr, tensor, block
+    real(real64) :: cell(3), angles(3)
+    real(real64) :: wide(3, 1), shortp(3, 0), masses(0), mass_wide(1)
+    real(c_double), pointer :: xyz(:,:)
+    integer :: status, n, ndim, bits, unit, i
+    integer(int64) :: s0, s1, found
+    integer(c_size_t) :: nframes
+    logical :: ok
+    character(len=:), allocatable :: text, pad, big
+    character(kind=c_char), allocatable :: cpath(:)
+    character(len=*), parameter :: empty_path = "source-empty.con"
+    character(len=*), parameter :: zero_path = "source-zero.con"
+    cell = [4.0_real64, 5.0_real64, 6.0_real64]
+    angles = [90.0_real64, 90.0_real64, 90.0_real64]
+    live = new_builder(cell, angles)
+    if (.not. live%valid()) error stop "live builder"
+    call live%free()
+    if (live%valid()) error stop "freed live builder"
+    empty_b = new_builder(cell, angles)
+    status = empty_b%copy_positions(wide)
+    if (status /= rkr_status_null_pointer) error stop "empty builder positions"
+    with_atom = new_builder(cell, angles)
+    status = with_atom%add_atom("Cu", 0.1_real64, 0.2_real64, 0.3_real64, &
+         7_int64, 63.546_real64, .false., .false., .false.)
+    if (status /= 0) error stop "source add"
+    status = with_atom%copy_positions(shortp)
+    if (status /= rkr_status_buffer_too_small) error stop "short builder positions"
+    status = with_atom%copy_masses(masses)
+    if (status /= rkr_status_buffer_too_small) error stop "short builder masses"
+    status = with_atom%masses_dlpack(tensor)
+    if (status /= 0 .or. .not. c_associated(tensor)) error stop "masses dlpack"
+    call dlpack_inspect(tensor, ndim, s0, s1, bits, ok)
+    if (ndim /= 1) error stop "masses tensor rank"
+    call with_atom%dlpack_delete(tensor)
+    status = with_atom%atom_energies_dlpack(tensor)
+    if (c_associated(tensor)) then
+      call dlpack_inspect(tensor, ndim, s0, s1, bits, ok)
+      call with_atom%dlpack_delete(tensor)
+    end if
+    plain = with_atom%build()
+    if (.not. plain%valid()) error stop "plain build"
+    call plain%xyz_ptr(xyz, n)
+    if (n /= 1) error stop "plain xyz count"
+    call plain%velocities_ptr(xyz, n)
+    if (n /= 0 .or. associated(xyz)) error stop "absent velocity pointer"
+    call plain%forces_ptr(xyz, n)
+    if (n /= 0 .or. associated(xyz)) error stop "absent force pointer"
+    atom = plain%atom(0)
+    if (int(atom%atomic_number) /= 0) error stop "atom zero"
+    found = plain%atom_index_by_id(huge(0_int64))
+    if (found /= -1_int64) error stop "missing atom id"
+    status = plain%copy_velocities(shortp)
+    if (status /= rkr_status_buffer_too_small) error stop "short velocities"
+    status = plain%copy_velocities(wide)
+    if (status == 0) error stop "absent velocities copied"
+    status = plain%copy_forces(shortp)
+    if (status /= rkr_status_buffer_too_small) error stop "short forces"
+    status = plain%copy_forces(wide)
+    if (status == 0) error stop "absent forces copied"
+    status = plain%copy_masses(masses)
+    if (status /= rkr_status_buffer_too_small) error stop "short frame masses"
+    status = plain%copy_masses(mass_wide)
+    if (status /= 0) error stop "frame masses"
+    status = plain%write_path("no-such-readcon-dir/out.con")
+    if (status == 0) error stop "missing directory write"
+    writer = open_writer("source-canonical.con")
+    if (.not. writer%valid()) error stop "canonical writer"
+    status = writer%set_canonical(.false.)
+    if (status /= 0) error stop "set canonical false"
+    if (writer%is_canonical()) error stop "canonical stayed on"
+    call writer%free()
+    status = frame_metatensor_positions_block(plain, block)
+    if (c_associated(block)) error stop "metatensor block without the feature"
+    call mts_block_free_rkr(block)
+    pad = repeat("x", 65536)
+    big = '{"pad":"' // pad // '"}'
+    empty_b = new_builder(cell, angles)
+    status = empty_b%add_atom("Cu", 0.1_real64, 0.2_real64, 0.3_real64, &
+         7_int64, 63.546_real64, .false., .false., .false.)
+    if (status /= 0) error stop "long meta add"
+    status = empty_b%set_metadata_json(big)
+    if (status /= 0) error stop "long meta set"
+    built = empty_b%build()
+    if (.not. built%valid()) error stop "long meta build"
+    text = built%metadata_json(stat=status)
+    if (status /= rkr_status_buffer_too_small) error stop "long meta status"
+    if (len(text) /= 0) error stop "long meta text"
+    call built%free()
+    call plain%free()
+    open(newunit=unit, file=zero_path, status="replace")
+    write(unit, "(A)") "user"
+    write(unit, "(A)") '{"con_spec_version":2}'
+    write(unit, "(A)") "4.0 5.0 6.0"
+    write(unit, "(A)") "90.0 90.0 90.0"
+    write(unit, "(A)") "0 0"
+    write(unit, "(A)") "0 0"
+    write(unit, "(A)") "0"
+    close(unit)
+    empty_frame = read_first_frame(zero_path)
+    if (.not. empty_frame%valid()) error stop "zero atom frame"
+    call empty_frame%xyz_ptr(xyz, n)
+    if (n /= 0) error stop "zero atom xyz"
+    call empty_frame%free()
+    open(newunit=unit, file=empty_path, status="replace")
+    close(unit)
+    n = len_trim(empty_path)
+    allocate(cpath(n + 1))
+    do i = 1, n
+      cpath(i) = empty_path(i:i)
+    end do
+    cpath(n + 1) = c_null_char
+    arr = rkr_read_all_frames(cpath, nframes)
+    if (.not. c_associated(arr) .or. nframes /= 0_c_size_t) error stop "empty file handle"
+    owned = frames_from_handle_array(arr, nframes)
+    if (size(owned) /= 0) error stop "empty handle array size"
+    if (count_frames("missing.con") /= -1) error stop "missing.con count"
   end subroutine
 end program
