@@ -19,7 +19,7 @@ tree_sha="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
   printf 'HEAD %s\n' "$head_sha"
   printf 'tree %s\n' "$tree_sha"
   printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line --disable-warnings --rootdir=."
-  printf 'note %s\n' "tool text is copied unchanged; a later note line lists any absolute paths"
+  printf 'note %s\n' "tool text is copied unchanged; the note line before exit names any rewritten path"
   set +e
   PYTHONPATH="${SITE}${PYTHONPATH:+:$PYTHONPATH}" \
     "$PY" -m pytest tests/python -q --tb=line --disable-warnings --rootdir=. \
@@ -83,15 +83,31 @@ for path in gcov:
     missed = len(re.findall(r"^ *#####:", body, re.M))
     total = executed + missed
     pct = (100.0 * executed / total) if total else 0.0
-    taken = len(re.findall(r"taken [1-9]", body))
-    not_taken = len(re.findall(r"taken 0", body))
-    never = len(re.findall(r"never executed", body))
-    outcomes = taken + not_taken + never
+    taken = len(re.findall(r"^branch\s+\d+\s+taken [1-9]", body, re.M))
+    not_taken = len(re.findall(r"^branch\s+\d+\s+taken 0", body, re.M))
+    branch_never = len(re.findall(r"^branch\s+\d+\s+never executed", body, re.M))
+    call_never = len(re.findall(r"^call\s+\d+\s+never executed", body, re.M))
+    call_returned = len(re.findall(r"^call\s+\d+\s+returned", body, re.M))
+    outcomes = taken + not_taken + branch_never
     text.append(
-        f"{path.name} lines {pct:.1f} executed {executed} missed {missed} branches_taken_at_least_once {taken} branches_outcomes {outcomes}"
+        f"{path.name} lines {pct:.1f} executed {executed} missed {missed} "
+        f"branches_taken_at_least_once {taken} branch_records {outcomes} "
+        f"call_records {call_returned + call_never} call_never {call_never}"
     )
 (out / "per-file.txt").write_text("\n".join(text) + ("\n" if text else ""), encoding="utf-8")
 print("\n".join(text))
 PY
+"$PY" "$ROOT/scripts/rewrite_receipt.py" "$OUT/pytest.txt" "$ROOT"
+if [[ -f "$OUT/rust/pytest.txt" ]]; then
+  "$PY" "$ROOT/scripts/rewrite_receipt.py" "$OUT/rust/pytest.txt" "$ROOT"
+fi
+if [[ -f "$OUT/rust/cargo-test.log" ]]; then
+  "$PY" "$ROOT/scripts/rewrite_receipt.py" "$OUT/rust/cargo-test.log" "$ROOT"
+fi
+if [[ -d "$OUT/fortran" ]]; then
+  find "$OUT/fortran" -name '*.gcov' -print0 | while IFS= read -r -d '' gcov; do
+    "$PY" "$ROOT/scripts/rewrite_receipt.py" "$gcov" "$ROOT"
+  done
+fi
 echo "wrote coverage"
 exit "$py_code"

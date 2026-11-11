@@ -7,5 +7,5 @@ Twelve of the eighteen public commits on main after that tag also carry the same
 Those public commits stay as published.
 
 Coverage receipts keep the tool text.
-If a receipt still contains an absolute path, its header says so.
-The path is left in place.
+A host path in a receipt is rewritten to a placeholder when the receipt is written.
+The note line before the exit code names each rewritten prefix.
