@@ -329,6 +329,108 @@ pub fn tables_from_extxyz_path(path: &Path) -> Result<XyzTables, String> {
     tables_from_extxyz_bytes(&bytes)
 }
 
+fn format_number(value: f64) -> String {
+    if value.is_nan() {
+        return "nan".to_string();
+    }
+    format!("{value}")
+}
+
+fn cos_sin(degrees: f64) -> (f64, f64) {
+    if (degrees - 90.0).abs() < 1e-8 {
+        return (0.0, 1.0);
+    }
+    if degrees.abs() < 1e-8 {
+        return (1.0, 0.0);
+    }
+    if (degrees - 180.0).abs() < 1e-8 {
+        return (-1.0, 0.0);
+    }
+    let radians = degrees.to_radians();
+    (radians.cos(), radians.sin())
+}
+
+pub fn lattice_from_cell(cell: &[f64]) -> Result<[f64; 9], String> {
+    if cell.len() < 6 {
+        return Err("cell".to_string());
+    }
+    let (a, b, c) = (cell[0], cell[1], cell[2]);
+    let (cos_a, _sin_a) = cos_sin(cell[3]);
+    let (cos_b, _sin_b) = cos_sin(cell[4]);
+    let (cos_g, sin_g) = cos_sin(cell[5]);
+    let bx = b * cos_g;
+    let by = b * sin_g;
+    let cx = c * cos_b;
+    let cy = if sin_g.abs() < 1e-15 {
+        0.0
+    } else {
+        c * (cos_a - cos_b * cos_g) / sin_g
+    };
+    let cz2 = c * c - cx * cx - cy * cy;
+    let cz = if cz2 > 0.0 { cz2.sqrt() } else { 0.0 };
+    Ok([a, 0.0, 0.0, bx, by, 0.0, cx, cy, cz])
+}
+
+fn properties_string(columns: &[XyzColumn]) -> String {
+    columns
+        .iter()
+        .map(|column| format!("{}:{}:{}", column.name, column.kind as char, column.width))
+        .collect::<Vec<_>>()
+        .join(":")
+}
+
+/// Write species, the lattice, `pbc`, and every per-atom column.
+pub fn tables_to_extxyz_bytes(tables: &XyzTables) -> Result<Vec<u8>, String> {
+    if tables.n_frames == 0 || tables.n_atoms == 0 || tables.columns.is_empty() {
+        return Err("frames".to_string());
+    }
+    if tables.cell.len() < tables.n_frames * 6 {
+        return Err("cell".to_string());
+    }
+    let mut out = Vec::new();
+    for frame in 0..tables.n_frames {
+        let lattice = lattice_from_cell(&tables.cell[frame * 6..frame * 6 + 6])?;
+        let lattice_text = lattice
+            .iter()
+            .map(|value| format_number(*value))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let header = format!(
+            "{}\nLattice=\"{}\" Properties={} pbc=\"T T T\"\n",
+            tables.n_atoms,
+            lattice_text,
+            properties_string(&tables.columns)
+        );
+        out.extend_from_slice(header.as_bytes());
+        for atom in 0..tables.n_atoms {
+            let mut parts = Vec::new();
+            for column in &tables.columns {
+                let base = (frame * tables.n_atoms + atom) * column.width;
+                if column.kind == b'S' {
+                    for slot in 0..column.width {
+                        parts.push(column.text[base + slot].clone());
+                    }
+                } else {
+                    for slot in 0..column.width {
+                        parts.push(format_number(column.real[base + slot]));
+                    }
+                }
+            }
+            out.extend_from_slice(parts.join(" ").as_bytes());
+            out.push(b'\n');
+        }
+    }
+    Ok(out)
+}
+
+pub fn write_extxyz_path(path: &Path, tables: &XyzTables) -> Result<(), String> {
+    let bytes = tables_to_extxyz_bytes(tables)?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|_| "write".to_string())?;
+    }
+    fs::write(path, bytes).map_err(|_| "write".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -390,6 +492,28 @@ Cu 4.0 5.0 6.0 63.546
             .map(|column| column.name.as_str())
             .collect();
         assert_eq!(names, vec!["species", "pos", "masses", "forces"]);
+    }
+
+    #[test]
+    fn written_bytes_reread_with_the_same_species_and_forces() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("bench/h2h/fixtures/small-n.extxyz");
+        let tables = tables_from_extxyz_path(&path).unwrap();
+        let bytes = tables_to_extxyz_bytes(&tables).unwrap();
+        let again = tables_from_extxyz_bytes(&bytes).unwrap();
+        assert_eq!(again.species, tables.species);
+        assert_eq!(again.positions, tables.positions);
+        assert_eq!(again.masses, tables.masses);
+        let forces = |item: &XyzTables| {
+            item.columns
+                .iter()
+                .find(|column| column.name == "forces")
+                .unwrap()
+                .real
+                .clone()
+        };
+        assert_eq!(forces(&again), forces(&tables));
+        assert!((again.cell[3] - 90.0).abs() < 1e-8);
     }
 
     #[test]

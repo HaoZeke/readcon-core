@@ -5,7 +5,7 @@
 //! `extxyz_time check PATH DUMP` writes the arrays from one read.
 //! `extxyz_time once PATH` reads once and prints the high-water mark.
 
-use readcon_core::extxyz_scan::tables_from_extxyz_path;
+use readcon_core::extxyz_scan::{tables_from_extxyz_path, write_extxyz_path};
 use std::env;
 use std::fs::File;
 use std::hint::black_box;
@@ -38,6 +38,18 @@ fn main() {
             args.next().expect("repeats").parse().expect("repeats"),
         ),
         "check" => check(&path, &args.next().expect("dump")),
+        "write" => write_timed(
+            &path,
+            &args.next().expect("out"),
+            args.next().expect("repeats").parse().expect("repeats"),
+        ),
+        "write-once" => {
+            let tables = tables_from_extxyz_path(Path::new(&path)).expect("read");
+            let out = args.next().expect("out");
+            write_extxyz_path(Path::new(&out), &tables).expect("write");
+            black_box(&tables);
+            println!("{{\"hwm_kib\":{}}}", hwm_kib());
+        }
         "once" => {
             let tables = tables_from_extxyz_path(Path::new(&path)).expect("read");
             black_box(&tables);
@@ -95,6 +107,27 @@ fn time(path: &str, repeats: usize) {
         last.n_atoms,
         hwm_kib()
     );
+}
+
+fn write_timed(src: &str, out: &str, repeats: usize) {
+    let tables = tables_from_extxyz_path(Path::new(src)).expect("read");
+    let dest = Path::new(out);
+    write_extxyz_path(dest, &tables).expect("warmup");
+    let mut samples = Vec::with_capacity(repeats);
+    for _ in 0..repeats {
+        let started = Instant::now();
+        write_extxyz_path(dest, &tables).expect("write");
+        samples.push(started.elapsed().as_secs_f64());
+    }
+    black_box(&tables);
+    print!("{{\"samples\":[");
+    for (i, sample) in samples.iter().enumerate() {
+        if i > 0 {
+            print!(",");
+        }
+        print!("{sample:.9}");
+    }
+    println!("],\"hwm_kib\":{}}}", hwm_kib());
 }
 
 fn check(path: &str, dump: &str) {

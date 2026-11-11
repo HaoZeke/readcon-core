@@ -56,7 +56,14 @@ READ_ARMS = (
     "extxyz",
     "extxyz_ng",
 )
-WRITE_ARMS = ("ase_extxyz", "ase_cextxyz", "extxyz", "extxyz_ng")
+WRITE_ARMS = (
+    "readcon_rust",
+    "readcon_py",
+    "ase_extxyz",
+    "ase_cextxyz",
+    "extxyz",
+    "extxyz_ng",
+)
 ARM_LABEL = {
     "readcon_rust": "readcon-core Rust",
     "readcon_py": "readcon-core Python",
@@ -344,6 +351,12 @@ def read_arm(arm: str, path: Path) -> dict:
 
 
 def load_for_write(arm: str, path: Path):
+    if arm == "readcon_py":
+        import readcon
+
+        return readcon.read_extxyz(os.fspath(path))
+    if arm == "readcon_rust":
+        return path
     if arm == "ase_extxyz":
         from ase.io import read as ase_read
 
@@ -368,6 +381,13 @@ def write_arm(arm: str, payload, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         path.unlink()
+    if arm == "readcon_py":
+        import readcon
+
+        readcon.write_extxyz(os.fspath(path), payload)
+        return
+    if arm == "readcon_rust":
+        raise SystemExit("the rust writer is timed in extxyz_time")
     if arm in ("ase_extxyz", "ase_cextxyz"):
         from ase.io import write as ase_write
 
@@ -711,6 +731,78 @@ def massif_heap(arm: str, name: str) -> int:
     return peak
 
 
+def write_once(arm: str, name: str) -> None:
+    payload = load_for_write(arm, input_path(name))
+    out = WORK / "outs" / f"once-{arm}-{name}.extxyz"
+    write_arm(arm, payload, out)
+    print(json.dumps({"hwm_kib": hwm_kib()}))
+
+
+def write_rss(arm: str, name: str) -> int:
+    out = WORK / "outs" / f"rss-{arm}-{name}.extxyz"
+    if arm == "readcon_rust":
+        completed = support.run_binary(
+            rust_binary(),
+            ["write-once", support.rel(input_path(name)), support.rel(out)],
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(
+                support.sanitize(completed.stderr or "rust write-once failed")
+            )
+        payload = json.loads(completed.stdout.strip().splitlines()[-1])
+        return int(payload["hwm_kib"])
+    completed = subprocess.run(
+        [sys.executable, str(SCRIPT), "write-once", arm, name],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=support.thread_env(),
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(
+            support.sanitize(completed.stderr or completed.stdout or "write rss failed")
+        )
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    return int(payload["hwm_kib"])
+
+
+def massif_write(arm: str, name: str) -> int:
+    out = WORK / "massif" / f"{arm}-write-{name}.out"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    dest = WORK / "outs" / f"massif-{arm}-{name}.extxyz"
+    if arm == "readcon_rust":
+        command = [
+            str(rust_binary()),
+            "write-once",
+            str(input_path(name)),
+            str(dest),
+        ]
+    else:
+        command = [sys.executable, str(SCRIPT), "write-once", arm, name]
+    completed = subprocess.run(
+        [
+            "valgrind",
+            "--tool=massif",
+            f"--massif-out-file={out}",
+            "--time-unit=B",
+            *command,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=support.thread_env(),
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(
+            support.sanitize(completed.stderr[-2000:] or "write massif failed")
+        )
+    peak = 0
+    for line in out.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("mem_heap_B="):
+            peak = max(peak, int(line.split("=", 1)[1]))
+    return peak
+
+
 def run_read(arm: str) -> None:
     rows = []
     for name, atoms, frames, _fixture in CASES:
@@ -781,7 +873,21 @@ def run_write(arm: str) -> None:
         def call(payload=payload, out: Path = out, arm: str = arm) -> None:
             write_arm(arm, payload, out)
 
-        samples, _last = timed(call)
+        if arm == "readcon_rust":
+            completed = support.run_binary(
+                rust_binary(),
+                ["write", support.rel(path), support.rel(out), str(REPEATS)],
+            )
+            if completed.returncode != 0:
+                raise RuntimeError(
+                    support.sanitize(
+                        completed.stderr or completed.stdout or "rust write failed"
+                    )
+                )
+            payload_row = json.loads(completed.stdout.strip().splitlines()[-1])
+            samples = [float(item) for item in payload_row["samples"]]
+        else:
+            samples, _last = timed(call)
         got, error = safe_read(arm, out)
         if error is not None:
             row = support.stats_block(samples)
@@ -809,8 +915,10 @@ def run_write(arm: str) -> None:
                 "op": "write",
                 "case": name,
                 "file": support.rel(out),
-                "rss_kib": hwm_kib(),
-                "massif_heap_bytes": None,
+                "rss_kib": write_rss(arm, name),
+                "massif_heap_bytes": massif_write(arm, name)
+                if name in MASSIF_CASES
+                else None,
                 "note": note,
             }
         )
@@ -864,6 +972,9 @@ def main() -> None:
     command = sys.argv[1]
     if command == "once":
         once(sys.argv[2], sys.argv[3])
+        return
+    if command == "write-once":
+        write_once(sys.argv[2], sys.argv[3])
         return
     support.ensure_pinned()
     if command == "prepare":

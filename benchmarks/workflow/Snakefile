@@ -698,6 +698,34 @@ rule h2h_extxyz_write_libatoms:
         """
 
 
+rule h2h_extxyz_write_readcon_rust:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-readcon_rust-write.stdout",
+        "bench/h2h/extxyz-logs/extxyz-readcon_rust-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_write_readcon_rust
+        """
+
+
+rule h2h_extxyz_write_readcon_py:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-readcon_py-write.stdout",
+        "bench/h2h/extxyz-logs/extxyz-readcon_py-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_write_readcon_py
+        """
+
+
 rule h2h_extxyz_write_ng:
     input:
         "bench/h2h/work/extxyz/prepare.ok",
@@ -724,6 +752,8 @@ rule h2h_extxyz_report:
         "bench/h2h/logs/campaign/extxyz-ase_cextxyz-write.stdout",
         "bench/h2h/logs/campaign/extxyz-extxyz-write.stdout",
         "bench/h2h/logs/campaign/extxyz-extxyz_ng-write.stdout",
+        "bench/h2h/logs/campaign/extxyz-readcon_rust-write.stdout",
+        "bench/h2h/logs/campaign/extxyz-readcon_py-write.stdout",
     output:
         "bench/h2h/extxyz-results.json",
     shell:

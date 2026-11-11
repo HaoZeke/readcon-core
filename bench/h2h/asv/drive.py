@@ -67,6 +67,8 @@ def main() -> None:
         "extxyz_write_cextxyz": lambda: extxyz_h2h.run_write("ase_cextxyz"),
         "extxyz_write_libatoms": lambda: extxyz_h2h.run_write("extxyz"),
         "extxyz_write_ng": lambda: extxyz_h2h.run_write("extxyz_ng"),
+        "extxyz_write_readcon_rust": lambda: extxyz_h2h.run_write("readcon_rust"),
+        "extxyz_write_readcon_py": lambda: extxyz_h2h.run_write("readcon_py"),
         "extxyz_report": extxyz_h2h.report,
     }
     if arm not in runners:

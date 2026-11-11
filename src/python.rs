@@ -3549,6 +3549,7 @@ fn readcon(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(has_mpi_support, m)?)?;
     m.add_function(wrap_pyfunction!(read_pdb, m)?)?;
     m.add_function(wrap_pyfunction!(read_extxyz, m)?)?;
+    m.add_function(wrap_pyfunction!(write_extxyz, m)?)?;
     m.add_function(wrap_pyfunction!(read_chemfiles, m)?)?;
     m.add_function(wrap_pyfunction!(read_chemfiles_first, m)?)?;
     m.add_function(wrap_pyfunction!(read_chemfiles_nth, m)?)?;
@@ -3697,6 +3698,85 @@ fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>>
     dict.set_item("species", species_frames)?;
     dict.set_item("arrays", arrays)?;
     Ok(dict)
+}
+
+/// Write an extended XYZ file from the dict returned by ``read_extxyz``.
+///
+/// Species, positions, the lattice, ``pbc`` and every per-atom column,
+/// including forces, are written.
+#[pyfunction]
+fn write_extxyz(path: &str, data: &Bound<'_, PyDict>) -> PyResult<()> {
+    let positions = data
+        .get_item("positions")?
+        .ok_or_else(|| PyValueError::new_err("positions"))?;
+    let pos = positions.cast::<PyArray3<f64>>()?;
+    let pos_view = pos.readonly();
+    let shape = pos_view.as_array().shape().to_vec();
+    if shape.len() != 3 || shape[2] != 3 {
+        return Err(PyValueError::new_err("positions"));
+    }
+    let n_frames = shape[0];
+    let n_atoms = shape[1];
+    let cell_obj = data
+        .get_item("cell")?
+        .ok_or_else(|| PyValueError::new_err("cell"))?;
+    let cell = cell_obj.cast::<PyArray2<f64>>()?.readonly();
+    let cell_values = cell.as_slice()?.to_vec();
+    let species_frames: Vec<Vec<String>> = data
+        .get_item("species")?
+        .ok_or_else(|| PyValueError::new_err("species"))?
+        .extract()?;
+    let species = species_frames.into_iter().flatten().collect();
+    let arrays_obj = data
+        .get_item("arrays")?
+        .ok_or_else(|| PyValueError::new_err("arrays"))?;
+    let arrays = arrays_obj.cast::<PyDict>()?;
+    let mut columns = Vec::new();
+    for (key, value) in arrays.iter() {
+        let name: String = key.extract()?;
+        if let Ok(text) = value.extract::<Vec<Vec<String>>>() {
+            let flat = text.into_iter().flatten().collect();
+            columns.push(crate::extxyz_scan::XyzColumn {
+                name,
+                kind: b'S',
+                width: 1,
+                text: flat,
+                real: Vec::new(),
+            });
+        } else if let Ok(wide) = value.cast::<PyArray3<f64>>() {
+            let view = wide.readonly();
+            let width = *view.as_array().shape().get(2).unwrap_or(&1);
+            columns.push(crate::extxyz_scan::XyzColumn {
+                name,
+                kind: b'R',
+                width,
+                text: Vec::new(),
+                real: view.as_slice()?.to_vec(),
+            });
+        } else if let Ok(thin) = value.cast::<PyArray2<f64>>() {
+            let view = thin.readonly();
+            columns.push(crate::extxyz_scan::XyzColumn {
+                name,
+                kind: b'R',
+                width: 1,
+                text: Vec::new(),
+                real: view.as_slice()?.to_vec(),
+            });
+        } else {
+            return Err(PyValueError::new_err(format!("column {name}")));
+        }
+    }
+    let tables = crate::extxyz_scan::XyzTables {
+        n_frames,
+        n_atoms,
+        positions: pos_view.as_slice()?.to_vec(),
+        masses: Vec::new(),
+        cell: cell_values,
+        species,
+        columns,
+    };
+    crate::extxyz_scan::write_extxyz_path(std::path::Path::new(path), &tables)
+        .map_err(|err| PyValueError::new_err(err))
 }
 
 /// Read a PDB file into positions, masses and the cell.
