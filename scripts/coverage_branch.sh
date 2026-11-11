@@ -22,7 +22,22 @@ export CARGO_TARGET_DIR="$ROOT/$dir_target/$dir_cov"
 unset RUSTC_WRAPPER || true
 
 cargo +nightly llvm-cov clean --workspace
-cargo +nightly llvm-cov --branch --features python --lib --tests --no-report -- --test-threads=1
+set +e
+cargo +nightly llvm-cov --branch --features python --lib --tests --no-report -- --test-threads=1 \
+  > "$OUT/cargo-test-body.txt" 2>&1
+cargo_code=$?
+set -e
+{
+  printf 'HEAD %s\n' "$(git -C "$ROOT" rev-parse HEAD)"
+  printf 'tree %s\n' "$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
+  printf 'command %s\n' "cargo +nightly llvm-cov --branch --features python --lib --tests --no-report"
+  sed "s|$ROOT/||g; s|$HOME/||g" "$OUT/cargo-test-body.txt"
+  printf 'exit %s\n' "$cargo_code"
+} > "$OUT/cargo-test.log"
+rm -f "$OUT/cargo-test-body.txt"
+if [[ "$cargo_code" -ne 0 ]]; then
+  exit "$cargo_code"
+fi
 
 PY="${H2H_PYTHON:-python3}"
 wheel_dir="$ROOT/$dir_target/py-wheel"
