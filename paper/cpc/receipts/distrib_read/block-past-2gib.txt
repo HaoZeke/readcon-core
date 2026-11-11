@@ -1,17 +1,17 @@
 broken-side: block-past-2gib
-test: two_ranks_read_and_write_every_mode
+test: one_rank_cannot_take_a_block_over_2_gib
 needle: one rank cannot take a block over 2 GiB
 exit: 101
 restored: True
 ----- test output -----
    Compiling readcon-core v0.18.1 (.)
 warning: unexpected `cfg` condition name: `coverage`
-   --> src/distrib_read.rs:525:15
+   --> src/distrib_read.rs:551:15
     |
-525 |         #[cfg(coverage)]
+551 |         #[cfg(coverage)]
     |               ^^^^^^^^
     |
-    = help: expected names are: `docsrs`, `feature`, and `test` and 34 more
+    = help: expected names are: `docsrs`, `feature`, and `test` and 31 more
     = help: consider using a Cargo feature instead
     = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
              [lints.rust]
@@ -21,198 +21,132 @@ warning: unexpected `cfg` condition name: `coverage`
     = note: `#[warn(unexpected_cfgs)]` on by default
 
 warning: variable does not need to be mutable
-    --> src/conbin.rs:3053:17
+    --> src/conbin.rs:3054:13
      |
-3053 | ...   let mut advise_map = unsafe { memmap2::MmapMut::map_mut(&advise_...
-     |           ----^^^^^^^^^^
-     |           |
-     |           help: remove this `mut`
+3054 |         let mut advise_map = unsafe { memmap2::MmapMut::map_mut(&advise_file) }.unwrap();
+     |             ----^^^^^^^^^^
+     |             |
+     |             help: remove this `mut`
      |
-     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+     = note: `#[warn(unused_mut)]` on by default
 
 warning: variable does not need to be mutable
-    --> src/ffi.rs:6577:17
+    --> src/ffi.rs:6578:13
      |
-6577 |         let mut bare = test_builder_handle();
+6578 |         let mut bare = test_builder_handle();
      |             ----^^^^
      |             |
      |             help: remove this `mut`
 
 warning: unnecessary `unsafe` block
-    --> src/ffi.rs:7223:23
+    --> src/ffi.rs:7224:23
      |
-7223 |             let msg = unsafe { rkr_status_message(status) };
+7224 |             let msg = unsafe { rkr_status_message(status) };
      |                       ^^^^^^ unnecessary `unsafe` block
      |
-     = note: `#[warn(unused_unsafe)]` (part of `#[warn(unused)]`) on by default
+     = note: `#[warn(unused_unsafe)]` on by default
 
 warning: unnecessary `unsafe` block
-    --> src/ffi.rs:7230:17
+    --> src/ffi.rs:7231:17
      |
-7230 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+7231 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
      |                 ^^^^^^ unnecessary `unsafe` block
 
 warning: unnecessary `unsafe` block
-    --> src/ffi.rs:7241:17
+    --> src/ffi.rs:7242:17
      |
-7241 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
+7242 |         assert!(unsafe { rkr_last_error_message() }.is_null() == false);
      |                 ^^^^^^ unnecessary `unsafe` block
 
-warning: value assigned to `flat_shape` is never read
-    --> src/ffi.rs:8635:9
-     |
-8635 |         flat_shape[0] = 3;
-     |         ^^^^^^^^^^^^^^^^^
-     |
-     = help: maybe it is overwritten before being read?
-     = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
-
 warning: unnecessary `unsafe` block
-    --> src/ffi.rs:9373:18
+    --> src/ffi.rs:9374:18
      |
-9373 |         assert!(!unsafe { rkr_last_error_message() }.is_null());
+9374 |         assert!(!unsafe { rkr_last_error_message() }.is_null());
      |                  ^^^^^^ unnecessary `unsafe` block
 
 warning: variable does not need to be mutable
-    --> src/iterators.rs:1508:13
+    --> src/iterators.rs:1509:9
      |
-1508 |     let mut attr = PerfEventAttr {
+1509 |     let mut attr = PerfEventAttr {
      |         ----^^^^
      |         |
      |         help: remove this `mut`
 
 warning: variable does not need to be mutable
-    --> src/iterators.rs:2187:25
+    --> src/iterators.rs:2188:21
      |
-2187 |                 let mut scanner = ConFrameIterator::from_bytes(bytes);
+2188 |                 let mut scanner = ConFrameIterator::from_bytes(bytes);
      |                     ----^^^^^^^
      |                     |
      |                     help: remove this `mut`
 
 warning: variable does not need to be mutable
-    --> src/iterators.rs:4185:17
+    --> src/iterators.rs:4186:13
      |
-4185 |         let mut iter = super::ConFrameIterator::from_bytes(&bytes);
+4186 |         let mut iter = super::ConFrameIterator::from_bytes(&bytes);
      |             ----^^^^
      |             |
      |             help: remove this `mut`
 
 warning: variable does not need to be mutable
-    --> src/iterators.rs:4667:17
+    --> src/iterators.rs:4668:13
      |
-4667 |         let mut it = ConFrameIterator::from_bytes(b"\n");
+4668 |         let mut it = ConFrameIterator::from_bytes(b"\n");
      |             ----^^
      |             |
      |             help: remove this `mut`
 
 warning: variable does not need to be mutable
-    --> src/iterators.rs:4673:17
+    --> src/iterators.rs:4674:13
      |
-4673 |         let mut bare = ConFrameIterator::from_bytes(b"");
+4674 |         let mut bare = ConFrameIterator::from_bytes(b"");
      |             ----^^^^
      |             |
      |             help: remove this `mut`
 
-warning: `readcon-core` (lib test) generated 13 warnings (run `cargo fix --lib -p readcon-core --tests` to apply 7 suggestions)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.75s
-     Running unittests src/lib.rs (target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876)
+warning: `readcon-core` (lib test) generated 12 warnings (run `cargo fix --lib -p readcon-core --tests` to apply 7 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.76s
+     Running unittests src/lib.rs (target/lib-tests/debug/deps/readcon_core-053e7ebcc1918f1b)
 
 running 1 test
-test distrib_read::tests::two_ranks_read_and_write_every_mode ... FAILED
+test distrib_read::tests::one_rank_cannot_take_a_block_over_2_gib ... FAILED
 
 failures:
 
----- distrib_read::tests::two_ranks_read_and_write_every_mode stdout ----
+---- distrib_read::tests::one_rank_cannot_take_a_block_over_2_gib stdout ----
 
-thread 'distrib_read::tests::two_ranks_read_and_write_every_mode' (1852273) panicked at src/distrib_read.rs:1059:13:
-two-rank job failed (ExitStatus(unix_wait_status(34304, "exit status: 134")))
-
-running 1 test
-test distrib_read::tests::two_ranks_read_and_write_every_mode ... 
-running 1 test
-test distrib_read::tests::two_ranks_read_and_write_every_mode ... 
-Authorization required, but no authorization protocol specified
-
-Authorization required, but no authorization protocol specified
-
-Authorization required, but no authorization protocol specified
-
-Authorization required, but no authorization protocol specified
-
-,mca_io_ompio_file_set_size: error in fs->set_size
-,mca_io_ompio_file_set_size: error in fs->set_size
-mpirun: Forwarding signal 6 to job
-[bench:1852278] *** Process received signal ***
-[bench:1852278] Signal: Aborted (6)
-[bench:1852278] Signal code: User function (kill, sigsend, abort, etc.) (0)
-[bench:1852278] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f9188445330]
-[bench:1852278] [ 1] /lib/x86_64-linux-gnu/libc.so.6(syscall+0x1d)[0x7f918852752d]
-[bench:1852278] [ 2] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8c5d46)[0x5569358a4d46]
-[bench:1852278] [ 3] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7e6925)[0x5569357c5925]
-[bench:1852278] [ 4] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7f1ce5)[0x5569357d0ce5]
-[bench:1852278] [ 5] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7fe75c)[0x5569357dd75c]
-[bench:1852278] [ 6] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7ea12a)[0x5569357c912a]
-[bench:1852278] [ 7] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7ead28)[0x5569357c9d28]
-[bench:1852278] [ 8] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x646608)[0x556935625608]
-[bench:1852278] [ 9] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x36120b)[0x55693534020b]
-[bench:1852278] [10] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x5187ee)[0x5569354f77ee]
-[bench:1852278] [11] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d4771)[0x5569352b3771]
-[bench:1852278] [12] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8d400f)[0x5569358b300f]
-[bench:1852278] [13] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d4527)[0x5569352b3527]
-[bench:1852278] [14] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x64662e)[0x55693562562e]
-[bench:1852278] [15] /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca)[0x7f918842a1ca]
-[bench:1852278] [16] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b)[0x7f918842a28b]
-[bench:1852278] [17] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x20ce15)[0x5569351ebe15]
-[bench:1852278] *** End of error message ***
-[bench:1852277] *** Process received signal ***
-[bench:1852277] Signal: Aborted (6)
-[bench:1852277] Signal code: User function (kill, sigsend, abort, etc.) (0)
-[bench:1852277] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f721c645330]
-[bench:1852277] [ 1] /lib/x86_64-linux-gnu/libc.so.6(syscall+0x1d)[0x7f721c72752d]
-[bench:1852277] [ 2] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8c5d46)[0x55884da87d46]
-[bench:1852277] [ 3] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7e6925)[0x55884d9a8925]
-[bench:1852277] [ 4] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7f1ce5)[0x55884d9b3ce5]
-[bench:1852277] [ 5] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7fe75c)[0x55884d9c075c]
-[bench:1852277] [ 6] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7ea12a)[0x55884d9ac12a]
-[bench:1852277] [ 7] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x7ead28)[0x55884d9acd28]
-[bench:1852277] [ 8] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x646608)[0x55884d808608]
-[bench:1852277] [ 9] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x36120b)[0x55884d52320b]
-[bench:1852277] [10] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x5187ee)[0x55884d6da7ee]
-[bench:1852277] [11] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d4771)[0x55884d496771]
-[bench:1852277] [12] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x8d400f)[0x55884da9600f]
-[bench:1852277] [13] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x2d4527)[0x55884d496527]
-[bench:1852277] [14] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x64662e)[0x55884d80862e]
-[bench:1852277] [15] /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca)[0x7f721c62a1ca]
-[bench:1852277] [16] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b)[0x7f721c62a28b]
-[bench:1852277] [17] ./target/lib-tests/debug/build/readcon-core/6465f9e1d1967876/out/readcon_core-6465f9e1d1967876(+0x20ce15)[0x55884d3cee15]
-[bench:1852277] *** End of error message ***
---------------------------------------------------------------------------
-Primary job  terminated normally, but 1 process returned
-a non-zero exit code. Per user-direction, the job has been aborted.
---------------------------------------------------------------------------
---------------------------------------------------------------------------
-mpirun noticed that process rank 1 with PID 0 on node bench exited on signal 6 (Aborted).
---------------------------------------------------------------------------
-
+thread 'distrib_read::tests::one_rank_cannot_take_a_block_over_2_gib' panicked at src/distrib_read.rs:1711:9:
+assertion `left == right` failed
+  left: "the oversized block was accepted"
+ right: "one rank cannot take a block over 2 GiB"
 stack backtrace:
    0: __rustc::rust_begin_unwind
-             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/std/src/panicking.rs:676:5
+             at /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc/library/std/src/panicking.rs:697:5
    1: core::panicking::panic_fmt
-             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/panicking.rs:80:14
-   2: readcon_core::distrib_read::tests::two_ranks_read_and_write_every_mode
-             at ./src/distrib_read.rs:1059:13
-   3: readcon_core::distrib_read::tests::two_ranks_read_and_write_every_mode::{closure#0}
-             at ./src/distrib_read.rs:839:45
-   4: <readcon_core::distrib_read::tests::two_ranks_read_and_write_every_mode::{closure#0} as core::ops::function::FnOnce<()>>::call_once
-             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
-   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
-             at /rustc/5b7b37aefcb5b2fba3c2392bc9065b9e4602d494/library/core/src/ops/function.rs:250:5
+             at /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc/library/core/src/panicking.rs:75:14
+   2: core::panicking::assert_failed_inner
+             at /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc/library/core/src/panicking.rs:433:17
+   3: core::panicking::assert_failed
+             at /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc/library/core/src/panicking.rs:388:5
+   4: readcon_core::distrib_read::tests::one_rank_cannot_take_a_block_over_2_gib
+             at ./src/distrib_read.rs:1711:9
+   5: readcon_core::distrib_read::tests::one_rank_cannot_take_a_block_over_2_gib::{{closure}}
+             at ./src/distrib_read.rs:1708:49
+   6: core::ops::function::FnOnce::call_once
+             at /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc/library/core/src/ops/function.rs:250:5
+   7: core::ops::function::FnOnce::call_once
+             at /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc/library/core/src/ops/function.rs:250:5
 note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
 
 
 failures:
-    distrib_read::tests::two_ranks_read_and_write_every_mode
+    distrib_read::tests::one_rank_cannot_take_a_block_over_2_gib
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 353 filtered out; finished in 113.38s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 356 filtered out; finished in 0.07s
 
 error: test failed, to rerun pass `--lib`
+hostname: bench
+rustc -V
+rustc 1.88.0 (6b00bc388 2025-06-23)
+cargo -V
+cargo 1.88.0 (873a06493 2025-05-10)

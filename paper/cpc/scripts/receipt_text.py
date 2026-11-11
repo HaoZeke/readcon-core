@@ -48,4 +48,5 @@ def versions() -> str:
     env["PATH"] = tool_path()
     rustc = subprocess.check_output(["rustc", "-V"], env=env, text=True)
     cargo = subprocess.check_output(["cargo", "-V"], env=env, text=True)
-    return f"rustc -V\n{rustc}cargo -V\n{cargo}"
+    host = Path("/etc/hostname").read_text(encoding="utf-8").strip()
+    return f"hostname: {host}\nrustc -V\n{rustc}cargo -V\n{cargo}"
