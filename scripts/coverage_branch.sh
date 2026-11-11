@@ -73,9 +73,6 @@ set -e
 rm -f "$OUT/pytest-body.txt"
 rm -f "$CARGO_TARGET_DIR"/pytest-*.profraw
 mapfile -t PYRAW < <(find "$wheel_dir" -name 'pytest-*.profraw' -type f)
-if [[ ${#PYRAW[@]} -gt 0 ]]; then
-  cp -f "${PYRAW[@]}" "$CARGO_TARGET_DIR/"
-fi
 
 SYSROOT="$(rustc +nightly --print sysroot)"
 LLVM="$SYSROOT/lib/rustlib/x86_64-unknown-linux-gnu/bin"
@@ -100,9 +97,6 @@ if [[ -z "$BIN" ]]; then
   exit 1
 fi
 OBJECTS=("$BIN")
-if [[ -n "${SO:-}" ]]; then
-  OBJECTS+=("$SO")
-fi
 
 strip_paths() {
   sed "s|$ROOT/||g; s|$HOME/||g; s|$SYSROOT/||g"
@@ -134,7 +128,7 @@ SOURCES=(
 "$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
   | strip_paths > "$OUT/branch.json"
 
-if [[ -n "${SO:-}" && ${#PYRAW[@]:-0} -gt 0 ]]; then
+if [[ -n "${SO:-}" && ${#PYRAW[@]} -gt 0 ]]; then
   pydata="$wheel_dir/python.profdata"
   "$LLVM/llvm-profdata" merge -sparse "${PYRAW[@]}" -o "$pydata"
   "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "$SO" \
