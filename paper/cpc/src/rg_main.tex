@@ -137,16 +137,15 @@ times an explicit copy, the median of eight repeats.
 saddle search \sep conformance corpus \sep nudged elastic band
 \end{keyword}
 
-\begin{highlights} \item CON 3.1 states the eOn saddle-search checkpoint
-as a versioned text grammar.
-\item The format defines per-component masks, atom identifiers and
-velocity time units.
-\item Two corpora of legal and illegal files decide what a conforming
+\begin{highlights} \item A versioned text grammar now defines the eOn
+saddle-search checkpoint format.
+\item Each coordinate row carries a mask of fixed components and an atom
+identifier.
+\item Two corpora of legal and illegal files fix what a conforming
 reader accepts.
-\item A climbing-image band resumed from CON 3.1 repeats the
-uninterrupted run bit for bit.
-\item Read times are measured against ASE, chemfiles, h5py and native
-trajectory readers.
+\item A climbing-image band resumed from a version 3.1 file repeats the
+uninterrupted run.
+\item One Rust reader serves C, C++, Fortran, Julia and Python callers.
 \end{highlights}
 
 \begin{graphicalabstract}
@@ -327,10 +326,10 @@ Cartesian coordinate format (XYZ) and publishes a grammar
 \cite{kermodeLibatomsExtxyzV0462026}.
 It keeps masks and identifiers in column names that the Atomic
 Simulation Environment (ASE) chose
-\cite{larsenAtomicSimulationEnvironmenta2017,larsenAtomicSimulationEnvironment2017},
-and a file declares no version and no velocity unit.
+\cite{larsenAtomicSimulationEnvironmenta2017}, and a file declares no
+version and no velocity unit.
 H5MD
-\cite{buylH5mdStructuredEfficient2014,deBuylH5MDStructuredEfficient2014,folkOverviewHdf5Technology2011}
+\cite{buylH5mdStructuredEfficient2014,folkOverviewHdf5Technology2011}
 stores identity, velocities with units and the box in HDF5, and it
 defines no element for a per-component constraint.
 The GROMACS compressed trajectory (XTC) and full-precision trajectory
@@ -1275,41 +1274,40 @@ Memory is the VmHWM after the read minus the VmHWM after the import.
 \texttt{RAYON\_NUM\_THREADS} are set to the thread count of the arm.
 
 \subsection{Results}\label{sec:results} The headline comparison is
-independent readers of one CON file: chemfiles, OVITO, MDAnalysis,
-pymatgen, ASE \texttt{get\_positions} and eOn \texttt{loadcons}.
-Each reader must return the same positions, the same cell and the same
-atom types.
-The log header names the resolved path and the sha256 of each library.
-Table~\ref{tab:peers} is that comparison.
-The cells are empty on purpose.
-The same-format log is not in this draft, and no median is filled in
-ahead of it.
-Times will be absolute seconds, and a ratio will use the fastest of
-those peers as the denominator, not \texttt{read\_con}.
+independent readers of one CON file.
+A ratio in this section is the ratio of two type-7 medians.
+The CON peer is ASE \texttt{get\_positions} on every frame.
+chemfiles, OVITO, MDAnalysis and pymatgen do not read CON.
+Their rows in the exchange log are XYZ, HDF5 or PDB, not this table.
+eOn \texttt{loadcons} does read CON.
+The log names the package version of the measured commit.
+It does not record a module sha256.
+Table~\ref{tab:peers} uses
+\path{paper/cpc/logs/reader-exchange-public.log}.
+ASE \texttt{get\_positions} is the fastest CON peer, so its ratio is 1.
+eOn \texttt{loadcons} is \rcEonOverAse{} times that median.
 
-\begin{table}[tbp] \centering \footnotesize \caption{Independent CON
-readers. Six fresh processes, type 7 median, same positions, cell and
-atom types. Path and sha256 of each library belong in the log header.
-Every numeric cell is pending.}
+\begin{table}[tbp] \centering \footnotesize
+\caption{CON readers in reader-exchange-public.log. Six fresh processes, type 7 median. A ratio is the median divided by the ASE median. chemfiles, OVITO, MDAnalysis and pymatgen do not read CON.}
 \label{tab:peers}
 \begin{tabular}{@{}llrr@{}}
 \toprule
-Reader & File & Median (s) & / fastest peer \\
+Reader & File & Median (s) & / ASE median \\
 \midrule
-chemfiles & CON & pending & pending \\
-OVITO & CON & pending & pending \\
-MDAnalysis & CON & pending & pending \\
-pymatgen & CON & pending & pending \\
-ASE \texttt{get\_positions} & CON & pending & pending \\
-eOn \texttt{loadcons} & CON & pending & pending \\
+chemfiles & not CON & --- & --- \\
+OVITO & not CON & --- & --- \\
+MDAnalysis & not CON & --- & --- \\
+pymatgen & not CON & --- & --- \\
+ASE \texttt{get\_positions} & CON & \rcAseMedian & 1 \\
+eOn \texttt{loadcons} & CON & \rcEonMedian & \rcEonOverAse \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Where readcon ties chemfiles, and what the iterator, the writer, the
-multi-frame read and the C, Fortran, Julia and Rust bindings add, will
-be quoted from that same log.
-Those sentences are not written until the medians exist.
+ASE \texttt{get\_positions} takes \rcAseMedian~s and matches 100000 of
+100000 frames.
+eOn \texttt{loadcons} takes \rcEonMedian~s on the same file and the same
+scope.
 
 \paragraph{Regression of readcon against itself} This note is not
 Table~\ref{tab:peers}.

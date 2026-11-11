@@ -1,0 +1,5 @@
+- A versioned text grammar now defines the eOn saddle-search checkpoint format.
+- Each coordinate row carries a mask of fixed components and an atom identifier.
+- Two corpora of legal and illegal files fix what a conforming reader accepts.
+- A climbing-image band resumed from a version 3.1 file repeats the uninterrupted run.
+- One Rust reader serves C, C++, Fortran, Julia and Python callers.

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 project = "readcon-core"
-copyright = "2025--present, LODE developers"
+copyright = "Copyright (c) readcon-core developers"
 author = "LODE developers"
 _version_path = Path(__file__).resolve().parents[2] / "VERSION"
 _version_text = _version_path.read_text(encoding="utf-8")

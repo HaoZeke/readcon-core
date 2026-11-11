@@ -247,6 +247,7 @@ def main() -> int:
             f"\\newcommand{{\\rcAseMedian}}{{{ase:.4g}}}",
             f"\\newcommand{{\\rcTipOverAse}}{{{ase / pos1:.4g}}}",
             f"\\newcommand{{\\rcEonMedian}}{{{eon:.4g}}}",
+            f"\\newcommand{{\\rcEonOverAse}}{{{eon / ase:.4g}}}",
             f"\\newcommand{{\\rcTipOverEon}}{{{eon / pos1:.4g}}}",
             f"\\newcommand{{\\rcApiMedian}}{{{api:.4g}}}",
             f"\\newcommand{{\\rcApiOverRead}}{{{api / pos1:.4g}}}",
