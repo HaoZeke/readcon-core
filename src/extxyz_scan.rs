@@ -371,56 +371,104 @@ pub fn lattice_from_cell(cell: &[f64]) -> Result<[f64; 9], String> {
     Ok([a, 0.0, 0.0, bx, by, 0.0, cx, cy, cz])
 }
 
-fn properties_string(columns: &[XyzColumn]) -> String {
-    columns
-        .iter()
-        .map(|column| format!("{}:{}:{}", column.name, column.kind as char, column.width))
-        .collect::<Vec<_>>()
-        .join(":")
+/// One per-atom column the writer can format without taking ownership.
+pub trait ExtxyzSource {
+    fn column_name(&self) -> &str;
+    fn column_kind(&self) -> u8;
+    fn column_width(&self) -> usize;
+    fn write_fields(&self, base: usize, out: &mut Vec<u8>);
+}
+
+impl ExtxyzSource for XyzColumn {
+    fn column_name(&self) -> &str {
+        &self.name
+    }
+
+    fn column_kind(&self) -> u8 {
+        self.kind
+    }
+
+    fn column_width(&self) -> usize {
+        self.width
+    }
+
+    fn write_fields(&self, base: usize, out: &mut Vec<u8>) {
+        for slot in 0..self.width {
+            if slot > 0 {
+                out.push(b' ');
+            }
+            if self.kind == b'S' {
+                out.extend_from_slice(self.text[base + slot].as_bytes());
+            } else {
+                let text = format_number(self.real[base + slot]);
+                out.extend_from_slice(text.as_bytes());
+            }
+        }
+    }
 }
 
 /// Write species, the lattice, `pbc`, and every per-atom column.
-pub fn tables_to_extxyz_bytes(tables: &XyzTables) -> Result<Vec<u8>, String> {
-    if tables.n_frames == 0 || tables.n_atoms == 0 || tables.columns.is_empty() {
+///
+/// `columns` are borrowed. The only large buffer this allocates is the
+/// output text.
+pub fn extxyz_bytes(
+    n_frames: usize,
+    n_atoms: usize,
+    cell: &[f64],
+    columns: &[&dyn ExtxyzSource],
+) -> Result<Vec<u8>, String> {
+    if n_frames == 0 || n_atoms == 0 || columns.is_empty() {
         return Err("frames".to_string());
     }
-    if tables.cell.len() < tables.n_frames * 6 {
+    if cell.len() < n_frames * 6 {
         return Err("cell".to_string());
     }
-    let mut out = Vec::new();
-    for frame in 0..tables.n_frames {
-        let lattice = lattice_from_cell(&tables.cell[frame * 6..frame * 6 + 6])?;
+    let properties = columns
+        .iter()
+        .map(|column| {
+            format!(
+                "{}:{}:{}",
+                column.column_name(),
+                column.column_kind() as char,
+                column.column_width()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(":");
+    let mut out = Vec::with_capacity(n_frames.saturating_mul(n_atoms).saturating_mul(64));
+    for frame in 0..n_frames {
+        let lattice = lattice_from_cell(&cell[frame * 6..frame * 6 + 6])?;
         let lattice_text = lattice
             .iter()
             .map(|value| format_number(*value))
             .collect::<Vec<_>>()
             .join(" ");
         let header = format!(
-            "{}\nLattice=\"{}\" Properties={} pbc=\"T T T\"\n",
-            tables.n_atoms,
-            lattice_text,
-            properties_string(&tables.columns)
+            "{n_atoms}\nLattice=\"{lattice_text}\" Properties={properties} pbc=\"T T T\"\n"
         );
         out.extend_from_slice(header.as_bytes());
-        for atom in 0..tables.n_atoms {
-            let mut parts = Vec::new();
-            for column in &tables.columns {
-                let base = (frame * tables.n_atoms + atom) * column.width;
-                if column.kind == b'S' {
-                    for slot in 0..column.width {
-                        parts.push(column.text[base + slot].clone());
-                    }
-                } else {
-                    for slot in 0..column.width {
-                        parts.push(format_number(column.real[base + slot]));
-                    }
+        for atom in 0..n_atoms {
+            for (index, column) in columns.iter().enumerate() {
+                if index > 0 {
+                    out.push(b' ');
                 }
+                let base = (frame * n_atoms + atom) * column.column_width();
+                column.write_fields(base, &mut out);
             }
-            out.extend_from_slice(parts.join(" ").as_bytes());
             out.push(b'\n');
         }
     }
     Ok(out)
+}
+
+/// Write species, the lattice, `pbc`, and every per-atom column.
+pub fn tables_to_extxyz_bytes(tables: &XyzTables) -> Result<Vec<u8>, String> {
+    let columns: Vec<&dyn ExtxyzSource> = tables
+        .columns
+        .iter()
+        .map(|column| column as &dyn ExtxyzSource)
+        .collect();
+    extxyz_bytes(tables.n_frames, tables.n_atoms, &tables.cell, &columns)
 }
 
 pub fn write_extxyz_path(path: &Path, tables: &XyzTables) -> Result<(), String> {

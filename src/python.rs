@@ -8,7 +8,7 @@ use pyo3::exceptions::PyIOError;
 use pyo3::exceptions::PyTypeError;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyDict, PyIterator, PyList, PyTuple};
+use pyo3::types::{IntoPyDict, PyDict, PyIterator, PyList, PyString, PyTuple};
 use serde_json::{Number, Value};
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -3700,83 +3700,206 @@ fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>>
     Ok(dict)
 }
 
+struct TextColumn<'a> {
+    name: &'a str,
+    tokens: &'a [&'a str],
+}
+
+struct RealColumn<'a> {
+    name: &'a str,
+    width: usize,
+    values: &'a [f64],
+}
+
+impl crate::extxyz_scan::ExtxyzSource for TextColumn<'_> {
+    fn column_name(&self) -> &str {
+        self.name
+    }
+
+    fn column_kind(&self) -> u8 {
+        b'S'
+    }
+
+    fn column_width(&self) -> usize {
+        1
+    }
+
+    fn write_fields(&self, base: usize, out: &mut Vec<u8>) {
+        out.extend_from_slice(self.tokens[base].as_bytes());
+    }
+}
+
+impl crate::extxyz_scan::ExtxyzSource for RealColumn<'_> {
+    fn column_name(&self) -> &str {
+        self.name
+    }
+
+    fn column_kind(&self) -> u8 {
+        b'R'
+    }
+
+    fn column_width(&self) -> usize {
+        self.width
+    }
+
+    fn write_fields(&self, base: usize, out: &mut Vec<u8>) {
+        for slot in 0..self.width {
+            if slot > 0 {
+                out.push(b' ');
+            }
+            let text = format!("{}", self.values[base + slot]);
+            out.extend_from_slice(text.as_bytes());
+        }
+    }
+}
+
 /// Write an extended XYZ file from the dict returned by ``read_extxyz``.
 ///
 /// Species, positions, the lattice, ``pbc`` and every per-atom column,
-/// including forces, are written.
+/// including forces, are written. Numeric columns are borrowed from the
+/// caller's arrays. The binding does not allocate a second copy of them.
 #[pyfunction]
 fn write_extxyz(path: &str, data: &Bound<'_, PyDict>) -> PyResult<()> {
     let positions = data
         .get_item("positions")?
         .ok_or_else(|| PyValueError::new_err("positions"))?;
     let pos = positions.cast::<PyArray3<f64>>()?;
-    let pos_view = pos.readonly();
-    let shape = pos_view.as_array().shape().to_vec();
+    let shape = {
+        let view = pos.readonly();
+        view.as_array().shape().to_vec()
+    };
     if shape.len() != 3 || shape[2] != 3 {
         return Err(PyValueError::new_err("positions"));
     }
     let n_frames = shape[0];
     let n_atoms = shape[1];
+    if data.get_item("species")?.is_none() {
+        return Err(PyValueError::new_err("species"));
+    }
     let cell_obj = data
         .get_item("cell")?
         .ok_or_else(|| PyValueError::new_err("cell"))?;
-    let cell = cell_obj.cast::<PyArray2<f64>>()?.readonly();
-    let cell_values = cell.as_slice()?.to_vec();
-    let species_frames: Vec<Vec<String>> = data
-        .get_item("species")?
-        .ok_or_else(|| PyValueError::new_err("species"))?
-        .extract()?;
-    let species = species_frames.into_iter().flatten().collect();
+    let cell_array = cell_obj.cast::<PyArray2<f64>>()?.clone();
     let arrays_obj = data
         .get_item("arrays")?
         .ok_or_else(|| PyValueError::new_err("arrays"))?;
     let arrays = arrays_obj.cast::<PyDict>()?;
-    let mut columns = Vec::new();
+    let mut text_names = Vec::new();
+    let mut text_items: Vec<Vec<Bound<'_, PyString>>> = Vec::new();
+    let mut real3_meta: Vec<(String, usize)> = Vec::new();
+    let mut real3_arrays: Vec<Bound<'_, PyArray3<f64>>> = Vec::new();
+    let mut real2_names = Vec::new();
+    let mut real2_arrays: Vec<Bound<'_, PyArray2<f64>>> = Vec::new();
+    let mut order = Vec::new();
     for (key, value) in arrays.iter() {
         let name: String = key.extract()?;
-        if let Ok(text) = value.extract::<Vec<Vec<String>>>() {
-            let flat = text.into_iter().flatten().collect();
-            columns.push(crate::extxyz_scan::XyzColumn {
-                name,
-                kind: b'S',
-                width: 1,
-                text: flat,
-                real: Vec::new(),
-            });
-        } else if let Ok(wide) = value.cast::<PyArray3<f64>>() {
+        if let Ok(wide) = value.cast::<PyArray3<f64>>() {
             let view = wide.readonly();
             let width = *view.as_array().shape().get(2).unwrap_or(&1);
-            columns.push(crate::extxyz_scan::XyzColumn {
-                name,
-                kind: b'R',
-                width,
-                text: Vec::new(),
-                real: view.as_slice()?.to_vec(),
-            });
+            if view.as_slice().is_err() {
+                return Err(PyValueError::new_err(format!("column {name}")));
+            }
+            drop(view);
+            real3_meta.push((name, width));
+            real3_arrays.push(wide.clone());
+            order.push(1u8);
         } else if let Ok(thin) = value.cast::<PyArray2<f64>>() {
             let view = thin.readonly();
-            columns.push(crate::extxyz_scan::XyzColumn {
-                name,
-                kind: b'R',
-                width: 1,
-                text: Vec::new(),
-                real: view.as_slice()?.to_vec(),
-            });
+            if view.as_slice().is_err() {
+                return Err(PyValueError::new_err(format!("column {name}")));
+            }
+            drop(view);
+            real2_names.push(name);
+            real2_arrays.push(thin.clone());
+            order.push(2u8);
         } else {
-            return Err(PyValueError::new_err(format!("column {name}")));
+            let mut items = Vec::new();
+            let frames = value.try_iter().map_err(|_| PyValueError::new_err(format!("column {name}")))?;
+            for frame in frames {
+                let frame = frame?;
+                for atom in frame.try_iter()? {
+                    items.push(atom?.cast::<PyString>()?.clone());
+                }
+            }
+            text_names.push(name);
+            text_items.push(items);
+            order.push(0u8);
         }
     }
-    let tables = crate::extxyz_scan::XyzTables {
-        n_frames,
-        n_atoms,
-        positions: pos_view.as_slice()?.to_vec(),
-        masses: Vec::new(),
-        cell: cell_values,
-        species,
-        columns,
-    };
-    crate::extxyz_scan::write_extxyz_path(std::path::Path::new(path), &tables)
-        .map_err(|err| PyValueError::new_err(err))
+    let cell_view = cell_array.readonly();
+    let cell = cell_view.as_slice()?;
+    let real3_views: Vec<_> = real3_arrays.iter().map(|array| array.readonly()).collect();
+    let real2_views: Vec<_> = real2_arrays.iter().map(|array| array.readonly()).collect();
+    let mut real3_slices = Vec::with_capacity(real3_views.len());
+    for view in &real3_views {
+        real3_slices.push(view.as_slice()?);
+    }
+    let mut real2_slices = Vec::with_capacity(real2_views.len());
+    for view in &real2_views {
+        real2_slices.push(view.as_slice()?);
+    }
+    let mut text_refs = Vec::with_capacity(text_items.len());
+    for items in &text_items {
+        let mut refs = Vec::with_capacity(items.len());
+        for item in items {
+            refs.push(item.to_str()?);
+        }
+        text_refs.push(refs);
+    }
+    let mut texts = Vec::new();
+    let mut reals = Vec::new();
+    let mut plan = Vec::new();
+    let mut text_index = 0;
+    let mut real3_index = 0;
+    let mut real2_index = 0;
+    for kind in &order {
+        match kind {
+            0 => {
+                texts.push(TextColumn {
+                    name: &text_names[text_index],
+                    tokens: &text_refs[text_index],
+                });
+                plan.push((0u8, texts.len() - 1));
+                text_index += 1;
+            }
+            1 => {
+                reals.push(RealColumn {
+                    name: &real3_meta[real3_index].0,
+                    width: real3_meta[real3_index].1,
+                    values: real3_slices[real3_index],
+                });
+                plan.push((1u8, reals.len() - 1));
+                real3_index += 1;
+            }
+            _ => {
+                reals.push(RealColumn {
+                    name: &real2_names[real2_index],
+                    width: 1,
+                    values: real2_slices[real2_index],
+                });
+                plan.push((1u8, reals.len() - 1));
+                real2_index += 1;
+            }
+        }
+    }
+    let sources: Vec<&dyn crate::extxyz_scan::ExtxyzSource> = plan
+        .iter()
+        .map(|(kind, index)| {
+            if *kind == 0 {
+                &texts[*index] as &dyn crate::extxyz_scan::ExtxyzSource
+            } else {
+                &reals[*index] as &dyn crate::extxyz_scan::ExtxyzSource
+            }
+        })
+        .collect();
+    let bytes = crate::extxyz_scan::extxyz_bytes(n_frames, n_atoms, cell, &sources)
+        .map_err(PyValueError::new_err)?;
+    if let Some(parent) = std::path::Path::new(path).parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent).map_err(|_| PyValueError::new_err("write"))?;
+        }
+    }
+    std::fs::write(path, bytes).map_err(|_| PyValueError::new_err("write"))
 }
 
 /// Read a PDB file into positions, masses and the cell.
