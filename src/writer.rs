@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 use crate::types::{
     ConFrame, SECTION_CHARGES, SECTION_DISPLACEMENTS, SECTION_ENERGIES, SECTION_FORCES,
     SECTION_MAGMOMS, SECTION_SPINS, SECTION_SPREADS, SECTION_VELOCITIES, encode_fixed_bitmask,
@@ -1385,8 +1386,8 @@ mod section_arity_tests {
         let frame = load_frame("tiny_cuh2.convel");
         let stamped = binding_metadata(&frame);
         assert!(stamped.contains_key(meta::UNITS));
-        let mut cursor = Cursor::new(Vec::new());
-        let mut writer = super::ConFrameWriter::new(&mut cursor);
+        let mut mark = Cursor::new(Vec::new());
+        let mut writer = super::ConFrameWriter::new(&mut mark);
         writer.set_canonical(false);
         assert!(!writer.is_canonical());
         writer.set_canonical(true);
@@ -1397,7 +1398,7 @@ mod section_arity_tests {
         writer.write_frame_binding(&mut owned).unwrap();
         assert_eq!(owned.header.spec_version, frame.header.spec_version);
         drop(writer);
-        let bytes = cursor.into_inner();
+        let bytes = mark.into_inner();
         assert!(!bytes.is_empty());
     }
 

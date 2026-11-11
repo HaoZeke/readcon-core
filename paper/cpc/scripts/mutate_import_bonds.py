@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from receipt_text import ROOT, clean, tool_path
+from receipt_text import ROOT, clean, tool_path, versions
 SOURCE = ROOT / "src" / "chemfiles_import_imp.rs"
 OUT = ROOT / "paper" / "cpc" / "receipts" / "import"
 
@@ -81,6 +81,7 @@ def main() -> int:
             f"restored: {restored}\n"
             "----- test output -----\n"
             f"{result.stdout}"
+            f"{versions()}"
         )
         (OUT / f"{name}.txt").write_text(clean(body))
         ok = result.returncode != 0 and needle in result.stdout and restored

@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Unit expressions and conversion (metatomic-inspired, SI dimensional analysis).
 //!
 //! Supports named base units and simple products/quotients with `*`, `/`, `^`,

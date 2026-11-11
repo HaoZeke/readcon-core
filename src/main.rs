@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! CLI for CON I/O and foreign → CON conversion (migration entry point).
 //!
 //! ```text

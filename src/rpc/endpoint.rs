@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! RPC listen/connect targets. Cap'n is the encoding; this is the byte pipe.
 //!
 //! - `host:port` and `[ipv6]:port` are TCP.

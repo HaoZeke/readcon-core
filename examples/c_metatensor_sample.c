@@ -1,3 +1,4 @@
+/* Copyright (c) readcon developers */
 /* Metatensor-sys C ABI consumer (option A: sys on the boundary).
  *
  * After: cargo build --release --features metatensor,chemfiles

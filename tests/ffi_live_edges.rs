@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Live handles with one null argument, so each later null check runs.
 
 use std::ffi::{CStr, CString};

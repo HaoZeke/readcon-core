@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Sidecar checks through the library copy used by integration tests.
 
 use std::fs;

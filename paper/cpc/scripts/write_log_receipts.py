@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from receipt_text import ROOT, clean, tool_path
+from receipt_text import ROOT, clean, tool_path, versions
 
 OUT = ROOT / "paper" / "cpc" / "receipts"
 
@@ -39,7 +39,7 @@ def write(name: str, result: subprocess.CompletedProcess[str]) -> None:
     path = OUT / name
     path.parent.mkdir(parents=True, exist_ok=True)
     body = clean(
-        f"test-log: {name}\nexit: {result.returncode}\n----- test output -----\n{result.stdout}"
+        f"test-log: {name}\nexit: {result.returncode}\n----- test output -----\n{result.stdout}{versions()}"
     )
     path.write_text(body)
     print(f"{name}: exit {result.returncode}", flush=True)

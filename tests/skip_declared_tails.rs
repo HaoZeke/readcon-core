@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! An empty section list and a cut legacy row leave the tail in place.
 use readcon_core::iterators::ConFrameIterator;
 

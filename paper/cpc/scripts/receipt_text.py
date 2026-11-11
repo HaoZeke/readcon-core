@@ -28,7 +28,7 @@ def rustup_bin() -> Path:
         Path.home()
         / ".rustup"
         / "toolchains"
-        / "nightly-x86_64-unknown-linux-gnu"
+        / "1.88.0-x86_64-unknown-linux-gnu"
         / "bin"
     )
 
@@ -37,3 +37,15 @@ def tool_path() -> str:
     import os
 
     return os.pathsep.join([str(rustup_bin()), "/usr/bin", "/bin"])
+
+
+def versions() -> str:
+    """Raw compiler lines from the pinned toolchain."""
+    import os
+    import subprocess
+
+    env = os.environ.copy()
+    env["PATH"] = tool_path()
+    rustc = subprocess.check_output(["rustc", "-V"], env=env, text=True)
+    cargo = subprocess.check_output(["cargo", "-V"], env=env, text=True)
+    return f"rustc -V\n{rustc}cargo -V\n{cargo}"

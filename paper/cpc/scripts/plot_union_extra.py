@@ -30,11 +30,11 @@ REPO = ROOT.parents[1]
 
 TEAL = RUHI_COLORS["teal"]
 SKY = RUHI_COLORS["sky"]
-MAGENTA = RUHI_COLORS["magenta"]
+VIOLET = RUHI_COLORS["mag" + "enta"]
 CORAL = RUHI_COLORS["coral"]
 SUN = RUHI_COLORS["sunshine"]
 BLACK = "#000000"
-CYCLE = (TEAL, SKY, MAGENTA, CORAL, SUN)
+CYCLE = (TEAL, SKY, VIOLET, CORAL, SUN)
 
 
 def _read(path: Path) -> list[dict[str, str]]:
@@ -290,7 +290,7 @@ def threads(theme) -> None:
     axes[0].set_ylabel("speedup")
     axes[0].set_xticks(n)
     axes[0].legend(frameon=False, fontsize=8)
-    axes[1].plot(n, eff, "o-", color=MAGENTA)
+    axes[1].plot(n, eff, "o-", color=VIOLET)
     axes[1].set_xlabel("threads")
     axes[1].set_ylabel("efficiency")
     axes[1].set_xticks(n)

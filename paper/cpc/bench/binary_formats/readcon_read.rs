@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! The readcon-core cells of the binary-format campaign and the CON and `.rcbin`
 //! files they read.
 //!

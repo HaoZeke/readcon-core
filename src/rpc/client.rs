@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 use capnp_rpc::{RpcSystem, rpc_twoparty_capnp, twoparty};
 use futures::AsyncReadExt;
 

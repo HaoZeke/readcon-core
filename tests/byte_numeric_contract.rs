@@ -67,7 +67,7 @@ fn mapped_file_reads_match_byte_buffers_for_all_worker_counts() {
 }
 
 #[test]
-fn byte_line_cursor_preserves_unicode_crlf_and_an_unterminated_final_line() {
+fn byte_line_mark_preserves_unicode_crlf_and_an_unterminated_final_line() {
     let mut lines = MemchrLines::from_bytes("αβ\r\n\r\nlast".as_bytes());
     assert_eq!(lines.peek_line(), Some("αβ"));
     assert_eq!(lines.peek_line(), Some("αβ"));
@@ -254,7 +254,7 @@ fn invalid_utf8_is_not_end_of_file_when_the_tail_is_whitespace() {
         assert_invalid_utf8(&err);
         let again = iter
             .next()
-            .expect("a rejected line stays an error if the cursor is polled again")
+            .expect("a rejected line stays an error if the mark is polled again")
             .expect_err("the decode error must not turn into a frame");
         assert_invalid_utf8(&again);
     }

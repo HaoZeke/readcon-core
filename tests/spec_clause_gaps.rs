@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Reader and writer behavior for clauses that no corpus file named.
 //!
 //! Each test's doc comment names the clause. The checks call the library.

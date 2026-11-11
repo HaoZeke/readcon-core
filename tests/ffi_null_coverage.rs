@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Calls into the C exports the default suite leaves cold.
 
 use std::ffi::CString;

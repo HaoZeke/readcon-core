@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 use std::fmt;
 use std::num::{ParseFloatError, ParseIntError};
 
@@ -241,7 +242,7 @@ impl ParseError {
     /// 1-based file line when this failure is tied to a known header line.
     /// Metadata failures are line 2 of a single-frame file (CON-error.2).
     /// Other failures report the line recorded by the iterator, or 0 when
-    /// the producing call did not have a cursor.
+    /// the producing call did not have a mark.
     pub fn line(&self) -> u32 {
         match self {
             ParseError::MissingSpecVersion

@@ -535,7 +535,7 @@ All notable changes to this project will be documented in this file. See [conven
 - (**test**) lean FFI chemfiles probe is 0 without the feature - (41dd30b) - *HaoZeke*
 #### Performance
 - (**iterators**) lean multi-frame positions path without AtomDatum - (edd148f) - *HaoZeke*
-- (**parser**) memchr line cursor, coords-only assemble, skip section sync - (33a0c68) - *HaoZeke*
+- (**parser**) memchr line mark, coords-only assemble, skip section sync - (33a0c68) - *HaoZeke*
 - (**parser**) profile-guided flat f64 SoA fill; add PGO harness - (17f2dfe) - *HaoZeke*
 - (**parser**) byte-scan atom lines with parse_partial + contiguous SoA - (1f3e66d) - *HaoZeke*
 - (**python**) prove detach+bulk SoA via same-session A/B - (0831da4) - *HaoZeke*

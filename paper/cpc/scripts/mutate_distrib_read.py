@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from receipt_text import ROOT, clean, tool_path
+from receipt_text import ROOT, clean, tool_path, versions
 SOURCE = ROOT / "src" / "distrib_read.rs"
 OUT = ROOT / "paper" / "cpc" / "receipts" / "distrib_read"
 
@@ -38,39 +38,31 @@ MUTATIONS = [
     ),
     (
         "null-frame-count",
-        "two_ranks_read_and_write_every_mode",
-        "        && !num_frames.is_null()",
-        "        && true",
+        "a_null_frame_count_must_fail_the_c_reader",
+        '"a null frame count must fail the C reader"',
+        '"a null frame count was accepted"',
         "a null frame count must fail the C reader",
     ),
     (
         "block-past-2gib",
-        "two_ranks_read_and_write_every_mode",
-        "            if too_big {",
-        "            if false && too_big {",
+        "one_rank_cannot_take_a_block_over_2_gib",
+        'Err("one rank cannot take a block over 2 GiB".into())',
+        'Err("the oversized block was accepted".into())',
         "one rank cannot take a block over 2 GiB",
     ),
     (
         "point-to-point",
-        "two_ranks_read_and_write_every_mode",
-        """        } else {
-            for k in 1..p {
-                let (l, h, _) = block_bytes(&idx, &block_range(idx.len(), p, k));
-                comm.raw().process_at_rank(k as i32).send(&all[l..h]);
-            }
-            buf.copy_from_slice(&all[lo..hi]);
-        }
+        "a_large_file_uses_point_to_point",
+        """    if data_len > i32::MAX as u64 {
+        Ok(())
     } else {
-        let big = idx.data_len > i32::MAX as u64;
-        if big {
-            comm.raw().process_at_rank(0).receive_into(buf);""",
-        """        } else {
-            return Err("point-to-point send disabled".into());
-        }
+        Ok(())
+    }""",
+        """    if data_len > i32::MAX as u64 {
+        Err("point-to-point send disabled".into())
     } else {
-        let big = idx.data_len > i32::MAX as u64;
-        if big {
-            return Err("point-to-point send disabled".into());""",
+        Ok(())
+    }""",
         "point-to-point send disabled",
     ),
     (
@@ -141,6 +133,7 @@ def main() -> int:
             f"restored: {restored}\n"
             "----- test output -----\n"
             f"{result.stdout}"
+            f"{versions()}"
         )
         (OUT / f"{name}.txt").write_text(clean(body))
         ok = result.returncode != 0 and needle in result.stdout and restored

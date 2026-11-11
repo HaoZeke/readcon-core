@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //=============================================================================
 // The Public API - A clean iterator for users of our library
 //=============================================================================
@@ -6,10 +7,10 @@ use crate::parser::{LineStream, parse_declared_sections};
 use crate::{error, types};
 use std::path::Path;
 
-/// memchr-backed line cursor for the full parse path (not only frame skip).
+/// memchr-backed line mark for the full parse path (not only frame skip).
 ///
 /// Profile note: `str::Lines` + `Peekable` showed up under
-/// `ConFrameIterator::next` on multi-atom multi-frame workloads. One cursor
+/// `ConFrameIterator::next` on multi-atom multi-frame workloads. One mark
 /// serves `next` / `peek` / `forward_fast` so skip and full parse share the
 /// same O(1) newline scan rather than two desynchronized views of the buffer.
 pub struct MemchrLines<'a> {
@@ -117,7 +118,7 @@ impl<'a> MemchrLines<'a> {
         self.peeked
     }
 
-    /// Drop any peek buffer (required before bulk cursor advances).
+    /// Drop any peek buffer (required before bulk mark advances).
     fn clear_peek(&mut self) {
         if let Some(p) = self.peeked.take() {
             // Rewind pos to the start of the peeked line.
@@ -131,7 +132,7 @@ impl<'a> MemchrLines<'a> {
 
     /// One line from the precomputed newline index.
     ///
-    /// The cursor must sit on a line start (or at the end). The bytes of
+    /// The mark must sit on a line start (or at the end). The bytes of
     /// the line are the same slice `memchr` would return, including a line
     /// whose body crosses a chunk boundary: only the `\n` is indexed.
     fn read_one_indexed(&mut self) -> Option<&'a str> {
@@ -174,7 +175,7 @@ impl<'a> MemchrLines<'a> {
         self.utf8_bad.then(invalid_utf8)
     }
 
-    /// Keep `err` unless this cursor already rejected a line as UTF-8.
+    /// Keep `err` unless this mark already rejected a line as UTF-8.
     fn prefer_utf8(&self, err: error::ParseError) -> error::ParseError {
         if self.utf8_bad { invalid_utf8() } else { err }
     }
@@ -280,7 +281,7 @@ impl<'a> LineStream<'a> for MemchrLines<'a> {
         match probe_section(&self.bytes[self.pos..]) {
             SectionProbe::Opens => true,
             SectionProbe::Closed => false,
-            // Leave the rejected bytes on the cursor. `prefer_utf8` then
+            // Leave the rejected bytes on the mark. `prefer_utf8` then
             // reports the decode error instead of a missing section.
             SectionProbe::InvalidUtf8 => {
                 self.utf8_bad = true;
@@ -522,7 +523,7 @@ fn declared_sections(line2: &str) -> Option<Vec<String>> {
 /// An iterator that lazily parses simulation frames from a `.con` or `.convel`
 /// file's contents.
 ///
-/// This struct wraps a memchr line cursor over the file buffer and, upon each
+/// This struct wraps a memchr line mark over the file buffer and, upon each
 /// iteration, attempts to parse a complete `ConFrame`. A blank line after the
 /// coordinates is a velocity section only when it begins a complete velocity
 /// block. Otherwise that line is line 1 of the next frame, and it may be empty.
@@ -536,13 +537,13 @@ pub struct ConFrameIterator<'a> {
 
 impl<'a> ConFrameIterator<'a> {
     /// 1-based line of the read position after the last line this iterator consumed.
-    pub fn cursor_line(&self) -> u32 {
+    pub fn mark_line(&self) -> u32 {
         self.lines.line_no as u32
     }
 
-    /// Same value as [`Self::cursor_line`].
+    /// Same value as [`Self::mark_line`].
     pub fn lines_read(&self) -> u32 {
-        self.cursor_line()
+        self.mark_line()
     }
 
     /// A slice that is not the start of the file may begin with U+FEFF.
@@ -597,7 +598,7 @@ impl<'a> ConFrameIterator<'a> {
         }
     }
 
-    /// Bulk-skips `n` lines from the shared memchr cursor.
+    /// Bulk-skips `n` lines from the shared memchr mark.
     ///
     /// A final line with no trailing newline still counts when it is the
     /// last line this call needs and its bytes are present. The full
@@ -706,7 +707,7 @@ impl<'a> ConFrameIterator<'a> {
         }
     }
 
-    /// One line from the shared cursor (same as full-parse path).
+    /// One line from the shared mark (same as full-parse path).
     fn read_line_str(&mut self) -> Option<&'a str> {
         self.lines.clear_peek();
         self.lines.next_line()
@@ -714,7 +715,7 @@ impl<'a> ConFrameIterator<'a> {
 
     /// memchr-backed equivalent of [`Self::forward`]. Skips the next
     /// frame without fully parsing its atom data. Shares the same line
-    /// cursor as [`Iterator::next`], so skip and full parse interleave safely.
+    /// mark as [`Iterator::next`], so skip and full parse interleave safely.
     pub fn forward_fast(&mut self) -> Option<Result<(), error::ParseError>> {
         self.forward_fast_to(None)
     }
@@ -899,7 +900,7 @@ impl<'a> ConFrameIterator<'a> {
     /// * `Some(Err(ParseError::...))` if there's an error parsing the header.
     /// * `None` if the iterator is already at the end.
     pub fn forward(&mut self) -> Option<Result<(), error::ParseError>> {
-        // Prefer the shared memchr skip path (same cursor as full parse).
+        // Prefer the shared memchr skip path (same mark as full parse).
         self.forward_fast()
     }
 
@@ -1016,7 +1017,7 @@ impl<'a> Iterator for ConFrameIterator<'a> {
     /// the end of the stream.
     fn next(&mut self) -> Option<Self::Item> {
         // A byte-order mark is rejected only at the start of the file
-        // (CON-file.2), before any peek moves the cursor. On a later
+        // (CON-file.2), before any peek moves the mark. On a later
         // frame it is text of that line.
         if self.check_bom
             && self.lines.pos == 0
@@ -1028,7 +1029,7 @@ impl<'a> Iterator for ConFrameIterator<'a> {
                 "file begins with a byte-order mark".into(),
             )));
         }
-        // A line rejected earlier in this cursor (for example while probing
+        // A line rejected earlier in this mark (for example while probing
         // for a velocity block) must not be reported as a clean EOF.
         if let Some(err) = self.lines.utf8_error() {
             return Some(Err(err));
@@ -1036,7 +1037,7 @@ impl<'a> Iterator for ConFrameIterator<'a> {
         // Trailing whitespace after the last complete frame is not a frame
         // (CON-frame.1, D2). An empty line that is followed by more text is
         // line 1 of the next frame (CON-frame.7).
-        // `remainder_is_whitespace` is true only when this cursor has not
+        // `remainder_is_whitespace` is true only when this mark has not
         // rejected a line. A decode error returns false there and is
         // reported by the check below.
         if self.lines.remainder_is_whitespace() {
@@ -2185,7 +2186,7 @@ fn parse_bytes_timed(bytes: &[u8], num_threads: Option<usize>) -> TimedParse {
         let t_scan = std::time::Instant::now();
         let (boundaries, scan_kind) = {
                 let mut scanner = ConFrameIterator::from_bytes(bytes);
-                // The frame bounds are the serial cursor's. An indexed scan
+                // The frame bounds are the serial mark's. An indexed scan
                 // ended these corpus frames before the line the serial parser
                 // rejects, so the workers accepted a prefix.
                 let scan_kind = SCAN_SERIAL;
@@ -4183,7 +4184,7 @@ mod one_thread_and_numa {
         bad.push_str("\nnot a number\n");
         assert!(parse_text_span(&bad, 0, bad.len()).is_err());
         let mut iter = super::ConFrameIterator::from_bytes(&bytes);
-        assert_eq!(iter.cursor_line(), iter.lines_read());
+        assert_eq!(iter.mark_line(), iter.lines_read());
 
         let raw = b"ok\n\xff\n";
         let mut indexed = super::MemchrLines::from_bytes(raw);
@@ -4299,12 +4300,12 @@ mod one_thread_and_numa {
         .is_none());
         let mut empty = Vec::<f64>::new();
         super::first_touch_f64(&mut empty, 2);
-        let mut cursor = super::MemchrLines::new("abc\ndef\n");
-        cursor.newlines = Some(vec![3, 7]);
-        cursor.peek_line();
-        cursor.clear_peek();
-        cursor.utf8_bad = true;
-        assert!(!crate::parser::LineStream::remainder_is_whitespace(&mut cursor));
+        let mut mark = super::MemchrLines::new("abc\ndef\n");
+        mark.newlines = Some(vec![3, 7]);
+        mark.peek_line();
+        mark.clear_peek();
+        mark.utf8_bad = true;
+        assert!(!crate::parser::LineStream::remainder_is_whitespace(&mut mark));
     }
 
     #[test]
@@ -4443,13 +4444,13 @@ mod one_thread_and_numa {
         let from_pool = pool.install(|| pack_position_slab(&[frame.clone()], 2).unwrap());
         assert!((from_pool[1] - 2.5).abs() < 1e-5);
 
-        let mut cursor = super::MemchrLines::from_bytes(b"   \n1 2 3 0 1\r\n");
-        let err = crate::parser::LineStream::next_coord_row(&mut cursor, 2, 0).unwrap_err();
+        let mut mark = super::MemchrLines::from_bytes(b"   \n1 2 3 0 1\r\n");
+        let err = crate::parser::LineStream::next_coord_row(&mut mark, 2, 0).unwrap_err();
         assert!(matches!(
             err,
             error::ParseError::InvalidVectorLength { found: 0, .. }
         ));
-        let row = crate::parser::LineStream::next_coord_row(&mut cursor, 2, 7).unwrap();
+        let row = crate::parser::LineStream::next_coord_row(&mut mark, 2, 7).unwrap();
         assert_eq!(row.0, [1.0, 2.0, 3.0]);
         let mut done = super::MemchrLines::from_bytes(b"");
         assert!(matches!(
@@ -4470,13 +4471,13 @@ mod missed_branch_tests {
     }
 
     #[test]
-    fn cursor_edges_report_the_rejected_line() {
+    fn mark_edges_report_the_rejected_line() {
         let raw = b"ok\n\xff\nnext\n";
-        let mut cursor = MemchrLines::from_bytes(raw);
-        assert_eq!(cursor.next_line(), Some("ok"));
-        assert!(cursor.next_line().is_none());
-        assert!(cursor.utf8_error().is_some());
-        assert!(cursor.next_line().is_none());
+        let mut mark = MemchrLines::from_bytes(raw);
+        assert_eq!(mark.next_line(), Some("ok"));
+        assert!(mark.next_line().is_none());
+        assert!(mark.utf8_error().is_some());
+        assert!(mark.next_line().is_none());
 
         let mut indexed = MemchrLines::from_bytes(raw);
         indexed.newlines = Some(vec![2, 4, 9]);

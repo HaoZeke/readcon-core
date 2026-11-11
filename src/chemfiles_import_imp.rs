@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Optional chemfiles -> readcon conversion (feature = "chemfiles").
 //!
 //! Maps a chemfiles [`Frame`](chemfiles::Frame) (and trajectory readers) into

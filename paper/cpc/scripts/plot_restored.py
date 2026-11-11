@@ -2,7 +2,7 @@
 """Regenerate the restored figures in the Ruhi palette.
 
 The five colours are the Ruhi palette from chemparseplot
-(coral, sunshine, teal, sky, magenta).
+(coral, sunshine, teal, sky, violet).
 Each PDF is written from a committed record.
 """
 

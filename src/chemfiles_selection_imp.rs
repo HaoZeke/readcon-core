@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Chemfiles selection grammar applied to readcon frames (feature = "chemfiles").
 //!
 //! Wraps [`chemfiles::Selection`] so callers can evaluate selection-language

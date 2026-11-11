@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Bulk exercise of the C ABI frame-builder and frame-metric surface.
 //!
 //! These paths are large and were under-instrumented when coverage only

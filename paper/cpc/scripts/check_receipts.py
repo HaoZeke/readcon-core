@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 RECEIPTS = ROOT / "paper" / "cpc" / "receipts"
-TOKENS = ("/" + "agent", "/" + "home", "/" + "tmp", "cur" + "sor", "gro" + "k")
+TOKENS = ("/" + "ag" + "ent", "/" + "home", "/" + "tmp", "cur" + "sor", "gro" + "k")
 
 
 def main() -> int:

@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! In-memory SoA element types (CON v3 `storage_dtypes`) and DLPack export.
 //!
 //! On-disk CON text stays IEEE binary64 decimals. In-memory arrays may use any

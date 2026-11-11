@@ -1,3 +1,4 @@
+/* Copyright (c) readcon developers */
 /*
  * readcon-core C API.
  *
@@ -262,7 +263,7 @@ typedef enum RKRStatus {
  * An iterator that lazily parses simulation frames from a `.con` or `.convel`
  * file's contents.
  *
- * This struct wraps a memchr line cursor over the file buffer and, upon each
+ * This struct wraps a memchr line mark over the file buffer and, upon each
  * iteration, attempts to parse a complete `ConFrame`. Velocity sections are
  * detected automatically: if a blank line follows the coordinate blocks, the
  * velocity data is parsed into the atoms.

@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Foreign path or CON → multi-frame CON write (migration surface).
 //!
 //! Used by the CLI (`readcon-core convert …`) and callable from Rust without

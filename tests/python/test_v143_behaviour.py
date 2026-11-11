@@ -48,11 +48,11 @@ def test_a_negative_atom_index_and_an_exhausted_iterator():
         frame[-(len(frame) + 1)]
     atoms = list(frame)
     assert atoms[0].symbol == "Cu"
-    cursor = iter(frame)
-    seen = [atom.symbol for atom in cursor]
+    mark = iter(frame)
+    seen = [atom.symbol for atom in mark]
     assert seen[0] == "Cu"
     assert len(seen) == len(frame)
-    assert next(cursor, None) is None
+    assert next(mark, None) is None
 
 
 def test_bad_paths_wrong_types_and_a_malformed_frame():
@@ -71,10 +71,10 @@ def test_bad_paths_wrong_types_and_a_malformed_frame():
 def test_frame_list_iterator_stops_and_a_string_round_trip(tmp_path):
     path = resource("tiny_multi_cuh2.con")
     frames = readcon.read_con(path)
-    cursor = iter(frames)
-    collected = list(cursor)
+    mark = iter(frames)
+    collected = list(mark)
     assert len(collected) == len(frames)
-    assert next(cursor, None) is None
+    assert next(mark, None) is None
     with pytest.raises(IndexError, match="out of range"):
         frames[-(len(frames) + 1)]
     text = readcon.write_con_string(frames, precision=8)
@@ -184,12 +184,12 @@ def test_ase_constraints_and_repeated_tags_convert_both_ways():
 
 def test_iterators_stop_and_views_follow_the_stored_columns(tmp_path):
     path = resource("tiny_multi_cuh2.con")
-    cursor = readcon.iter_con(path)
-    first = next(cursor)
+    mark = readcon.iter_con(path)
+    first = next(mark)
     assert first.atoms[0].symbol == "Cu"
-    assert cursor.forward() is True
-    assert next(cursor, None) is None
-    assert cursor.forward() is False
+    assert mark.forward() is True
+    assert next(mark, None) is None
+    assert mark.forward() is False
     built = readcon.ConFrame(
         cell=[2.0, 2.0, 2.0],
         angles=[90.0, 90.0, 90.0],

@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Write the CON-bin image `h2h.py` times beside a trajectory.
 //!
 //! ```text

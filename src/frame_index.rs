@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Frame offset index and its checked `.rcidx` sidecar.
 //!
 //! The sidecar stores the byte offset of every frame start in an
@@ -85,8 +86,8 @@ pub fn frame_start_offsets_checked(text: &str) -> Result<Vec<usize>, ParseError>
             break;
         }
         out.push(start);
-        // `forward_fast` returns None only when the cursor is already at
-        // the end, and `no_frame_at` breaks on that cursor above.
+        // `forward_fast` returns None only when the mark is already at
+        // the end, and `no_frame_at` breaks on that mark above.
         let stepped = scanner.forward_fast().unwrap();
         if let Err(e) = stepped {
             return Err(e);

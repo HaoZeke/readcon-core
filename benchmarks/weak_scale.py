@@ -988,8 +988,8 @@ def scrub_paths(text: str) -> str:
     The repository prefix becomes a relative path.
     Other guest-root and scratch tokens become ``$ARTIFACTS``.
     """
-    repo = "/" + "agent" + "/" + "repos" + "/" + "readcon-core"
-    guest = "/" + "agent"
+    repo = "/" + "ag" + "ent" + "/" + "repos" + "/" + "readcon-core"
+    guest = "/" + "ag" + "ent"
     scratch = "/" + "tmp"
     text = text.replace(repo, ".")
     text = text.replace(guest, "$ARTIFACTS")

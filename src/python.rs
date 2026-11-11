@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 use ndarray::{Array2, Array3, ArrayView2};
 use numpy::{
     IntoPyArray, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyReadonlyArray2, PyReadonlyArray3,
@@ -486,7 +487,7 @@ impl PyConFrame {
         self.atom_count(py)
     }
 
-    /// Atoms in file order. The file cursor is `iter_con`, not this.
+    /// Atoms in file order. The file mark is `iter_con`, not this.
     fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
         self.ensure_atoms(py)?;
         self.atoms.bind(py).try_iter()

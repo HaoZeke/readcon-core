@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! CON-bin: one page of header, then every frame's positions as one run
 //! of little-endian values, then the velocities the same way.
 //!

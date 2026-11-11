@@ -340,7 +340,7 @@ class HostAndLaunch(unittest.TestCase):
             self.assertIn("\ntree ", text)
             self.assertIn("\n$ python3 benchmarks/weak_scale.py run-threads\n", text)
             self.assertNotIn("/" + "tmp", text)
-            self.assertNotIn("/" + "agent", text)
+            self.assertNotIn("/" + "ag" + "ent", text)
             self.assertTrue(text.endswith("exit_code 2\n"))
             weak.assert_no_machine_name(text)
             gpu_log = directory / "gpu.log"

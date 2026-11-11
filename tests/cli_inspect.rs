@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! The `readcon-core` binary: inspect, rewrite, and convert.
 
 use std::process::Command;

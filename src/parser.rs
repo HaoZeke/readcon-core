@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 use crate::error::ParseError;
 use crate::helpers::symbol_to_atomic_number;
 use crate::types::{
@@ -12,7 +13,7 @@ use std::sync::Arc;
 
 /// Line source with peek for section detection (blank-line separators).
 ///
-/// Implemented by the memchr cursor on the hot iterator path and by
+/// Implemented by the memchr mark on the hot iterator path and by
 /// `Peekable<I>` for tests / ad-hoc callers.
 pub trait LineStream<'a> {
     fn next_line(&mut self) -> Option<&'a str>;
@@ -45,7 +46,7 @@ pub trait LineStream<'a> {
     }
 
     /// Bytes not yet consumed, including a peeked line. `None` when the
-    /// stream has no byte cursor. A declared atom count larger than this
+    /// stream has no byte mark. A declared atom count larger than this
     /// cannot appear in the file.
     fn bytes_remaining(&mut self) -> Option<usize> {
         None
@@ -54,7 +55,7 @@ pub trait LineStream<'a> {
     /// One coordinate row, fused with the line scan when the stream can do it.
     ///
     /// The default pulls a `&str` line. [`crate::iterators::MemchrLines`]
-    /// parses the row directly from the byte cursor so tokenize and numeric
+    /// parses the row directly from the byte mark so tokenize and numeric
     /// parse are one pass.
     fn next_coord_row(
         &mut self,
@@ -1643,7 +1644,7 @@ where
 /// Frame parse over a [`LineStream`].
 ///
 /// Coordinate rows go through [`LineStream::next_coord_row`] so the memchr
-/// cursor can fuse the newline scan with numeric parse. Positions, ids, and
+/// mark can fuse the newline scan with numeric parse. Positions, ids, and
 /// flags land in flat buffers; [`AtomDatum`] values are built from those
 /// buffers afterwards (one `Vec` allocation, no per-atom heap traffic).
 pub(crate) fn parse_single_frame_ls<'a, L>(lines: &mut L) -> Result<ConFrame, ParseError>

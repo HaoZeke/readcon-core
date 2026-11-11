@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Campaign-store **index projection**: screening scalars and contracts derived from
 //! a parsed [`ConFrame`](crate::types::ConFrame) so corpora (e.g. `readcon-db`) do not
 //! fork CON semantics.

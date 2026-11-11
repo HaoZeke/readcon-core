@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Weak-scaling thread parse.
 //!
 //! The file for `w` workers holds `frames_per_worker * w` frames of

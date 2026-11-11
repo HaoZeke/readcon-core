@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Cap'n Proto ↔ [`ConFrame`] conversion (CON v3 field parity).
 
 use std::collections::BTreeMap;

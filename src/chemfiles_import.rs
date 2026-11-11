@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Chemfiles → CON conversion.
 //!
 //! Real implementation requires the `chemfiles` Cargo feature (links libchemfiles).

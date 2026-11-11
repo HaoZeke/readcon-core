@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Chemfiles selection grammar on CON frames.
 //!
 //! Real evaluation requires the `chemfiles` Cargo feature. Without it, APIs

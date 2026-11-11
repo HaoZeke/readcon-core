@@ -1,7 +1,7 @@
 
 # Table of Contents
 
-1.  [About](#org8a516dd)
+1. [About](#org8a516dd)
     1.  [Features](#orge280c29)
     2.  [Migrate onto CON](#org9a4c2eb)
     3.  [Install](#org34cb29e)
@@ -13,25 +13,26 @@
         2.  [convel format](#org521e4d3)
     7.  [Capabilities](#org112ad98)
     8.  [Citation](#org0dc7c45)
-2.  [License](#org5fa1ad7)
+2. [License](#org5fa1ad7)
 
 
 <a id="org8a516dd"></a>
 
 # About
 
-`readcon-core` is the reference implementation of versioned `.con` / `.convel`.
+`readcon-core` is the reference implementation of versioned `.con` and
+`.convel`.
 This tree is package version 0.18.1.
-Rare-event codes already checkpoint on CON. This library is the spec and
-the hourglass API so the rest of the atomistic stack reads the same file
-everywhere:
-optimizers, potential drivers, analysis tools, and ML
-hand-off.
+Rare-event codes already checkpoint on CON.
+This library is the spec and the hourglass API so the rest of the
+atomistic stack reads the same file everywhere: optimizers, potential
+drivers, analysis tools, and ML hand-off.
 
 One frame is complete: cell, type-grouped coordinates, per-direction
 fixed masks, column-5 `atom_id`, optional per-atom sections (velocities,
-forces, energies, charges, spins, magmoms, displacements, spreads), and JSON metadata (spec
-v2-v3, [docs/orgmode/spec.org](docs/orgmode/spec.org)).
+forces, energies, charges, spins, magmoms, displacements, spreads), and
+JSON metadata (spec v2-v3,
+[docs/orgmode/spec.org](docs/orgmode/spec.org)).
 Saddle, dimer, and NEB codes already depend on that payload.
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -75,15 +76,16 @@ Saddle, dimer, and NEB codes already depend on that payload.
 </tbody>
 </table>
 
-Already on that path: rare-event clients, rgpot, rgpycrumbs, ASE adapters,
-amsel, and anything that takes DLPack or metatensor blocks.
+Already on that path: rare-event clients, rgpot, rgpycrumbs, ASE
+adapters, amsel, and anything that takes DLPack or metatensor blocks.
 
-Rust rewrite of [readCon](https://github.com/HaoZeke/readCon). Chemfiles owns
-format diversity at the edge; this crate owns CON fidelity on the wire and in
-memory.
+Rust rewrite of [readCon](https://github.com/HaoZeke/readCon).
+Chemfiles owns format diversity at the edge; this crate owns CON
+fidelity on the wire and in memory.
 
-Measurements: Cachegrind I-refs (`examples/cachegrind_harness.rs`);
-Python ASV on PRs (`benchmarks/`, Snakemake, memray peaks); CON peers via
+Measurements: Cachegrind I-refs
+(`examples/cachegrind_harness.rs`); Python ASV on PRs (`benchmarks/`,
+Snakemake, memray peaks); CON peers via
 `benches/compare_readers.py` (and other scripts under `benches/`).
 See [docs/orgmode/benchmarks.org](docs/orgmode/benchmarks.org).
 
@@ -92,18 +94,32 @@ See [docs/orgmode/benchmarks.org](docs/orgmode/benchmarks.org).
 
 ## Features
 
--   **CON and convel:** Coordinates; optional sections declared in `sections`
-    (velocities, forces, energies, charges, spins, magmoms, displacements, spreads). Velocities also
-    auto-detect on legacy `.convel` without a `sections` key.
--   **Lazy iteration:** `ConFrameIterator`; `next_with_raw_span` keeps the on-disk blob for corpus ingest.
--   **Hot path:** [fast-float2](https://github.com/aldanor/fast-float-rust), [memmap2](https://docs.rs/memmap2), Cachegrind-tracked scenarios.
--   **Parallel frames:** Rayon behind the `parallel` Cargo feature.
--   **Bindings:** Python (PyO3), Julia (ccall), C (shipped header), C++ (RAII header), Fortran (fpm); hourglass ABI patterned on [metatensor](https://github.com/metatensor/metatensor).
--   **Metadata helpers:** Typed `energy`, `frame_index`, `time`, `timestep`, `neb_bead`, `neb_band` across bindings; raw JSON still available.
--   **Validation:** `validate=true` enforces finiteness, reserved keys, geometry, labels, symbols, section presence, identity columns.
--   **Fidelity:** `atom_id`, per-direction fixed masks, and declared optional sections round-trip through the core reader/writer.
--   **Corpora:** Pair with [readcon-db](https://github.com/lode-org/readcon-db) (CON-text indexes, dedup, multi-reader; [docs](https://lode-org.github.io/readcon-db/docs/)).
--   **RPC:** Cap'n Proto behind the `rpc` feature.
+- **CON and convel:** Coordinates; optional sections declared in
+  `sections` (velocities, forces, energies, charges, spins, magmoms,
+  displacements, spreads).
+  Velocities also auto-detect on legacy `.convel` without a `sections`
+  key.
+- **Lazy iteration:** `ConFrameIterator`; `next_with_raw_span` keeps the
+  on-disk blob for corpus ingest.
+- **Hot path:**
+  [fast-float2](https://github.com/aldanor/fast-float-rust),
+  [memmap2](https://docs.rs/memmap2), Cachegrind-tracked scenarios.
+- **Parallel frames:** Rayon behind the `parallel` Cargo feature.
+- **Bindings:** Python (PyO3), Julia (ccall), C (shipped header), C++
+  (RAII header), Fortran (fpm); hourglass ABI patterned on
+  [metatensor](https://github.com/metatensor/metatensor).
+- **Metadata helpers:** Typed `energy`,
+  `frame_index`, `time`, `timestep`, `neb_bead`, `neb_band` across
+  bindings; raw JSON still available.
+- **Validation:** `validate=true` enforces finiteness, reserved keys,
+  geometry, labels, symbols, section presence, identity columns.
+- **Fidelity:** `atom_id`, per-direction fixed masks, and declared
+  optional sections round-trip through the core reader/writer.
+- **Corpora:** Pair with
+  [readcon-db](https://github.com/lode-org/readcon-db) (CON-text
+  indexes, dedup, multi-reader;
+  [docs](https://lode-org.github.io/readcon-db/docs/)).
+- **RPC:** Cap'n Proto behind the `rpc` feature.
 
 
 <a id="org9a4c2eb"></a>
@@ -113,23 +129,33 @@ See [docs/orgmode/benchmarks.org](docs/orgmode/benchmarks.org).
 Why switch: use a real frame API and multi-language library instead of
 hand-rolling XYZ and a private atoms object.
 
--   **API:** parse/write, builders, metadata, validation, compression, lazy multi-frame iteration
--   **Payload:** constraints, `atom_id`, optional sections, versioned JSON on one frame
--   **Selection:** `select_atoms` / `rkr_frame_select` (`name H`, bonds/angles when topology is present)
--   **Languages:** hourglass `rkr_*` in Fortran / C / C++ / Python / Julia / Rust (same semantics when you add a language)
--   **Corpora:** [readcon-db](https://github.com/lode-org/readcon-db) on CON text (energy / formula / sections, dedup, multi-reader; [docs](https://lode-org.github.io/readcon-db/docs/))
--   **Plotting:** [chemparseplot](https://chemparseplot.rgoswami.me) (+ [rgpycrumbs](https://rgpycrumbs.rgoswami.me)) on the same files
--   **Measurements:** Cachegrind I-refs; PR ASV (one runner, memray peaks); peer scripts in `benches/`. [benchmarks.org](docs/orgmode/benchmarks.org)
+- **API:** parse/write, builders, metadata, validation, compression,
+  lazy multi-frame iteration
+- **Payload:** constraints, `atom_id`, optional sections, versioned JSON
+  on one frame
+- **Selection:** `select_atoms` / `rkr_frame_select` (`name H`,
+  bonds/angles when topology is present)
+- **Languages:** hourglass `rkr_*` in Fortran / C / C++ / Python / Julia
+  / Rust (same semantics when you add a language)
+- **Corpora:** [readcon-db](https://github.com/lode-org/readcon-db) on
+  CON text (energy / formula / sections, dedup, multi-reader;
+  [docs](https://lode-org.github.io/readcon-db/docs/))
+- **Plotting:** [chemparseplot](https://chemparseplot.rgoswami.me) (+
+  [rgpycrumbs](https://rgpycrumbs.rgoswami.me)) on the same files
+- **Measurements:** Cachegrind I-refs; PR ASV (one runner, memray
+  peaks); peer scripts in `benches/`.
+  [benchmarks.org](docs/orgmode/benchmarks.org)
 
     # foreign → CON (needs --features chemfiles)
     cargo run --release --features chemfiles -- convert structure.xyz structure.con
     # Python (readcon-chemfiles or maturin --features python,chemfiles)
     # python -c "import readcon; readcon.convert_to_con('structure.xyz','structure.con')"
 
-How-to: [docs/orgmode/migrate.org](docs/orgmode/migrate.org). Chemfiles path (CI-run):
-[chemfiles-notebook](docs/orgmode/chemfiles-notebook.org). Corpora:
-[readcon-db docs](https://lode-org.github.io/readcon-db/docs/). Plotting:
-[chemparseplot](https://chemparseplot.rgoswami.me).
+How-to: [docs/orgmode/migrate.org](docs/orgmode/migrate.org).
+Chemfiles path (CI-run):
+[chemfiles-notebook](docs/orgmode/chemfiles-notebook.org).
+Corpora: [readcon-db docs](https://lode-org.github.io/readcon-db/docs/).
+Plotting: [chemparseplot](https://chemparseplot.rgoswami.me).
 
 
 <a id="org34cb29e"></a>
@@ -204,7 +230,11 @@ How-to: [docs/orgmode/migrate.org](docs/orgmode/migrate.org). Chemfiles path (CI
 </tbody>
 </table>
 
-The C/C++ headers are **shipped** (`include/readcon-core.h`). cbindgen is a maintainer tool, not a consumer dependency. C99 (`readcon-core.h`) or C++17 (`readcon-core.hpp`) compiler. FetchContent URL: `readcon-core-cxx-$VERSION.tar.gz` on the GitHub Release.
+The C/C++ headers are **shipped** (`include/readcon-core.h`). cbindgen
+is a maintainer tool, not a consumer dependency.
+C99 (`readcon-core.h`) or C++17 (`readcon-core.hpp`) compiler.
+FetchContent URL: `readcon-core-cxx-$VERSION.tar.gz` on the GitHub
+Release.
 Full matrix: [getting-started](docs/orgmode/getting-started.org).
 
 
@@ -213,8 +243,9 @@ Full matrix: [getting-started](docs/orgmode/getting-started.org).
 ## Tutorial
 
 Install, read a multi-frame fixture, inspect `atom_id`, write a
-round-trip, build a frame with energy. Full steps:
-[docs/orgmode/tutorial.org](docs/orgmode/tutorial.org) (or the published HTML `tutorial` page).
+round-trip, build a frame with energy.
+Full steps: [docs/orgmode/tutorial.org](docs/orgmode/tutorial.org) (or
+the published HTML `tutorial` page).
 
 Short Python path from the repository root:
 
@@ -235,16 +266,23 @@ Rust smoke (same fixture):
 
     cargo run --example rust_usage -- resources/test/tiny_multi_cuh2.con
 
-Other languages and task recipes: [docs/orgmode/howto.org](docs/orgmode/howto.org).
-Conversion from XYZ/PDB/GRO: [chemfiles-tutorial](docs/orgmode/chemfiles-tutorial.org).
+Other languages and task recipes:
+[docs/orgmode/howto.org](docs/orgmode/howto.org).
+Conversion from XYZ/PDB/GRO:
+[chemfiles-tutorial](docs/orgmode/chemfiles-tutorial.org).
 
 
 <a id="org518562a"></a>
 
 ## Design Decisions
 
--   **Lazy parsing:** `ConFrameIterator` parses one frame at a time for large trajectories.
--   **Hourglass FFI:** shipped C header plus a hand-written C++ RAII wrapper, same pattern as [metatensor](https://github.com/metatensor/metatensor). CMake FetchContent, Meson wrap, and `readcon-core.pc` do not run cbindgen.
+- **Lazy parsing:** `ConFrameIterator` parses one frame at a time for
+  large trajectories.
+- **Hourglass FFI:** shipped C header plus a hand-written C++ RAII
+  wrapper, same pattern as
+  [metatensor](https://github.com/metatensor/metatensor).
+  CMake FetchContent, Meson wrap, and `readcon-core.pc` do not run
+  cbindgen.
 
 
 <a id="orgd88ce4e"></a>
@@ -253,40 +291,48 @@ Conversion from XYZ/PDB/GRO: [chemfiles-tutorial](docs/orgmode/chemfiles-tutoria
 
 Two exposure modes:
 
-1.  **Opaque handles** (`RKRConFrame*`): client calls Rust accessors
-    (`rkr_frame_get_header_line`, …). Hides layout; ABI can evolve behind the
-    handle.
-2.  **Transparent `#[repr(C)]` extract** (`rkr_frame_to_c_frame` → `CFrame`):
-    client owns a flat atom table for hot loops and frees it with
-    `free_c_frame`.
+1. **Opaque handles** (`RKRConFrame*`): client calls Rust accessors
+   (`rkr_frame_get_header_line`, …).
+   Hides layout; ABI can evolve behind the handle.
+2. **Transparent `#[repr(C)]` extract** (`rkr_frame_to_c_frame` →
+   `CFrame`): client owns a flat atom table for hot loops and frees it
+   with `free_c_frame`.
 
 
 <a id="org82eb141"></a>
 
 ## Specification
 
-See [docs/orgmode/spec.org](docs/orgmode/spec.org) (or the [published HTML build](https://lode-org.github.io/readcon-core/spec.html)) for the full specification. A summary follows.
+See [docs/orgmode/spec.org](docs/orgmode/spec.org) (or the
+[published HTML build](https://lode-org.github.io/readcon-core/spec.html))
+for the full specification.
+A summary follows.
 
 
 <a id="orgcefba1f"></a>
 
 ### CON format
 
--   A 9-line header (comments, cell dimensions, cell angles, atom type/count/mass metadata)
--   Line 2 is reserved for spec-v2 JSON metadata
--   Per-type coordinate blocks (symbol, label, atom lines with x y z fixed atomID)
--   Optional spec-v2 `sections` and `validate` metadata for declared per-atom sections and strict validation
--   Multiple frames are concatenated directly with no separator
+- A 9-line header (comments, cell dimensions, cell angles, atom
+  type/count/mass metadata)
+- Line 2 is reserved for spec-v2 JSON metadata
+- Per-type coordinate blocks (symbol, label, atom lines with x y z fixed
+  atomID)
+- Optional spec-v2 `sections` and `validate` metadata for declared
+  per-atom sections and strict validation
+- Multiple frames are concatenated directly with no separator
 
 
 <a id="org521e4d3"></a>
 
 ### convel format
 
-Same as CON, with an additional velocity section after each frame's coordinates:
+Same as CON, with an additional velocity section after each frame's
+coordinates:
 
--   A blank separator line
--   Per-type velocity blocks (symbol, label, atom lines with vx vy vz fixed atomID)
+- A blank separator line
+- Per-type velocity blocks (symbol, label, atom lines with vx vy vz
+  fixed atomID)
 
 
 <a id="org112ad98"></a>
@@ -352,7 +398,10 @@ Predecessor: [readCon](https://github.com/HaoZeke/readCon).
 
 ## Citation
 
-If you use `readcon-core` in academic work, please cite it via the metadata in [CITATION.cff](CITATION.cff). A Zenodo DOI is minted on a freeze tag and recorded in `CITATION.cff` identifiers; this tree does not invent one.
+If you use `readcon-core` in academic work, please cite it via the
+metadata in [CITATION.cff](CITATION.cff).
+A Zenodo DOI is minted on a freeze tag and recorded in `CITATION.cff`
+identifiers; this tree does not invent one.
 
 
 <a id="org5fa1ad7"></a>

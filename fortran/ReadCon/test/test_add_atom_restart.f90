@@ -1,3 +1,4 @@
+! Copyright (c) readcon developers
 ! Build a restart frame only through builder%add_atom, write it, read it back.
 ! Every atom has a distinct id, a per-axis fixed mask and a velocity.
 ! A second frame uses the nine-argument call and must carry no velocities.

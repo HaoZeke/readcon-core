@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Sequential extended-XYZ scan.
 //!
 //! One byte buffer, fixed token walks, and plain arrays. The comment
@@ -53,20 +54,20 @@ fn quoted_after<'a>(line: &'a [u8], key: &[u8]) -> Option<&'a [u8]> {
     let mut index = 0;
     while index + key.len() <= line.len() {
         if &line[index..index + key.len()] == key {
-            let mut cursor = index + key.len();
-            if cursor < line.len() && line[cursor] == b'"' {
-                cursor += 1;
-                let start = cursor;
-                while cursor < line.len() && line[cursor] != b'"' {
-                    cursor += 1;
+            let mut mark = index + key.len();
+            if mark < line.len() && line[mark] == b'"' {
+                mark += 1;
+                let start = mark;
+                while mark < line.len() && line[mark] != b'"' {
+                    mark += 1;
                 }
-                return Some(&line[start..cursor]);
+                return Some(&line[start..mark]);
             }
-            let start = cursor;
-            while cursor < line.len() && !line[cursor].is_ascii_whitespace() {
-                cursor += 1;
+            let start = mark;
+            while mark < line.len() && !line[mark].is_ascii_whitespace() {
+                mark += 1;
             }
-            return Some(&line[start..cursor]);
+            return Some(&line[start..mark]);
         }
         index += 1;
     }
@@ -185,29 +186,29 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
     let mut positions = Vec::new();
     let mut masses = Vec::new();
     let mut cell = Vec::new();
-    let mut cursor = 0;
+    let mut mark = 0;
     let mut n_atoms = 0;
     let mut n_frames = 0;
-    while cursor < lines.len() {
-        let count_line = trim(lines[cursor]);
+    while mark < lines.len() {
+        let count_line = trim(lines[mark]);
         if count_line.is_empty() {
-            cursor += 1;
+            mark += 1;
             continue;
         }
         let count = parse_f64(count_line)? as usize;
-        if cursor + 1 >= lines.len() {
+        if mark + 1 >= lines.len() {
             return Err("comment".to_string());
         }
-        let comment = lines[cursor + 1];
+        let comment = lines[mark + 1];
         let lattice = quoted_after(comment, b"Lattice=").ok_or("lattice")?;
         let properties = quoted_after(comment, b"Properties=").ok_or("properties")?;
         let (pos_col, mass_col) = column_layout(properties)?;
         let frame_cell = lattice_cell(lattice)?;
-        cursor += 2;
-        if cursor + count > lines.len() {
+        mark += 2;
+        if mark + count > lines.len() {
             return Err("atoms".to_string());
         }
-        for line in &lines[cursor..cursor + count] {
+        for line in &lines[mark..mark + count] {
             let (x, y, z, mass) = atom_values(line, pos_col, mass_col)?;
             positions.push(x);
             positions.push(y);
@@ -215,7 +216,7 @@ pub fn tables_from_extxyz_bytes(bytes: &[u8]) -> Result<XyzTables, String> {
             masses.push(mass);
         }
         cell.extend_from_slice(&frame_cell);
-        cursor += count;
+        mark += count;
         n_frames += 1;
         n_atoms = count;
     }

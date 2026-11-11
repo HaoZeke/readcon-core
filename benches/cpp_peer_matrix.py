@@ -20,9 +20,14 @@ CELLS = (
     ("clang", "-O3", "clang-o3"),
 )
 
-SOURCE = Path(
-    "/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/"
-    "chemfiles-sys-0.10.41/chemfiles"
+SOURCE = (
+    Path.home()
+    / ".cargo"
+    / "registry"
+    / "src"
+    / "index.crates.io-1949cf8c6b5b557f"
+    / "chemfiles-sys-0.10.41"
+    / "chemfiles"
 )
 
 

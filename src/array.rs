@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Opaque numeric storage for builders and frames (metatensor v0.2.x shape).
 //!
 //! **Design:** internal data is DLPack-shaped (`shape` / `dtype` / `device` /

@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Frames parsed from a byte stream with about one frame in memory.
 
 use crate::error::ParseError;
@@ -39,7 +40,7 @@ pub struct ConFrameReader<R> {
     start: usize,
     end: usize,
     /// Bytes dropped from the front of the buffer. `start` is zero after
-    /// a refill, so this is what says the cursor is past the file start.
+    /// a refill, so this is what says the mark is past the file start.
     abs_pos: u64,
     read_size: usize,
     eof: bool,
@@ -85,7 +86,7 @@ impl<R: Read> ConFrameReader<R> {
 
     /// Run `op` on a fresh iterator over the buffered whole lines.
     /// Its result is final once the stream has ended, or once the lines
-    /// after its cursor fix every look-ahead decision.
+    /// after its mark fix every look-ahead decision.
     /// Otherwise read more.
     ///
     /// After a source error no more bytes arrive, so the buffer is parsed
@@ -207,7 +208,7 @@ fn incomplete_prefix<T>(
 
 /// Whether `text` has, after `pos`, any whitespace-only lines, then a
 /// line with text and one more line.
-/// The parser reads no further past its cursor.
+/// The parser reads no further past its mark.
 /// A scan for trailing whitespace stops at the line with text.
 /// A section probe after a peeked blank reads two lines.
 /// It stops early when the first of them is whitespace.

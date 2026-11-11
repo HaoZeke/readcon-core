@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! CPU model string used when a bench records one.
 //!
 //! The value is the `model name` line from `/proc/cpuinfo`, with the

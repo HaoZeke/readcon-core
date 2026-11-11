@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Export `ConFrame` data as metatensor `TensorBlock` instances.
 //!
 //! Available behind the `metatensor` Cargo feature. The block layout

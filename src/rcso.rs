@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! RCSO cooked SoA bytes for a caller-side `MPI_Bcast`.
 //!
 //! Layout matches readcon-db `cooked_soa` v1 (little-endian):

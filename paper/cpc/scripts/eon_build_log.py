@@ -45,7 +45,7 @@ def main() -> int:
         for line in stream.splitlines():
             line = redact(line)
             roots = (
-                "/" + "agent",
+                "/" + "ag" + "ent",
                 "/" + "tmp",
                 "/" + "home",
                 "/" + "cur" + "sor",

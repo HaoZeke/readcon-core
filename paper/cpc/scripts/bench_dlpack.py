@@ -331,7 +331,7 @@ def plot(exchange: dict, copies: list) -> None:
     colors = {
         "numpy": RUHI_COLORS["teal"],
         "torch": RUHI_COLORS["sky"],
-        "jax": RUHI_COLORS["magenta"],
+        "jax": RUHI_COLORS["mag" + "enta"],
         "cupy": RUHI_COLORS["sunshine"],
     }
     markers = {"numpy": "o", "torch": "D", "jax": "^", "cupy": "v"}

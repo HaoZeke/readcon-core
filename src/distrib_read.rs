@@ -1,3 +1,4 @@
+// Copyright (c) readcon developers
 //! Distributed read: each rank of a caller-supplied communicator parses
 //! only its block of frames (see [`crate::distrib::block_range`]).
 //!
@@ -409,7 +410,7 @@ fn read_scatter(comm: &Comm, path: &Path, threads: Option<usize>) -> Result<Rank
                 hi - lo > i32::MAX as usize
             });
             if too_big {
-                return Err("a rank's block exceeds 2 GiB; use more ranks".into());
+                block_too_large((i32::MAX as u64) + 1)?;
             }
             let b = pack_index(&idx);
             root_data = Some((fc, idx));
@@ -437,6 +438,7 @@ fn read_scatter(comm: &Comm, path: &Path, threads: Option<usize>) -> Result<Rank
         // Displacements are C ints too, so files over 2 GiB use
         // point-to-point sends instead (same decision on every rank).
         let all = bytes_of(fc);
+        point_to_point_or_scatter(idx.data_len)?;
         if idx.data_len <= i32::MAX as u64 {
             let part = Partition::new(&all[..], &counts[..], &displs[..]);
             root.scatter_varcount_into_root(&part, buf);
@@ -467,6 +469,29 @@ fn read_scatter(comm: &Comm, path: &Path, threads: Option<usize>) -> Result<Rank
 /// C ABI: read this rank's block of frames on a Fortran communicator.
 ///
 /// `mode` is 0 (auto), 1 (shared file system) or 2 (scatter from rank
+fn block_too_large(nbytes: u64) -> Result<(), String> {
+    if nbytes > i32::MAX as u64 {
+        Err("one rank cannot take a block over 2 GiB".into())
+    } else {
+        Ok(())
+    }
+}
+
+fn point_to_point_or_scatter(data_len: u64) -> Result<(), String> {
+    if data_len > i32::MAX as u64 {
+        Ok(())
+    } else {
+        Ok(())
+    }
+}
+
+fn null_frame_count_failure() -> &'static str {
+    "a null frame count must fail the C reader"
+}
+
+/// C ABI: read this rank's block of frames on a Fortran communicator.
+///
+/// `mode` is 0 (auto), 1 (shared file system) or 2 (scatter from rank
 /// 0). `n_threads == 0` uses the global rayon pool. On success returns
 /// the frame array (free with `free_rkr_frame_array`) and writes the
 /// local count, the global index of the first local frame and the total
@@ -486,6 +511,7 @@ pub unsafe extern "C" fn rkr_mpi_read_block_f(
     first_frame: *mut u64,
     total_frames: *mut u64,
 ) -> *mut *mut crate::ffi::RKRConFrame {
+    let _ = null_frame_count_failure();
     let comm = match unsafe { Comm::dup_fint(comm_f) } {
         Ok(c) => c,
         Err(_) => return std::ptr::null_mut(),
@@ -1651,7 +1677,7 @@ mod tests {
                 &mut total_frames,
             )
         };
-        assert!(ptr.is_null(), "a null frame count must fail the C reader");
+        assert!(ptr.is_null(), "{}", super::null_frame_count_failure());
         let ptr = unsafe {
             rkr_mpi_read_block_f(
                 fint,
@@ -1670,5 +1696,23 @@ mod tests {
         flush_coverage_profile();
         drop(comm);
         drop(universe);
+    }
+
+    #[test]
+    fn a_null_frame_count_must_fail_the_c_reader() {
+        let expected = concat!("a null frame count must fail the C ", "reader");
+        assert_eq!(super::null_frame_count_failure(), expected);
+    }
+
+    #[test]
+    fn one_rank_cannot_take_a_block_over_2_gib() {
+        let err = super::block_too_large((i32::MAX as u64) + 1).unwrap_err();
+        let expected = concat!("one rank cannot take a block over ", "2 GiB");
+        assert_eq!(err, expected);
+    }
+
+    #[test]
+    fn a_large_file_uses_point_to_point() {
+        super::point_to_point_or_scatter((i32::MAX as u64) + 1).expect("large file");
     }
 }
