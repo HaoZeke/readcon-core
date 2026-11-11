@@ -190,3 +190,47 @@ fn convert_reads_native_con_and_refuses_xyz_without_chemfiles() {
 
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+#[test]
+fn stdin_dash_reads_a_con_frame() {
+    use std::io::Write;
+    use std::process::Stdio;
+
+    let text = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+    let mut child = bin()
+        .arg("-")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child.stdin.take().unwrap().write_all(&text).unwrap();
+    let out = child.wait_with_output().unwrap();
+    let (stdout, stderr) = output_text(&out);
+    assert!(out.status.success(), "{stderr}");
+    assert!(
+        stdout.contains("Successfully parsed 1 valid frames."),
+        "{stdout}"
+    );
+    assert!(stdout.contains("Total atoms: 4"), "{stdout}");
+}
+
+#[test]
+fn gzip_input_is_read() {
+    use std::io::Write;
+
+    let dir = std::env::temp_dir().join(format!("readcon-cli-gz-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir(&dir).unwrap();
+    let gz_path = dir.join("tiny.con.gz");
+    let plain = std::fs::read("resources/test/tiny_cuh2.con").unwrap();
+    let file = std::fs::File::create(&gz_path).unwrap();
+    let mut encoder = flate2::write::GzEncoder::new(file, flate2::Compression::default());
+    encoder.write_all(&plain).unwrap();
+    encoder.finish().unwrap();
+    let out = bin().arg(gz_path.to_str().unwrap()).output().unwrap();
+    let (stdout, stderr) = output_text(&out);
+    assert!(out.status.success(), "{stderr}");
+    assert!(stdout.contains("Total atoms: 4"), "{stdout}");
+    std::fs::remove_dir_all(&dir).unwrap();
+}

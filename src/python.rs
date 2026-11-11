@@ -2751,8 +2751,10 @@ fn convert_to_con(py: Python<'_>, input_path: &str, output_path: &str) -> PyResu
 /// Write frames to a .con or .convel file path.
 ///
 /// The `compression` argument controls output compression:
-/// - `None` (default): auto-detect from extension (.gz = gzip, else uncompressed)
+/// - `None` (default): the codec from [`detect_compression_from_extension`]
+///   (`.gz` gzip, `.zst` zstd, otherwise uncompressed)
 /// - `"gzip"`: force gzip compression
+/// - `"zstd"`: force zstd compression
 /// - `"none"`: force uncompressed
 #[pyfunction]
 #[pyo3(signature = (path, frames, precision=None, compression=None, *, canonical=false, comm=None, mode="auto"))]
@@ -2768,8 +2770,9 @@ fn write_con(
     mode: &str,
 ) -> PyResult<()> {
     let rust_frames = py_frames_to_rust(py, frames)?;
+    let codec = output_codec(path, compression)?;
     if let Some(comm) = comm {
-        if compression.is_some_and(|c| c != "none") || path.ends_with(".gz") || canonical {
+        if !matches!(codec, OutputCodec::Plain) || canonical {
             return Err(pyo3::exceptions::PyValueError::new_err(
                 "comm= writes uncompressed, non-canonical output only",
             ));
@@ -2777,41 +2780,87 @@ fn write_con(
         return write_con_mpi(py, path, &rust_frames, precision, comm, mode);
     }
 
-    let use_gzip = match compression {
-        Some("gzip") => true,
-        Some("none") => false,
-        Some(other) => {
-            return Err(PyIOError::new_err(format!(
-                "unknown compression: {other}. Use \"gzip\" or \"none\"."
-            )));
+    match codec {
+        OutputCodec::Gzip => {
+            let mut writer = match precision {
+                Some(precision) => ConFrameWriter::from_path_gzip_with_precision(path, precision)
+                    .map_err(|e| PyIOError::new_err(format!("failed to create gzip writer: {e}")))?,
+                None => ConFrameWriter::from_path_gzip(path)
+                    .map_err(|e| PyIOError::new_err(format!("failed to create gzip writer: {e}")))?,
+            }
+            .canonical(canonical);
+            writer
+                .extend(rust_frames.iter())
+                .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
         }
-        None => path.ends_with(".gz"),
-    };
-
-    if use_gzip {
-        let mut writer = match precision {
-            Some(precision) => ConFrameWriter::from_path_gzip_with_precision(path, precision)
-                .map_err(|e| PyIOError::new_err(format!("failed to create gzip writer: {e}")))?,
-            None => ConFrameWriter::from_path_gzip(path)
-                .map_err(|e| PyIOError::new_err(format!("failed to create gzip writer: {e}")))?,
+        OutputCodec::Zstd => {
+            #[cfg(feature = "zstd")]
+            {
+                let mut writer = match precision {
+                    Some(precision) => {
+                        ConFrameWriter::from_path_zstd_with_precision(path, precision).map_err(
+                            |e| PyIOError::new_err(format!("failed to create zstd writer: {e}")),
+                        )?
+                    }
+                    None => ConFrameWriter::from_path_zstd(path).map_err(|e| {
+                        PyIOError::new_err(format!("failed to create zstd writer: {e}"))
+                    })?,
+                }
+                .canonical(canonical);
+                writer
+                    .extend(rust_frames.iter())
+                    .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
+            }
+            #[cfg(not(feature = "zstd"))]
+            {
+                let _ = (precision, canonical, rust_frames);
+                return Err(PyIOError::new_err(
+                    "zstd compression requires readcon built with the zstd feature",
+                ));
+            }
         }
-        .canonical(canonical);
-        writer
-            .extend(rust_frames.iter())
-            .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
-    } else {
-        let mut writer = match precision {
-            Some(precision) => ConFrameWriter::from_path_with_precision(path, precision)
-                .map_err(|e| PyIOError::new_err(format!("failed to create writer: {e}")))?,
-            None => ConFrameWriter::from_path(path)
-                .map_err(|e| PyIOError::new_err(format!("failed to create writer: {e}")))?,
+        OutputCodec::Plain => {
+            let mut writer = match precision {
+                Some(precision) => ConFrameWriter::from_path_with_precision(path, precision)
+                    .map_err(|e| PyIOError::new_err(format!("failed to create writer: {e}")))?,
+                None => ConFrameWriter::from_path(path)
+                    .map_err(|e| PyIOError::new_err(format!("failed to create writer: {e}")))?,
+            }
+            .canonical(canonical);
+            writer
+                .extend(rust_frames.iter())
+                .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
         }
-        .canonical(canonical);
-        writer
-            .extend(rust_frames.iter())
-            .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
     }
     Ok(())
+}
+
+enum OutputCodec {
+    Plain,
+    Gzip,
+    Zstd,
+}
+
+/// `"none"`, `"gzip"`, `"zstd"`, or the codec
+/// [`crate::compression::detect_compression_from_extension`] picks.
+fn output_codec(path: &str, compression: Option<&str>) -> PyResult<OutputCodec> {
+    match compression {
+        Some("none") => Ok(OutputCodec::Plain),
+        Some("gzip") => Ok(OutputCodec::Gzip),
+        Some("zstd") => Ok(OutputCodec::Zstd),
+        Some(other) => Err(PyIOError::new_err(format!(
+            "unknown compression: {other}. Use \"gzip\", \"zstd\" or \"none\"."
+        ))),
+        None => {
+            Ok(
+                match crate::compression::detect_compression_from_extension(Path::new(path)) {
+                    crate::compression::Compression::Gzip => OutputCodec::Gzip,
+                    crate::compression::Compression::Zstd => OutputCodec::Zstd,
+                    crate::compression::Compression::None => OutputCodec::Plain,
+                },
+            )
+        }
+    }
 }
 
 /// Collective write: every rank passes its own frames (possibly none)

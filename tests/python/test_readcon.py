@@ -144,6 +144,39 @@ class TestWriteCon:
         assert len(frames2[0]) == len(frames[0])
 
 
+class TestZstdWriter:
+    def test_zst_extension_is_not_plain_text(self, tmp_path):
+        frames = readcon.read_con(_resource("tiny_cuh2.con"))
+        dest = tmp_path / "out.con.zst"
+        try:
+            readcon.write_con(str(dest), frames)
+        except OSError as exc:
+            message = str(exc)
+            assert "unknown compression" not in message
+            assert "zstd" in message
+            return
+        magic = dest.read_bytes()[:4]
+        assert magic == bytes([0x28, 0xB5, 0x2F, 0xFD]), magic
+        back = readcon.read_con(str(dest))
+        assert len(back) == len(frames)
+        assert back[0].atoms[0].x == pytest.approx(frames[0].atoms[0].x)
+        assert back[0].atoms[0].symbol == frames[0].atoms[0].symbol
+
+    def test_compression_zstd_argument(self, tmp_path):
+        frames = readcon.read_con(_resource("tiny_cuh2.con"))
+        dest = tmp_path / "forced.con"
+        try:
+            readcon.write_con(str(dest), frames, compression="zstd")
+        except OSError as exc:
+            message = str(exc)
+            assert "unknown compression" not in message
+            assert "zstd" in message
+            return
+        assert dest.read_bytes()[:4] == bytes([0x28, 0xB5, 0x2F, 0xFD])
+        back = readcon.read_con(str(dest))
+        assert back[0].atoms[1].y == pytest.approx(frames[0].atoms[1].y)
+
+
 class TestConvelWriteRoundtrip:
     def test_convel_roundtrip(self):
         frames = readcon.read_con(_resource("tiny_cuh2.convel"))

@@ -10,10 +10,13 @@
 //! Foreign formats need a build with `--features chemfiles`.
 
 use std::env;
+use std::io::Read;
 use std::path::Path;
 use std::process;
 
-use readcon_core::convert::{convert_path_to_con, path_looks_like_con};
+use readcon_core::compression::read_file_text;
+
+use readcon_core::convert::convert_path_to_con;
 use readcon_core::iterators::ConFrameIterator;
 use readcon_core::types::ConFrame;
 use readcon_core::writer::ConFrameWriter;
@@ -26,6 +29,8 @@ fn usage(argv0: &str) {
 Usage:
   {argv0} <input.con> [output.con]
       Inspect a CON/convel file; optionally rewrite all frames to output.con
+      input.con may be plain, gzip (.gz) or zstd (.zst). `-` reads plain
+      CON text from stdin (`gzip -dc file.con.gz | {argv0} -`).
 
   {argv0} convert <input> <output.con>
       Convert a structure or trajectory into CON.
@@ -95,13 +100,29 @@ fn main() {
         process::exit(2);
     }
     let input_fname = Path::new(&args[1]);
-    if !input_fname.exists() {
+    let from_stdin = input_fname == Path::new("-");
+    if !from_stdin && !input_fname.exists() {
         eprintln!("Error: Input file not found at {}", input_fname.display());
         process::exit(1);
     }
 
     println!("-> Reading from '{}'...", input_fname.display());
-    let fdat = std::fs::read_to_string(input_fname).expect("Failed to read input file.");
+    let fdat = if from_stdin {
+        let mut text = String::new();
+        if let Err(err) = std::io::stdin().read_to_string(&mut text) {
+            eprintln!("Error: {err}");
+            process::exit(1);
+        }
+        text
+    } else {
+        match read_file_text(input_fname) {
+            Ok(text) => text,
+            Err(err) => {
+                eprintln!("Error: {err}");
+                process::exit(1);
+            }
+        }
+    };
     let parser = ConFrameIterator::new(&fdat);
 
     let all_frames: Vec<ConFrame> = parser
