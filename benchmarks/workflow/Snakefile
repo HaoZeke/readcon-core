@@ -675,3 +675,119 @@ rule h2h_con_report:
 rule h2h_con:
     input:
         "bench/h2h/con-results.json",
+
+
+# Compressed CON. One rule and one session per comparison.
+
+
+rule h2h_compress_traj_read:
+    output:
+        "bench/h2h/logs/campaign/compress-traj-read.stdout",
+        "bench/h2h/compress-logs/compress-traj-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py compress_traj_read
+        """
+
+
+rule h2h_compress_traj_write:
+    output:
+        "bench/h2h/logs/campaign/compress-traj-write.stdout",
+        "bench/h2h/compress-logs/compress-traj-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py compress_traj_write
+        """
+
+
+rule h2h_compress_cu_read:
+    output:
+        "bench/h2h/logs/campaign/compress-cu-read.stdout",
+        "bench/h2h/compress-logs/compress-cu-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py compress_cu_read
+        """
+
+
+rule h2h_compress_cu_write:
+    output:
+        "bench/h2h/logs/campaign/compress-cu-write.stdout",
+        "bench/h2h/compress-logs/compress-cu-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py compress_cu_write
+        """
+
+
+rule h2h_compress_report:
+    input:
+        "bench/h2h/logs/campaign/compress-traj-read.stdout",
+        "bench/h2h/logs/campaign/compress-traj-write.stdout",
+        "bench/h2h/logs/campaign/compress-cu-read.stdout",
+        "bench/h2h/logs/campaign/compress-cu-write.stdout",
+    output:
+        "bench/h2h/compress-results.json",
+    shell:
+        """
+        set -euo pipefail
+        taskset -c 0 python3 bench/h2h/asv/drive.py compress_report
+        """
+
+
+rule h2h_compress:
+    input:
+        "bench/h2h/compress-results.json",
+
+
+# readcon-db against ASE SQLite and an ASE trajectory.
+
+
+rule h2h_db_append:
+    output:
+        "bench/h2h/logs/campaign/db-append.stdout",
+        "bench/h2h/db-logs/db-append.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py db_append
+        """
+
+
+rule h2h_db_random:
+    output:
+        "bench/h2h/logs/campaign/db-random.stdout",
+        "bench/h2h/db-logs/db-random.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py db_random
+        """
+
+
+rule h2h_db_report:
+    input:
+        "bench/h2h/logs/campaign/db-append.stdout",
+        "bench/h2h/logs/campaign/db-random.stdout",
+    output:
+        "bench/h2h/db-results.json",
+    shell:
+        """
+        set -euo pipefail
+        taskset -c 0 python3 bench/h2h/asv/drive.py db_report
+        """
+
+
+rule h2h_db:
+    input:
+        "bench/h2h/db-results.json",

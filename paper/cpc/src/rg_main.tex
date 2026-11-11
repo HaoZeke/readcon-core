@@ -1523,6 +1523,88 @@ readcon Python & convel & 5.08 & 0.321 & 2820.7 & 1438.8 \\
 \end{tabular}
 \end{table}
 
+The same host then reads and writes those frames, and one copper file of
+\(10^{6}\) atoms, through the codecs
+\texttt{compression\_from\_extension} returns: gzip and zstd.
+No other extension selects a codec.
+The Python writer uses that same choice, so a \texttt{.zst} path and
+\texttt{compression="zstd"} both write a zstd frame.
+The build is readcon 0.18.1 with the zstd feature, rustc 1.91.0,
+Python 3.12.3, NumPy 2.5.4, ASE 3.29.0, gzip 1.12 and Valgrind 3.22.0.
+Each comparison is one Snakemake rule and one asv class.
+The arms of a comparison share one session, pinned with
+\texttt{taskset -c 0}, one thread, one warmup and six serial repeats.
+A row is timed only after the atom count, the cell and the coordinates
+match within \(10^{-12}\).
+RSS and massif are fresh processes.
+A write reports the increase above the loaded input.
+The record is \path{bench/h2h/compress-results.json}.
+Raw repeats are the CSV files under \path{bench/h2h/compress-logs}.
+
+The 100000 frames are one copper grid repeated, so the ratios below are
+for that file.
+The plain trajectory is 63488890 bytes.
+gzip is 492026 bytes and zstd is 181243 bytes.
+The plain million-atom file is 39589039 bytes.
+gzip is 2644663 bytes and zstd is 752245 bytes.
+On the trajectory, integrated gzip and zstd reads take 0.412~s and
+0.414~s in Rust.
+\texttt{gzip -dc} piped into \texttt{readcon-core -} takes 0.643~s on
+the same gzip file.
+ASE \texttt{format='eon'} reads that gzip in 10.6~s.
+ASE \texttt{format='xyz'} does not finish on the 100000-frame file:
+\texttt{read\_xyz} pops the front of the line list.
+On the million-atom file the same xyz read takes 127~s and returns cell
+lengths of 0, so that row fails the cell check.
+The coordinates still match.
+
+\begin{table}[tbp] \centering \footnotesize
+\caption{Compressed reads. Six repeats after one warmup, type 7 median and interquartile range. RSS is the high-water mark of a fresh process. Massif is that process's peak \texttt{mem\_heap\_B}. The pipe is \texttt{gzip -dc} into \texttt{readcon-core -}.}
+\label{tab:compress-read}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Reader & File & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
+\midrule
+readcon Rust gzip & 100000 frames & 0.412 & 0.00264 & 539.3 & 530.5 \\
+readcon Rust zstd & 100000 frames & 0.414 & 0.00763 & 539.7 & 530.5 \\
+readcon Python gzip & 100000 frames & 0.439 & 0.0114 & 579.8 & 547.7 \\
+readcon Python zstd & 100000 frames & 0.435 & 0.0175 & 580.1 & 547.7 \\
+ASE \texttt{eon} gzip & 100000 frames & 10.6 & 0.0354 & 377.5 & 168.1 \\
+\texttt{gzip -dc} pipe & 100000 frames & 0.643 & 0.00362 & 535.9 & 530.5 \\
+readcon Rust gzip & \(10^{6}\) atoms & 0.100 & 0.00502 & 125.3 & 131.2 \\
+readcon Rust zstd & \(10^{6}\) atoms & 0.104 & 0.0101 & 133.3 & 131.2 \\
+readcon Python gzip & \(10^{6}\) atoms & 0.113 & 0.00658 & 571.3 & 130.2 \\
+readcon Python zstd & \(10^{6}\) atoms & 0.108 & 0.00670 & 571.5 & 138.9 \\
+ASE \texttt{eon} gzip & \(10^{6}\) atoms & 1.47 & 0.0446 & 429.8 & 121.8 \\
+ASE \texttt{xyz} gzip & \(10^{6}\) atoms & 127 & 0.120 & 376.5 & 74.9 \\
+\texttt{gzip -dc} pipe & \(10^{6}\) atoms & 0.165 & 0.00179 & 125.0 & 131.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[tbp] \centering \footnotesize
+\caption{Compressed writes from the same session protocol. RSS and massif are the increase above the loaded input. ASE \texttt{xyz} writes the coordinates and does not write a cell, so those two rows fail the cell check. The Rust gzip heap does not rise above the loaded frames.}
+\label{tab:compress-write}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Writer & File & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
+\midrule
+readcon Rust gzip & 100000 frames & 0.561 & 0.00380 & 0.57 & 0 \\
+readcon Rust zstd & 100000 frames & 0.471 & 0.00208 & 3.41 & 3.55 \\
+readcon Python gzip & 100000 frames & 3.36 & 0.0788 & 2045 & 721.4 \\
+readcon Python zstd & 100000 frames & 3.45 & 0.170 & 2048 & 724.6 \\
+ASE \texttt{eon} gzip & 100000 frames & 14.2 & 0.138 & 22.5 & 12.8 \\
+ASE \texttt{xyz} gzip & 100000 frames & 6.04 & 0.120 & 22.5 & 12.7 \\
+readcon Rust gzip & \(10^{6}\) atoms & 0.699 & 0.00222 & 23.2 & 32.3 \\
+readcon Rust zstd & \(10^{6}\) atoms & 0.209 & 0.00115 & 26.2 & 35.5 \\
+readcon Python gzip & \(10^{6}\) atoms & 1.23 & 0.00964 & 1022 & 577.3 \\
+readcon Python zstd & \(10^{6}\) atoms & 0.718 & 0.00474 & 1022 & 577.3 \\
+ASE \texttt{eon} gzip & \(10^{6}\) atoms & 6.14 & 0.0186 & 341.6 & 239.0 \\
+ASE \texttt{xyz} gzip & \(10^{6}\) atoms & 5.41 & 0.0196 & 31.6 & 12.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 The survey frame written by ASE as extended XYZ has
 \texttt{Lattice="5.5437171645025325 0.0 0.0 0.0 5.5437171645025325 0.0 0.0 0.0 13.96"}
 and \texttt{pbc="T T F"}.
@@ -1685,6 +1767,39 @@ readcon-db takes a median of \rcDbIngestMedian~s and the ASE database
 takes \rcAseDbMedian~s.
 Both stores keep all 40 frames.
 The log is \path{paper/cpc/logs/db.log}.
+
+On this host we append the same 100000-frame, 32-atom trajectory, and
+then read the same 1000 frames at random.
+The stores are readcon-db 0.2.0, ASE's SQLite database opened with
+\texttt{with connect}, and an \texttt{ase.io.Trajectory} file.
+The frames are loaded before the clock.
+Append memory is the increase above that loaded input.
+The random read is a fresh process that only reads.
+Every row matches the coordinates within \(10^{-12}\).
+readcon-db appends in 5.51~s and the store is 30867584 bytes.
+The ASE database appends in 9.44~s and occupies 153169920 bytes.
+The trajectory file appends in 3.45~s and occupies 115236273 bytes.
+A later read of the same 1000 indices takes 4.53~s from readcon-db,
+0.297~s from the ASE database and 0.0468~s from the trajectory file.
+The record is \path{bench/h2h/db-results.json}.
+Raw repeats are the CSV files under \path{bench/h2h/db-logs}.
+
+\begin{table}[tbp] \centering \footnotesize
+\caption{Append of 100000 frames of 32 atoms, and a later read of the same 1000 frame indices. Six repeats after one warmup, type 7. Append RSS and massif are the increase above the loaded frames. Read RSS is the fresh-process high-water mark.}
+\label{tab:db-h2h}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Store & Work & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
+\midrule
+readcon-db & append & 5.51 & 0.0611 & 692.2 & 722.0 \\
+ASE \texttt{db} & append & 9.44 & 0.0628 & 71.2 & 14.6 \\
+ASE trajectory & append & 3.45 & 0.0388 & 50.0 & 36.7 \\
+readcon-db & 1000 frames & 4.53 & 0.138 & 67.9 & 8.11 \\
+ASE \texttt{db} & 1000 frames & 0.297 & 0.00450 & 97.6 & 33.8 \\
+ASE trajectory & 1000 frames & 0.0468 & 0.000624 & 81.3 & 19.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \input{figures/generated/mpi_macros}
 

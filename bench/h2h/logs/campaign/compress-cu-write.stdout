@@ -1,0 +1,191 @@
+git rev-parse HEAD
+0258cb1f861c10abfc642457ed2171a0949fa9c8
+git rev-parse HEAD^{tree}
+18ed88719d680dcb82d0e4050851367b03108c17
+git rev-parse HEAD:src
+5bbd588981812d448e5bf534f7f839d5262b3a9a
+command
+taskset -c 0 python3 bench/h2h/asv/drive.py compress_cu_write
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.699193318
+sample 0.699323392
+sample 0.696443057
+sample 0.692337652
+sample 0.698965614
+sample 0.700117967
+median_s 0.699079466
+q25_s 0.697073696
+q75_s 0.699290874
+iqr_s 0.002217177
+n_atoms 1000000
+n_frames 1
+cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_rust_gzip
+op write
+case cu
+file bench/h2h/work/compress/outs/readcon_rust_gzip-cu.con.gz
+bytes 2644663
+rss_kib 23728
+massif_heap_bytes 33914786
+{"samples": [0.699193318, 0.699323392, 0.696443057, 0.692337652, 0.698965614, 0.700117967], "n": 6, "median_s": 0.6990794659999999, "q25_s": 0.6970736962499999, "q75_s": 0.6992908735000001, "iqr_s": 0.0022171772500001463, "correct": true, "n_atoms_ok": true, "n_frames_ok": true, "cell_ok": true, "coords_ok": true, "max_abs": 0.0, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "reason": "ok", "arm": "readcon_rust_gzip", "op": "write", "case": "cu", "file": "bench/h2h/work/compress/outs/readcon_rust_gzip-cu.con.gz", "bytes": 2644663, "rss_kib": 23728, "massif_heap_bytes": 33914786}
+repeat 6
+serial 1
+quantile type-7
+sample 1.212229460
+sample 1.227766247
+sample 1.227218156
+sample 1.224811156
+sample 1.240398418
+sample 1.237483933
+median_s 1.227492202
+q25_s 1.225412906
+q75_s 1.235054511
+iqr_s 0.009641605
+n_atoms 1000000
+n_frames 1
+cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_py_gzip
+op write
+case cu
+file bench/h2h/work/compress/outs/readcon_py_gzip-cu.con.gz
+bytes 2644763
+rss_kib 1046088
+massif_heap_bytes 605383820
+{"samples": [1.2122294600003443, 1.2277662470000905, 1.2272181560001627, 1.2248111559997596, 1.2403984180000407, 1.2374839329995666], "n": 6, "median_s": 1.2274922015001266, "q25_s": 1.2254129059998604, "q75_s": 1.2350545114996976, "iqr_s": 0.00964160549983717, "correct": true, "n_atoms_ok": true, "n_frames_ok": true, "cell_ok": true, "coords_ok": true, "max_abs": 0.0, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "reason": "ok", "arm": "readcon_py_gzip", "op": "write", "case": "cu", "file": "bench/h2h/work/compress/outs/readcon_py_gzip-cu.con.gz", "bytes": 2644763, "rss_kib": 1046088, "massif_heap_bytes": 605383820}
+repeat 6
+serial 1
+quantile type-7
+sample 0.208542467
+sample 0.209808504
+sample 0.206765030
+sample 0.208900803
+sample 0.209684886
+sample 0.210139179
+median_s 0.209292844
+q25_s 0.208632051
+q75_s 0.209777599
+iqr_s 0.001145548
+n_atoms 1000000
+n_frames 1
+cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_rust_zstd
+op write
+case cu
+file bench/h2h/work/compress/outs/readcon_rust_zstd-cu.con.zst
+bytes 752245
+rss_kib 26856
+massif_heap_bytes 37258835
+{"samples": [0.208542467, 0.209808504, 0.20676503, 0.208900803, 0.209684886, 0.210139179], "n": 6, "median_s": 0.2092928445, "q25_s": 0.208632051, "q75_s": 0.2097775995, "iqr_s": 0.001145548499999982, "correct": true, "n_atoms_ok": true, "n_frames_ok": true, "cell_ok": true, "coords_ok": true, "max_abs": 0.0, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "reason": "ok", "arm": "readcon_rust_zstd", "op": "write", "case": "cu", "file": "bench/h2h/work/compress/outs/readcon_rust_zstd-cu.con.zst", "bytes": 752245, "rss_kib": 26856, "massif_heap_bytes": 37258835}
+repeat 6
+serial 1
+quantile type-7
+sample 0.719930712
+sample 0.715141479
+sample 0.743973636
+sample 0.716252991
+sample 0.712260934
+sample 0.720231328
+median_s 0.718091852
+q25_s 0.715419357
+q75_s 0.720156174
+iqr_s 0.004736817
+n_atoms 1000000
+n_frames 1
+cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_py_zstd
+op write
+case cu
+file bench/h2h/work/compress/outs/readcon_py_zstd-cu.con.zst
+bytes 755162
+rss_kib 1046088
+massif_heap_bytes 605383820
+{"samples": [0.7199307119999503, 0.7151414789996124, 0.7439736359997369, 0.7162529910001467, 0.7122609340003692, 0.7202313280004091], "n": 6, "median_s": 0.7180918515000485, "q25_s": 0.715419356999746, "q75_s": 0.7201561740002944, "iqr_s": 0.004736817000548399, "correct": true, "n_atoms_ok": true, "n_frames_ok": true, "cell_ok": true, "coords_ok": true, "max_abs": 0.0, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "reason": "ok", "arm": "readcon_py_zstd", "op": "write", "case": "cu", "file": "bench/h2h/work/compress/outs/readcon_py_zstd-cu.con.zst", "bytes": 755162, "rss_kib": 1046088, "massif_heap_bytes": 605383820}
+repeat 6
+serial 1
+quantile type-7
+sample 6.148036784
+sample 6.156895493
+sample 6.185146785
+sample 6.123037510
+sample 6.134675927
+sample 6.140324467
+median_s 6.144180625
+q25_s 6.136088062
+q75_s 6.154680816
+iqr_s 0.018592754
+n_atoms 1000000
+n_frames 1
+cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_eon_gz
+op write
+case cu
+file bench/h2h/work/compress/outs/ase_eon_gz-cu.con.gz
+bytes 3408987
+rss_kib 349784
+massif_heap_bytes 250564564
+{"samples": [6.148036783999942, 6.15689549300032, 6.185146785000143, 6.1230375100003585, 6.134675926999989, 6.140324467000028], "n": 6, "median_s": 6.144180625499985, "q25_s": 6.136088061999999, "q75_s": 6.1546808157502255, "iqr_s": 0.01859275375022662, "correct": true, "n_atoms_ok": true, "n_frames_ok": true, "cell_ok": true, "coords_ok": true, "max_abs": 0.0, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "reason": "ok", "arm": "ase_eon_gz", "op": "write", "case": "cu", "file": "bench/h2h/work/compress/outs/ase_eon_gz-cu.con.gz", "bytes": 3408987, "rss_kib": 349784, "massif_heap_bytes": 250564564}
+repeat 6
+serial 1
+quantile type-7
+sample 5.401345163
+sample 5.424891181
+sample 5.403689051
+sample 5.411449996
+sample 5.398743360
+sample 5.448470019
+median_s 5.407569523
+q25_s 5.401931135
+q75_s 5.421530885
+iqr_s 0.019599750
+n_atoms 1000000
+n_frames 1
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 0
+coords_ok 1
+correct 0
+reason cell is missing
+arm ase_xyz_gz
+op write
+case cu
+file bench/h2h/work/compress/outs/ase_xyz_gz-cu.xyz.gz
+bytes 2648080
+rss_kib 32332
+massif_heap_bytes 13339804
+{"samples": [5.40134516299986, 5.424891181000021, 5.403689050999674, 5.411449996000101, 5.398743359999571, 5.448470019000524], "n": 6, "median_s": 5.4075695234998875, "q25_s": 5.401931134999813, "q75_s": 5.421530884750041, "iqr_s": 0.019599749750227602, "correct": false, "n_atoms_ok": true, "n_frames_ok": true, "cell_ok": false, "coords_ok": true, "max_abs": 0.0, "n_atoms": 1000000, "n_frames": 1, "cell": null, "reason": "cell is missing", "arm": "ase_xyz_gz", "op": "write", "case": "cu", "file": "bench/h2h/work/compress/outs/ase_xyz_gz-cu.xyz.gz", "bytes": 2648080, "rss_kib": 32332, "massif_heap_bytes": 13339804}
+exit 0

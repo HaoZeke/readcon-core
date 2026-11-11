@@ -12,7 +12,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import compress_h2h
 import con_h2h
+import db_h2h
 import extxyz_h2h
 import measure
 import support
@@ -79,6 +81,14 @@ def main() -> None:
         "con_survey_extxyz": lambda: con_h2h.main_command("survey-extxyz"),
         "con_grid": lambda: con_h2h.main_command("grid"),
         "con_report": con_h2h.report,
+        "compress_traj_read": lambda: compress_h2h.run_read("traj"),
+        "compress_traj_write": lambda: compress_h2h.run_write("traj"),
+        "compress_cu_read": lambda: compress_h2h.run_read("cu"),
+        "compress_cu_write": lambda: compress_h2h.run_write("cu"),
+        "compress_report": compress_h2h.report,
+        "db_append": db_h2h.run_append,
+        "db_random": db_h2h.run_random,
+        "db_report": db_h2h.report,
     }
     if arm not in runners:
         raise SystemExit(f"unknown arm {arm}")

@@ -1,0 +1,98 @@
+git rev-parse HEAD
+0258cb1f861c10abfc642457ed2171a0949fa9c8
+git rev-parse HEAD^{tree}
+18ed88719d680dcb82d0e4050851367b03108c17
+git rev-parse HEAD:src
+5bbd588981812d448e5bf534f7f839d5262b3a9a
+command
+taskset -c 0 python3 bench/h2h/asv/drive.py db_random
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 4.481495723
+sample 4.454430344
+sample 4.482897807
+sample 4.579676739
+sample 4.633133333
+sample 4.634289397
+median_s 4.531287273
+q25_s 4.481846244
+q75_s 4.619769185
+iqr_s 0.137922940
+n_atoms 32
+n_frames 100000
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_db
+op random
+case traj
+bytes 30867584
+rss_kib 69492
+massif_heap_bytes 8506148
+{"samples": [4.48149572300008, 4.454430343999775, 4.482897806999972, 4.579676739000206, 4.6331333329999325, 4.63428939700043], "n": 6, "median_s": 4.531287273000089, "q25_s": 4.481846244000053, "q75_s": 4.619769184500001, "iqr_s": 0.1379229404999478, "correct": true, "reason": "ok", "max_abs": 0.0, "n_atoms": 32, "n_frames": 100000, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "cell": null, "arm": "readcon_db", "op": "random", "case": "traj", "bytes": 30867584, "file": "bench/h2h/work/db/random/readcon-db", "n_random": 1000, "seed": 20261111, "rss_kib": 69492, "massif_heap_bytes": 8506148}
+repeat 6
+serial 1
+quantile type-7
+sample 0.294342987
+sample 0.294102907
+sample 0.299551975
+sample 0.298541544
+sample 0.296169635
+sample 0.302229291
+median_s 0.297355590
+q25_s 0.294799649
+q75_s 0.299299367
+iqr_s 0.004499718
+n_atoms 32
+n_frames 100000
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_db
+op random
+case traj
+bytes 153169920
+rss_kib 99932
+massif_heap_bytes 35421927
+{"samples": [0.2943429870001637, 0.2941029069997967, 0.29955197499930364, 0.2985415439998178, 0.2961696350002967, 0.3022292910000033], "n": 6, "median_s": 0.29735558950005725, "q25_s": 0.29479964900019695, "q75_s": 0.2992993672494322, "iqr_s": 0.0044997182492352295, "correct": true, "reason": "ok", "max_abs": 0.0, "n_atoms": 32, "n_frames": 100000, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "cell": null, "arm": "ase_db", "op": "random", "case": "traj", "bytes": 153169920, "file": "bench/h2h/work/db/random/ase.db", "n_random": 1000, "seed": 20261111, "rss_kib": 99932, "massif_heap_bytes": 35421927}
+repeat 6
+serial 1
+quantile type-7
+sample 0.046979403
+sample 0.046684725
+sample 0.046370272
+sample 0.046318623
+sample 0.047104004
+sample 0.047321535
+median_s 0.046832064
+q25_s 0.046448885
+q75_s 0.047072854
+iqr_s 0.000623969
+n_atoms 32
+n_frames 100000
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_traj
+op random
+case traj
+bytes 115236273
+rss_kib 83252
+massif_heap_bytes 20687359
+{"samples": [0.046979402999568265, 0.046684724999977334, 0.04637027199987642, 0.04631862299993372, 0.04710400400017534, 0.04732153499935521], "n": 6, "median_s": 0.0468320639997728, "q25_s": 0.04644888524990165, "q75_s": 0.04707285375002357, "iqr_s": 0.0006239685001219186, "correct": true, "reason": "ok", "max_abs": 0.0, "n_atoms": 32, "n_frames": 100000, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "cell": null, "arm": "ase_traj", "op": "random", "case": "traj", "bytes": 115236273, "file": "bench/h2h/work/db/random/frames.traj", "n_random": 1000, "seed": 20261111, "rss_kib": 83252, "massif_heap_bytes": 20687359}
+exit 0
