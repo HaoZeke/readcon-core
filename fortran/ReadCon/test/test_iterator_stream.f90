@@ -612,6 +612,7 @@ contains
     real(real64) :: one(3, 1), masses(1), cell(3), angles(3)
     real(c_double), pointer :: xyz(:, :)
     integer :: status, nmatch, nwritten, i, j, order, n
+    type(catom_t) :: atom
     integer(int64) :: indices(1)
     logical :: has_order
     character(len=:), allocatable :: text
@@ -722,5 +723,16 @@ contains
     if (iblank%skip(1) /= 0_c_size_t) error stop "blank skip"
     nxt = iblank%nth(0)
     if (nxt%valid()) error stop "blank nth"
+    if (blank%natoms() /= 0) error stop "blank natoms"
+    atom = blank%atom(1)
+    if (int(atom%atomic_number) /= 0) error stop "blank atom"
+    status = bblank%set_frame_index(3_int64)
+    if (status /= rkr_status_null_pointer) error stop "blank frame index set"
+    call bblank%free()
+    if (bblank%valid()) error stop "freed blank builder"
+    call wblank%free()
+    if (wblank%valid()) error stop "freed blank writer"
+    if (count_frames("no-such-blank-count.con") /= -1) error stop "missing count"
+    call iblank%free()
   end subroutine
 end program
