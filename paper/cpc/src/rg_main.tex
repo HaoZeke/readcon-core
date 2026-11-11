@@ -1496,31 +1496,47 @@ eOn v3.6.0 & 1.01 & 0.0597 & 1532.5 & 1488.7 \\
 \end{table}
 
 readcon writes the survey frame as CON and as convel.
-Rust takes \(3.83\times 10^{-4}\)~s and \(3.55\times 10^{-4}\)~s, and
-Python takes \(5.26\times 10^{-4}\)~s and \(2.71\times 10^{-4}\)~s.
+Rust takes \(1.03\times 10^{-4}\)~s and \(4.27\times 10^{-4}\)~s,
+Python takes \(6.65\times 10^{-4}\)~s and \(1.74\times 10^{-4}\)~s,
+and eOn \texttt{7f1a22d} takes \(7.65\times 10^{-5}\)~s and
+\(8.59\times 10^{-5}\)~s.
 ASE \texttt{format='eon'} raises \texttt{TypeError}:
 \texttt{category must be a Warning subclass, not 'FixCartesian'}.
-Both eOn clients exit with a segmentation fault in \texttt{matter2con}
-and in \texttt{matter2convel}.
-On the 100000-frame file the same two readcon writers and ASE
-\texttt{format='eon'} do write the CON geometry.
+Released eOn, v3.6.0 and \texttt{579738a}, exits with a segmentation
+fault in \texttt{matter2con} and in \texttt{matter2convel}.
+The timed eOn writer is \texttt{7f1a22d}, one commit past
+\texttt{579738a}.
+That commit keeps the writer alive after \texttt{Parameters} ends.
+On the survey frame it emits atoms in atom-id order and folds one
+negative periodic coordinate into the cell, so a file-order comparison
+differs by 4.16.
+Matched by atom id, the positions and the convel velocities agree.
+On the 100000-frame file the same two readcon writers, ASE
+\texttt{format='eon'}, and eOn \texttt{7f1a22d} write the CON
+geometry.
+readcon rereads each of those files in file order.
 Python streams each frame through the Rust writer, so that write no
 longer keeps a second copy of the trajectory.
-The convel file still stops ASE on line 23 of a velocity title, and
-both eOn clients still segfault.
+The convel file still stops ASE on line 23 of a velocity title.
+Released eOn still segfaults on both files.
+eOn \texttt{7f1a22d} writes each CON frame with \texttt{matter2con}
+in append mode, and writes each convel frame with
+\texttt{matter2convel}, concatenating those single-frame files.
 
 \begin{table}[tbp] \centering \footnotesize
-\caption{Writes of the 32-atom, 100000-frame geometry. The resident and heap columns are the increase above the loaded input.}
+\caption{Writes of the 32-atom, 100000-frame geometry. The resident and heap columns are the increase above the loaded input. The eOn row is commit \texttt{7f1a22d}. Released eOn v3.6.0 and \texttt{579738a} segfault in \texttt{matter2con} and \texttt{matter2convel}.}
 \label{tab:con-write}
 \begin{tabular}{@{}llrrrr@{}}
 \toprule
 Writer & File & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
 \midrule
-readcon Rust & CON & 0.534 & 0.0107 & 0.34 & 0.023 \\
-readcon Python & CON & 0.570 & 0.0178 & 0.26 & 0.025 \\
-ASE \texttt{eon} & CON & 14.2 & 0.559 & 6.4 & 0.026 \\
-readcon Rust & convel & 0.926 & 0.0205 & 0.34 & 0 \\
-readcon Python & convel & 1.12 & 0.0246 & 0.26 & 0.032 \\
+readcon Rust & CON & 0.539 & 0.00187 & 0.40 & 0.023 \\
+readcon Python & CON & 0.583 & 0.0269 & 0.26 & 0.025 \\
+ASE \texttt{eon} & CON & 14.7 & 0.800 & 6.4 & 0.029 \\
+eOn \texttt{7f1a22d} & CON & 12.1 & 0.0663 & 417.8 & 413.2 \\
+readcon Rust & convel & 0.938 & 0.00692 & 0.34 & 0 \\
+readcon Python & convel & 1.25 & 0.0202 & 0.26 & 0.031 \\
+eOn \texttt{7f1a22d} & convel & 9.01 & 0.160 & 417.6 & 414.5 \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -42,6 +42,7 @@ RUST = ROOT / "target" / "release" / "examples" / "con_time"
 EON_BUILDS = {
     "eon_579738a": support.WORK / "eon-579738a",
     "eon_v360": support.WORK / "eon-v360",
+    "eon_7f1a22d": support.WORK / "eon-7f1a22d",
 }
 N_ATOMS = 32
 N_FRAMES = 100_000
@@ -86,6 +87,7 @@ def environment() -> dict:
         "git": support.git_line(["rev-parse", "HEAD"]),
         "eon_579738a": "579738a9387e8d0ea55496f45dd057812cfab892",
         "eon_v360": "02f57df3442252e4cc8e9efaa70fc5b63663fb43",
+        "eon_7f1a22d": "7f1a22d161a3368b3ad3ab9fc3fcc59dda3bce5a",
         "pin": "taskset -c 0",
         "threads": 1,
         "repeats": REPEATS,
@@ -163,11 +165,22 @@ def rust_samples(mode: str, args: list[str]) -> list[float]:
     return [float(item) for item in payload["samples"]]
 
 
+def fault_reason(code: int, args: list[str]) -> str | None:
+    if code not in (139, -11) and not (code < 0 and abs(code) == 11):
+        return None
+    convel = any(arg in ("write-convel", "convel") for arg in args)
+    if convel:
+        return "segmentation fault in matter2convel"
+    return "segmentation fault in matter2con"
+
+
 def native_samples(binary: Path, args: list[str], key: str) -> list[float]:
     completed = support.run_binary(binary, args)
     if completed.returncode != 0:
+        fault = fault_reason(completed.returncode, args)
         raise RuntimeError(
-            support.sanitize(completed.stderr or completed.stdout or str(binary))
+            fault
+            or support.sanitize(completed.stderr or completed.stdout or str(binary))
         )
     if completed.stdout.strip().startswith("{"):
         payload = json.loads(completed.stdout.strip().splitlines()[-1])
@@ -754,6 +767,117 @@ def inspect_survey_extxyz(path: Path) -> dict:
     }
 
 
+def coordinate_block(frames, velocity: bool) -> tuple[np.ndarray, np.ndarray | None]:
+    n_frames = len(frames)
+    n_atoms = len(frames[0].atoms) if n_frames else 0
+    positions = np.empty((n_frames, n_atoms, 3), dtype=np.float64)
+    velocities = np.empty_like(positions) if velocity else None
+    for i, frame in enumerate(frames):
+        for j, atom in enumerate(frame.atoms):
+            positions[i, j, 0] = atom.x
+            positions[i, j, 1] = atom.y
+            positions[i, j, 2] = atom.z
+            if velocities is not None:
+                velocities[i, j, 0] = atom.vx
+                velocities[i, j, 1] = atom.vy
+                velocities[i, j, 2] = atom.vz
+    return positions, velocities
+
+
+def _periodic_axes(frame) -> list[bool]:
+    meta = frame.metadata if hasattr(frame, "metadata") else {}
+    pbc = meta.get("pbc") if isinstance(meta, dict) else None
+    if not isinstance(pbc, (list, tuple)) or len(pbc) != 3:
+        return [False, False, False]
+    return [bool(value) for value in pbc]
+
+
+def _aligned_max_abs(src, got, want_velocity: bool) -> float | None:
+    """Match atoms by id and fold periodic axes into the source cell."""
+    worst = 0.0
+    for origin, frame in zip(src, got):
+        by_id = {atom.atom_id: atom for atom in frame.atoms}
+        if len(by_id) != len(frame.atoms):
+            return None
+        lengths = np.asarray(origin.cell, dtype=np.float64)
+        periodic = _periodic_axes(origin)
+        for atom in origin.atoms:
+            other = by_id.get(atom.atom_id)
+            if other is None:
+                return None
+            delta = np.array(
+                [other.x - atom.x, other.y - atom.y, other.z - atom.z],
+                dtype=np.float64,
+            )
+            for axis, wrap in enumerate(periodic):
+                length = float(lengths[axis]) if lengths.size > axis else 0.0
+                if wrap and length:
+                    delta[axis] -= length * np.round(delta[axis] / length)
+            worst = max(worst, float(np.max(np.abs(delta))))
+            if want_velocity:
+                worst = max(
+                    worst,
+                    abs(other.vx - atom.vx),
+                    abs(other.vy - atom.vy),
+                    abs(other.vz - atom.vz),
+                )
+    return worst
+
+
+def roundtrip_file(src, dest: Path, convel: bool) -> tuple[bool, str, float | None]:
+    """Reread a written file with readcon and compare it with the source."""
+    import readcon
+
+    try:
+        got = readcon.read_con(os.fspath(dest))
+    except (OSError, RuntimeError, ValueError) as exc:
+        return False, f"reread {type(exc).__name__}: {exc}".splitlines()[0][:300], None
+    if len(got) != len(src):
+        return False, f"reread frames {len(got)} != {len(src)}", None
+    if any(len(frame.atoms) != len(origin.atoms) for frame, origin in zip(got, src)):
+        return False, "reread atom count", None
+    want_velocity = bool(convel and src and src[0].has_velocities)
+    src_pos, src_vel = coordinate_block(src, want_velocity)
+    got_velocity = bool(want_velocity and got and got[0].has_velocities)
+    got_pos, got_vel = coordinate_block(got, got_velocity)
+    worst = float(np.max(np.abs(src_pos - got_pos))) if src_pos.size else 0.0
+    if want_velocity and not got_velocity:
+        return False, f"reread dropped velocities; positions max_abs {worst:.3e}", worst
+    if want_velocity and got_vel is not None and src_vel is not None:
+        worst = max(worst, float(np.max(np.abs(src_vel - got_vel))))
+    src_cell = np.asarray(src[0].cell, dtype=np.float64) if src else None
+    got_cell = np.asarray(got[0].cell, dtype=np.float64) if got else None
+    if (
+        src_cell is not None
+        and got_cell is not None
+        and src_cell.shape == got_cell.shape
+    ):
+        worst = max(worst, float(np.max(np.abs(src_cell - got_cell))))
+    if worst <= 1e-8:
+        return True, "round-trip", worst
+    aligned = _aligned_max_abs(src, got, want_velocity)
+    if aligned is not None and aligned <= 1e-8:
+        return (
+            True,
+            f"round-trip by atom id; file order max_abs {worst:.3e}",
+            aligned,
+        )
+    return False, f"reread max_abs {worst:.3e}", worst
+
+
+def note_roundtrip(row: dict, src, dest: Path, convel: bool) -> dict:
+    if not row.get("samples") or not dest.is_file():
+        return row
+    ok, reason, max_abs = roundtrip_file(src, dest, convel)
+    row["correct"] = bool(ok)
+    row["reason"] = reason
+    row["max_abs"] = max_abs
+    row["coords_ok"] = bool(ok)
+    row["n_frames"] = len(src)
+    row["n_atoms"] = len(src[0].atoms) if src else 0
+    return row
+
+
 def run_writes() -> list[dict]:
     import readcon
     from ase.io import write as ase_write
@@ -774,17 +898,29 @@ def run_writes() -> list[dict]:
                 os.fspath(WORK / "outs" / f"readcon-py-{case}.{suffix}"), frames
             )
 
-        rows.append(finish(timed(write_py), "readcon_py", "write", case, True, "ok"))
+        py_dest = WORK / "outs" / f"readcon-py-{case}.{suffix}"
+        rows.append(
+            note_roundtrip(
+                finish(timed(write_py), "readcon_py", "write", case, True, "ok"),
+                frames,
+                py_dest,
+                convel,
+            )
+        )
+        rust_dest = WORK / "outs" / f"readcon-rust-{case}.{suffix}"
         try:
             samples = rust_samples(
                 "write",
-                [
-                    rel(src),
-                    rel(WORK / "outs" / f"readcon-rust-{case}.{suffix}"),
-                    str(REPEATS),
-                ],
+                [rel(src), rel(rust_dest), str(REPEATS)],
             )
-            rows.append(finish(samples, "readcon_rust", "write", case, True, "ok"))
+            rows.append(
+                note_roundtrip(
+                    finish(samples, "readcon_rust", "write", case, True, "ok"),
+                    frames,
+                    rust_dest,
+                    convel,
+                )
+            )
         except RuntimeError as exc:
             rows.append(failed("readcon_rust", "write", case, str(exc)))
         if case.startswith("survey"):
@@ -814,7 +950,14 @@ def run_writes() -> list[dict]:
                 rows.append(failed("ase_eon", "write", case, err))
             else:
                 rows.append(
-                    finish(timed(write_ase), "ase_eon", "write", case, True, "wrote")
+                    note_roundtrip(
+                        finish(
+                            timed(write_ase), "ase_eon", "write", case, True, "wrote"
+                        ),
+                        frames,
+                        dest,
+                        convel,
+                    )
                 )
         for arm, root in EON_BUILDS.items():
             binary = root / "con_eon_time"
@@ -830,7 +973,14 @@ def run_writes() -> list[dict]:
             except RuntimeError as exc:
                 rows.append(failed(arm, "write", case, str(exc)))
                 continue
-            rows.append(finish(samples, arm, "write", case, True, "ok"))
+            rows.append(
+                note_roundtrip(
+                    finish(samples, arm, "write", case, True, "ok"),
+                    frames,
+                    dest,
+                    convel,
+                )
+            )
     attach_write_memory(rows)
     emit("con-write", rows)
     return rows
