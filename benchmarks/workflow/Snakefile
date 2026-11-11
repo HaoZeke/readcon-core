@@ -599,3 +599,79 @@ rule h2h_extxyz_session:
 rule h2h_extxyz:
     input:
         "bench/h2h/extxyz-results.json",
+
+
+rule h2h_con_convel:
+    output:
+        "bench/h2h/logs/campaign/con-convel-read.stdout",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py con_convel
+        """
+
+
+rule h2h_con_frames:
+    output:
+        "bench/h2h/logs/campaign/con-frames-read.stdout",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py con_frames
+        """
+
+
+rule h2h_con_write:
+    output:
+        "bench/h2h/logs/campaign/con-write.stdout",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py con_write
+        """
+
+
+rule h2h_con_survey_extxyz:
+    output:
+        "bench/h2h/logs/campaign/con-survey-extxyz.stdout",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py con_survey_extxyz
+        """
+
+
+rule h2h_con_grid:
+    output:
+        "bench/h2h/logs/campaign/con-grid-extxyz.stdout",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py con_grid
+        """
+
+
+rule h2h_con_report:
+    input:
+        "bench/h2h/logs/campaign/con-convel-read.stdout",
+        "bench/h2h/logs/campaign/con-frames-read.stdout",
+        "bench/h2h/logs/campaign/con-write.stdout",
+        "bench/h2h/logs/campaign/con-survey-extxyz.stdout",
+        "bench/h2h/logs/campaign/con-grid-extxyz.stdout",
+    output:
+        "bench/h2h/con-results.json",
+    shell:
+        """
+        set -euo pipefail
+        taskset -c 0 python3 bench/h2h/asv/drive.py con_report
+        """
+
+
+rule h2h_con:
+    input:
+        "bench/h2h/con-results.json",

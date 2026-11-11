@@ -1,0 +1,274 @@
+git rev-parse HEAD
+e4f0888148d5503770d585b79d92a0bd0518dc03
+git rev-parse HEAD^{tree}
+eff9de05adee17dfdde0dd9f031a427624d49ed0
+git rev-parse HEAD:src
+5bbd588981812d448e5bf534f7f839d5262b3a9a
+command
+taskset -c 0 python3 bench/h2h/con_h2h.py con-write
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.000131406
+sample 0.000520625
+sample 0.000346809
+sample 0.000484823
+sample 0.000449036
+sample 0.000523929
+median_s 0.000466930
+q25_s 0.000372366
+q75_s 0.000511674
+iqr_s 0.000139309
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_py
+op write
+case survey-con
+rss_kib 332
+massif_heap_bytes None
+{"samples": [0.00013140600003680447, 0.0005206249998082058, 0.00034680899989325553, 0.00048482300007890444, 0.00044903600064571947, 0.0005239290003373753], "n": 6, "median_s": 0.00046692950036231196, "q25_s": 0.0003723657500813715, "q75_s": 0.0005116744998758804, "iqr_s": 0.0001393087497945089, "arm": "readcon_py", "op": "write", "case": "survey-con", "correct": true, "reason": "ok", "rss_kib": 332, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000068809
+sample 0.000291165
+sample 0.000710563
+sample 0.000413250
+sample 0.000407879
+sample 0.000502076
+median_s 0.000410564
+q25_s 0.000320344
+q75_s 0.000479869
+iqr_s 0.000159526
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_rust
+op write
+case survey-con
+rss_kib 348
+massif_heap_bytes None
+{"samples": [6.8809e-05, 0.000291165, 0.000710563, 0.00041325, 0.000407879, 0.000502076], "n": 6, "median_s": 0.0004105645, "q25_s": 0.0003203435, "q75_s": 0.00047986949999999996, "iqr_s": 0.00015952599999999995, "arm": "readcon_rust", "op": "write", "case": "survey-con", "correct": true, "reason": "ok", "rss_kib": 348, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "TypeError: category must be a Warning subclass, not 'FixCartesian'", "arm": "ase_eon", "op": "write", "case": "survey-con", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "survey-con", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "survey-con", "rss_kib": null, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000115903
+sample 0.000593700
+sample 0.000559626
+sample 0.000618226
+sample 0.000577292
+sample 0.000080944
+median_s 0.000568459
+q25_s 0.000226834
+q75_s 0.000589598
+iqr_s 0.000362764
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_py
+op write
+case survey-convel
+rss_kib 332
+massif_heap_bytes None
+{"samples": [0.00011590299982344732, 0.000593700000536046, 0.0005596259998128517, 0.0006182259994602646, 0.0005772920003437321, 8.094400072877761e-05], "n": 6, "median_s": 0.0005684590000782919, "q25_s": 0.0002268337498207984, "q75_s": 0.0005895980004879675, "iqr_s": 0.0003627642506671691, "arm": "readcon_py", "op": "write", "case": "survey-convel", "correct": true, "reason": "ok", "rss_kib": 332, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000078110
+sample 0.000235012
+sample 0.000444726
+sample 0.000231899
+sample 0.000277090
+sample 0.000297482
+median_s 0.000256051
+q25_s 0.000232677
+q75_s 0.000292384
+iqr_s 0.000059707
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_rust
+op write
+case survey-convel
+rss_kib 216
+massif_heap_bytes None
+{"samples": [7.811e-05, 0.000235012, 0.000444726, 0.000231899, 0.00027709, 0.000297482], "n": 6, "median_s": 0.000256051, "q25_s": 0.00023267725, "q75_s": 0.000292384, "iqr_s": 5.970675000000001e-05, "arm": "readcon_rust", "op": "write", "case": "survey-convel", "correct": true, "reason": "ok", "rss_kib": 216, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "TypeError: category must be a Warning subclass, not 'FixCartesian'", "arm": "ase_eon", "op": "write", "case": "survey-convel", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "survey-convel", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "survey-convel", "rss_kib": null, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 3.237964575
+sample 3.067671508
+sample 3.254633060
+sample 3.314985807
+sample 3.243836054
+sample 3.157966289
+median_s 3.240900314
+q25_s 3.177965860
+q75_s 3.251933808
+iqr_s 0.073967948
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_py
+op write
+case frames-con
+rss_kib 2093316
+massif_heap_bytes 756106740
+{"samples": [3.2379645749997508, 3.0676715079989663, 3.2546330599998328, 3.314985807000994, 3.243836053999985, 3.157966288999887], "n": 6, "median_s": 3.240900314499868, "q25_s": 3.177965860499853, "q75_s": 3.251933808499871, "iqr_s": 0.07396794800001771, "arm": "readcon_py", "op": "write", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": 2093316, "massif_heap_bytes": 756106740}
+repeat 6
+serial 1
+quantile type-7
+sample 0.575429346
+sample 0.544927499
+sample 0.527635001
+sample 0.528627966
+sample 0.522007362
+sample 0.520676670
+median_s 0.528131483
+q25_s 0.523414272
+q75_s 0.540852616
+iqr_s 0.017438344
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_rust
+op write
+case frames-con
+rss_kib 412
+massif_heap_bytes 24576
+{"samples": [0.575429346, 0.544927499, 0.527635001, 0.528627966, 0.522007362, 0.52067667], "n": 6, "median_s": 0.5281314834999999, "q25_s": 0.52341427175, "q75_s": 0.54085261575, "iqr_s": 0.017438343999999995, "arm": "readcon_rust", "op": "write", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": 412, "massif_heap_bytes": 24576}
+repeat 6
+serial 1
+quantile type-7
+sample 15.094627912
+sample 14.572885975
+sample 14.469190360
+sample 14.641641764
+sample 14.999738273
+sample 14.719590297
+median_s 14.680616030
+q25_s 14.590074922
+q75_s 14.929701279
+iqr_s 0.339626357
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason wrote
+arm ase_eon
+op write
+case frames-con
+rss_kib 6552
+massif_heap_bytes 30375
+{"samples": [15.09462791199985, 14.572885975001554, 14.46919035999963, 14.64164176399936, 14.99973827299982, 14.71959029699974], "n": 6, "median_s": 14.68061603049955, "q25_s": 14.590074922251006, "q75_s": 14.9297012789998, "iqr_s": 0.33962635674879493, "arm": "ase_eon", "op": "write", "case": "frames-con", "correct": true, "reason": "wrote", "rss_kib": 6552, "massif_heap_bytes": 30375}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "frames-con", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "frames-con", "rss_kib": null, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 5.227095254
+sample 4.893614002
+sample 4.656892688
+sample 5.220942514
+sample 4.936688453
+sample 6.037820241
+median_s 5.078815483
+q25_s 4.904382615
+q75_s 5.225557069
+iqr_s 0.321174454
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_py
+op write
+case frames-convel
+rss_kib 2888356
+massif_heap_bytes 1508698886
+{"samples": [5.227095253998414, 4.893614002001414, 4.65689268800088, 5.220942513999034, 4.936688452999078, 6.037820240999281], "n": 6, "median_s": 5.078815483499056, "q25_s": 4.90438261475083, "q75_s": 5.225557068998569, "iqr_s": 0.32117445424773905, "arm": "readcon_py", "op": "write", "case": "frames-convel", "correct": true, "reason": "ok", "rss_kib": 2888356, "massif_heap_bytes": 1508698886}
+repeat 6
+serial 1
+quantile type-7
+sample 0.986924450
+sample 1.316435755
+sample 0.999865848
+sample 0.970038317
+sample 1.288036549
+sample 1.095025854
+median_s 1.047445851
+q25_s 0.990159799
+q75_s 1.239783875
+iqr_s 0.249624076
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_rust
+op write
+case frames-convel
+rss_kib 408
+massif_heap_bytes 0
+{"samples": [0.98692445, 1.316435755, 0.999865848, 0.970038317, 1.288036549, 1.095025854], "n": 6, "median_s": 1.047445851, "q25_s": 0.9901597995, "q75_s": 1.2397838752500001, "iqr_s": 0.24962407575000012, "arm": "readcon_rust", "op": "write", "case": "frames-convel", "correct": true, "reason": "ok", "rss_kib": 408, "massif_heap_bytes": 0}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "load ValueError: could not convert string to float: 'Velocities'", "arm": "ase_eon", "op": "write", "case": "frames-convel", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_579738a", "op": "write", "case": "frames-convel", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "segmentation fault in matter2con", "arm": "eon_v360", "op": "write", "case": "frames-convel", "rss_kib": null, "massif_heap_bytes": null}
+exit 1

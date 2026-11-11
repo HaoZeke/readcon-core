@@ -499,9 +499,13 @@ The input-format table of the OVITO 3.17.2 manual names XYZ, extended XYZ, POSCA
 That table is not a rerun of the opener.
 The development changelog of ASE dated 2026-11-09 is not part of release 3.29.0, and it records a fix for extended XYZ reading when Python is run with the optimisation flag \cite{aseChangelog20261109}.
 The survey and the drift files were not read under that flag.
-% TODO (head-to-head): OVITO 3.17.2 (PyPI 3.17.2; manual input-format table at docs.ovito.org, accessed 2026-11-11) against the OVITO 3.16.1 rows.
-% Same calls as scripts/drift.py r_ovito and scripts/con_openers.py: import_file on the seven drift files and on one version-1 CON file and one CON 3.1 file.
-% Match positions, pbc, move_mask and Particle Identifier. The 3.17.2 manual lists no CON, convel or H5MD reader; the opener has not been rerun.
+OVITO 3.17.2 \texttt{import\_file} on the 32-atom, 100000-frame CON file
+raises \texttt{RuntimeError}: it cannot detect the format.
+chemfiles 0.10.4 raises \texttt{ChemfilesError}: it has no format for
+the \texttt{.con} extension.
+On the copper-grid extended XYZ files, opened by chemfiles as XYZ,
+the million-atom medians are 0.455~s and 0.150~s and the 10000-frame
+medians are 0.567~s and 0.657~s.
 % TODO (head-to-head): ASE development tree that contains the 2026-11-09 changelog entry, which is not release 3.29.0 (PyPI on 2026-11-11 is 3.29.0).
 % ase.io.read(format='extxyz') on the seven drift files, once with python and once with python -O.
 % Release 3.29.0 is the survey reader. The changelog says extended XYZ reading under python -O was wrong until that entry.

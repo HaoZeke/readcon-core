@@ -1,0 +1,123 @@
+git rev-parse HEAD
+e4f0888148d5503770d585b79d92a0bd0518dc03
+git rev-parse HEAD^{tree}
+eff9de05adee17dfdde0dd9f031a427624d49ed0
+git rev-parse HEAD:src
+5bbd588981812d448e5bf534f7f839d5262b3a9a
+command
+taskset -c 0 python3 bench/h2h/con_h2h.py con-survey-extxyz
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.000014720
+sample 0.000013110
+sample 0.000012452
+sample 0.000012446
+sample 0.000012101
+sample 0.000011420
+median_s 0.000012449
+q25_s 0.000012187
+q75_s 0.000012946
+iqr_s 0.000000758
+n_atoms 9
+n_frames 1
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_py
+op read
+case survey-extxyz
+rss_kib None
+massif_heap_bytes None
+{"samples": [1.4719998944201507e-05, 1.3110000509186648e-05, 1.2452001101337373e-05, 1.2446000255295075e-05, 1.2100999811082147e-05, 1.1420001101214439e-05], "n": 6, "median_s": 1.2449000678316224e-05, "q25_s": 1.218724992213538e-05, "q75_s": 1.294550065722433e-05, "iqr_s": 7.5825073508895e-07, "arm": "readcon_py", "op": "read", "case": "survey-extxyz", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "n_atoms": 9, "n_frames": 1, "pbc": null, "has_velocities": true}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000216548
+sample 0.000203356
+sample 0.000215502
+sample 0.000297552
+sample 0.000330446
+sample 0.000391729
+median_s 0.000257050
+q25_s 0.000215763
+q75_s 0.000322223
+iqr_s 0.000106459
+n_atoms 9
+n_frames 1
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm ase_extxyz
+op read
+case survey-extxyz
+rss_kib None
+massif_heap_bytes None
+{"samples": [0.00021654800002579577, 0.00020335599947429728, 0.00021550199926423375, 0.00029755200012004934, 0.00033044600058929063, 0.00039172899960249197], "n": 6, "median_s": 0.00025705000007292256, "q25_s": 0.00021576349945462425, "q75_s": 0.0003222225004719803, "iqr_s": 0.00010645900101735606, "arm": "ase_extxyz", "op": "read", "case": "survey-extxyz", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "n_atoms": 9, "n_frames": 1, "pbc": [true, true, false], "has_velocities": true}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000051298
+sample 0.000042955
+sample 0.000042133
+sample 0.000038922
+sample 0.000037808
+sample 0.000039285
+median_s 0.000040709
+q25_s 0.000039013
+q75_s 0.000042749
+iqr_s 0.000003737
+n_atoms 9
+n_frames 1
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm chemfiles
+op read
+case survey-extxyz
+rss_kib None
+massif_heap_bytes None
+{"samples": [5.1298000471433625e-05, 4.295500002626795e-05, 4.213299871480558e-05, 3.8922000385355204e-05, 3.780800034292042e-05, 3.928499972971622e-05], "n": 6, "median_s": 4.07089992222609e-05, "q25_s": 3.901275022144546e-05, "q75_s": 4.274949969840236e-05, "iqr_s": 3.736749476956902e-06, "arm": "chemfiles", "op": "read", "case": "survey-extxyz", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "n_atoms": 9, "n_frames": 1, "pbc": null, "has_velocities": false}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000132052
+sample 0.000117649
+sample 0.000114592
+sample 0.000102339
+sample 0.000098874
+sample 0.000091198
+median_s 0.000108465
+q25_s 0.000099740
+q75_s 0.000116885
+iqr_s 0.000017145
+n_atoms 9
+n_frames 1
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm ovito
+op read
+case survey-extxyz
+rss_kib None
+massif_heap_bytes None
+{"samples": [0.00013205200048105326, 0.00011764900045818649, 0.00011459199959062971, 0.00010233899956801906, 9.887399937724695e-05, 9.11979986994993e-05], "n": 6, "median_s": 0.00010846549957932439, "q25_s": 9.974024942493998e-05, "q75_s": 0.0001168847502412973, "iqr_s": 1.7144500816357322e-05, "arm": "ovito", "op": "read", "case": "survey-extxyz", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "n_atoms": 9, "n_frames": 1, "pbc": [true, true, false], "has_velocities": false}
+exit 0

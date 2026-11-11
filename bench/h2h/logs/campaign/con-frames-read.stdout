@@ -1,0 +1,125 @@
+git rev-parse HEAD
+e4f0888148d5503770d585b79d92a0bd0518dc03
+git rev-parse HEAD^{tree}
+eff9de05adee17dfdde0dd9f031a427624d49ed0
+git rev-parse HEAD:src
+5bbd588981812d448e5bf534f7f839d5262b3a9a
+command
+taskset -c 0 python3 bench/h2h/con_h2h.py con-frames-read
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.399493682
+sample 0.357253046
+sample 0.355091348
+sample 0.375872663
+sample 0.443703984
+sample 0.373427495
+median_s 0.374650079
+q25_s 0.361296658
+q75_s 0.393588427
+iqr_s 0.032291769
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_c
+op read
+case frames-100000x32
+rss_kib 567128
+massif_heap_bytes 570295066
+{"samples": [0.399493682, 0.357253046, 0.355091348, 0.375872663, 0.443703984, 0.373427495], "n": 6, "median_s": 0.374650079, "q25_s": 0.36129665825, "q75_s": 0.39358842725, "iqr_s": 0.03229176899999997, "arm": "readcon_c", "op": "read", "case": "frames-100000x32", "correct": true, "reason": "ok", "rss_kib": 567128, "massif_heap_bytes": 570295066}
+repeat 6
+serial 1
+quantile type-7
+sample 0.521425119
+sample 0.541438785
+sample 0.487364185
+sample 0.484175363
+sample 0.472399948
+sample 0.784851967
+median_s 0.504394652
+q25_s 0.484972569
+q75_s 0.536435368
+iqr_s 0.051462800
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon_fortran
+op read
+case frames-100000x32
+rss_kib None
+massif_heap_bytes 570301357
+{"samples": [0.521425119, 0.541438785, 0.487364185, 0.484175363, 0.472399948, 0.784851967], "n": 6, "median_s": 0.504394652, "q25_s": 0.48497256850000003, "q75_s": 0.5364353685, "iqr_s": 0.05146279999999992, "arm": "readcon_fortran", "op": "read", "case": "frames-100000x32", "correct": true, "reason": "ok", "rss_kib": 567468, "massif_heap_bytes": 570301357}
+repeat 6
+serial 1
+quantile type-7
+sample 0.865366534
+sample 0.940718149
+sample 0.827048601
+sample 0.846554724
+sample 0.837442077
+sample 0.862328108
+median_s 0.854441416
+q25_s 0.839720239
+q75_s 0.864606928
+iqr_s 0.024886689
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm eon_579738a
+op read
+case frames-100000x32
+rss_kib 943300
+massif_heap_bytes 918111252
+{"samples": [0.865366534, 0.940718149, 0.827048601, 0.846554724, 0.837442077, 0.862328108], "n": 6, "median_s": 0.854441416, "q25_s": 0.83972023875, "q75_s": 0.8646069275, "iqr_s": 0.024886688749999997, "arm": "eon_579738a", "op": "read", "case": "frames-100000x32", "correct": true, "reason": "ok", "rss_kib": 943300, "massif_heap_bytes": 918111252}
+repeat 6
+serial 1
+quantile type-7
+sample 0.976651544
+sample 1.090525564
+sample 1.030830798
+sample 1.042310190
+sample 0.988856439
+sample 0.976342581
+median_s 1.009843618
+q25_s 0.979702768
+q75_s 1.039440342
+iqr_s 0.059737574
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm eon_v360
+op read
+case frames-100000x32
+rss_kib 1569304
+massif_heap_bytes 1561050900
+{"samples": [0.976651544, 1.090525564, 1.030830798, 1.04231019, 0.988856439, 0.976342581], "n": 6, "median_s": 1.0098436185, "q25_s": 0.97970276775, "q75_s": 1.039440342, "iqr_s": 0.059737574250000036, "arm": "eon_v360", "op": "read", "case": "frames-100000x32", "correct": true, "reason": "ok", "rss_kib": 1569304, "massif_heap_bytes": 1561050900}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "ChemfilesError: can not find a format associated with the '.con' extension", "arm": "chemfiles", "op": "read", "case": "frames-100000x32", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "iqr_s": null, "correct": false, "reason": "RuntimeError: Could not detect the file format. The format might not be supported.", "arm": "ovito", "op": "read", "case": "frames-100000x32", "rss_kib": null, "massif_heap_bytes": null}
+exit 1

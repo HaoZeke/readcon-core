@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import con_h2h
 import extxyz_h2h
 import measure
 import support
@@ -72,6 +73,12 @@ def main() -> None:
         "extxyz_session": extxyz_h2h.run_session,
         "extxyz_memory": extxyz_h2h.refresh_memory,
         "extxyz_report": extxyz_h2h.report,
+        "con_convel": lambda: con_h2h.main_command("convel"),
+        "con_frames": lambda: con_h2h.main_command("frames"),
+        "con_write": lambda: con_h2h.main_command("write"),
+        "con_survey_extxyz": lambda: con_h2h.main_command("survey-extxyz"),
+        "con_grid": lambda: con_h2h.main_command("grid"),
+        "con_report": con_h2h.report,
     }
     if arm not in runners:
         raise SystemExit(f"unknown arm {arm}")
