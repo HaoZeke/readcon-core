@@ -461,7 +461,7 @@ def main() -> None:
     }
     out = Path(os.environ.get("H2H_RESULTS", str(KIT / "results.json")))
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {out}", flush=True)
+    print(f"wrote {recorded_path(out)}", flush=True)
 
 
 if __name__ == "__main__":
