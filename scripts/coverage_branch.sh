@@ -89,14 +89,16 @@ if [[ ${#RAW[@]} -eq 0 ]]; then
 fi
 "$LLVM/llvm-profdata" merge -sparse "${RAW[@]}" -o "$PROFDATA"
 
-BIN="$(find "$CARGO_TARGET_DIR" -type f -path '*/out/readcon_core-*' ! -name '*.*' -printf '%s %p\n' | sort -n | awk '{print $2}' | tail -n 1)"
+BIN="$(find "$CARGO_TARGET_DIR" -type f -path '*/deps/readcon_core-*' ! -name '*.*' -printf '%s %p\n' | sort -n | awk '{print $2}' | tail -n 1)"
 if [[ -z "$BIN" ]]; then
   echo "no lib test binary" >&2
   exit 1
 fi
 OBJECTS=("$BIN")
 
-EQUIV=(-path-equivalence="$ROOT,.")
+# The build remaps this repository to '.'. show then reads src/ relative to
+# the working directory. A path equivalence on top of that remap yields an
+# empty listing, so show is run without one.
 
 SOURCES=(
   "$dir_src/c_iter.rs"
@@ -107,29 +109,29 @@ SOURCES=(
   "$dir_src/python.rs"
 )
 
-"$LLVM/llvm-cov" report --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" "${SOURCES[@]}" \
+"$LLVM/llvm-cov" report --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
   > "$OUT/functions.txt" || true
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
   --sources "$dir_src/c_iter.rs" > "$OUT/c_iter-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
   --sources "$dir_src/ffi.rs" > "$OUT/ffi-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
   --sources "$dir_src/stream.rs" > "$OUT/stream-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
   --sources "$dir_src/compression.rs" > "$OUT/compression-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
   --sources "$dir_src/extxyz_scan.rs" > "$OUT/extxyz_scan-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
   --sources "$dir_src/python.rs" > "$OUT/python-branches.txt"
-"$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" "${SOURCES[@]}" \
+"$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
   > "$OUT/branch.json"
 
 if [[ -n "${SO:-}" && ${#PYRAW[@]} -gt 0 ]]; then
   pydata="$wheel_dir/python.profdata"
   "$LLVM/llvm-profdata" merge -sparse "${PYRAW[@]}" -o "$pydata"
-  "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "${EQUIV[@]}" "$SO" \
+  "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "$SO" \
     "$dir_src/python.rs" > "$OUT/python.json"
-  "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" "${EQUIV[@]}" "$SO" \
+  "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" "$SO" \
     --sources "$dir_src/python.rs" > "$OUT/python-branches.txt"
   rm -f "$pydata"
 fi
