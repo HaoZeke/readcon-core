@@ -1,6 +1,7 @@
 Dear Editor,
 
 Please consider the enclosed manuscript, "readcon-core: a versioned geometry checkpoint for resumed saddle searches", for Computer Physics Communications as a Computer Programs in Physics paper.
+We submit it with the program archive and the raw timing logs.
 
 Saddle-search codes in the eOn family stop and resume from eOn configuration (CON) files.
 CON had no specification, so each reader decided which files are legal and what each column means.

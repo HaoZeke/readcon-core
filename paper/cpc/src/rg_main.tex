@@ -1230,18 +1230,17 @@ six times, one fresh process per sample.
 
 \begin{figure*}[tbp] \centering
 \includegraphics[width=\textwidth]{figures/generated/timing.pdf}
-\caption{Wall times from \texttt{reader-exchange-public.log}, the
-32-atom file. This is not the independent comparison. That comparison is
-Table~\ref{tab:peers}, and its bars are not drawn until its log is in.}
+\caption{Three panels of one-thread medians from the r0174 records. The
+bars are those medians and the whiskers are the quartiles.
+Table~\ref{tab:peers} lists the independent CON readers in
+\texttt{reader-exchange-public.log}.}
 \label{fig:timing} \end{figure*}
 
 \begin{figure}[tbp] \centering
 \includegraphics[width=\textwidth]{figures/generated/ratios.pdf}
-\caption{Regression panel, not the independent comparison. Each point is
-a readcon build or the C++ arm, divided by \texttt{read\_con} of the
-v0.18.0 build, on the 32-atom file in
-\texttt{reader-exchange-public.log}. The independent readers are
-Table~\ref{tab:peers}. Their medians are not drawn here.}
+\caption{Each point is a full-frame time divided by the one-thread
+\texttt{read\_con} series. Table~\ref{tab:peers} lists the independent
+CON readers in \texttt{reader-exchange-public.log}.}
 \label{fig:ratios} \end{figure}
 
 \begin{figure}[tbp] \centering
@@ -1273,15 +1272,17 @@ Memory is the VmHWM after the read minus the VmHWM after the import.
 \texttt{MKL\_NUM\_THREADS}, \texttt{NUMEXPR\_NUM\_THREADS} and
 \texttt{RAYON\_NUM\_THREADS} are set to the thread count of the arm.
 
-\subsection{Results}\label{sec:results} The headline comparison is
+\subsection{Results}\label{sec:results} The main comparison is
 independent readers of one CON file.
 A ratio in this section is the ratio of two type-7 medians.
 The CON peer is ASE \texttt{get\_positions} on every frame.
 chemfiles, OVITO, MDAnalysis and pymatgen do not read CON.
 Their rows in the exchange log are XYZ, HDF5 or PDB, not this table.
 eOn \texttt{loadcons} does read CON.
-The log names the package version of the measured commit.
-It does not record a module sha256.
+The commit named by that log is tag v0.18.0.
+The raw log does not record a module sha256.
+Lines absent from the run stdout are in
+\path{paper/cpc/logs/reader-exchange-public.provenance.txt}.
 Table~\ref{tab:peers} uses
 \path{paper/cpc/logs/reader-exchange-public.log}.
 ASE \texttt{get\_positions} is the fastest CON peer, so its ratio is 1.
@@ -1556,7 +1557,8 @@ held.
 The library files of the release have digest \texttt{\readcondigest}.
 \readcontagstate{} The reader exchange in
 \path{paper/cpc/logs/reader-exchange-public.log} was measured by the
-harness of that release, on the clean commit \texttt{\rcHostCommit}.
+timing program of that release, on the clean commit
+\texttt{\rcHostCommit}.
 The stored campaigns in Table~\ref*{tab:versionmap}, including r0174 and
 the head-to-head records, were not rerun on that commit.
 Each of those records names the library it was measured with.
@@ -1613,7 +1615,7 @@ release, the commit, the compiler and the host it was measured on.
 \FloatBarrier
 \section*{CRediT authorship contribution statement}\label{sec:credit}
 Rohit Goswami: Conceptualization, Methodology, Software, Visualization,
-Writing -- original draft, Writing -- review and editing.
+Writing, original draft; Writing, review and editing.
 
 \section*{Funding} \label{sec:funding} This research did not receive any
 specific grant from funding agencies in the public, commercial, or
@@ -1635,6 +1637,7 @@ He also thanks Ami the cactus.
 
 % Elsevier prescribes this heading word for word.
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}\label{sec:ai-declaration}
+% NEEDS ROHIT: leave the next sentence unchanged and name the tool.
 Chatbots were used to refine certain turns of phrase and to speed
 through some implementation details; all the work is the author's own.
 The author reviewed and edited all tool output as needed and takes full

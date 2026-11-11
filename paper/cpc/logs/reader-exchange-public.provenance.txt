@@ -1,0 +1,14 @@
+source paper/cpc/logs/reader-exchange-public.log
+note These lines are not in the raw log. Commit ddc9460 inserted them after the kernel line. The raw log is the unmodified run stdout.
+hypervisor_vendor KVM
+virtual_machine yes
+cpu_family 6
+cpu_model_id 207
+cpu_stepping 2
+cpu_mhz 2400
+session_start 2026-11-09T09:33:43Z
+session_end not_recorded
+boot_id not_recorded
+module_version 0.18.0
+module_sha256 not_recorded
+ratio_statistic ratio_of_type7_medians

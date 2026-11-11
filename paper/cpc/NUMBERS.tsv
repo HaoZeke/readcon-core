@@ -6,19 +6,19 @@ cargo -V result	1.88.0 (873a06493 2025-05-10)	paper/cpc/logs/reader-exchange-pub
 RAM kib	49342816	paper/cpc/logs/reader-exchange-public.log	11
 OS	Ubuntu 24.04.5 LTS	paper/cpc/logs/reader-exchange-public.log	12
 kernel	6.12.113+	paper/cpc/logs/reader-exchange-public.log	13
-hypervisor	KVM	paper/cpc/logs/reader-exchange-public.log	14
-cpu clock MHz	2400	paper/cpc/logs/reader-exchange-public.log	19
-session start	2026-11-09T09:33:43Z	paper/cpc/logs/reader-exchange-public.log	20
-session end	not_recorded	paper/cpc/logs/reader-exchange-public.log	21
-boot id	not_recorded	paper/cpc/logs/reader-exchange-public.log	22
-measured package version	0.18.0	paper/cpc/logs/reader-exchange-public.log	23
-module sha256	not_recorded	paper/cpc/logs/reader-exchange-public.log	24
-all-frames tip median_s	1.778926005e-01	paper/cpc/logs/reader-exchange-public.log	151
-baseline all-frames median_s	1.967518828e+00	paper/cpc/logs/reader-exchange-public.log	152
-readcon_v0173 all-frames median_s	1.508949556e+00	paper/cpc/logs/reader-exchange-public.log	153
-ASE get_positions CON median_s	1.097313846e+01	paper/cpc/logs/reader-exchange-public.log	156
-eOn loadcons CON median_s	1.461845212e+01	paper/cpc/logs/reader-exchange-public.log	158
-C++ all-frames median_s	1.468019723e+00	paper/cpc/logs/reader-exchange-public.log	159
+hypervisor	KVM	paper/cpc/logs/reader-exchange-public.provenance.txt	3
+cpu clock MHz	2400	paper/cpc/logs/reader-exchange-public.provenance.txt	8
+session start	2026-11-09T09:33:43Z	paper/cpc/logs/reader-exchange-public.log	3
+session end	not_recorded	paper/cpc/logs/reader-exchange-public.provenance.txt	10
+boot id	not_recorded	paper/cpc/logs/reader-exchange-public.provenance.txt	11
+measured package version	0.18.0	paper/cpc/logs/reader-exchange-public.provenance.txt	12
+module sha256	not_recorded	paper/cpc/logs/reader-exchange-public.provenance.txt	13
+all-frames tip median_s	1.778926005e-01	paper/cpc/logs/reader-exchange-public.log	139
+baseline all-frames median_s	1.967518828e+00	paper/cpc/logs/reader-exchange-public.log	140
+readcon_v0173 all-frames median_s	1.508949556e+00	paper/cpc/logs/reader-exchange-public.log	141
+ASE get_positions CON median_s	1.097313846e+01	paper/cpc/logs/reader-exchange-public.log	144
+eOn loadcons CON median_s	1.461845212e+01	paper/cpc/logs/reader-exchange-public.log	146
+C++ all-frames median_s	1.468019723e+00	paper/cpc/logs/reader-exchange-public.log	147
 ASE over tip, ratio of medians	61.68	paper/cpc/logs/reader-exchange-public.log	derived from summary medians
 eOn over ASE, ratio of medians	1.332	paper/cpc/logs/reader-exchange-public.log	derived from summary medians
 XYZ ASE cu32_f100k median_s	11.485844442002417	paper/cpc/data/h2h-r233-results.json	11288
@@ -34,5 +34,6 @@ CON read ASE over readcon ratio of medians	4.4791	paper/cpc/data/h2h-r233-result
 CON write ASE cu1000_f1k median_s	2.4583374865032965	paper/cpc/data/h2h-r233-results.json	11723
 CON write readcon_py cu1000_f1k median_s	0.7167300539949792	paper/cpc/data/h2h-r233-results.json	11708
 CON write ASE over readcon ratio of medians	3.4299	paper/cpc/data/h2h-r233-results.json	11723/11708
-rerun v14.9 read_all_frames median_s n=6 frames=500	0.001682624	paper/cpc/logs/rerun-v149.log	samples
-rerun v14.10 read_all_frames median_s n=6 frames=500	0.0017902895	paper/cpc/logs/rerun-v1410.log	samples
+rerun v14.7 read_all_frames median_s n=6 frames=500	0.0019228015	paper/cpc/logs/rerun-bench-v147.log	samples
+rerun v14.9 read_all_frames median_s n=6 frames=500	0.0016512975	paper/cpc/logs/rerun-bench-v149.log	samples
+rerun v14.10 read_all_frames median_s n=6 frames=500	0.001891206	paper/cpc/logs/rerun-bench-v1410.log	samples
