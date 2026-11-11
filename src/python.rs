@@ -3637,17 +3637,67 @@ fn chemfiles_opts_from_kwargs(
     }
 }
 
+fn interned_symbol<'a>(
+    py: Python<'_>,
+    intern: &mut std::collections::HashMap<&'a str, Py<pyo3::types::PyString>>,
+    token: &'a str,
+) -> Py<pyo3::types::PyString> {
+    if let Some(found) = intern.get(token) {
+        return found.clone_ref(py);
+    }
+    let created = pyo3::types::PyString::new(py, token).unbind();
+    intern.insert(token, created.clone_ref(py));
+    created
+}
+
+/// One Python list per frame. Repeated symbols are one string object.
+fn py_text_frames<'py>(
+    py: Python<'py>,
+    text: &[String],
+    n_atoms: usize,
+    width: usize,
+) -> PyResult<Bound<'py, PyList>> {
+    let frames = PyList::empty(py);
+    if n_atoms == 0 || width == 0 || text.is_empty() {
+        return Ok(frames);
+    }
+    let mut intern = std::collections::HashMap::<&str, Py<pyo3::types::PyString>>::new();
+    let stride = n_atoms.saturating_mul(width);
+    for frame in text.chunks(stride) {
+        let row = PyList::empty(py);
+        if width == 1 {
+            for token in frame {
+                row.append(interned_symbol(py, &mut intern, token))?;
+            }
+        } else {
+            for group in frame.chunks(width) {
+                let item = PyList::empty(py);
+                for token in group {
+                    item.append(interned_symbol(py, &mut intern, token))?;
+                }
+                row.append(item)?;
+            }
+        }
+        frames.append(row)?;
+    }
+    Ok(frames)
+}
+
 /// Read an extended XYZ file.
 ///
 /// The comment line gives the lattice and the column order. The returned
 /// dict holds ``positions`` with shape `(frames, atoms, 3)`, ``masses``
 /// with shape `(frames, atoms)`, ``cell`` with shape `(frames, 6)`,
 /// ``species`` as one symbol list per frame, and ``arrays``, a dict of
-/// every per-atom `Properties` column. A real column is a float array.
-/// A text column is a list of lists.
+/// every per-atom `Properties` column. A real column is one float array.
+/// A text column is a list of lists, and a repeated symbol is one string
+/// object shared by every atom that spells it. ``arrays['species']`` is
+/// the same list as ``species``.
 #[pyfunction]
 fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>> {
-    let mut tables = crate::extxyz_scan::tables_from_extxyz_path(std::path::Path::new(path))
+    let path_owned = path.to_string();
+    let mut tables = py
+        .detach(move || crate::extxyz_scan::tables_from_extxyz_path(std::path::Path::new(&path_owned)))
         .map_err(|err| pyo3::exceptions::PyValueError::new_err(err))?;
     let n_frames = tables.n_frames;
     let n_atoms = tables.n_atoms;
@@ -3661,26 +3711,15 @@ fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>>
             .unwrap();
     let cell =
         ndarray::Array2::from_shape_vec((n_frames, 6), std::mem::take(&mut tables.cell)).unwrap();
-    let mut species_frames = Vec::with_capacity(n_frames);
-    for frame in tables.species.chunks(n_atoms) {
-        species_frames.push(frame.to_vec());
-    }
     let arrays = PyDict::new(py);
+    let mut shared_species: Option<Bound<'py, PyList>> = None;
     for column in tables.columns.drain(..) {
-        if column.kind == b'S' && column.width == 1 {
-            let mut frames = Vec::with_capacity(n_frames);
-            for frame in column.text.chunks(n_atoms) {
-                frames.push(frame.to_vec());
+        if column.kind == b'S' {
+            let built = py_text_frames(py, &column.text, n_atoms, column.width)?;
+            if column.name == "species" && column.width == 1 {
+                shared_species = Some(built.clone());
             }
-            arrays.set_item(column.name, frames)?;
-        } else if column.kind == b'S' {
-            let mut frames = Vec::with_capacity(n_frames);
-            for frame in column.text.chunks(n_atoms * column.width) {
-                let rows: Vec<Vec<String>> =
-                    frame.chunks(column.width).map(|row| row.to_vec()).collect();
-                frames.push(rows);
-            }
-            arrays.set_item(column.name, frames)?;
+            arrays.set_item(column.name, built)?;
         } else if column.width == 1 {
             let values = ndarray::Array2::from_shape_vec((n_frames, n_atoms), column.real).unwrap();
             arrays.set_item(column.name, values.into_pyarray(py))?;
@@ -3691,11 +3730,15 @@ fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>>
             arrays.set_item(column.name, values.into_pyarray(py))?;
         }
     }
+    let species = match shared_species {
+        Some(found) => found,
+        None => py_text_frames(py, &tables.species, n_atoms, 1)?,
+    };
     let dict = PyDict::new(py);
     dict.set_item("positions", positions.into_pyarray(py))?;
     dict.set_item("masses", masses.into_pyarray(py))?;
     dict.set_item("cell", cell.into_pyarray(py))?;
-    dict.set_item("species", species_frames)?;
+    dict.set_item("species", species)?;
     dict.set_item("arrays", arrays)?;
     Ok(dict)
 }
