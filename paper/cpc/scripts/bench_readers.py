@@ -580,7 +580,6 @@ def main() -> int:
         f"cpu_model {cpu_model()}",
         f"baseline_commit {BASE_COMMIT}",
         f"release_commit {RELEASE_COMMIT}",
-        f"eon_commit {EON_COMMIT}",
         f"eon_version {EON_VERSION}",
         "git_status_begin",
         status or "(clean)",

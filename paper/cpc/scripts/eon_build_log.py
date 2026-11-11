@@ -38,7 +38,6 @@ def main() -> int:
         f"rev_parse {git(['rev-parse', 'HEAD'], ROOT)}",
         f"tree {git(['rev-parse', 'HEAD^{tree}'], ROOT)}",
         "command ninja -C paper/cpc/bench/work/peers/eon/build-h2h client/python/_core.abi3.so",
-        f"eon_commit {git(['rev-parse', 'HEAD'], EON)}",
         f"eon_version {version}",
     ]
     for stream in (proc.stdout, proc.stderr):

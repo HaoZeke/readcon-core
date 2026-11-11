@@ -11,9 +11,8 @@
 !logs/mpi-fallback.log
 !logs/db.log
 !logs/install.log
-!logs/reader-exchange.log
 !logs/reader-exchange-public.log
-!logs/rerun-v147.log
+!logs/rerun-v1410.log
 !logs/rerun-v149.log
 !logs/dlpack-exchange.log
 !logs/build.log

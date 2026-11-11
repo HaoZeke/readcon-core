@@ -343,8 +343,8 @@ RULES: list[Rule] = [
     ),
     Rule(
         "100000",
-        log_field("logs/reader-exchange.log", "frames"),
-        "logs/reader-exchange.log",
+        log_field("logs/reader-exchange-public.log", "frames"),
+        "logs/reader-exchange-public.log",
         "frames of the reader-exchange trajectory",
         (
             f"{DOC}~100000",
@@ -354,8 +354,8 @@ RULES: list[Rule] = [
     ),
     Rule(
         "32",
-        log_field("logs/reader-exchange.log", "atoms"),
-        "logs/reader-exchange.log",
+        log_field("logs/reader-exchange-public.log", "atoms"),
+        "logs/reader-exchange-public.log",
         "atoms of the reader-exchange trajectory",
         (f"{DOC}~32 copper",),
     ),

@@ -1,7 +1,6 @@
 rev_parse 102e4f628de6bee015da730d8d076300e92c1155
 tree cb70a6b6b256e539384b547613e458962e2462ff
 command ninja -C paper/cpc/bench/work/peers/eon/build-h2h client/python/_core.abi3.so
-eon_commit 579738a9387e8d0ea55496f45dd057812cfab892
 eon_version 3.6.0
 ninja: Entering directory `paper/cpc/bench/work/peers/eon/build-h2h'
 [1/2] Compiling C++ object <site-packages>/nanobind/src_nb_combined.cpp.o

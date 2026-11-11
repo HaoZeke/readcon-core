@@ -159,9 +159,9 @@ def test_number_rule_guards_fire_on_a_disagreement(monkeypatch):
     front = load("number_rules/front.py")
     assert front.si_factor('&["ev"]') > 0
     assert front.miller(front.RESTART_PY, "3, 3, 3") == 100
-    assert front.log_field("logs/reader-exchange.log", "frames") == 100000
+    assert front.log_field("logs/reader-exchange-public.log", "frames") == 100000
     with pytest.raises(SystemExit, match="no not-a-field"):
-        front.log_field("logs/reader-exchange.log", "not-a-field")
+        front.log_field("logs/reader-exchange-public.log", "not-a-field")
     real_param = front.param
     monkeypatch.setattr(front, "param", lambda name: -1 if name == "fmax_eV_A" else real_param(name))
     with pytest.raises(SystemExit, match="FMAX"):
