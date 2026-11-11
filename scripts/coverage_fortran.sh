@@ -34,7 +34,6 @@ export GFORTRAN_ERROR_BACKTRACE=0
 ( cd "$WORK" && ./test_iterator_stream )
 gcov -b -c -o "$WORK" fortran/ReadCon/src/readcon.f90 fortran/ReadCon/test/test_iterator_stream.f90
 gcov -f -b -c -o "$WORK" fortran/ReadCon/src/readcon.f90 > "$WORK/gcov-functions.txt"
-cp "$WORK/gcov-functions.txt" gcov-functions.txt
 
 python3 - "$ROOT" "$HOME" "$OUT" <<'PY'
 import re
