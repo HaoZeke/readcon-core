@@ -50,6 +50,20 @@ def test_many_frames_share_symbols_and_one_position_slab(tmp_path: Path):
     assert got["arrays"]["pos"] is got["positions"]
     assert got["arrays"]["masses"] is got["masses"]
     assert got["species"][0] is got["species"][-1]
+    assert isinstance(got["species"][0], tuple)
+    try:
+        got["species"][0].append("X")
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError("a species row accepted append")
+    try:
+        got["species"][0][0] = "H"
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("a species row accepted item assignment")
+    assert got["species"][-1][0] == "Cu"
     assert len(got["species"]) == n_frames
     symbols = {id(symbol) for frame in got["species"] for symbol in frame}
     assert symbols == {id("Cu")} or symbols == {id(got["species"][0][0])}

@@ -3650,7 +3650,9 @@ fn interned_symbol<'a>(
     created
 }
 
-/// One Python list per frame. Repeated symbols are one string object.
+/// One tuple per frame. A repeated symbol is one string object, and a
+/// frame that matches the previous frame is that same tuple. Tuples are
+/// immutable, so sharing a row cannot let one frame change another.
 fn py_text_frames<'py>(
     py: Python<'py>,
     text: &[String],
@@ -3664,7 +3666,7 @@ fn py_text_frames<'py>(
     let mut intern = std::collections::HashMap::<&str, Py<pyo3::types::PyString>>::new();
     let stride = n_atoms.saturating_mul(width);
     let mut prev: Option<&[String]> = None;
-    let mut prev_row: Option<Py<PyList>> = None;
+    let mut prev_row: Option<Py<pyo3::types::PyTuple>> = None;
     for frame in text.chunks(stride) {
         if let (Some(old), Some(row)) = (prev, prev_row.as_ref()) {
             if old == frame {
@@ -3672,20 +3674,25 @@ fn py_text_frames<'py>(
                 continue;
             }
         }
-        let row = PyList::empty(py);
-        if width == 1 {
-            for token in frame {
-                row.append(interned_symbol(py, &mut intern, token))?;
-            }
+        let row = if width == 1 {
+            pyo3::types::PyTuple::new(
+                py,
+                frame
+                    .iter()
+                    .map(|token| interned_symbol(py, &mut intern, token)),
+            )?
         } else {
+            let mut groups = Vec::with_capacity(frame.len() / width);
             for group in frame.chunks(width) {
-                let item = PyList::empty(py);
-                for token in group {
-                    item.append(interned_symbol(py, &mut intern, token))?;
-                }
-                row.append(item)?;
+                groups.push(pyo3::types::PyTuple::new(
+                    py,
+                    group
+                        .iter()
+                        .map(|token| interned_symbol(py, &mut intern, token)),
+                )?);
             }
-        }
+            pyo3::types::PyTuple::new(py, groups)?
+        };
         let owned = row.unbind();
         frames.append(owned.clone_ref(py))?;
         prev = Some(frame);
@@ -3699,11 +3706,11 @@ fn py_text_frames<'py>(
 /// The comment line gives the lattice and the column order. The returned
 /// dict holds ``positions`` with shape `(frames, atoms, 3)`, ``masses``
 /// with shape `(frames, atoms)`, ``cell`` with shape `(frames, 6)`,
-/// ``species`` as one symbol list per frame, and ``arrays``, a dict of
+/// ``species`` as one symbol tuple per frame, and ``arrays``, a dict of
 /// every per-atom `Properties` column. A real column is one float array.
-/// A text column is a list of lists. A repeated symbol is one string
+/// A text column is a list of tuples. A repeated symbol is one string
 /// object, and a frame whose symbols match the previous frame is that
-/// same list. ``arrays['species']`` is ``species``. ``arrays['pos']``
+/// same tuple. ``arrays['species']`` is ``species``. ``arrays['pos']``
 /// and ``arrays['masses']`` are the top-level slabs.
 #[pyfunction]
 fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>> {

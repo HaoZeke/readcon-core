@@ -92,7 +92,7 @@ def test_write_rereads_with_ase_and_extxyz(tmp_path):
     readcon.write_extxyz(str(out), original)
     for fmt in ("extxyz", "cextxyz"):
         image = ase_read(str(out), index=0, format=fmt)
-        assert image.get_chemical_symbols() == original["species"][0]
+        assert image.get_chemical_symbols() == list(original["species"][0])
         _same(image.positions, original["positions"][0])
         forces = (
             image.get_forces() if image.calc is not None else image.arrays["forces"]
@@ -102,7 +102,7 @@ def test_write_rereads_with_ase_and_extxyz(tmp_path):
         _same(image.cell.angles(), original["cell"][0, 3:], tol=1e-6)
     frame = extxyz.read_dicts(str(out))
     frame = frame[0] if isinstance(frame, list) else frame
-    assert list(frame.arrays["species"]) == original["species"][0]
+    assert list(frame.arrays["species"]) == list(original["species"][0])
     _same(frame.arrays["pos"], original["positions"][0])
     _same(frame.arrays["forces"], original["arrays"]["forces"][0])
     _same(frame.arrays["masses"], original["masses"][0])

@@ -22,7 +22,7 @@ def test_species_and_forces_round_trip(name, frames):
     assert forces.shape == (frames, 10, 3)
     assert set(got["arrays"]) >= {"species", "pos", "masses", "forces"}
     for frame in range(frames):
-        assert species[frame] == ["Cu"] * 10
+        assert list(species[frame]) == ["Cu"] * 10
         for atom in range(10):
             assert list(forces[frame, atom]) == pytest.approx(_forces(atom))
     assert got["positions"].shape == (frames, 10, 3)
