@@ -1408,14 +1408,18 @@ atoms in 10000 frames.
 The two 10-atom files are in \path{bench/h2h/fixtures}.
 The others are written by \path{bench/h2h/extxyz_h2h.py} and are not
 committed.
-Each arm is one Snakemake rule and one asv class.
-The run is one process on \texttt{taskset -c 0}, with one thread.
+One Snakemake rule runs every arm in one process.
+Inside each case the arms are interleaved.
+The asv class calls that session.
+The run is pinned with \texttt{taskset -c 0}, with one thread.
 One warmup call is excluded.
 The six repeats are serial.
-A time in Table~\ref{tab:extxyz-h2h} is the type 7 median, and the
-spread is the type 7 interquartile range.
+A time in Table~\ref{tab:extxyz-h2h} and Table~\ref{tab:extxyz-h2h-write}
+is the type 7 median, and the spread is the type 7 interquartile range.
 The host line in \path{bench/h2h/extxyz-results.json} is Intel Xeon
 Processor, x86\_64, 8 CPUs, 49342816 KiB.
+The kernel is 6.12.113+.
+The CPU governor is not visible.
 The build is readcon 0.18.1, rustc 1.91.0, Python 3.12.3, NumPy 2.2.6,
 ASE 3.29.0, ase-extxyz 0.1.2, extxyz 0.4.6 and extxyz-ng 0.0.2.
 Before the clock, every arm is compared with the grid on species,
@@ -1424,26 +1428,31 @@ Those fields agree for every reader that finishes.
 The largest absolute difference is 0.
 readcon writes species, positions, the lattice and every per-atom
 column, including forces.
-On the million-atom file the Rust writer takes 0.571~s and the Python
-writer takes 0.575~s.
-On the 10000-frame file those medians are 0.529 and 0.555~s.
-The massif heap peaks of those writes are 210.9 and 210.2~MiB for Rust
-and 277.8 and 305.9~MiB for Python.
+The Python writer formats the caller's numeric columns in place.
+On the million-atom file the Rust writer takes 0.487~s and the Python
+writer takes 0.442~s.
+On the 10000-frame file those medians are 0.431 and 0.411~s.
+The massif heap peaks of those writes are 220.0 and 220.7~MiB for Rust
+and 224.0 and 218.0~MiB for Python.
 A reread matches.
 ASE \texttt{extxyz}, ASE \texttt{cextxyz} and extxyz 0.4.6 also write
 every file and the reread matches.
+On the million-atom file those three writers take 3.74~s, 0.948~s and
+0.906~s, and on the 10000-frame file 4.26~s, 1.47~s and 1.19~s.
+Their massif peaks on the million-atom file are 234.7, 252.6 and
+256.0~MiB, and on the 10000-frame file 124.5, 84.6 and 95.2~MiB.
 extxyz-ng 0.0.2 agrees on the 10-atom files.
 It reads a 230-atom frame of 8168 bytes and rejects a 231-atom frame
 of 8203 bytes, so it does not read the medium or large files.
-On the million-atom file ASE \texttt{extxyz} takes 1.791~s, ASE
-\texttt{cextxyz} takes 0.246~s, extxyz 0.4.6 takes 0.265~s, the
-readcon Python reader takes 0.373~s, and the readcon Rust reader
-takes 0.273~s.
-The massif heap peaks on that file are 210.6, 188.2, 152.8, 223.3 and
+On the million-atom file ASE \texttt{extxyz} takes 1.91~s, ASE
+\texttt{cextxyz} takes 0.275~s, extxyz 0.4.6 takes 0.261~s, the
+readcon Python reader takes 0.419~s, and the readcon Rust reader
+takes 0.287~s.
+The massif heap peaks on that file are 211.3, 188.8, 153.5, 224.0 and
 210.9~MiB.
-On the 10000-frame file the same five medians are 3.634, 0.925,
-0.785, 0.456 and 0.265~s.
-extxyz-ng 0.0.2 writes the 10-atom frame in \(7.73\times 10^{-5}\)~s.
+On the 10000-frame file the same five medians are 3.41, 0.937,
+0.740, 0.454 and 0.294~s.
+extxyz-ng 0.0.2 writes the 10-atom frame in \(1.03\times 10^{-4}\)~s.
 Its 8-frame write finishes, and the file is then 11528 bytes, which
 that reader rejects.
 \texttt{write\_frames} rejects a Python iterator of frames, so the
@@ -1458,16 +1467,37 @@ Raw repeats are the CSV files under \path{bench/h2h/extxyz-logs}.
 \toprule
 Reader & File & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
 \midrule
-readcon Rust & \(10^{6}\) atoms & 0.273 & 0.0483 & 244.3 & 210.9 \\
-readcon Rust & 10000 frames & 0.265 & 0.0450 & 243.6 & 210.2 \\
-readcon Python & \(10^{6}\) atoms & 0.373 & 0.0145 & 384.5 & 223.3 \\
-readcon Python & 10000 frames & 0.456 & 0.0164 & 402.3 & 217.3 \\
-ASE \texttt{extxyz} & \(10^{6}\) atoms & 1.791 & 0.00821 & 654.0 & 210.6 \\
-ASE \texttt{extxyz} & 10000 frames & 3.634 & 0.202 & 319.7 & 218.1 \\
-ASE \texttt{cextxyz} & \(10^{6}\) atoms & 0.246 & 0.0185 & 248.6 & 188.2 \\
-ASE \texttt{cextxyz} & 10000 frames & 0.925 & 0.0307 & 236.6 & 154.2 \\
-\texttt{extxyz} 0.4.6 & \(10^{6}\) atoms & 0.265 & 0.0259 & 225.7 & 152.8 \\
-\texttt{extxyz} 0.4.6 & 10000 frames & 0.785 & 0.0573 & 250.0 & 156.9 \\
+readcon Rust & \(10^{6}\) atoms & 0.287 & 0.0182 & 244.4 & 210.9 \\
+readcon Rust & 10000 frames & 0.294 & 0.00402 & 243.8 & 210.2 \\
+readcon Python & \(10^{6}\) atoms & 0.419 & 0.0382 & 385.3 & 224.0 \\
+readcon Python & 10000 frames & 0.454 & 0.0145 & 403.0 & 218.0 \\
+ASE \texttt{extxyz} & \(10^{6}\) atoms & 1.91 & 0.219 & 654.6 & 211.3 \\
+ASE \texttt{extxyz} & 10000 frames & 3.41 & 0.0622 & 320.5 & 218.8 \\
+ASE \texttt{cextxyz} & \(10^{6}\) atoms & 0.275 & 0.0294 & 249.5 & 188.8 \\
+ASE \texttt{cextxyz} & 10000 frames & 0.937 & 0.0685 & 237.6 & 154.9 \\
+\texttt{extxyz} 0.4.6 & \(10^{6}\) atoms & 0.261 & 0.0257 & 226.6 & 153.5 \\
+\texttt{extxyz} 0.4.6 & 10000 frames & 0.740 & 0.0240 & 250.7 & 157.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[tbp] \centering \footnotesize
+\caption{Extended XYZ writes. Six repeats after one warmup, type 7 median and interquartile range, from the same session as Table~\ref{tab:extxyz-h2h}. RSS is the fresh-process high-water mark. Massif is the peak \texttt{mem\_heap\_B}. extxyz-ng 0.0.2 does not read these two files, so it has no write row here.}
+\label{tab:extxyz-h2h-write}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Writer & File & Median (s) & IQR (s) & RSS (MiB) & Massif (MiB) \\
+\midrule
+readcon Rust & \(10^{6}\) atoms & 0.487 & 0.00855 & 244.4 & 220.0 \\
+readcon Rust & 10000 frames & 0.431 & 0.00806 & 243.7 & 220.7 \\
+readcon Python & \(10^{6}\) atoms & 0.442 & 0.00938 & 385.2 & 224.0 \\
+readcon Python & 10000 frames & 0.411 & 0.00439 & 404.4 & 218.0 \\
+ASE \texttt{extxyz} & \(10^{6}\) atoms & 3.74 & 0.0247 & 654.6 & 234.7 \\
+ASE \texttt{extxyz} & 10000 frames & 4.26 & 0.0749 & 217.2 & 124.5 \\
+ASE \texttt{cextxyz} & \(10^{6}\) atoms & 0.948 & 0.0169 & 420.5 & 252.6 \\
+ASE \texttt{cextxyz} & 10000 frames & 1.47 & 0.0162 & 160.5 & 84.6 \\
+\texttt{extxyz} 0.4.6 & \(10^{6}\) atoms & 0.906 & 0.0126 & 389.6 & 256.0 \\
+\texttt{extxyz} 0.4.6 & 10000 frames & 1.19 & 0.0167 & 136.4 & 95.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
