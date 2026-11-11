@@ -339,6 +339,22 @@ trajectory (DCD) format of CHARMM
 generation (TNG) format
 \cite{spangbergTrajectoryNgPortable2011,lundborgEfficientExtensibleFormat2014}
 store molecular dynamics output with neither a mask nor a velocity unit.
+GROMACS deprecates TNG and states that H5MD will replace it, and the
+release of 2026-01-19 writes an experimental H5MD trajectory from
+\texttt{mdrun} \cite{gromacsManual2026}.
+The file handle in that release writes positions, velocities, forces,
+the box, the step and the time, and it reads the group
+\texttt{/particles/system}.
+The H5MD specification it follows still defines no element for a
+per-component constraint.
+% TODO (head-to-head): GROMACS 2026.4, experimental H5MD from mdrun (trajectory type h5md).
+% Manual: https://manual.gromacs.org/2026.4/release-notes/2026/major/highlights.html
+% TNG deprecation text: https://manual.gromacs.org/2026.4/release-notes/2025/major/deprecated-functionality.html
+% Writer: gmx::H5md::writeNextFrame in the 2026.4 API docs, positions, velocities, forces, box, step and time, group /particles/system.
+% Matching settings: one system, the same atoms, cell and coordinates as the survey frame, velocities in the declared H5MD unit attribute, no per-component mask in the file.
+% Read the file with h5py against H5MD 1.1 and with readcon-core from the same geometry written as CON 3.1.
+% Compare the box and the coordinates directly, and the velocities after conversion to the eOn natural unit.
+% Do not score TNG as the trajectory this release writes.
 The ASE trajectory keeps every field in a layout that the Python code of
 ASE defines.
 POSCAR, the structure file of the Vienna Ab initio Simulation Package
@@ -1011,6 +1027,35 @@ open, and Table~\ref{tab:versions} lists the clauses involved.
 Extended XYZ is the text format to set beside CON on this test, because
 it has a published grammar, the libAtoms extxyz specification
 \cite{kermodeLibatomsExtxyzV0462026}, and parsers in C, C++ and Python.
+From extxyz 0.4.2 the C reader defaults to a whitespace split,
+\texttt{use\_regex=false}, and extxyz 0.4.6 keeps that default on
+\texttt{iread\_dicts} \cite{kermodeExtxyz0422026}.
+The C and Python paths of the drift table call \texttt{read\_dicts}
+without setting \texttt{use\_regex}, so they take that default, and the
+regular-expression parser is a separate path.
+The package ase-extxyz 0.1.2 registers the C parser with ASE as the
+format \texttt{cextxyz} \cite{kermodeAseExtxyz0122026}.
+The ASE extended XYZ arm uses \texttt{format='extxyz'}, the reader that
+ships in ASE, not \texttt{cextxyz}.
+extxyz-ng 0.0.2 is a separate Rust parser of the same text.
+Its repository compares that parser with the C parser of libAtoms on
+one frame of more than twenty thousand atoms, and it records a massif
+peak for one file of about twenty thousand lines
+\cite{yuExtxyzNg0022026}.
+This paper has not repeated that comparison.
+% TODO (head-to-head): extxyz-ng 0.0.2 (crates.io extxyz-ng, git commit 83a5b290c, 2026-04-29) against libAtoms extxyz 0.4.6 read_dicts(use_cextxyz=True, use_regex=False).
+% The published comparison parses one structure of more than 20000 atoms and reports the Rust parser nearly four times as fast, and a massif peak of 2.53 MB against 4.74 MB for the C parser on one file of about 20000 lines and 758 kB.
+% Repeat both arms on that file if it is released with the repository, and on the seven drift files of scripts/drift.py, and on the 100000-frame extended XYZ file of the host table.
+% Six fresh processes, one thread. Report positions, periodicity and the id column, not only the time.
+% TODO (head-to-head): extxyz 0.4.6 read_dicts on the seven drift files of scripts/drift.py.
+% Arm A: use_cextxyz=True, use_regex=False, the default since v0.4.2 (tag v0.4.2, 2026-06-11).
+% Arm B: use_cextxyz=True, use_regex=True.
+% Arm C: use_cextxyz=False, use_regex=False, the Python path the drift table already runs.
+% Arm D: ASE 3.29.0 ase.io.read(format='extxyz').
+% Arm E: ase-extxyz 0.1.2 (PyPI 0.1.2, git tag ase-extxyz-v0.1.2, 2026-10-02) ase.io.read(format='cextxyz').
+% Same files: the reference Lattice/Properties header, the dropped pbc key, the plain comment, 6.0d0, True/False, note="E=1.5 eV" and units="angstrom,eV,fs".
+% Report periodicity, the boolean move_mask, the id column and the binary64 positions.
+% The published extxyz note that the whitespace path is the faster of the two belongs to that same pair of flags; time both on the 100000-frame extxyz file the host table already reads, one fresh process per sample, six repeats.
 Table~\ref{tab:drift} gives seven three-atom files to \(\driftAllPaths\)
 reader paths from \(\driftAllLibraries\) libraries.
 On the reference frame the \(\driftXyzPaths\) extended XYZ paths, from
@@ -1020,7 +1065,7 @@ That grammar admits a \texttt{d} or \texttt{D} exponent and reads
 \texttt{T}, \texttt{true}, \texttt{True} and \texttt{TRUE} as true, and
 the paths split on both files.
 It leaves open whether a comment line that is not key-value pairs makes
-a file plain XYZ or an error, and on such a file the C parser of
+a file plain XYZ or an error, and on such a file the default C path of
 libAtoms departs from the default periodicity while its Python parser
 fails.
 From extxyz 0.4.2 the C reader defaults to a whitespace split, with
@@ -1067,13 +1112,38 @@ outside the H5MD specification, which only our reader knows to read.
 Extended XYZ returns the mask and the identifiers through the column
 names of ASE, which chemfiles and OVITO also read.
 ASE writes that file with eight decimals, a shift of
-\(\num{\surveyAseXyzShiftNum}\,\text{\AA}\); chemfiles moves the
+\(\num{\surveyAseXyzShiftNum}\,\text{\AA}\); chemfiles 0.10.4 moves the
 coordinates by \(\num{\surveyChemXyzShiftNum}\,\text{\AA}\), rounds the
 cell lengths to six significant digits and drops the velocities.
+The tag chemfiles 0.11.0-rc1, commit \texttt{a2319946} of 2025-10-06,
+is not the release on PyPI \cite{frauxChemfiles0110rc12025}.
+That tag stores one cell vector per row of the cell matrix, and
+chemfiles 0.10.4 stores one cell vector per column, so a reader that
+takes the columns of the matrix as the cell vectors does not see the
+cell this route stored.
+The tag records native XTC, TRR and DCD parsers and an XTC decoder
+taken from the routine proposed by libxtc
+\cite{krylovLibxtcEfficientLibrary2021}, and it does not add a CON or
+convel reader \cite{frauxChemfilesConIssue2025}.
+% TODO (head-to-head): chemfiles tag 0.11.0-rc1, commit a2319946dcd0a96b055e803e59affed52e83bfb1 (2025-10-06), against chemfiles 0.10.4.
+% XYZ arm: the survey frame, Trajectory opened with format XYZ, the same property names as scripts/drift.py (id, move_mask_0..2, pbc). Compare positions and the 3x3 cell matrix, not only the cell lengths. 0.10.4 is column vectors; the tag is row vectors.
+% XTC arm: paper/cpc/bench/binary_formats.py traj.xtc, the file gen.c writes at 0.001 nm, positions only.
+% Read it with the native XTC parser in that tag and with libxtc commit 58f40e1e9d392ec607e775772658eb1b748be549, frame-at-a-time and all-frames, one thread and eight threads, the modes that bench already times.
+% TRR arm: the same generator's traj.trr, and check that forces come back as atom properties.
+% CON arm: the version-1 and CON 3.1 probes of scripts/con_openers.py. The open issue 522 (2025-07-19) asks for a CON reader and was still open on 2026-11-11; the tag changelog does not add one.
 MDAnalysis returns single precision, which changes a coordinate by up to
 \(\num{\surveyMdaShiftNum}\,\text{\AA}\), and Open Babel keeps the
 identifiers only inside the site labels of a Crystallographic
 Information File (CIF).
+That MDAnalysis route is the H5MD reader of release 2.10.0.
+Release 2.11.0, of 2026-10-21, reads one PDBx/mmCIF frame through gemmi
+and converts the positions and velocities of a GROMACS TPR file into its
+base units, which release 2.10.0 left in the native units of GROMACS
+\cite{gowersMdanalysis21102026}.
+% TODO (head-to-head): MDAnalysis 2.11.0 (Zenodo 10.5281/zenodo.23534588, 2026-10-21) against the 2.10.0 routes this paper timed.
+% TPR arm: one GROMACS 2026 TPR, Universe with the TPR reader and convert_units=True. Positions in angstrom and velocities in angstrom per picosecond, the MDAnalysis base units. Repeat with 2.10.0, which the 2.11.0 notes say left those values in GROMACS native units (PR 5374).
+% mmCIF arm: one single-frame PDBx/mmCIF file of the survey geometry, MMCIFReader through gemmi, against Open Babel 3.2.1 on the CIF route already in the survey. Match atom count, cell and coordinates. Identifiers are site labels, as in the Open Babel row.
+% H5MD arm: do not replace the 2.10.0 H5MD numbers with the TPR reader. Re-read the same H5MD file the survey wrote, convert_units=True, and report only whether 2.11.0 still returns single precision.
 Identifiers come back on \(\surveyCrossIds\) of the
 \(\surveyCrossRoutes\) cross-library round trips, all through the
 \texttt{id} column of ASE.
@@ -1383,6 +1453,18 @@ frame.
 frame.
 The eOn build log is \path{paper/cpc/logs/eon-build.log}, and it names
 eOn commit \texttt{\seqsplit{579738a9387e8d0ea55496f45dd057812cfab892}}.
+That commit is not tag v3.6.0.
+The tag is an ancestor, and the commit includes
+\texttt{e5b658813}, which writes CON and convel with the binary64
+round-trip spelling of readcon-core at commit \texttt{694e808}
+\cite{goswamiEonRoundtripWriter2026}.
+Tag v3.6.0 does not contain that writer.
+% TODO (head-to-head): eOn commit 579738a9387e8d0ea55496f45dd057812cfab892, the commit the build log names, against tag v3.6.0.
+% The later commit includes e5b658813 (2026-10-14), merged by pull request 776 on 2026-10-15.
+% Write one survey frame and the 100000-frame copper file with each writer.
+% The later writer spells CON and convel through readcon-core commit 694e808.
+% Read both outputs with loadcons at 1 thread and with readcon.
+% Match coordinates, masks and the grammar version. Six fresh processes, the host-table settings.
 
 \subsection{Same-file and nearest-native panel}\label{sec:h2h} The
 same-file comparison reads one con file.

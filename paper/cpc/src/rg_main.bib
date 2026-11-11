@@ -1272,3 +1272,106 @@
   url = {https://github.com/dmlc/dlpack},
   note = {Tensor exchange consumed by NumPy, PyTorch, JAX and CuPy. Accessed 2026-11-09}
 }
+
+@misc{gromacsManual2026,
+  title = {{GROMACS} 2026.4 manual: experimental {H5MD} trajectory output, and the deprecation of {TNG}},
+  author = {{GROMACS development team}},
+  year = {2026},
+  howpublished = {\url{https://manual.gromacs.org/2026.4/release-notes/2026/major/highlights.html}},
+  note = {GROMACS 2026 was released on 2026-01-19. The highlights page records experimental H5MD trajectory output for mdrun. The TNG deprecation is the 2025 note in the same manual, \url{https://manual.gromacs.org/2026.4/release-notes/2025/major/deprecated-functionality.html}. The H5MD file handle writes positions, velocities, forces, the box, the step and the time, and reads the group /particles/system, \url{https://manual.gromacs.org/2026.4/doxygen/html-lib/classgmx_1_1H5md.xhtml}. Accessed 2026-11-11}
+}
+
+@misc{frauxChemfiles0110rc12025,
+  title = {chemfiles 0.11.0-rc1},
+  author = {{chemfiles developers}},
+  year = {2025},
+  howpublished = {GitHub tag 0.11.0-rc1},
+  note = {Commit a2319946dcd0a96b055e803e59affed52e83bfb1, 2025-10-06, message ``Release chemfiles v0.11.0-rc1''. Not the PyPI release, which remains 0.10.4. The changelog at that tag records native XTC, TRR and DCD parsers, an XTC decoder taken from the routine proposed by libxtc, TRR forces stored as atom properties, and a unit-cell matrix with one vector per row. \url{https://github.com/chemfiles/chemfiles/tree/0.11.0-rc1}. Accessed 2026-11-11}
+}
+
+@misc{frauxChemfilesConIssue2025,
+  title = {Support for {CON} files},
+  author = {{chemfiles developers}},
+  year = {2025},
+  howpublished = {GitHub issue 522},
+  note = {Opened 2025-07-19. Still open on 2026-11-11. \url{https://github.com/chemfiles/chemfiles/issues/522}. Accessed 2026-11-11}
+}
+
+@misc{gowersMdanalysis21102026,
+  title = {{MDAnalysis}/mdanalysis: Release 2.11.0 of {MDAnalysis} and {MDAnalysisTests}},
+  author = {{Richard Gowers} and {Oliver Beckstein} and {Max Linke} and {Irfan Alibay} and {Jonathan Barnoud} and {Tyler Reddy} and {Hugo MacDermott-Opeskin} and {Rocco Meli} and {Lily Wang} and {Utkarsh Bansal} and {Johannes Zeman} and {John Detlefs} and {David L. Dotson} and {Manuel N. Melo} and {Mateusz Bieniek} and {ayushsuhane} and {S{\'e}bastien Buchoux} and {Matteo Tiberti} and {Naveen Michaud-Agrawal} and {Davide Cruz} and {Sean Seyler} and {denniej0-2} and {Philip Loche} and {Valerij Talagayev} and {Jose Borreguero Calvo} and {Yuxuan Zhuang} and {Tanish Yelgoe} and {Nabarun Pal} and {Ninad} and {Jan Doma{\'n}ski}},
+  year = {2026},
+  version = {package-2.11.0},
+  howpublished = {Zenodo},
+  doi = {10.5281/zenodo.23534588},
+  url = {https://doi.org/10.5281/zenodo.23534588},
+  note = {Software, version package-2.11.0, released 2026-10-21. Creators are the names on that Zenodo record}
+}
+
+@article{woodsZarrtrajPythonPackage2026,
+  title = {Zarrtraj: A {Python} package for streaming molecular dynamics trajectories from cloud services},
+  author = {Woods, Lawson and MacDermott-Opeskin, Hugo and Jakupovic, Edis and Zhuang, Yuxuan and Gowers, Richard J. and Beckstein, Oliver},
+  year = {2026},
+  journal = {Journal of Open Source Software},
+  volume = {11},
+  number = {121},
+  pages = {7943},
+  doi = {10.21105/joss.07943},
+  url = {https://doi.org/10.21105/joss.07943}
+}
+
+@misc{mdtrajRelease11102025,
+  title = {mdtraj 1.11.0},
+  author = {{MDTraj developers}},
+  year = {2025},
+  howpublished = {GitHub release 1.11.0},
+  note = {Released 2025-06-24. Adds a PDBx/mmCIF reader and writer ported from OpenMM, in mdtraj/formats/pdbx/pdbxfile.py. Tag 1.11.2, 2026-10-05, still contains that module. \url{https://github.com/mdtraj/mdtraj/releases/tag/1.11.0}. Accessed 2026-11-11}
+}
+
+@misc{kermodeExtxyz0422026,
+  title = {{libAtoms}/extxyz v0.4.2},
+  author = {Kermode, James},
+  year = {2026},
+  howpublished = {GitHub release v0.4.2},
+  note = {Released 2026-06-11. Makes the whitespace tokenizer the default read mode. At v0.4.6 the dict reader defaults the regex flag to false. \url{https://github.com/libAtoms/extxyz/releases/tag/v0.4.2}. Accessed 2026-11-11}
+}
+
+@misc{kermodeAseExtxyz0122026,
+  title = {ase-extxyz 0.1.2},
+  author = {Kermode, James},
+  year = {2026},
+  howpublished = {PyPI},
+  note = {ASE I/O plugin backed by the libextxyz C parser. Registers the format cextxyz. Git tag ase-extxyz-v0.1.2, 2026-10-02, and the pyproject version is 0.1.2. \url{https://pypi.org/project/ase-extxyz/0.1.2/}. Accessed 2026-11-11}
+}
+
+@misc{aseChangelog20261109,
+  title = {{ASE} development changelog dated 2026-11-09},
+  author = {{ASE developers}},
+  year = {2026},
+  howpublished = {\url{https://docs.ase-lib.org/changelog.html}},
+  note = {The section dated 2026-11-09 precedes the notes for release 3.29.0 and records a fix for extended XYZ reading when Python is run with -O. The PyPI release of ASE on 2026-11-11 is 3.29.0. Accessed 2026-11-11}
+}
+
+@misc{goswamiEonRoundtripWriter2026,
+  title = {Write {CON} files with binary64 round-trip spelling},
+  author = {{eOn developers}},
+  year = {2026},
+  howpublished = {GitHub pull request 776, TheochemUI/eOn},
+  note = {Commit e5b658813a9ff79e8f44861387b1c2bfae274a90, 2026-10-14. Merged to main on 2026-10-15. Writes CON and convel with the round-trip spelling of readcon-core at commit 694e808. Not contained in tag v3.6.0. The commit named by the paper's eOn build log, 579738a9387e8d0ea55496f45dd057812cfab892, is a later main commit and contains this change. \url{https://github.com/TheochemUI/eOn/pull/776}. Accessed 2026-11-11}
+}
+
+@misc{yuExtxyzNg0022026,
+  title = {extxyz-ng 0.0.2},
+  author = {Yu, Jusong},
+  year = {2026},
+  howpublished = {crates.io},
+  note = {Rust parser of extended XYZ, release v0.0.2, commit 83a5b290c, 2026-04-29. The repository README compares it with the C parser of libAtoms/extxyz on one frame of more than 20000 atoms, and records a massif peak of 2.53 MB against 4.74 MB on one file of about 20000 lines. \url{https://github.com/extxyz/extxyz}. Accessed 2026-11-11}
+}
+
+@misc{ovitoManual3172,
+  title = {{OVITO} user manual 3.17.2: input file formats},
+  author = {{OVITO developers}},
+  year = {2026},
+  howpublished = {\url{https://docs.ovito.org/reference/file_formats/file_formats_input.html}},
+  note = {Manual heading OVITO 3.17.2. The input-format table lists XYZ, extended XYZ, POSCAR and PDBx/mmCIF, and it does not list CON, convel or H5MD. PyPI version 3.17.2. Accessed 2026-11-11}
+}
