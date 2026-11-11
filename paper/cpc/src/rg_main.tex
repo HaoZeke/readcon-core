@@ -1071,9 +1071,25 @@ outside the H5MD specification, which only our reader knows to read.
 Extended XYZ returns the mask and the identifiers through the column
 names of ASE, which chemfiles and OVITO also read.
 ASE writes that file with eight decimals, a shift of
-\(\num{\surveyAseXyzShiftNum}\,\text{\AA}\); chemfiles moves the
+\(\num{\surveyAseXyzShiftNum}\,\text{\AA}\); chemfiles 0.10.4 moves the
 coordinates by \(\num{\surveyChemXyzShiftNum}\,\text{\AA}\), rounds the
 cell lengths to six significant digits and drops the velocities.
+The tag chemfiles 0.11.0-rc1, commit \texttt{a2319946} of 2025-10-06,
+is not the release on PyPI \cite{frauxChemfiles0110rc12025}.
+That tag stores one cell vector per row of the cell matrix, and
+chemfiles 0.10.4 stores one cell vector per column, so a reader that
+takes the columns of the matrix as the cell vectors does not see the
+cell this route stored.
+The tag records native XTC, TRR and DCD parsers and an XTC decoder
+taken from the routine proposed by libxtc
+\cite{krylovLibxtcEfficientLibrary2021}, and it does not add a CON or
+convel reader \cite{frauxChemfilesConIssue2025}.
+% TODO (head-to-head): chemfiles tag 0.11.0-rc1, commit a2319946dcd0a96b055e803e59affed52e83bfb1 (2025-10-06), against chemfiles 0.10.4.
+% XYZ arm: the survey frame, Trajectory opened with format XYZ, the same property names as scripts/drift.py (id, move_mask_0..2, pbc). Compare positions and the 3x3 cell matrix, not only the cell lengths. 0.10.4 is column vectors; the tag is row vectors.
+% XTC arm: paper/cpc/bench/binary_formats.py traj.xtc, the file gen.c writes at 0.001 nm, positions only.
+% Read it with the native XTC parser in that tag and with libxtc commit 58f40e1e9d392ec607e775772658eb1b748be549, frame-at-a-time and all-frames, one thread and eight threads, the modes that bench already times.
+% TRR arm: the same generator's traj.trr, and check that forces come back as atom properties.
+% CON arm: the version-1 and CON 3.1 probes of scripts/con_openers.py. The open issue 522 (2025-07-19) asks for a CON reader and was still open on 2026-11-11; the tag changelog does not add one.
 MDAnalysis returns single precision, which changes a coordinate by up to
 \(\num{\surveyMdaShiftNum}\,\text{\AA}\), and Open Babel keeps the
 identifiers only inside the site labels of a Crystallographic
