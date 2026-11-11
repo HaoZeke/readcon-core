@@ -1,9 +1,9 @@
 git rev-parse HEAD
-9a301b0cd66ae8d732c95ed3746af16c84664f5e
+5be9a66daacebcda1e3e23152eb1b1e21bae6149
 git rev-parse HEAD^{tree}
-178e25ac9ab5df70a86b92b350f2734beb2c82bf
+562bf4a976a345adc89edd2b79bcf707a10422cb
 git rev-parse HEAD:src
-b5b6e904c5f7c9563316011a4abb371109f8979f
+269595d7b26e823d353f6b9cd1233d2a18205812
 command
 taskset -c 0 python3 bench/h2h/extxyz_h2h.py read readcon_py
 hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
@@ -11,16 +11,16 @@ pinned taskset -c 0
 repeat 6
 serial 1
 quantile type-7
-sample 0.000007380
-sample 0.000008902
-sample 0.000006169
-sample 0.000005608
-sample 0.000005044
-sample 0.000004777
-median_s 0.000005889
-q25_s 0.000005185
-q75_s 0.000007077
-iqr_s 0.000001892
+sample 0.000014526
+sample 0.000014460
+sample 0.000011805
+sample 0.000010130
+sample 0.000009747
+sample 0.000009732
+median_s 0.000010967
+q25_s 0.000009843
+q75_s 0.000013796
+iqr_s 0.000003954
 n_atoms 10
 n_frames 1
 cell 3.000000000 3.000000000 3.000000000 90.000000000 90.000000000 90.000000000
@@ -28,28 +28,28 @@ max_abs 0.000e+00
 n_atoms_ok 1
 cell_ok 1
 coords_ok 1
-correct 0
-reason species not returned; forces not returned
+correct 1
+reason ok
 arm readcon_py
 op read
 case small-1
 file bench/h2h/fixtures/small-1.extxyz
-rss_kib 34052
+rss_kib 34240
 massif_heap_bytes None
-{"samples": [7.379999942713766e-06, 8.90199999048491e-06, 6.169000016598147e-06, 5.608000037682359e-06, 5.044000090492773e-06, 4.77699995826697e-06], "n": 6, "median_s": 5.888500027140253e-06, "q25_s": 5.1850000772901694e-06, "q75_s": 7.077249961184862e-06, "iqr_s": 1.8922498838946922e-06, "n_atoms": 10, "n_frames": 1, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": null, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "species not returned; forces not returned", "arm": "readcon_py", "op": "read", "case": "small-1", "file": "bench/h2h/fixtures/small-1.extxyz", "rss_kib": 34052, "massif_heap_bytes": null}
+{"samples": [1.4526000086334534e-05, 1.4459999874816276e-05, 1.1804999758169288e-05, 1.0130000191566069e-05, 9.746999694471015e-06, 9.731999853102025e-06], "n": 6, "median_s": 1.0967499974867678e-05, "q25_s": 9.842749818744778e-06, "q75_s": 1.3796249845654529e-05, "iqr_s": 3.953500026909751e-06, "n_atoms": 10, "n_frames": 1, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "readcon_py", "op": "read", "case": "small-1", "file": "bench/h2h/fixtures/small-1.extxyz", "rss_kib": 34240, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 0.000031952
-sample 0.000015954
-sample 0.000014433
-sample 0.000014069
-sample 0.000013357
-sample 0.000014176
-median_s 0.000014304
-q25_s 0.000014096
-q75_s 0.000015574
-iqr_s 0.000001478
+sample 0.000048126
+sample 0.000047921
+sample 0.000042642
+sample 0.000042644
+sample 0.000036963
+sample 0.000041123
+median_s 0.000042643
+q25_s 0.000041503
+q75_s 0.000046602
+iqr_s 0.000005099
 n_atoms 10
 n_frames 8
 cell 3.000000000 3.000000000 3.000000000 90.000000000 90.000000000 90.000000000
@@ -57,28 +57,28 @@ max_abs 0.000e+00
 n_atoms_ok 1
 cell_ok 1
 coords_ok 1
-correct 0
-reason species not returned; forces not returned
+correct 1
+reason ok
 arm readcon_py
 op read
 case small-n
 file bench/h2h/fixtures/small-n.extxyz
-rss_kib 34056
+rss_kib 34216
 massif_heap_bytes None
-{"samples": [3.195199997207965e-05, 1.5953999991324963e-05, 1.4432999932978419e-05, 1.4069000144445454e-05, 1.3357000170799438e-05, 1.4175999922372284e-05], "n": 6, "median_s": 1.4304499927675352e-05, "q25_s": 1.4095750088927161e-05, "q75_s": 1.5573749976738327e-05, "iqr_s": 1.4779998878111655e-06, "n_atoms": 10, "n_frames": 8, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": null, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "species not returned; forces not returned", "arm": "readcon_py", "op": "read", "case": "small-n", "file": "bench/h2h/fixtures/small-n.extxyz", "rss_kib": 34056, "massif_heap_bytes": null}
+{"samples": [4.812600036530057e-05, 4.79209998047736e-05, 4.2641999698389554e-05, 4.264399967723875e-05, 3.696300018418697e-05, 4.1123000301013235e-05], "n": 6, "median_s": 4.2642999687814154e-05, "q25_s": 4.1502750150357315e-05, "q75_s": 4.660174977288989e-05, "iqr_s": 5.098999622532574e-06, "n_atoms": 10, "n_frames": 8, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "readcon_py", "op": "read", "case": "small-n", "file": "bench/h2h/fixtures/small-n.extxyz", "rss_kib": 34216, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 0.000078155
-sample 0.000071377
-sample 0.000068151
-sample 0.000061790
-sample 0.000063725
-sample 0.000061918
-median_s 0.000065938
-q25_s 0.000062370
-q75_s 0.000070571
-iqr_s 0.000008201
+sample 0.000376654
+sample 0.000338737
+sample 0.000316545
+sample 0.000297907
+sample 0.000295879
+sample 0.000342518
+median_s 0.000327641
+q25_s 0.000302566
+q75_s 0.000341573
+iqr_s 0.000039006
 n_atoms 1000
 n_frames 1
 cell 10.000000000 10.000000000 10.000000000 90.000000000 90.000000000 90.000000000
@@ -86,28 +86,28 @@ max_abs 0.000e+00
 n_atoms_ok 1
 cell_ok 1
 coords_ok 1
-correct 0
-reason species not returned; forces not returned
+correct 1
+reason ok
 arm readcon_py
 op read
 case medium-1
 file bench/h2h/work/extxyz/inputs/medium-1.extxyz
-rss_kib 34052
+rss_kib 34616
 massif_heap_bytes None
-{"samples": [7.815499998287123e-05, 7.137700004022918e-05, 6.815100005042041e-05, 6.179000001793611e-05, 6.372500001816661e-05, 6.191800002852688e-05], "n": 6, "median_s": 6.593800003429351e-05, "q25_s": 6.236975002593681e-05, "q75_s": 7.057050004277698e-05, "iqr_s": 8.200750016840175e-06, "n_atoms": 1000, "n_frames": 1, "cell": [10.0, 10.0, 10.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": null, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "species not returned; forces not returned", "arm": "readcon_py", "op": "read", "case": "medium-1", "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz", "rss_kib": 34052, "massif_heap_bytes": null}
+{"samples": [0.0003766539998650842, 0.00033873699976538774, 0.00031654499980504625, 0.0002979070000037609, 0.00029587900007754797, 0.0003425179997975647], "n": 6, "median_s": 0.000327640999785217, "q25_s": 0.00030256649995408225, "q75_s": 0.00034157274978952046, "iqr_s": 3.900624983543821e-05, "n_atoms": 1000, "n_frames": 1, "cell": [10.0, 10.0, 10.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "readcon_py", "op": "read", "case": "medium-1", "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz", "rss_kib": 34616, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 0.000741252
-sample 0.000706739
-sample 0.000645799
-sample 0.000607346
-sample 0.000621506
-sample 0.000592633
-median_s 0.000633653
-q25_s 0.000610886
-q75_s 0.000691504
-iqr_s 0.000080618
+sample 0.003390661
+sample 0.003418170
+sample 0.003158720
+sample 0.003214050
+sample 0.003401411
+sample 0.003136010
+median_s 0.003302355
+q25_s 0.003172553
+q75_s 0.003398724
+iqr_s 0.000226171
 n_atoms 100
 n_frames 100
 cell 5.000000000 5.000000000 5.000000000 90.000000000 90.000000000 90.000000000
@@ -115,28 +115,28 @@ max_abs 0.000e+00
 n_atoms_ok 1
 cell_ok 1
 coords_ok 1
-correct 0
-reason species not returned; forces not returned
+correct 1
+reason ok
 arm readcon_py
 op read
 case medium-n
 file bench/h2h/work/extxyz/inputs/medium-n.extxyz
-rss_kib 34760
+rss_kib 37756
 massif_heap_bytes None
-{"samples": [0.0007412519998979405, 0.0007067389999519946, 0.000645799000039915, 0.0006073460001516651, 0.0006215060000158701, 0.0005926329999965674], "n": 6, "median_s": 0.0006336525000278925, "q25_s": 0.0006108860001177163, "q75_s": 0.0006915039999739747, "iqr_s": 8.06179998562584e-05, "n_atoms": 100, "n_frames": 100, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": null, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "species not returned; forces not returned", "arm": "readcon_py", "op": "read", "case": "medium-n", "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz", "rss_kib": 34760, "massif_heap_bytes": null}
+{"samples": [0.0033906610001395165, 0.003418170000259124, 0.0031587200001013116, 0.003214049999769486, 0.003401411000140797, 0.0031360100001620594], "n": 6, "median_s": 0.0033023554999545013, "q25_s": 0.003172552500018355, "q75_s": 0.003398723500140477, "iqr_s": 0.00022617100012212177, "n_atoms": 100, "n_frames": 100, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "readcon_py", "op": "read", "case": "medium-n", "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz", "rss_kib": 37756, "massif_heap_bytes": null}
 repeat 6
 serial 1
 quantile type-7
-sample 0.079373414
-sample 0.078440202
-sample 0.078620209
-sample 0.077266366
-sample 0.076281751
-sample 0.075666344
-median_s 0.077853284
-q25_s 0.076527905
-q75_s 0.078575207
-iqr_s 0.002047302
+sample 0.369555500
+sample 0.384241610
+sample 0.367522349
+sample 0.377259193
+sample 0.384958827
+sample 0.366232961
+median_s 0.373407347
+q25_s 0.368030637
+q75_s 0.382496006
+iqr_s 0.014465369
 n_atoms 1000000
 n_frames 1
 cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
@@ -144,28 +144,28 @@ max_abs 0.000e+00
 n_atoms_ok 1
 cell_ok 1
 coords_ok 1
-correct 0
-reason species not returned; forces not returned
+correct 1
+reason ok
 arm readcon_py
 op read
 case large-1
 file bench/h2h/work/extxyz/inputs/large-1.extxyz
-rss_kib 117804
-massif_heap_bytes 103872701
-{"samples": [0.07937341399997422, 0.07844020199991064, 0.0786202089998369, 0.07726636600000347, 0.07628175100012413, 0.07566634399995564], "n": 6, "median_s": 0.07785328399995706, "q25_s": 0.07652790475009397, "q75_s": 0.07857520724985534, "iqr_s": 0.002047302499761372, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": null, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "species not returned; forces not returned", "arm": "readcon_py", "op": "read", "case": "large-1", "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz", "rss_kib": 117804, "massif_heap_bytes": 103872701}
+rss_kib 393716
+massif_heap_bytes 234180206
+{"samples": [0.3695554999999331, 0.38424161000011736, 0.3675223489999553, 0.3772591930000999, 0.3849588269999913, 0.3662329610001507], "n": 6, "median_s": 0.3734073465000165, "q25_s": 0.36803063674994974, "q75_s": 0.382496005750113, "iqr_s": 0.014465369000163264, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "readcon_py", "op": "read", "case": "large-1", "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz", "rss_kib": 393716, "massif_heap_bytes": 234180206}
 repeat 6
 serial 1
 quantile type-7
-sample 0.081670985
-sample 0.081646092
-sample 0.083051642
-sample 0.071556903
-sample 0.083072760
-sample 0.080266859
-median_s 0.081658538
-q25_s 0.080611667
-q75_s 0.082706478
-iqr_s 0.002094811
+sample 0.448109665
+sample 0.454896731
+sample 0.468993990
+sample 0.475434407
+sample 0.457850121
+sample 0.442872658
+median_s 0.456373426
+q25_s 0.449806432
+q75_s 0.466208023
+iqr_s 0.016401591
 n_atoms 100
 n_frames 10000
 cell 5.000000000 5.000000000 5.000000000 90.000000000 90.000000000 90.000000000
@@ -173,13 +173,13 @@ max_abs 0.000e+00
 n_atoms_ok 1
 cell_ok 1
 coords_ok 1
-correct 0
-reason species not returned; forces not returned
+correct 1
+reason ok
 arm readcon_py
 op read
 case large-n
 file bench/h2h/work/extxyz/inputs/large-n.extxyz
-rss_kib 117028
-massif_heap_bytes 103108960
-{"samples": [0.08167098500007341, 0.08164609199980077, 0.08305164199987303, 0.07155690299987327, 0.08307276000005004, 0.08026685899994845], "n": 6, "median_s": 0.0816585384999371, "q25_s": 0.08061166724991153, "q75_s": 0.08270647774992312, "iqr_s": 0.00209481050001159, "n_atoms": 100, "n_frames": 10000, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": null, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "species not returned; forces not returned", "arm": "readcon_py", "op": "read", "case": "large-n", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 117028, "massif_heap_bytes": 103108960}
-exit 1
+rss_kib 411964
+massif_heap_bytes 227893979
+{"samples": [0.4481096650001746, 0.45489673099973515, 0.46899398999994446, 0.47543440700019346, 0.4578501209998649, 0.442872657999942], "n": 6, "median_s": 0.4563734259998, "q25_s": 0.4498064315000647, "q75_s": 0.46620802274992457, "iqr_s": 0.016401591249859848, "n_atoms": 100, "n_frames": 10000, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "readcon_py", "op": "read", "case": "large-n", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 411964, "massif_heap_bytes": 227893979}
+exit 0

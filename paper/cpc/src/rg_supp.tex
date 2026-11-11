@@ -452,8 +452,9 @@ The chemfiles row copies each frame out of the trajectory iterator, and that cop
 The extended XYZ head-to-head of Section~\ref{sec:h2h} is a separate run from that exchange.
 Table~\ref{tab:extxyz-h2h} is the two large reads.
 Table~\ref{tab:extxyz-small} is the median of the six reads on the four smaller files, in the same order: 10 atoms and 1 frame, 10 atoms and 8 frames, 1000 atoms and 1 frame, 100 atoms and 100 frames.
-extxyz-ng 0.0.2 has no median on the last two of those files.
-On the reads it finishes, the 10-atom medians are \(7.83\times 10^{-5}\)~s and \(4.34\times 10^{-4}\)~s.
+extxyz-ng 0.0.2 reads a frame of 8168 bytes and rejects a frame of 8203 bytes, so it has no median on the last two of those files.
+On the reads it finishes, the 10-atom medians are \(6.94\times 10^{-5}\)~s and \(4.17\times 10^{-4}\)~s.
+It also cannot reread the 8-frame file it writes.
 The large writes, where the library has a writer, take 3.891~s and 4.358~s for ASE \texttt{extxyz}, 0.959~s and 1.488~s for ASE \texttt{cextxyz}, and 0.877~s and 1.196~s for extxyz 0.4.6, on the million-atom file and then the 10000-frame file.
 Fresh-process high-water marks for those writes are 652.3 and 214.7~MiB, 418.0 and 157.8~MiB, and 387.0 and 133.8~MiB.
 extxyz-ng 0.0.2 writes the single 10-atom frame and cannot reread the 8-frame file it writes.
@@ -465,12 +466,12 @@ extxyz-ng 0.0.2 writes the single 10-atom frame and cannot reread the 8-frame fi
 \toprule
 Reader & 10\(\times\)1 & 10\(\times\)8 & 1000\(\times\)1 & 100\(\times\)100 \\
 \midrule
-readcon Rust & \(2.83\times 10^{-6}\) & \(1.14\times 10^{-5}\) & \(6.46\times 10^{-5}\) & \(6.41\times 10^{-4}\) \\
-readcon Python & \(5.89\times 10^{-6}\) & \(1.43\times 10^{-5}\) & \(6.59\times 10^{-5}\) & \(6.34\times 10^{-4}\) \\
-ASE \texttt{extxyz} & \(3.15\times 10^{-4}\) & \(1.84\times 10^{-3}\) & \(1.95\times 10^{-3}\) & 0.0341 \\
-ASE \texttt{cextxyz} & \(1.74\times 10^{-4}\) & \(6.43\times 10^{-4}\) & \(3.59\times 10^{-4}\) & 0.0103 \\
-\texttt{extxyz} 0.4.6 & \(8.16\times 10^{-5}\) & \(3.90\times 10^{-4}\) & \(2.88\times 10^{-4}\) & 0.00687 \\
-extxyz-ng 0.0.2 & \(7.83\times 10^{-5}\) & \(4.34\times 10^{-4}\) & --- & --- \\
+readcon Rust & \(5.68\times 10^{-6}\) & \(3.64\times 10^{-5}\) & \(2.16\times 10^{-4}\) & \(2.28\times 10^{-3}\) \\
+readcon Python & \(1.10\times 10^{-5}\) & \(4.26\times 10^{-5}\) & \(3.28\times 10^{-4}\) & \(3.30\times 10^{-3}\) \\
+ASE \texttt{extxyz} & \(3.11\times 10^{-4}\) & \(1.85\times 10^{-3}\) & \(2.00\times 10^{-3}\) & 0.0337 \\
+ASE \texttt{cextxyz} & \(1.38\times 10^{-4}\) & \(6.40\times 10^{-4}\) & \(3.23\times 10^{-4}\) & 0.00873 \\
+\texttt{extxyz} 0.4.6 & \(7.58\times 10^{-5}\) & \(3.86\times 10^{-4}\) & \(2.83\times 10^{-4}\) & 0.00689 \\
+extxyz-ng 0.0.2 & \(6.94\times 10^{-5}\) & \(4.17\times 10^{-4}\) & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
