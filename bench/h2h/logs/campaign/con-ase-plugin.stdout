@@ -1,0 +1,123 @@
+git rev-parse HEAD
+ba27839399bf30e4b1c71f2488c33246f5d5823f
+git rev-parse HEAD^{tree}
+d50c603aa6016a29c1df1eee9afeeb1ccc33087c
+git rev-parse HEAD:src
+98362b7093c32ebe43f0bb7d8e2615407ea0f8c4
+command
+taskset -c 0 python3 bench/h2h/con_h2h.py con-ase-plugin
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 10.803685658
+sample 11.398874914
+sample 10.769481777
+sample 10.855625983
+sample 10.983049355
+sample 10.997898669
+median_s 10.919337669
+q25_s 10.816670739
+q75_s 10.994186341
+iqr_s 0.177515601
+n_atoms None
+n_frames None
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm eon
+op read
+case frames-con
+rss_kib None
+massif_heap_bytes None
+{"samples": [10.803685658000177, 11.398874914000771, 10.769481777002511, 10.855625983000209, 10.983049354999821, 10.997898669000278], "n": 6, "median_s": 10.919337669000015, "q25_s": 10.816670739250185, "q75_s": 10.994186340500164, "iqr_s": 0.17751560124997923, "arm": "eon", "op": "read", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+repeat 6
+serial 1
+quantile type-7
+sample 41.641454719
+sample 41.308027032
+sample 40.998527519
+sample 42.094857048
+sample 41.709772700
+sample 41.644217610
+median_s 41.642836164
+q25_s 41.391383954
+q75_s 41.693383927
+iqr_s 0.301999974
+n_atoms None
+n_frames None
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason ok
+arm readcon-con
+op read
+case frames-con
+rss_kib None
+massif_heap_bytes None
+{"samples": [41.64145471899974, 41.30802703199879, 40.99852751900107, 42.09485704799954, 41.70977269999639, 41.64421760999903], "n": 6, "median_s": 41.642836164499386, "q25_s": 41.39138395374903, "q75_s": 41.69338392749705, "iqr_s": 0.3019999737480248, "arm": "readcon-con", "op": "read", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+repeat 6
+serial 1
+quantile type-7
+sample 14.069714589
+sample 13.975980266
+sample 14.563581534
+sample 13.949166308
+sample 14.142534241
+sample 13.973928645
+median_s 14.022847428
+q25_s 13.974441550
+q75_s 14.124329328
+iqr_s 0.149887778
+n_atoms None
+n_frames None
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason round-trip
+arm eon
+op write
+case frames-con
+rss_kib None
+massif_heap_bytes None
+{"samples": [14.069714589000796, 13.975980266000988, 14.56358153399924, 13.949166308000713, 14.142534241000249, 13.973928645002161], "n": 6, "median_s": 14.022847427500892, "q25_s": 13.974441550251868, "q75_s": 14.124329328000385, "iqr_s": 0.1498877777485177, "arm": "eon", "op": "write", "case": "frames-con", "correct": true, "reason": "round-trip", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+repeat 6
+serial 1
+quantile type-7
+sample 49.644094000
+sample 49.926352209
+sample 50.406835066
+sample 50.442887440
+sample 49.738807665
+sample 50.130442474
+median_s 50.028397342
+q25_s 49.785693801
+q75_s 50.337736918
+iqr_s 0.552043117
+n_atoms None
+n_frames None
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 1
+reason round-trip
+arm readcon-con
+op write
+case frames-con
+rss_kib None
+massif_heap_bytes None
+{"samples": [49.64409399999931, 49.92635220900047, 50.406835066001804, 50.44288744000005, 49.7388076649986, 50.13044247400103], "n": 6, "median_s": 50.02839734150075, "q25_s": 49.78569380099907, "q75_s": 50.33773691800161, "iqr_s": 0.5520431170025404, "arm": "readcon-con", "op": "write", "case": "frames-con", "correct": true, "reason": "round-trip", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+exit 0

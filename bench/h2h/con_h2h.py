@@ -1186,6 +1186,108 @@ def run_grid_extxyz() -> list[dict]:
     return rows
 
 
+def images_match(left, right) -> tuple[bool, str, float | None]:
+    if len(left) != len(right):
+        return False, f"frames {len(left)} != {len(right)}", None
+    worst = 0.0
+    for index, (got, expect) in enumerate(zip(left, right)):
+        if len(got) != len(expect):
+            return False, f"atom count at frame {index}", None
+        worst = max(worst, float(np.max(np.abs(got.positions - expect.positions))))
+        if index == 0 and got.get_chemical_symbols() != expect.get_chemical_symbols():
+            return False, "symbols", worst
+    ok = worst <= 1e-8
+    return ok, "ok" if ok else f"max_abs {worst:.3e}", worst
+
+
+def file_matches_images(path: Path, images) -> tuple[bool, str, float | None]:
+    import readcon
+
+    frames = readcon.read_con(os.fspath(path))
+    if len(frames) != len(images):
+        return False, f"reread frames {len(frames)} != {len(images)}", None
+    worst = 0.0
+    for index, (frame, atoms) in enumerate(zip(frames, images)):
+        if len(frame.atoms) != len(atoms):
+            return False, f"reread atom count at frame {index}", None
+        coords = np.array([(atom.x, atom.y, atom.z) for atom in frame.atoms])
+        worst = max(worst, float(np.max(np.abs(coords - atoms.positions))))
+    ok = worst <= 1e-8
+    return ok, "round-trip" if ok else f"reread max_abs {worst:.3e}", worst
+
+
+def run_ase_plugin() -> list[dict]:
+    """Time ASE eon against the readcon-con plugin on the 100000-frame file."""
+    from ase.io import read as ase_read
+    from ase.io import write as ase_write
+
+    path = WORK / "inputs" / "frames-100000x32.con"
+    rows = []
+    loaded = {}
+    for fmt in ("eon", "readcon-con"):
+        images, err = safe(
+            lambda fmt=fmt: ase_read(os.fspath(path), index=":", format=fmt)
+        )
+        if err:
+            rows.append(failed(fmt, "read", "frames-con", err))
+            continue
+        loaded[fmt] = images
+    images = None
+    if "eon" in loaded and "readcon-con" in loaded:
+        ok, reason, worst = images_match(loaded["readcon-con"], loaded["eon"])
+        images = loaded["eon"]
+        del loaded
+        for fmt in ("eon", "readcon-con"):
+            if not ok:
+                rows.append(failed(fmt, "read", "frames-con", reason, max_abs=worst))
+                continue
+
+            def read_fmt(fmt=fmt):
+                ase_read(os.fspath(path), index=":", format=fmt)
+
+            rows.append(
+                finish(
+                    timed(read_fmt),
+                    fmt,
+                    "read",
+                    "frames-con",
+                    True,
+                    reason,
+                    max_abs=worst,
+                )
+            )
+    elif loaded:
+        images = next(iter(loaded.values()))
+    if images is not None:
+        for fmt in ("eon", "readcon-con"):
+            dest = WORK / "outs" / f"ase-plugin-{fmt}.con"
+
+            def write_fmt(fmt=fmt, dest=dest):
+                ase_write(os.fspath(dest), images, format=fmt)
+
+            _written, err = safe(write_fmt)
+            if err:
+                rows.append(failed(fmt, "write", "frames-con", err))
+                continue
+            ok, reason, worst = file_matches_images(dest, images)
+            if not ok:
+                rows.append(failed(fmt, "write", "frames-con", reason, max_abs=worst))
+                continue
+            rows.append(
+                finish(
+                    timed(write_fmt),
+                    fmt,
+                    "write",
+                    "frames-con",
+                    True,
+                    reason,
+                    max_abs=worst,
+                )
+            )
+    emit("con-ase-plugin", rows)
+    return rows
+
+
 def main_command(command: str) -> None:
     sys.argv = [sys.argv[0], command]
     main()
@@ -1216,6 +1318,8 @@ def main() -> None:
         run_survey_extxyz()
     if command in ("session", "grid"):
         run_grid_extxyz()
+    if command in ("session", "ase-plugin"):
+        run_ase_plugin()
     if command in ("session", "report"):
         report()
     elif command not in (
@@ -1225,6 +1329,7 @@ def main() -> None:
         "write",
         "survey-extxyz",
         "grid",
+        "ase-plugin",
         "report",
     ):
         raise SystemExit(f"unknown command {command}")

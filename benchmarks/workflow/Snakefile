@@ -634,6 +634,17 @@ rule h2h_con_write:
         """
 
 
+rule h2h_con_ase_plugin:
+    output:
+        "bench/h2h/logs/campaign/con-ase-plugin.stdout",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py con_ase_plugin
+        """
+
+
 rule h2h_con_survey_extxyz:
     output:
         "bench/h2h/logs/campaign/con-survey-extxyz.stdout",
@@ -661,6 +672,7 @@ rule h2h_con_report:
         "bench/h2h/logs/campaign/con-convel-read.stdout",
         "bench/h2h/logs/campaign/con-frames-read.stdout",
         "bench/h2h/logs/campaign/con-write.stdout",
+        "bench/h2h/logs/campaign/con-ase-plugin.stdout",
         "bench/h2h/logs/campaign/con-survey-extxyz.stdout",
         "bench/h2h/logs/campaign/con-grid-extxyz.stdout",
     output:

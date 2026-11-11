@@ -11,7 +11,7 @@
     "chemfiles": "0.10.4",
     "ovito": "3.17.2",
     "readcon": "0.18.1",
-    "git": "0bc2b09d6908b0f2a834ed4f03e9b0fccaf800b9",
+    "git": "ba27839399bf30e4b1c71f2488c33246f5d5823f",
     "eon_579738a": "579738a9387e8d0ea55496f45dd057812cfab892",
     "eon_v360": "02f57df3442252e4cc8e9efaa70fc5b63663fb43",
     "eon_7f1a22d": "7f1a22d161a3368b3ad3ab9fc3fcc59dda3bce5a",
@@ -32,6 +32,98 @@
     "note": "read_eon takes the blank line before the velocity block as the first header line of a second frame. process_header then parses the velocity title as the cell-length line."
   },
   "rows": [
+    {
+      "samples": [
+        10.803685658000177,
+        11.398874914000771,
+        10.769481777002511,
+        10.855625983000209,
+        10.983049354999821,
+        10.997898669000278
+      ],
+      "n": 6,
+      "median_s": 10.919337669000015,
+      "q25_s": 10.816670739250185,
+      "q75_s": 10.994186340500164,
+      "iqr_s": 0.17751560124997923,
+      "arm": "eon",
+      "op": "read",
+      "case": "frames-con",
+      "correct": true,
+      "reason": "ok",
+      "rss_kib": null,
+      "massif_heap_bytes": null,
+      "max_abs": 0.0
+    },
+    {
+      "samples": [
+        41.64145471899974,
+        41.30802703199879,
+        40.99852751900107,
+        42.09485704799954,
+        41.70977269999639,
+        41.64421760999903
+      ],
+      "n": 6,
+      "median_s": 41.642836164499386,
+      "q25_s": 41.39138395374903,
+      "q75_s": 41.69338392749705,
+      "iqr_s": 0.3019999737480248,
+      "arm": "readcon-con",
+      "op": "read",
+      "case": "frames-con",
+      "correct": true,
+      "reason": "ok",
+      "rss_kib": null,
+      "massif_heap_bytes": null,
+      "max_abs": 0.0
+    },
+    {
+      "samples": [
+        14.069714589000796,
+        13.975980266000988,
+        14.56358153399924,
+        13.949166308000713,
+        14.142534241000249,
+        13.973928645002161
+      ],
+      "n": 6,
+      "median_s": 14.022847427500892,
+      "q25_s": 13.974441550251868,
+      "q75_s": 14.124329328000385,
+      "iqr_s": 0.1498877777485177,
+      "arm": "eon",
+      "op": "write",
+      "case": "frames-con",
+      "correct": true,
+      "reason": "round-trip",
+      "rss_kib": null,
+      "massif_heap_bytes": null,
+      "max_abs": 0.0
+    },
+    {
+      "samples": [
+        49.64409399999931,
+        49.92635220900047,
+        50.406835066001804,
+        50.44288744000005,
+        49.7388076649986,
+        50.13044247400103
+      ],
+      "n": 6,
+      "median_s": 50.02839734150075,
+      "q25_s": 49.78569380099907,
+      "q75_s": 50.33773691800161,
+      "iqr_s": 0.5520431170025404,
+      "arm": "readcon-con",
+      "op": "write",
+      "case": "frames-con",
+      "correct": true,
+      "reason": "round-trip",
+      "rss_kib": null,
+      "massif_heap_bytes": null,
+      "max_abs": 0.0
+    },
     {
       "samples": [
         2.8297e-05,
