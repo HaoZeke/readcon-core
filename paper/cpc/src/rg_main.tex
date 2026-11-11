@@ -1027,6 +1027,25 @@ open, and Table~\ref{tab:versions} lists the clauses involved.
 Extended XYZ is the text format to set beside CON on this test, because
 it has a published grammar, the libAtoms extxyz specification
 \cite{kermodeLibatomsExtxyzV0462026}, and parsers in C, C++ and Python.
+From extxyz 0.4.2 the C reader defaults to a whitespace split,
+\texttt{use\_regex=false}, and extxyz 0.4.6 keeps that default on
+\texttt{iread\_dicts} \cite{kermodeExtxyz0422026}.
+The C and Python paths of the drift table call \texttt{read\_dicts}
+without setting \texttt{use\_regex}, so they take that default, and the
+regular-expression parser is a separate path.
+The package ase-extxyz 0.1.2 registers the C parser with ASE as the
+format \texttt{cextxyz} \cite{kermodeAseExtxyz0122026}.
+The ASE extended XYZ arm uses \texttt{format='extxyz'}, the reader that
+ships in ASE, not \texttt{cextxyz}.
+% TODO (head-to-head): extxyz 0.4.6 read_dicts on the seven drift files of scripts/drift.py.
+% Arm A: use_cextxyz=True, use_regex=False, the default since v0.4.2 (tag v0.4.2, 2026-06-11).
+% Arm B: use_cextxyz=True, use_regex=True.
+% Arm C: use_cextxyz=False, use_regex=False, the Python path the drift table already runs.
+% Arm D: ASE 3.29.0 ase.io.read(format='extxyz').
+% Arm E: ase-extxyz 0.1.2 (PyPI 0.1.2, git tag ase-extxyz-v0.1.2, 2026-10-02) ase.io.read(format='cextxyz').
+% Same files: the reference Lattice/Properties header, the dropped pbc key, the plain comment, 6.0d0, True/False, note="E=1.5 eV" and units="angstrom,eV,fs".
+% Report periodicity, the boolean move_mask, the id column and the binary64 positions.
+% The published extxyz note that the whitespace path is the faster of the two belongs to that same pair of flags; time both on the 100000-frame extxyz file the host table already reads, one fresh process per sample, six repeats.
 Table~\ref{tab:drift} gives seven three-atom files to \(\driftAllPaths\)
 reader paths from \(\driftAllLibraries\) libraries.
 On the reference frame the \(\driftXyzPaths\) extended XYZ paths, from
@@ -1036,7 +1055,7 @@ That grammar admits a \texttt{d} or \texttt{D} exponent and reads
 \texttt{T}, \texttt{true}, \texttt{True} and \texttt{TRUE} as true, and
 the paths split on both files.
 It leaves open whether a comment line that is not key-value pairs makes
-a file plain XYZ or an error, and on such a file the C parser of
+a file plain XYZ or an error, and on such a file the default C path of
 libAtoms departs from the default periodicity while its Python parser
 fails.
 

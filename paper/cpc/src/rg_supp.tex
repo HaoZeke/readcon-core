@@ -467,6 +467,16 @@ The chemfiles row copies each frame out of the trajectory iterator, and that cop
 
 \section{Measured versions}\label{sec:supp-versions} The survey of Table~\ref{tab:survey} ran ASE 3.29.0, chemfiles 0.10.4, MDAnalysis 2.10.0, h5py 3.16.0, OVITO 3.16.1 and Open Babel 3.2.1.
 chemfiles 0.10.4, MDAnalysis 2.10.0, OVITO 3.16.1 and Open Babel 3.2.1 open neither a version-1 CON file nor a CON 3.1 file, and the eon module of ASE 3.29.0 opens both (\texttt{scripts/\allowbreak con\_\allowbreak openers.py}).
+The input-format table of the OVITO 3.17.2 manual names XYZ, extended XYZ, POSCAR and PDBx/mmCIF, and it names neither CON nor convel nor H5MD \cite{ovitoManual3172}.
+That table is not a rerun of the opener.
+The development changelog of ASE dated 2026-11-09 is not part of release 3.29.0, and it records a fix for extended XYZ reading when Python is run with the optimisation flag \cite{aseChangelog20261109}.
+The survey and the drift files were not read under that flag.
+% TODO (head-to-head): OVITO 3.17.2 (PyPI 3.17.2; manual input-format table at docs.ovito.org, accessed 2026-11-11) against the OVITO 3.16.1 rows.
+% Same calls as scripts/drift.py r_ovito and scripts/con_openers.py: import_file on the seven drift files and on one version-1 CON file and one CON 3.1 file.
+% Match positions, pbc, move_mask and Particle Identifier. The 3.17.2 manual lists no CON, convel or H5MD reader; the opener has not been rerun.
+% TODO (head-to-head): ASE development tree that contains the 2026-11-09 changelog entry, which is not release 3.29.0 (PyPI on 2026-11-11 is 3.29.0).
+% ase.io.read(format='extxyz') on the seven drift files, once with python and once with python -O.
+% Release 3.29.0 is the survey reader. The changelog says extended XYZ reading under python -O was wrong until that entry.
 The drift files of Table~\ref{tab:drift} went to ASE 3.29.0, the libAtoms \texttt{extxyz} 0.4.6 package, chemfiles 0.10.4, OVITO 3.16.1, MDAnalysis 2.10.0 and Open Babel 3.2.1.
 The readers timed on this branch are named in Section~\ref{sec:host} of the main text.
 
