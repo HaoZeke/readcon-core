@@ -18,20 +18,22 @@ mkdir -p "$OUT"
 dir_target="target"
 dir_cov="llvm-cov-target"
 dir_src="src"
-export CARGO_TARGET_DIR="$ROOT/$dir_target/$dir_cov"
+export CARGO_TARGET_DIR="$dir_target/$dir_cov"
+export RUSTFLAGS="--remap-path-prefix=${ROOT}=."
 unset RUSTC_WRAPPER || true
 
+rm -rf "$CARGO_TARGET_DIR"
 cargo +nightly llvm-cov clean --workspace
 set +e
-cargo +nightly llvm-cov --branch --features python --lib --tests --no-report -- --test-threads=1 \
-  > "$OUT/cargo-test-body.txt" 2>&1
+cargo +nightly llvm-cov --branch --features python,zstd --lib --tests --no-report -- --test-threads=1 >"$OUT/cargo-test-body.txt" 2>&1
 cargo_code=$?
 set -e
 {
   printf 'HEAD %s\n' "$(git -C "$ROOT" rev-parse HEAD)"
   printf 'tree %s\n' "$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
-  printf 'command %s\n' "cargo +nightly llvm-cov --branch --features python --lib --tests --no-report"
-  sed "s|$ROOT/||g; s|$HOME/||g" "$OUT/cargo-test-body.txt"
+  printf 'command %s\n' "cargo +nightly llvm-cov --branch --features python,zstd --lib --tests --no-report"
+  printf 'note %s\n' "tool text is copied unchanged; a later note line lists any absolute paths"
+  cat "$OUT/cargo-test-body.txt"
   printf 'exit %s\n' "$cargo_code"
 } > "$OUT/cargo-test.log"
 rm -f "$OUT/cargo-test-body.txt"
@@ -45,7 +47,7 @@ rm -rf "$wheel_dir"
 mkdir -p "$wheel_dir/wheels" "$wheel_dir/site"
 (
   export CARGO_TARGET_DIR="$wheel_dir/target"
-  export RUSTFLAGS="-C instrument-coverage -Z coverage-options=branch"
+  export RUSTFLAGS="-C instrument-coverage -Z coverage-options=branch --remap-path-prefix=${ROOT}=."
   export RUSTUP_TOOLCHAIN=nightly
   export LLVM_PROFILE_FILE="$wheel_dir/pytest-%p.profraw"
   "$PY" -m maturin build --features python --interpreter "$PY" -o "$wheel_dir/wheels"
@@ -59,15 +61,16 @@ tree_sha="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
 set +e
 PYTHONPATH="$wheel_dir/site${PYTHONPATH:+:$PYTHONPATH}" \
   LLVM_PROFILE_FILE="$wheel_dir/pytest-%p.profraw" \
-  "$PY" -m pytest tests/python -q --tb=line --disable-warnings \
+  "$PY" -m pytest tests/python -q --tb=line --disable-warnings --rootdir=. \
   > "$OUT/pytest-body.txt" 2>&1
 code=$?
 set -e
 {
   printf 'HEAD %s\n' "$head_sha"
   printf 'tree %s\n' "$tree_sha"
-  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line --disable-warnings"
-  sed "s|$ROOT/||g; s|$HOME/||g" "$OUT/pytest-body.txt"
+  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line --disable-warnings --rootdir=."
+  printf 'note %s\n' "tool text is copied unchanged; a later note line lists any absolute paths"
+  cat "$OUT/pytest-body.txt"
   printf 'exit %s\n' "$code"
 } > "$OUT/pytest.txt"
 rm -f "$OUT/pytest-body.txt"
@@ -76,7 +79,7 @@ mapfile -t PYRAW < <(find "$wheel_dir" -name 'pytest-*.profraw' -type f)
 
 SYSROOT="$(rustc +nightly --print sysroot)"
 LLVM="$SYSROOT/lib/rustlib/x86_64-unknown-linux-gnu/bin"
-PROFDATA="$(mktemp)"
+PROFDATA="$OUT/merged.profdata"
 
 dir_build="build"
 mapfile -t RAW < <(find "$CARGO_TARGET_DIR" -name '*.profraw' -type f ! -path "*/${dir_build}/*")
@@ -86,55 +89,48 @@ if [[ ${#RAW[@]} -eq 0 ]]; then
 fi
 "$LLVM/llvm-profdata" merge -sparse "${RAW[@]}" -o "$PROFDATA"
 
-BIN=""
-while IFS= read -r candidate; do
-  if [[ -n "$candidate" && -x "$candidate" && -f "$candidate" ]]; then
-    BIN="$candidate"
-  fi
-done < <(find "$CARGO_TARGET_DIR" -type f -name 'readcon_core-*' ! -name '*.*' -printf '%T@ %p\n' | sort -n | awk '{print $2}')
+BIN="$(find "$CARGO_TARGET_DIR" -type f -path '*/out/readcon_core-*' ! -name '*.*' -printf '%s %p\n' | sort -n | awk '{print $2}' | tail -n 1)"
 if [[ -z "$BIN" ]]; then
   echo "no lib test binary" >&2
   exit 1
 fi
 OBJECTS=("$BIN")
 
-strip_paths() {
-  sed "s|$ROOT/||g; s|$HOME/||g; s|$SYSROOT/||g"
-}
+EQUIV=(-path-equivalence="$ROOT,.")
 
 SOURCES=(
-  "$ROOT/$dir_src/c_iter.rs"
-  "$ROOT/$dir_src/ffi.rs"
-  "$ROOT/$dir_src/stream.rs"
-  "$ROOT/$dir_src/compression.rs"
-  "$ROOT/$dir_src/extxyz_scan.rs"
-  "$ROOT/$dir_src/python.rs"
+  "$dir_src/c_iter.rs"
+  "$dir_src/ffi.rs"
+  "$dir_src/stream.rs"
+  "$dir_src/compression.rs"
+  "$dir_src/extxyz_scan.rs"
+  "$dir_src/python.rs"
 )
 
-"$LLVM/llvm-cov" report --show-functions --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
-  | strip_paths > "$OUT/functions.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  "$ROOT/$dir_src/c_iter.rs" | strip_paths > "$OUT/c_iter-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  "$ROOT/$dir_src/ffi.rs" | strip_paths > "$OUT/ffi-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  "$ROOT/$dir_src/stream.rs" | strip_paths > "$OUT/stream-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  "$ROOT/$dir_src/compression.rs" | strip_paths > "$OUT/compression-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  "$ROOT/$dir_src/extxyz_scan.rs" | strip_paths > "$OUT/extxyz_scan-branches.txt"
-"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${OBJECTS[@]}" \
-  "$ROOT/$dir_src/python.rs" | strip_paths > "$OUT/python-branches.txt"
-"$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
-  | strip_paths > "$OUT/branch.json"
+"$LLVM/llvm-cov" report --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" "${SOURCES[@]}" \
+  > "$OUT/functions.txt" || true
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+  "$dir_src/c_iter.rs" > "$OUT/c_iter-branches.txt"
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+  "$dir_src/ffi.rs" > "$OUT/ffi-branches.txt"
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+  "$dir_src/stream.rs" > "$OUT/stream-branches.txt"
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+  "$dir_src/compression.rs" > "$OUT/compression-branches.txt"
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+  "$dir_src/extxyz_scan.rs" > "$OUT/extxyz_scan-branches.txt"
+"$LLVM/llvm-cov" show --show-branches=count --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" \
+  "$dir_src/python.rs" > "$OUT/python-branches.txt"
+"$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${EQUIV[@]}" "${OBJECTS[@]}" "${SOURCES[@]}" \
+  > "$OUT/branch.json"
 
 if [[ -n "${SO:-}" && ${#PYRAW[@]} -gt 0 ]]; then
   pydata="$wheel_dir/python.profdata"
   "$LLVM/llvm-profdata" merge -sparse "${PYRAW[@]}" -o "$pydata"
-  "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "$SO" \
-    "$ROOT/$dir_src/python.rs" | strip_paths > "$OUT/python.json"
-  "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" "$SO" \
-    "$ROOT/$dir_src/python.rs" | strip_paths > "$OUT/python-branches.txt"
+  "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "${EQUIV[@]}" "$SO" \
+    "$dir_src/python.rs" > "$OUT/python.json"
+  "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" "${EQUIV[@]}" "$SO" \
+    "$dir_src/python.rs" > "$OUT/python-branches.txt"
   rm -f "$pydata"
 fi
 

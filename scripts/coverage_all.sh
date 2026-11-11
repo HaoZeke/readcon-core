@@ -18,14 +18,15 @@ tree_sha="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
 {
   printf 'HEAD %s\n' "$head_sha"
   printf 'tree %s\n' "$tree_sha"
-  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line --disable-warnings"
+  printf 'command %s\n' "python3 -m pytest tests/python -q --tb=line --disable-warnings --rootdir=."
+  printf 'note %s\n' "tool text is copied unchanged; a later note line lists any absolute paths"
   set +e
   PYTHONPATH="${SITE}${PYTHONPATH:+:$PYTHONPATH}" \
-    "$PY" -m pytest tests/python -q --tb=line --disable-warnings \
+    "$PY" -m pytest tests/python -q --tb=line --disable-warnings --rootdir=. \
     > "$OUT/pytest-body.txt" 2>&1
   code=$?
   set -e
-  sed "s|$ROOT/||g; s|$HOME/||g" "$OUT/pytest-body.txt"
+  cat "$OUT/pytest-body.txt"
   rm -f "$OUT/pytest-body.txt"
   printf 'exit %s\n' "$code"
 } > "$OUT/pytest.txt"
@@ -78,8 +79,10 @@ for path in gcov:
     pct = (100.0 * executed / total) if total else 0.0
     taken = len(re.findall(r"taken [1-9]", body))
     not_taken = len(re.findall(r"taken 0", body))
+    never = len(re.findall(r"never executed", body))
+    outcomes = taken + not_taken + never
     text.append(
-        f"{path.name} lines {pct:.1f} executed {executed} missed {missed} branches_taken {taken} branches_not_taken {not_taken}"
+        f"{path.name} lines {pct:.1f} executed {executed} missed {missed} branches_taken {taken} branches_outcomes {outcomes}"
     )
 (out / "per-file.txt").write_text("\n".join(text) + ("\n" if text else ""), encoding="utf-8")
 print("\n".join(text))
