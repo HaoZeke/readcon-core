@@ -1230,9 +1230,12 @@ six times, one fresh process per sample.
 
 \begin{figure*}[tbp] \centering
 \includegraphics[width=\textwidth]{figures/generated/timing.pdf}
-\caption{Three panels of one-thread medians from the r0174 records. The
-bars are those medians and the whiskers are the quartiles.
-Table~\ref{tab:peers} lists the independent CON readers in
+\caption{One panel of six bars on a logarithmic axis of median wall
+time, in seconds. The bars are \texttt{v0.18.0 read\_con},
+\texttt{read\_positions}, \texttt{baseline read\_con},
+\texttt{C++ read\_all\_frames}, \texttt{ASE get\_positions} and
+\texttt{eOn loadcons}. The panel draws those bars, the axes and the
+ticks. Table~\ref{tab:peers} lists the independent CON readers in
 \texttt{reader-exchange-public.log}.}
 \label{fig:timing} \end{figure*}
 

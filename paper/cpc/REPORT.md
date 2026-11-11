@@ -1,6 +1,6 @@
 # Coverage measurement
 
-v14.2 is a checkpoint, not a pass. The v14.3 table in
+v14.2 records one checkpoint. We keep that list beside the later table. The v14.3 table in
 `COVERAGE_TABLE.md` is newer. `scripts/coverage_table.py` writes it
 from a fresh `cargo llvm-cov --branch` JSON export. Seven source
 files are still OPEN because they are under 98 percent on lines or
@@ -19,8 +19,8 @@ A command-line write reported success when the buffered writer could
 not flush. The command now flushes before it reports success, and the
 path converter does the same. A full device returns an error from both.
 
-The sections below are earlier measurements. They are not the v14.2
-table.
+The sections that follow record earlier measurements. We kept those
+tables so a later export can be set beside the v14.2 list.
 
 ffi.rs was reported at 94.75 percent lines by a run of
 `cargo llvm-cov --lib --tests`, and at 87.07 percent lines by a later
@@ -35,13 +35,13 @@ even when the source and the tests do not.
 doctests. Those two flags cannot be combined, and the script keeps
 both sets of profiles for one report. It then runs the C driver, and
 the Fortran driver when `fpm` is on `PATH`, against the instrumented
-static library. It builds the Python extension with
+static library. The script builds the Python extension with
 `cargo llvm-cov show-env` and `maturin develop`, runs
 `pytest tests/python`, and writes one report.
 
 ## Run after the cold-arm tests
 
-Files still under 98 percent on lines or branches:
+We list the files that remain under 98 percent on lines or branches:
 
 | File | Lines | Branches |
 | --- | --- | --- |
@@ -65,7 +65,7 @@ Every other source file is at or above 98 percent on both bars.
 
 ## Run after the writer and unit tests
 
-Files still under 98 percent on lines or branches:
+We list the files that remain under 98 percent on lines or branches:
 
 | File | Lines | Branches |
 | --- | --- | --- |
@@ -83,7 +83,7 @@ Nineteen source files are at or above 98 percent on both bars.
 
 ## Run after the cold wide-file stream
 
-Files still under 98 percent on lines or branches:
+We list the files that remain under 98 percent on lines or branches:
 
 | File | Lines | Branches |
 | --- | --- | --- |
@@ -133,19 +133,19 @@ been run at this tip. The values the checks compare:
   `provenance.json` records `d94b6ad922e9980e`.
   The binary-format records name both, with one binary sha256.
 
-Residual arms from that measurement:
+We name the callers of each open arm from that measurement:
 
 - `src/chemfiles_import_imp.rs:920`. The test
   `imports_xyz_from_temp_file_via_chemfiles_io` asserts an oxygen at
   the origin and an oxygen whose z is above 0.5. The export left one
   side of the origin comparison at count 0.
 - `src/conbin.rs:594`. `handle.join().is_err` inside
-  `sum_pieces_in_order`. Callers: `sum_split_streams` at line 523 and
-  `split_stream_sum` at line 641. The worker only receives a piece
+  `sum_pieces_in_order`. Callers: `sum_split_streams` and
+  `split_stream_sum`. The worker only receives a piece
   index and adds a range. A join error requires that worker to panic.
 - `src/conbin.rs:690`. `err_rx.try_recv` inside `split_stream_sum`.
-  Callers: `sum_split_streams` at line 619, and the tests at lines
-  2000, 2623 and 2986. The zero side is an error string on that
+  Callers: `sum_split_streams`, and the tests in that file.
+  The zero side is an error string on that
   channel. The fault cases that fail an open do not send on it.
 - `src/conbin.rs:2811`. The `Ok` arm of `stream_one_span` after the
   first round in `run_fault_suite`. The only caller is that loop.
@@ -176,7 +176,8 @@ conbin.rs branches are 205/212 (96.70 percent).
 ## Prefix sides that left conbin.rs
 
 The run 84 export was replaced in place by the run 85 export, so the
-branch lists below are the open regions recorded from each export.
+branch lists that follow are the open regions recorded from each export.
+We read those regions from the two exports.
 Run 84 left four open regions: 594, 690, 2811 and 3213. Run 85 leaves
 those and four more. The four that went from covered to open are the
 temporary-prefix sides. `conbin_namespace_child` used to call
