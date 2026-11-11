@@ -1422,9 +1422,16 @@ Before the clock, every arm is compared with the grid on species,
 positions, masses, forces and the cell.
 Those fields agree for every reader that finishes.
 The largest absolute difference is 0.
-readcon has no extended XYZ writer.
-The writers that do, ASE \texttt{extxyz}, ASE \texttt{cextxyz} and
-extxyz 0.4.6, write every file and the reread matches.
+readcon writes species, positions, the lattice and every per-atom
+column, including forces.
+On the million-atom file the Rust writer takes 0.571~s and the Python
+writer takes 0.575~s.
+On the 10000-frame file those medians are 0.529 and 0.555~s.
+The massif heap peaks of those writes are 210.9 and 210.2~MiB for Rust
+and 277.8 and 305.9~MiB for Python.
+A reread matches.
+ASE \texttt{extxyz}, ASE \texttt{cextxyz} and extxyz 0.4.6 also write
+every file and the reread matches.
 extxyz-ng 0.0.2 agrees on the 10-atom files.
 It reads a 230-atom frame of 8168 bytes and rejects a 231-atom frame
 of 8203 bytes, so it does not read the medium or large files.
