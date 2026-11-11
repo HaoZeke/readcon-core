@@ -45,17 +45,14 @@ rm -rf "$wheel_dir"
 mkdir -p "$wheel_dir/wheels" "$wheel_dir/site"
 (
   export CARGO_TARGET_DIR="$wheel_dir/target"
-  export RUSTFLAGS="-C instrument-coverage"
+  export RUSTFLAGS="-C instrument-coverage -Z coverage-options=branch"
   export RUSTUP_TOOLCHAIN=nightly
   export LLVM_PROFILE_FILE="$wheel_dir/pytest-%p.profraw"
   "$PY" -m maturin build --features python --interpreter "$PY" -o "$wheel_dir/wheels"
   wheel="$(printf '%s\n' "$wheel_dir"/wheels/*.whl | head -n 1)"
   "$PY" -m pip install --no-deps --no-index --target "$wheel_dir/site" "$wheel"
 )
-mapfile -t PYRAW < <(find "$wheel_dir" -name 'pytest-*.profraw' -type f)
-if [[ ${#PYRAW[@]} -gt 0 ]]; then
-  cp -f "${PYRAW[@]}" "$CARGO_TARGET_DIR/"
-fi
+rm -f "$CARGO_TARGET_DIR"/pytest-*.profraw
 SO="$(find "$wheel_dir/site" -name '*.so' -type f -print -quit || true)"
 head_sha="$(git -C "$ROOT" rev-parse HEAD)"
 tree_sha="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
@@ -74,6 +71,7 @@ set -e
   printf 'exit %s\n' "$code"
 } > "$OUT/pytest.txt"
 rm -f "$OUT/pytest-body.txt"
+rm -f "$CARGO_TARGET_DIR"/pytest-*.profraw
 mapfile -t PYRAW < <(find "$wheel_dir" -name 'pytest-*.profraw' -type f)
 if [[ ${#PYRAW[@]} -gt 0 ]]; then
   cp -f "${PYRAW[@]}" "$CARGO_TARGET_DIR/"
@@ -135,6 +133,16 @@ SOURCES=(
   "$ROOT/$dir_src/python.rs" | strip_paths > "$OUT/python-branches.txt"
 "$LLVM/llvm-cov" export --format=text --instr-profile="$PROFDATA" "${OBJECTS[@]}" "${SOURCES[@]}" \
   | strip_paths > "$OUT/branch.json"
+
+if [[ -n "${SO:-}" && ${#PYRAW[@]:-0} -gt 0 ]]; then
+  pydata="$wheel_dir/python.profdata"
+  "$LLVM/llvm-profdata" merge -sparse "${PYRAW[@]}" -o "$pydata"
+  "$LLVM/llvm-cov" export --format=text --instr-profile="$pydata" "$SO" \
+    "$ROOT/$dir_src/python.rs" | strip_paths > "$OUT/python.json"
+  "$LLVM/llvm-cov" show --show-branches=count --instr-profile="$pydata" "$SO" \
+    "$ROOT/$dir_src/python.rs" | strip_paths > "$OUT/python-branches.txt"
+  rm -f "$pydata"
+fi
 
 rm -f "$PROFDATA"
 echo "wrote rust coverage"

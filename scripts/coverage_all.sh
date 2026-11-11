@@ -44,9 +44,19 @@ from pathlib import Path
 out = Path(sys.argv[1])
 text = []
 export = out / "rust" / "branch.json"
+python_export = out / "rust" / "python.json"
 if export.is_file():
     data = json.loads(export.read_text(encoding="utf-8"))
     files = data.get("data", [{}])[0].get("files", [])
+    if python_export.is_file():
+        extra = json.loads(python_export.read_text(encoding="utf-8"))
+        extra_files = extra.get("data", [{}])[0].get("files", [])
+        files = [
+            item
+            for item in files
+            if not str(item.get("filename", "")).endswith("python.rs")
+        ]
+        files.extend(extra_files)
     for item in files:
         name = item.get("filename", "")
         summary = item.get("summary", {})
