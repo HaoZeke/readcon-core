@@ -3663,7 +3663,15 @@ fn py_text_frames<'py>(
     }
     let mut intern = std::collections::HashMap::<&str, Py<pyo3::types::PyString>>::new();
     let stride = n_atoms.saturating_mul(width);
+    let mut prev: Option<&[String]> = None;
+    let mut prev_row: Option<Py<PyList>> = None;
     for frame in text.chunks(stride) {
+        if let (Some(old), Some(row)) = (prev, prev_row.as_ref()) {
+            if old == frame {
+                frames.append(row.clone_ref(py))?;
+                continue;
+            }
+        }
         let row = PyList::empty(py);
         if width == 1 {
             for token in frame {
@@ -3678,7 +3686,10 @@ fn py_text_frames<'py>(
                 row.append(item)?;
             }
         }
-        frames.append(row)?;
+        let owned = row.unbind();
+        frames.append(owned.clone_ref(py))?;
+        prev = Some(frame);
+        prev_row = Some(owned);
     }
     Ok(frames)
 }
@@ -3690,9 +3701,10 @@ fn py_text_frames<'py>(
 /// with shape `(frames, atoms)`, ``cell`` with shape `(frames, 6)`,
 /// ``species`` as one symbol list per frame, and ``arrays``, a dict of
 /// every per-atom `Properties` column. A real column is one float array.
-/// A text column is a list of lists, and a repeated symbol is one string
-/// object shared by every atom that spells it. ``arrays['species']`` is
-/// the same list as ``species``.
+/// A text column is a list of lists. A repeated symbol is one string
+/// object, and a frame whose symbols match the previous frame is that
+/// same list. ``arrays['species']`` is ``species``. ``arrays['pos']``
+/// and ``arrays['masses']`` are the top-level slabs.
 #[pyfunction]
 fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>> {
     let path_owned = path.to_string();
@@ -3705,12 +3717,14 @@ fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>>
         (n_frames, n_atoms, 3),
         std::mem::take(&mut tables.positions),
     )
-    .unwrap();
-    let masses =
-        ndarray::Array2::from_shape_vec((n_frames, n_atoms), std::mem::take(&mut tables.masses))
-            .unwrap();
-    let cell =
-        ndarray::Array2::from_shape_vec((n_frames, 6), std::mem::take(&mut tables.cell)).unwrap();
+    .unwrap()
+    .into_pyarray(py);
+    let masses = ndarray::Array2::from_shape_vec((n_frames, n_atoms), std::mem::take(&mut tables.masses))
+        .unwrap()
+        .into_pyarray(py);
+    let cell = ndarray::Array2::from_shape_vec((n_frames, 6), std::mem::take(&mut tables.cell))
+        .unwrap()
+        .into_pyarray(py);
     let arrays = PyDict::new(py);
     let mut shared_species: Option<Bound<'py, PyList>> = None;
     for column in tables.columns.drain(..) {
@@ -3720,6 +3734,11 @@ fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>>
                 shared_species = Some(built.clone());
             }
             arrays.set_item(column.name, built)?;
+        } else if column.name == "pos" && column.width == 3 {
+            // The top-level slab is this column. One array, not a second copy.
+            arrays.set_item(column.name, &positions)?;
+        } else if (column.name == "masses" || column.name == "mass") && column.width == 1 {
+            arrays.set_item(column.name, &masses)?;
         } else if column.width == 1 {
             let values = ndarray::Array2::from_shape_vec((n_frames, n_atoms), column.real).unwrap();
             arrays.set_item(column.name, values.into_pyarray(py))?;
@@ -3735,9 +3754,9 @@ fn read_extxyz<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>>
         None => py_text_frames(py, &tables.species, n_atoms, 1)?,
     };
     let dict = PyDict::new(py);
-    dict.set_item("positions", positions.into_pyarray(py))?;
-    dict.set_item("masses", masses.into_pyarray(py))?;
-    dict.set_item("cell", cell.into_pyarray(py))?;
+    dict.set_item("positions", positions)?;
+    dict.set_item("masses", masses)?;
+    dict.set_item("cell", cell)?;
     dict.set_item("species", species)?;
     dict.set_item("arrays", arrays)?;
     Ok(dict)

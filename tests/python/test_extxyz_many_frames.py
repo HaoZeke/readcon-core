@@ -47,6 +47,9 @@ def test_many_frames_share_symbols_and_one_position_slab(tmp_path: Path):
     assert got["masses"].shape == (n_frames, n_atoms)
     assert got["arrays"]["forces"].shape == (n_frames, n_atoms, 3)
     assert got["arrays"]["species"] is got["species"]
+    assert got["arrays"]["pos"] is got["positions"]
+    assert got["arrays"]["masses"] is got["masses"]
+    assert got["species"][0] is got["species"][-1]
     assert len(got["species"]) == n_frames
     symbols = {id(symbol) for frame in got["species"] for symbol in frame}
     assert symbols == {id("Cu")} or symbols == {id(got["species"][0][0])}
