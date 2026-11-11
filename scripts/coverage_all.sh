@@ -60,6 +60,8 @@ if export.is_file():
         files.extend(extra_files)
     for item in files:
         name = item.get("filename", "")
+        if not (name.startswith("src/") and name.endswith(".rs")):
+            continue
         summary = item.get("summary", {})
         lines = summary.get("lines", {})
         branches = summary.get("branches", {})
