@@ -191,12 +191,14 @@ def read_readcon(path: Path) -> dict:
     species = []
     has_v = False
     for frame in frames:
-        pos = [(atom.x, atom.y, atom.z) for atom in frame.atoms]
-        positions.append(pos)
-        species.append([atom.symbol for atom in frame.atoms])
-        if frame.has_velocities:
+        # Column views. Indexing ``.atoms`` builds one Python object per atom,
+        # which dominated a single small convel frame.
+        positions.append(np.array(frame.xyz, copy=True))
+        species.append(list(frame.symbols))
+        vel = frame.vel
+        if vel is not None:
             has_v = True
-            velocities.append([(atom.vx, atom.vy, atom.vz) for atom in frame.atoms])
+            velocities.append(np.array(vel, copy=True))
     cell = frames[0].cell if frames else None
     return {
         "n_frames": len(frames),
@@ -466,6 +468,7 @@ def run_convel_read() -> list[dict]:
     for row in rows:
         if row.get("samples"):
             row["rss_kib"] = read_rss(row["arm"], path, "survey")
+            row["massif_heap_bytes"] = massif_read(row["arm"], path)
     emit("con-convel-read", rows)
     return rows
 
