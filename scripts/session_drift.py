@@ -374,10 +374,16 @@ def main() -> None:
             "Within each session those two arms load one shared hash. "
             "The slowdown points at the rebuilt binary rather than at session drift of the host."
         )
+    if old_n == new_n:
+        repeat_sentence = f"Both sessions use {old_n} repeats."
+    else:
+        repeat_sentence = (
+            f"The earlier cells use {old_n} repeats and the later cells use {new_n} repeats."
+        )
     paragraphs.append(
-        f"The interquartile range (IQR) is a descriptive screen. "
-        f"The earlier cells use {old_n} repeats and the later cells use {new_n} repeats. "
-        f"A cell is outside the screen when the median paired ratio moves by more than the larger of the two interquartile ranges."
+        "The interquartile range (IQR) is a descriptive screen. "
+        + repeat_sentence
+        + " A cell is outside the screen when the median paired ratio moves by more than the larger of the two interquartile ranges."
     )
     paragraphs.append(
         f"An exact two-sided permutation test uses the {old_n}+{new_n} paired ratios in each cell. "
