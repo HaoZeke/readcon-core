@@ -21,18 +21,18 @@ eOn loadcons CON median_s	1.461845212e+01	paper/cpc/logs/reader-exchange-public.
 C++ all-frames median_s	1.468019723e+00	paper/cpc/logs/reader-exchange-public.log	159
 ASE over tip, ratio of medians	61.68	paper/cpc/logs/reader-exchange-public.log	derived from summary medians
 eOn over ASE, ratio of medians	1.332	paper/cpc/logs/reader-exchange-public.log	derived from summary medians
-XYZ ASE cu32_f100k median_s	11.485844442002417	paper/cpc/logs/h2h-r233-results.json	11288
-XYZ readcon_extxyz cu32_f100k median_s	0.48851243849640014	paper/cpc/logs/h2h-r233-results.json	11228
-XYZ ASE over readcon ratio of medians	23.5119	paper/cpc/logs/h2h-r233-results.json	11288/11228
-XYZ chemfiles cu32_f100k median_s	14.414081515504222	paper/cpc/logs/h2h-r233-results.json	11303
-XYZ chemfiles over readcon ratio of medians	29.5061	paper/cpc/logs/h2h-r233-results.json	11303/11228
-XYZ OVITO cu32_f100k median_s	6.854207352494996	paper/cpc/logs/h2h-r233-results.json	11318
-XYZ OVITO over readcon ratio of medians	14.0308	paper/cpc/logs/h2h-r233-results.json	11318/11228
-CON read ASE cu32_f100k median_s	12.13305550050427	paper/cpc/logs/h2h-r233-results.json	11573
-CON read readcon_py cu32_f100k median_s	2.708809151503374	paper/cpc/logs/h2h-r233-results.json	11558
-CON read ASE over readcon ratio of medians	4.4791	paper/cpc/logs/h2h-r233-results.json	11573/11558
-CON write ASE cu1000_f1k median_s	2.4583374865032965	paper/cpc/logs/h2h-r233-results.json	11723
-CON write readcon_py cu1000_f1k median_s	0.7167300539949792	paper/cpc/logs/h2h-r233-results.json	11708
-CON write ASE over readcon ratio of medians	3.4299	paper/cpc/logs/h2h-r233-results.json	11723/11708
+XYZ ASE cu32_f100k median_s	11.485844442002417	paper/cpc/data/h2h-r233-results.json	11288
+XYZ readcon_extxyz cu32_f100k median_s	0.48851243849640014	paper/cpc/data/h2h-r233-results.json	11228
+XYZ ASE over readcon ratio of medians	23.5119	paper/cpc/data/h2h-r233-results.json	11288/11228
+XYZ chemfiles cu32_f100k median_s	14.414081515504222	paper/cpc/data/h2h-r233-results.json	11303
+XYZ chemfiles over readcon ratio of medians	29.5061	paper/cpc/data/h2h-r233-results.json	11303/11228
+XYZ OVITO cu32_f100k median_s	6.854207352494996	paper/cpc/data/h2h-r233-results.json	11318
+XYZ OVITO over readcon ratio of medians	14.0308	paper/cpc/data/h2h-r233-results.json	11318/11228
+CON read ASE cu32_f100k median_s	12.13305550050427	paper/cpc/data/h2h-r233-results.json	11573
+CON read readcon_py cu32_f100k median_s	2.708809151503374	paper/cpc/data/h2h-r233-results.json	11558
+CON read ASE over readcon ratio of medians	4.4791	paper/cpc/data/h2h-r233-results.json	11573/11558
+CON write ASE cu1000_f1k median_s	2.4583374865032965	paper/cpc/data/h2h-r233-results.json	11723
+CON write readcon_py cu1000_f1k median_s	0.7167300539949792	paper/cpc/data/h2h-r233-results.json	11708
+CON write ASE over readcon ratio of medians	3.4299	paper/cpc/data/h2h-r233-results.json	11723/11708
 rerun v14.9 read_all_frames median_s n=6 frames=500	0.001682624	paper/cpc/logs/rerun-v149.log	samples
-rerun v14.7 read_all_frames median_s n=6 frames=500	0.002226751	paper/cpc/logs/rerun-v147.log	samples
+rerun v14.10 read_all_frames median_s n=6 frames=500	0.0017902895	paper/cpc/logs/rerun-v1410.log	samples
