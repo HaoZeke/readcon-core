@@ -1009,9 +1009,8 @@ Each of those changes decided a case that the text of its release left
 open, and Table~\ref{tab:versions} lists the clauses involved.
 
 Extended XYZ is the text format to set beside CON on this test, because
-it has a published grammar, the specification of the libAtoms extxyz
-package \cite{kermodeLibatomsExtxyzV0462026}, and parsers in C, C++ and
-Python.
+it has a published grammar, the libAtoms extxyz specification
+\cite{kermodeLibatomsExtxyzV0462026}, and parsers in C, C++ and Python.
 Table~\ref{tab:drift} gives seven three-atom files to \(\driftAllPaths\)
 reader paths from \(\driftAllLibraries\) libraries.
 On the reference frame the \(\driftXyzPaths\) extended XYZ paths, from
@@ -1231,10 +1230,10 @@ six times, one fresh process per sample.
 \begin{figure*}[tbp] \centering
 \includegraphics[width=\textwidth]{figures/generated/timing.pdf}
 \caption{One panel of six bars. Each bar is the median wall time on a
-logarithmic scale. The bars are \texttt{v0.18.0 read\_con},
-\texttt{read\_positions}, \texttt{baseline read\_con},
-\texttt{C++ read\_all\_frames}, \texttt{ASE get\_positions} and
-\texttt{eOn loadcons}.}
+logarithmic scale. The bars are v0.17.3 \texttt{read\_con}, tip
+\texttt{read\_con}, the untagged 0.17.3 baseline,
+\texttt{read\_all\_frames} then \texttt{con2matter}, ASE
+\texttt{get\_positions} and eOn \texttt{loadcons}.}
 \label{fig:timing} \end{figure*}
 
 \begin{figure}[tbp] \centering

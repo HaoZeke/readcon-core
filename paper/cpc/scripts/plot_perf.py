@@ -2,9 +2,10 @@
 """The timing figure checked into the manuscript.
 
 The file ``timing.pdf`` is one panel of six bars. Each bar is a median
-wall time on a logarithmic scale. The arms are ``v0.18.0 read_con``,
-``read_positions``, ``baseline read_con``, ``C++ read_all_frames``,
-``ASE get_positions`` and ``eOn loadcons``.
+wall time on a logarithmic scale. Left to right the arms are
+``v0.17.3 read_con``, ``tip read_con``, the untagged 0.17.3 baseline,
+``read_all_frames`` then ``con2matter``, ``ASE get_positions`` and
+``eOn loadcons``.
 
 The face is Latin Modern Roman. Bars are Okabe-Ito blue. The canvas
 width is the double-column measure, 17.8 cm.
