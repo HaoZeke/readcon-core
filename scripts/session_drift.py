@@ -544,7 +544,7 @@ def main() -> None:
         if abs(readcon_change) > abs(ase_change):
             side = "readcon"
         elif abs(ase_change) > abs(readcon_change):
-            side = "the Atomic Simulation Environment (ASE)"
+            side = "ASE"
         else:
             side = "both readers equally"
         move = percent(row["old"], row["new"])
