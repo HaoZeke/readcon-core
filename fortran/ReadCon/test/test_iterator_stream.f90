@@ -1,5 +1,5 @@
 program test_iterator_stream
-  use, intrinsic :: iso_c_binding, only: c_size_t, c_double
+  use, intrinsic :: iso_c_binding, only: c_size_t, c_double, c_ptr, c_null_ptr
   use, intrinsic :: iso_fortran_env, only: real64, int64
   use readcon
   implicit none
@@ -9,6 +9,7 @@ program test_iterator_stream
   call assert_stream_matches_read_all()
   call assert_truncated_last_frame()
   call assert_public_readers()
+  call assert_remaining_procedures()
 contains
 
   subroutine assert_missing_file()
@@ -303,5 +304,110 @@ contains
     if (empty%atom_count() /= 0_c_size_t) error stop "empty atom count"
     call empty%cell_lengths(cell)
     call empty%free()
+  end subroutine
+
+  subroutine assert_remaining_procedures()
+    type(frame_t) :: frame, built, chem
+    type(frame_t), allocatable :: owned(:)
+    type(builder_t) :: builder
+    type(writer_t) :: writer
+    type(c_ptr) :: tensor, block, raw
+    integer :: status, i, j, order, nmatch, nwritten, spec
+    integer(int64) :: indices(4)
+    logical :: has_order
+    real(real64) :: cell(3), angles(3), pos(3, 2), vel(3, 2), frc(3, 2), masses(2)
+    real(c_double), pointer :: xyz(:,:)
+    character(len=*), parameter :: path = "remaining.con"
+    status = 0
+    i = 0
+    j = 0
+    order = 0
+    has_order = .false.
+    if (con_spec_version() < 1) error stop "spec"
+    if (len_trim(readcon_version) == 0) error stop "version"
+    if (len_trim(last_error_message()) < 0) error stop "last error"
+    if (has_chemfiles_support()) status = 0
+    cell = [6.0_real64, 6.0_real64, 6.0_real64]
+    angles = [90.0_real64, 90.0_real64, 90.0_real64]
+    builder = new_builder(cell, angles, header="user")
+    status = builder%add_atom_full("Cu", 0.0_real64, 0.0_real64, 0.0_real64, &
+         1_int64, 63.546_real64, .false., .false., .false., &
+         velocity=[0.1_real64, 0.0_real64, 0.0_real64], &
+         force=[0.2_real64, 0.0_real64, 0.0_real64])
+    if (status /= 0) error stop "full atom"
+    status = builder%set_energy(1.25_real64)
+    status = builder%set_metadata_json('{"con_spec_version":2}')
+    status = builder%set_frame_index(3_int64)
+    status = builder%copy_positions(pos)
+    status = builder%copy_masses(masses)
+    status = builder%positions_dlpack(tensor)
+    call builder%dlpack_delete(tensor)
+    status = builder%velocities_dlpack(tensor)
+    call builder%dlpack_delete(tensor)
+    status = builder%forces_dlpack(tensor)
+    call builder%dlpack_delete(tensor)
+    status = builder%atom_energies_dlpack(tensor)
+    call builder%dlpack_delete(tensor)
+    status = builder%masses_dlpack(tensor)
+    call builder%dlpack_delete(tensor)
+    status = builder%atom_ids_dlpack(tensor)
+    call builder%dlpack_delete(tensor)
+    built = builder%build()
+    if (.not. built%valid()) error stop "remaining build"
+    if (.not. built%has_velocities()) error stop "velocities"
+    if (.not. built%has_forces()) error stop "forces"
+    status = built%copy_velocities(vel)
+    status = built%copy_forces(frc)
+    status = built%copy_masses(masses)
+    call built%velocities_ptr(xyz, i)
+    call built%forces_ptr(xyz, i)
+    spec = int(built%index_energy())
+    spec = int(built%fmax())
+    spec = built%sections_mask()
+    spec = built%index_natoms()
+    if (len_trim(built%index_projection_json()) < 0) error stop "projection"
+    if (len_trim(built%potential_type()) < 0) error stop "potential"
+    spec = int(built%frame_index())
+    spec = int(built%sim_time())
+    spec = int(built%timestep())
+    spec = int(built%neb_bead())
+    spec = int(built%neb_band())
+    if (built%atom_index_by_id(1_int64) < -1) error stop "id"
+    status = built%select("name Cu", nmatch)
+    status = built%select_primary("name Cu", indices, nwritten)
+    raw = built%handle_ptr()
+    raw = frame_c_handle(built)
+    status = frame_metatensor_positions_block(built, block)
+    call mts_block_free_rkr(block)
+    status = frame_metatensor_velocities_block(built, block)
+    call mts_block_free_rkr(block)
+    status = frame_metatensor_forces_block(built, block)
+    call mts_block_free_rkr(block)
+    status = frame_metatensor_atom_energies_block(built, block)
+    call mts_block_free_rkr(block)
+    status = built%write_path(path)
+    writer = open_writer_gzip("remaining.gz")
+    if (writer%valid()) then
+      status = writer%extend_one(built)
+      status = writer%set_canonical(.true.)
+      if (writer%is_canonical()) status = 0
+      call writer%free()
+    end if
+    writer = open_writer_zstd("remaining.zst")
+    if (writer%valid()) call writer%free()
+    writer = open_writer_gzip_with_precision("remaining-p.gz", 8)
+    if (writer%valid()) call writer%free()
+    writer = open_writer_zstd_with_precision("remaining-p.zst", 8)
+    if (writer%valid()) call writer%free()
+    chem = read_chemfiles_first(path)
+    call chem%free()
+    chem = read_chemfiles_nth(path, 0)
+    call chem%free()
+    status = chemfiles_nsteps(path)
+    owned = frames_from_handle_array(c_null_ptr, 0_c_size_t)
+    if (size(owned) /= 0) error stop "empty handle array"
+    call built%free()
+    status = status + i + j + order
+    has_order = has_order
   end subroutine
 end program
