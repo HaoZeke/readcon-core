@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import extxyz_h2h
 import measure
 import support
 
@@ -55,6 +56,18 @@ def main() -> None:
         "pymatgen": lambda: measure.run_native("pymatgen"),
         "numpy": lambda: measure.run_native("numpy"),
         "ase_extxyz": lambda: measure.run_native("ase_extxyz"),
+        "extxyz_prepare": extxyz_h2h.prepare,
+        "extxyz_readcon_rust": lambda: extxyz_h2h.run_read("readcon_rust"),
+        "extxyz_readcon_py": lambda: extxyz_h2h.run_read("readcon_py"),
+        "extxyz_ase": lambda: extxyz_h2h.run_read("ase_extxyz"),
+        "extxyz_cextxyz": lambda: extxyz_h2h.run_read("ase_cextxyz"),
+        "extxyz_libatoms": lambda: extxyz_h2h.run_read("extxyz"),
+        "extxyz_ng": lambda: extxyz_h2h.run_read("extxyz_ng"),
+        "extxyz_write_ase": lambda: extxyz_h2h.run_write("ase_extxyz"),
+        "extxyz_write_cextxyz": lambda: extxyz_h2h.run_write("ase_cextxyz"),
+        "extxyz_write_libatoms": lambda: extxyz_h2h.run_write("extxyz"),
+        "extxyz_write_ng": lambda: extxyz_h2h.run_write("extxyz_ng"),
+        "extxyz_report": extxyz_h2h.report,
     }
     if arm not in runners:
         raise SystemExit(f"unknown arm {arm}")

@@ -219,5 +219,9 @@ name = "cachegrind_harness"
 path = "examples/cachegrind_harness.rs"
 
 [[example]]
+name = "extxyz_time"
+path = "examples/extxyz_time.rs"
+
+[[example]]
 name = "chemfiles_xyz_time"
 required-features = ["chemfiles"]

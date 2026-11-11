@@ -556,3 +556,183 @@ rule h2h_report:
 rule h2h:
     input:
         "bench/h2h/results.json",
+
+
+# Extended XYZ head-to-head. One rule per arm. Samples are serial.
+
+
+rule h2h_extxyz_prepare:
+    output:
+        touch("bench/h2h/work/extxyz/prepare.ok"),
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_prepare
+        """
+
+
+rule h2h_extxyz_readcon_rust:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-readcon_rust-read.stdout",
+        "bench/h2h/extxyz-logs/extxyz-readcon_rust-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_readcon_rust
+        """
+
+
+rule h2h_extxyz_readcon_py:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-readcon_py-read.stdout",
+        "bench/h2h/extxyz-logs/extxyz-readcon_py-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_readcon_py
+        """
+
+
+rule h2h_extxyz_ase:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-ase_extxyz-read.stdout",
+        "bench/h2h/extxyz-logs/extxyz-ase_extxyz-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_ase
+        """
+
+
+rule h2h_extxyz_cextxyz:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-ase_cextxyz-read.stdout",
+        "bench/h2h/extxyz-logs/extxyz-ase_cextxyz-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_cextxyz
+        """
+
+
+rule h2h_extxyz_libatoms:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-extxyz-read.stdout",
+        "bench/h2h/extxyz-logs/extxyz-extxyz-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_libatoms
+        """
+
+
+rule h2h_extxyz_ng:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-extxyz_ng-read.stdout",
+        "bench/h2h/extxyz-logs/extxyz-extxyz_ng-read.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_ng
+        """
+
+
+rule h2h_extxyz_write_ase:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-ase_extxyz-write.stdout",
+        "bench/h2h/extxyz-logs/extxyz-ase_extxyz-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_write_ase
+        """
+
+
+rule h2h_extxyz_write_cextxyz:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-ase_cextxyz-write.stdout",
+        "bench/h2h/extxyz-logs/extxyz-ase_cextxyz-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_write_cextxyz
+        """
+
+
+rule h2h_extxyz_write_libatoms:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-extxyz-write.stdout",
+        "bench/h2h/extxyz-logs/extxyz-extxyz-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_write_libatoms
+        """
+
+
+rule h2h_extxyz_write_ng:
+    input:
+        "bench/h2h/work/extxyz/prepare.ok",
+    output:
+        "bench/h2h/logs/campaign/extxyz-extxyz_ng-write.stdout",
+        "bench/h2h/extxyz-logs/extxyz-extxyz_ng-write.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_write_ng
+        """
+
+
+rule h2h_extxyz_report:
+    input:
+        "bench/h2h/logs/campaign/extxyz-readcon_rust-read.stdout",
+        "bench/h2h/logs/campaign/extxyz-readcon_py-read.stdout",
+        "bench/h2h/logs/campaign/extxyz-ase_extxyz-read.stdout",
+        "bench/h2h/logs/campaign/extxyz-ase_cextxyz-read.stdout",
+        "bench/h2h/logs/campaign/extxyz-extxyz-read.stdout",
+        "bench/h2h/logs/campaign/extxyz-extxyz_ng-read.stdout",
+        "bench/h2h/logs/campaign/extxyz-ase_extxyz-write.stdout",
+        "bench/h2h/logs/campaign/extxyz-ase_cextxyz-write.stdout",
+        "bench/h2h/logs/campaign/extxyz-extxyz-write.stdout",
+        "bench/h2h/logs/campaign/extxyz-extxyz_ng-write.stdout",
+    output:
+        "bench/h2h/extxyz-results.json",
+    shell:
+        """
+        set -euo pipefail
+        taskset -c 0 python3 bench/h2h/asv/drive.py extxyz_report
+        """
+
+
+rule h2h_extxyz:
+    input:
+        "bench/h2h/extxyz-results.json",
