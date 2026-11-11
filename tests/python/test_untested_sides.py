@@ -436,12 +436,13 @@ class _List:
 
 
 class _Duck:
-    def __init__(self, index, mask=None, tags=None, velocities=None, forces=None):
+    def __init__(self, index, mask=None, tags=None, velocities=None, forces=None, cell=None):
         self._index = index
         self._mask = mask
         self._tags = tags
         self._velocities = velocities
         self._forces = forces
+        self._cell = cell if cell is not None else _Cell()
 
     def get_chemical_symbols(self):
         return ["Cu"]
@@ -450,7 +451,7 @@ class _Duck:
         return _List([[0.0, 0.0, 0.0]])
 
     def get_cell(self):
-        return _Cell()
+        return self._cell
 
     @property
     def pbc(self):
@@ -480,6 +481,32 @@ class _Cell:
 
     def cellpar(self):
         return _List([4.0, 5.0, 6.0, 90.0, 90.0, 90.0])
+
+
+class _ShortCell(_Cell):
+    def cellpar(self):
+        return _List([4.0, 5.0, 6.0])
+
+
+class _ZeroRowCell:
+    def tolist(self):
+        return [[4.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 6.0]]
+
+    def cellpar(self):
+        return _List([4.0, 0.0, 6.0, 90.0, 90.0, 90.0])
+
+
+class _ZeroLastCell:
+    def tolist(self):
+        return [[4.0, 0.0, 0.0], [0.0, 5.0, 0.0], [0.0, 0.0, 0.0]]
+
+    def cellpar(self):
+        return _List([4.0, 5.0, 0.0, 90.0, 90.0, 90.0])
+
+
+class _NanCellpar(_Cell):
+    def cellpar(self):
+        return _List([4.0, 5.0, 6.0, float("nan"), 90.0, 90.0])
 
 
 class _FixAtoms:
@@ -513,3 +540,15 @@ def test_duck_typed_constraints_and_optional_arrays():
     assert tagged[0].atom_id == 0
     quiet = readcon.ConFrame.from_ase(_Duck(0, velocities=None, forces=None))
     assert quiet[0].symbol == "Cu"
+    listed = readcon.ConFrame.from_ase(_Duck([99], mask=_List([True, False, False])))
+    assert listed[0].is_fixed is False
+    with pytest.raises(ValueError):
+        readcon.ConFrame.from_ase(_Duck(_List("no")))
+    finite = readcon.ConFrame.from_ase(_Duck(0, cell=_ShortCell()))
+    assert finite[0].symbol == "Cu"
+    flat = readcon.ConFrame.from_ase(_Duck(0, cell=_ZeroRowCell()))
+    assert flat[0].symbol == "Cu"
+    last = readcon.ConFrame.from_ase(_Duck(0, cell=_ZeroLastCell()))
+    assert last[0].symbol == "Cu"
+    odd = readcon.ConFrame.from_ase(_Duck(0, cell=_NanCellpar()))
+    assert odd[0].symbol == "Cu"
