@@ -2748,6 +2748,79 @@ fn convert_to_con(py: Python<'_>, input_path: &str, output_path: &str) -> PyResu
     Ok(dict.into())
 }
 
+/// Write one Python frame through the Rust writer, then drop it.
+///
+/// A frame that still holds the parser's `ConFrame` is written from that
+/// value. Building the Python atom list, and keeping every converted
+/// frame alive until the last one is written, is what made a long
+/// trajectory allocate a second copy.
+fn write_one_py_frame<W: std::io::Write>(
+    py: Python<'_>,
+    writer: &mut ConFrameWriter<W>,
+    frame: &PyConFrame,
+) -> PyResult<()> {
+    if !frame
+        .atoms_ready
+        .load(std::sync::atomic::Ordering::Acquire)
+    {
+        if let Some(inner) = frame.inner.as_ref() {
+            return writer
+                .write_frame(inner)
+                .map_err(|err| PyIOError::new_err(format!("write error: {err}")));
+        }
+    }
+    let built = frame.to_con_frame(py)?;
+    writer
+        .write_frame(&built)
+        .map_err(|err| PyIOError::new_err(format!("write error: {err}")))
+}
+
+/// Stream a `read_con` result without building a Python object per frame.
+fn write_stored_list<W: std::io::Write>(
+    py: Python<'_>,
+    writer: &mut ConFrameWriter<W>,
+    list: &ConFrameList,
+) -> PyResult<()> {
+    let n = list.len_frames();
+    for index in 0..n {
+        let stored = list
+            .frames
+            .lock()
+            .expect("frames")
+            .get(index)
+            .and_then(|slot| slot.as_ref().cloned());
+        if let Some(frame) = stored {
+            writer
+                .write_frame(&frame)
+                .map_err(|err| PyIOError::new_err(format!("write error: {err}")))?;
+            continue;
+        }
+        let obj = list.frame_obj(py, index)?;
+        let view = obj.bind(py).borrow();
+        write_one_py_frame(py, writer, &view)?;
+    }
+    Ok(())
+}
+
+fn write_stream<W: std::io::Write>(
+    py: Python<'_>,
+    writer: &mut ConFrameWriter<W>,
+    frames: &Bound<'_, PyAny>,
+) -> PyResult<()> {
+    if let Ok(list) = frames.cast::<ConFrameList>() {
+        return write_stored_list(py, writer, &list.borrow());
+    }
+    let iterator = PyIterator::from_object(frames)?;
+    for item in iterator {
+        let item = item?;
+        let frame = item.extract::<PyRef<'_, PyConFrame>>().map_err(|_| {
+            PyTypeError::new_err("frames must be an iterable of readcon.ConFrame objects")
+        })?;
+        write_one_py_frame(py, writer, &frame)?;
+    }
+    Ok(())
+}
+
 /// Write frames to a .con or .convel file path.
 ///
 /// The `compression` argument controls output compression:
@@ -2767,13 +2840,13 @@ fn write_con(
     comm: Option<&Bound<'_, PyAny>>,
     mode: &str,
 ) -> PyResult<()> {
-    let rust_frames = py_frames_to_rust(py, frames)?;
     if let Some(comm) = comm {
         if compression.is_some_and(|c| c != "none") || path.ends_with(".gz") || canonical {
             return Err(pyo3::exceptions::PyValueError::new_err(
                 "comm= writes uncompressed, non-canonical output only",
             ));
         }
+        let rust_frames = py_frames_to_rust(py, frames)?;
         return write_con_mpi(py, path, &rust_frames, precision, comm, mode);
     }
 
@@ -2796,9 +2869,7 @@ fn write_con(
                 .map_err(|e| PyIOError::new_err(format!("failed to create gzip writer: {e}")))?,
         }
         .canonical(canonical);
-        writer
-            .extend(rust_frames.iter())
-            .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
+        write_stream(py, &mut writer, frames)?;
     } else {
         let mut writer = match precision {
             Some(precision) => ConFrameWriter::from_path_with_precision(path, precision)
@@ -2807,9 +2878,7 @@ fn write_con(
                 .map_err(|e| PyIOError::new_err(format!("failed to create writer: {e}")))?,
         }
         .canonical(canonical);
-        writer
-            .extend(rust_frames.iter())
-            .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
+        write_stream(py, &mut writer, frames)?;
     }
     Ok(())
 }
@@ -2866,7 +2935,6 @@ fn write_con_string(
     precision: Option<usize>,
     canonical: bool,
 ) -> PyResult<String> {
-    let rust_frames = py_frames_to_rust(py, frames)?;
     let mut buffer: Vec<u8> = Vec::new();
     {
         let mut writer = match precision {
@@ -2874,9 +2942,7 @@ fn write_con_string(
             None => ConFrameWriter::new(&mut buffer),
         }
         .canonical(canonical);
-        writer
-            .extend(rust_frames.iter())
-            .map_err(|e| PyIOError::new_err(format!("write error: {e}")))?;
+        write_stream(py, &mut writer, frames)?;
     }
     String::from_utf8(buffer).map_err(|e| PyIOError::new_err(format!("utf8 error: {e}")))
 }
