@@ -14,7 +14,8 @@ echo "night rustc -V"
 "$night/rustc" -V
 echo "night cargo -V"
 "$night/cargo" -V
-export PATH="$night:$PATH"
+export PATH="$night:$HOME/.cargo/bin:/usr/bin:/bin"
 export CARGO_TARGET_DIR="$root/target/cov-branch"
+export RUSTFLAGS="-C link-arg=-lpython3.12"
 # Date pin: the nightly installed on this machine, printed above.
 cargo llvm-cov --branch --lib --features mpi,python -- --test-threads=1
