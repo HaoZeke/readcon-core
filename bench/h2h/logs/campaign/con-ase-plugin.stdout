@@ -1,7 +1,7 @@
 git rev-parse HEAD
-ba27839399bf30e4b1c71f2488c33246f5d5823f
+a11cf4fdac5c2d9c223f6fa6a42c4b579c4ec830
 git rev-parse HEAD^{tree}
-d50c603aa6016a29c1df1eee9afeeb1ccc33087c
+1553403c980732cafacb889242b4d0559747688f
 git rev-parse HEAD:src
 98362b7093c32ebe43f0bb7d8e2615407ea0f8c4
 command
@@ -11,16 +11,16 @@ pinned taskset -c 0
 repeat 6
 serial 1
 quantile type-7
-sample 10.803685658
-sample 11.398874914
-sample 10.769481777
-sample 10.855625983
-sample 10.983049355
-sample 10.997898669
-median_s 10.919337669
-q25_s 10.816670739
-q75_s 10.994186341
-iqr_s 0.177515601
+sample 10.549047462
+sample 10.571682105
+sample 10.647520519
+sample 10.668895578
+sample 11.131047095
+sample 10.865667697
+median_s 10.658208049
+q25_s 10.590641709
+q75_s 10.816474667
+iqr_s 0.225832959
 n_atoms None
 n_frames None
 cell missing
@@ -35,20 +35,20 @@ op read
 case frames-con
 rss_kib None
 massif_heap_bytes None
-{"samples": [10.803685658000177, 11.398874914000771, 10.769481777002511, 10.855625983000209, 10.983049354999821, 10.997898669000278], "n": 6, "median_s": 10.919337669000015, "q25_s": 10.816670739250185, "q75_s": 10.994186340500164, "iqr_s": 0.17751560124997923, "arm": "eon", "op": "read", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+{"samples": [10.54904746199827, 10.571682105000946, 10.647520518999954, 10.668895578000956, 11.131047094997484, 10.865667696998571], "n": 6, "median_s": 10.658208048500455, "q25_s": 10.590641708500698, "q75_s": 10.816474667249167, "iqr_s": 0.22583295874846954, "arm": "eon", "op": "read", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
 repeat 6
 serial 1
 quantile type-7
-sample 41.641454719
-sample 41.308027032
-sample 40.998527519
-sample 42.094857048
-sample 41.709772700
-sample 41.644217610
-median_s 41.642836164
-q25_s 41.391383954
-q75_s 41.693383927
-iqr_s 0.301999974
+sample 1.735617466
+sample 1.725711685
+sample 1.817385018
+sample 1.654542378
+sample 1.715942196
+sample 1.648697640
+median_s 1.720826941
+q25_s 1.669892332
+q75_s 1.733141021
+iqr_s 0.063248688
 n_atoms None
 n_frames None
 cell missing
@@ -63,20 +63,20 @@ op read
 case frames-con
 rss_kib None
 massif_heap_bytes None
-{"samples": [41.64145471899974, 41.30802703199879, 40.99852751900107, 42.09485704799954, 41.70977269999639, 41.64421760999903], "n": 6, "median_s": 41.642836164499386, "q25_s": 41.39138395374903, "q75_s": 41.69338392749705, "iqr_s": 0.3019999737480248, "arm": "readcon-con", "op": "read", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+{"samples": [1.7356174659980752, 1.7257116849978047, 1.817385018002824, 1.6545423779971316, 1.7159421960022883, 1.6486976400010462], "n": 6, "median_s": 1.7208269405000465, "q25_s": 1.6698923324984207, "q75_s": 1.7331410207480076, "iqr_s": 0.06324868824958685, "arm": "readcon-con", "op": "read", "case": "frames-con", "correct": true, "reason": "ok", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0, "parse_s": 0.431816412, "atoms_s": 1.0679326889985532}
 repeat 6
 serial 1
 quantile type-7
-sample 14.069714589
-sample 13.975980266
-sample 14.563581534
-sample 13.949166308
-sample 14.142534241
-sample 13.973928645
-median_s 14.022847428
-q25_s 13.974441550
-q75_s 14.124329328
-iqr_s 0.149887778
+sample 14.048063956
+sample 13.877143032
+sample 13.824516049
+sample 13.997044926
+sample 13.777676282
+sample 13.761329654
+median_s 13.850829541
+q25_s 13.789386224
+q75_s 13.967069453
+iqr_s 0.177683229
 n_atoms None
 n_frames None
 cell missing
@@ -91,20 +91,20 @@ op write
 case frames-con
 rss_kib None
 massif_heap_bytes None
-{"samples": [14.069714589000796, 13.975980266000988, 14.56358153399924, 13.949166308000713, 14.142534241000249, 13.973928645002161], "n": 6, "median_s": 14.022847427500892, "q25_s": 13.974441550251868, "q75_s": 14.124329328000385, "iqr_s": 0.1498877777485177, "arm": "eon", "op": "write", "case": "frames-con", "correct": true, "reason": "round-trip", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+{"samples": [14.048063956000988, 13.877143032001186, 13.824516049000522, 13.997044925999944, 13.777676282003085, 13.761329654000292], "n": 6, "median_s": 13.850829540500854, "q25_s": 13.789386223752444, "q75_s": 13.967069452500255, "iqr_s": 0.17768322874781006, "arm": "eon", "op": "write", "case": "frames-con", "correct": true, "reason": "round-trip", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
 repeat 6
 serial 1
 quantile type-7
-sample 49.644094000
-sample 49.926352209
-sample 50.406835066
-sample 50.442887440
-sample 49.738807665
-sample 50.130442474
-median_s 50.028397342
-q25_s 49.785693801
-q75_s 50.337736918
-iqr_s 0.552043117
+sample 1.178091779
+sample 1.160551971
+sample 1.152538749
+sample 1.129060934
+sample 1.152022702
+sample 1.135024797
+median_s 1.152280726
+q25_s 1.139274273
+q75_s 1.158548666
+iqr_s 0.019274392
 n_atoms None
 n_frames None
 cell missing
@@ -119,5 +119,5 @@ op write
 case frames-con
 rss_kib None
 massif_heap_bytes None
-{"samples": [49.64409399999931, 49.92635220900047, 50.406835066001804, 50.44288744000005, 49.7388076649986, 50.13044247400103], "n": 6, "median_s": 50.02839734150075, "q25_s": 49.78569380099907, "q75_s": 50.33773691800161, "iqr_s": 0.5520431170025404, "arm": "readcon-con", "op": "write", "case": "frames-con", "correct": true, "reason": "round-trip", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
+{"samples": [1.1780917789983505, 1.1605519710028602, 1.1525387490000867, 1.1290609339994262, 1.152022702000977, 1.1350247970003693], "n": 6, "median_s": 1.1522807255005318, "q25_s": 1.1392742732505212, "q75_s": 1.1585486655021668, "iqr_s": 0.019274392251645622, "arm": "readcon-con", "op": "write", "case": "frames-con", "correct": true, "reason": "round-trip", "rss_kib": null, "massif_heap_bytes": null, "max_abs": 0.0}
 exit 0

@@ -12,12 +12,19 @@ only the frames the slice asks for. A negative index uses
 from __future__ import annotations
 
 import os
+import time
 from collections.abc import Iterator
 
 import numpy as np
 import readcon
 from ase.atoms import Atoms
+from ase.constraints import FixAtoms, FixCartesian
+from ase.data import atomic_numbers
+from ase.geometry import cellpar_to_cell
 from ase.utils.plugins import ExternalIOFormat
+
+# Filled by a bulk read: readcon parse versus Atoms construction.
+last_split = {"parse_s": None, "atoms_s": None}
 
 readcon_con_format = ExternalIOFormat(
     desc="CON trajectory via readcon",
@@ -77,6 +84,11 @@ def _read(filename, index) -> Iterator[Atoms]:
         return
     start = 0 if selection.start is None else selection.start
     stop = selection.stop
+    if start == 0 and stop is None and step == 1:
+        bulk = _read_bulk(path)
+        if bulk is not None:
+            yield from bulk
+            return
     frames = readcon.iter_con(path, stream=True)
     if start:
         frames.skip(start)
@@ -100,11 +112,113 @@ def _write(filename, images, velocities: bool, append: bool) -> None:
     path = os.fspath(filename)
     if isinstance(images, Atoms):
         images = [images]
+    batch = None if append or velocities or not images else _batch_geometry(images)
+    if batch is not None:
+        positions, masses, cell, symbol = batch
+        readcon.write_coords(path, positions, masses, cell, symbol=symbol)
+        return
     frames = []
     if append and os.path.isfile(path) and os.path.getsize(path):
         frames.extend(readcon.iter_con(path, stream=True))
     frames.extend(_atoms_to_frame(atoms, velocities) for atoms in images)
     readcon.write_con(path, frames)
+
+
+def _read_bulk(path: str):
+    """Build every frame from readcon's coordinate arrays.
+
+    Returns None when the file needs the per-frame path (velocities or a
+    partial constraint). The copper-grid trajectory does not.
+    """
+    probe = next(readcon.iter_con(path, stream=True), None)
+    if probe is None or _needs_slow_frame(probe):
+        return None
+    symbols = [atom.symbol for atom in probe.atoms]
+    numbers = np.array([atomic_numbers[symbol] for symbol in symbols], dtype=int)
+    fixed = [all(atom.fixed) for atom in probe.atoms]
+    meta = dict(probe.metadata)
+    pbc = meta.get("pbc", [False, False, False])
+    info = {key: value for key, value in meta.items() if key not in _RESERVED}
+    constraint = FixAtoms(indices=np.flatnonzero(np.asarray(fixed, dtype=bool)))
+    data = readcon.read_coords(path)
+    positions = np.asarray(data["positions"])
+    masses = np.asarray(data["masses"])
+    cell = np.asarray(data["cell"])
+    n_frames = int(data["n_frames"])
+    started = time.perf_counter()
+    same_cell = n_frames == 0 or bool(np.all(cell == cell[0]))
+    cell_matrix = cellpar_to_cell(cell[0]) if same_cell and n_frames else None
+    same_mass = n_frames == 0 or bool(np.all(masses == masses[0]))
+    mass_row = np.ascontiguousarray(masses[0]) if same_mass and n_frames else None
+    images = []
+    for index in range(n_frames):
+        atoms = Atoms(
+            numbers=numbers,
+            positions=positions[index],
+            cell=cell_matrix
+            if cell_matrix is not None
+            else cellpar_to_cell(cell[index]),
+            pbc=pbc,
+            masses=mass_row if mass_row is not None else masses[index],
+            constraint=constraint,
+        )
+        if info:
+            atoms.info.update(info)
+        images.append(atoms)
+    last_split["parse_s"] = float(data["parse_s"])
+    last_split["atoms_s"] = time.perf_counter() - started
+    return images
+
+
+def _needs_slow_frame(frame) -> bool:
+    if frame.has_velocities:
+        return True
+    for atom in frame.atoms:
+        if any(atom.fixed) and not all(atom.fixed):
+            return True
+    return False
+
+
+def _batch_geometry(images):
+    """Contiguous positions, masses and cell when one write_coords call is enough."""
+    numbers = np.ascontiguousarray(images[0].numbers)
+    if numbers.size == 0 or len(set(numbers.tolist())) != 1:
+        return None
+    symbol = images[0].get_chemical_symbols()[0]
+    masses = np.ascontiguousarray(images[0].get_masses(), dtype=np.float64)
+    if not np.all(masses == masses[0]):
+        return None
+    for constraint in images[0].constraints:
+        if isinstance(constraint, FixCartesian):
+            return None
+        index = getattr(constraint, "index", [])
+        if len(np.asarray(index).reshape(-1)) != 0:
+            return None
+    n_frames = len(images)
+    n_atoms = numbers.size
+    positions = np.empty((n_frames, n_atoms, 3), dtype=np.float64)
+    cell = np.empty((n_frames, 6), dtype=np.float64)
+    cell_ref = np.ascontiguousarray(images[0].cell.array)
+    same_cell = True
+    for index, atoms in enumerate(images):
+        if atoms.numbers.shape != numbers.shape or not np.array_equal(
+            atoms.numbers, numbers
+        ):
+            return None
+        positions[index] = atoms.positions
+        if same_cell and not np.array_equal(atoms.cell.array, cell_ref):
+            same_cell = False
+    if same_cell:
+        row = np.empty(6, dtype=np.float64)
+        row[:3] = images[0].cell.lengths()
+        row[3:] = images[0].cell.angles()
+        cell[:] = row
+    else:
+        for index, atoms in enumerate(images):
+            cell[index, :3] = atoms.cell.lengths()
+            cell[index, 3:] = atoms.cell.angles()
+    mass = np.ascontiguousarray(np.broadcast_to(masses, (n_frames, n_atoms)))
+    return positions, mass, cell, symbol
 
 
 def _frame_to_atoms(frame) -> Atoms:

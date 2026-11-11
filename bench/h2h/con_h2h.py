@@ -1235,6 +1235,9 @@ def run_ase_plugin() -> list[dict]:
     images = None
     if "eon" in loaded and "readcon-con" in loaded:
         ok, reason, worst = images_match(loaded["readcon-con"], loaded["eon"])
+        from ase_readcon.io import last_split
+
+        split = dict(last_split)
         images = loaded["eon"]
         del loaded
         for fmt in ("eon", "readcon-con"):
@@ -1245,6 +1248,10 @@ def run_ase_plugin() -> list[dict]:
             def read_fmt(fmt=fmt):
                 ase_read(os.fspath(path), index=":", format=fmt)
 
+            extra = {"max_abs": worst}
+            if fmt == "readcon-con":
+                extra["parse_s"] = split.get("parse_s")
+                extra["atoms_s"] = split.get("atoms_s")
             rows.append(
                 finish(
                     timed(read_fmt),
@@ -1253,7 +1260,7 @@ def run_ase_plugin() -> list[dict]:
                     "frames-con",
                     True,
                     reason,
-                    max_abs=worst,
+                    **extra,
                 )
             )
     elif loaded:

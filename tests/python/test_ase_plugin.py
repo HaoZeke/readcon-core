@@ -47,6 +47,29 @@ def _cartesian(atoms):
     return found
 
 
+def _same_atoms(got, expect):
+    assert got.get_chemical_symbols() == expect.get_chemical_symbols()
+    np.testing.assert_allclose(got.positions, expect.positions)
+    np.testing.assert_allclose(got.get_masses(), expect.get_masses())
+    np.testing.assert_allclose(got.cell.array, expect.cell.array)
+    assert list(got.pbc) == list(expect.pbc)
+    assert _fixed_indices(got) == _fixed_indices(expect)
+    assert _cartesian(got) == _cartesian(expect)
+    assert dict(got.info) == dict(expect.info)
+    np.testing.assert_allclose(got.get_velocities(), expect.get_velocities())
+
+
+def test_matches_eon_reader_on_fixture(tmp_path):
+    images = [_atoms(0.0), _atoms(0.25)]
+    path = tmp_path / "fixture.con"
+    write(path, images, format="eon")
+    via_eon = read(path, index=":", format="eon")
+    via_plugin = read(path, index=":", format="readcon-con")
+    assert len(via_plugin) == len(via_eon)
+    for got, expect in zip(via_plugin, via_eon):
+        _same_atoms(got, expect)
+
+
 def test_round_trip_against_ase_eon_writer(tmp_path):
     images = [_atoms(0.0), _atoms(0.25)]
     path = tmp_path / "ase.con"
