@@ -299,6 +299,7 @@ def test_float32_storage_reads_back(tmp_path: Path):
     assert abs(float(frame.frc[0, 0]) - 0.123456) < 1e-5
     eager, _phases = readcon.read_con_phases(str(path), build="eager")
     assert len(eager) == 1
+    assert abs(float(eager[0].xyz[0, 0]) - 0.6394) < 1e-4
 
 
 def test_mixed_atom_counts_are_not_rectangular(tmp_path: Path):
@@ -368,7 +369,8 @@ def test_numpy_missing_keeps_the_parsed_frame(tmp_path: Path):
         "sys.modules['numpy'] = None\n"
         "import readcon\n"
         f"frames = readcon.read_con({str(path)!r})\n"
-        "print('N', len(frames))\n"
+        f"eager, _phases = readcon.read_con_phases({str(path)!r}, build='eager')\n"
+        "print('N', len(frames), len(eager))\n"
         "try:\n"
         "    frames.touch_checksum()\n"
         "    print('CHECKSUM ok')\n"
