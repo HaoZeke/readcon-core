@@ -10,6 +10,7 @@ inside each case, then records massif and a fresh-process high-water mark.
 
 from __future__ import annotations
 
+import ctypes
 import json
 import os
 import struct
@@ -39,6 +40,8 @@ FIXTURES = support.BENCH / "fixtures"
 LOG_CSV = support.BENCH / "extxyz-logs"
 RESULTS = support.BENCH / "extxyz-results.json"
 BINARY = ROOT / "target" / "release" / "examples" / "extxyz_time"
+VGMARK_SRC = Path(__file__).resolve().parent / "vgmark.c"
+VGMARK = WORK / "vgmark.so"
 MASSIF_CASES = ("large-1", "large-n")
 
 # name, atoms, frames, committed fixture
@@ -745,44 +748,111 @@ def massif_heap(arm: str, name: str) -> int:
     return peak
 
 
-def write_once(arm: str, name: str) -> None:
+def ensure_vgmark() -> Path:
+    VGMARK.parent.mkdir(parents=True, exist_ok=True)
+    if not VGMARK.is_file() or VGMARK.stat().st_mtime < VGMARK_SRC.stat().st_mtime:
+        completed = subprocess.run(
+            [
+                "gcc",
+                "-shared",
+                "-fPIC",
+                "-O2",
+                "-pthread",
+                "-o",
+                str(VGMARK),
+                str(VGMARK_SRC),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(completed.stderr or "gcc vgmark failed")
+    return VGMARK
+
+
+def vgmark():
+    library = ctypes.CDLL(str(ensure_vgmark()))
+    library.watch_start.restype = None
+    library.watch_delta_kib.restype = ctypes.c_long
+    library.vg_monitor.argtypes = [ctypes.c_char_p]
+    library.vg_monitor.restype = ctypes.c_int
+    return library
+
+
+def snapshot_heaps(path: Path) -> list[tuple[int, int]]:
+    found = []
+    stamp = None
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("time="):
+            stamp = int(line.split("=", 1)[1])
+        elif line.startswith("mem_heap_B=") and stamp is not None:
+            found.append((stamp, int(line.split("=", 1)[1])))
+            stamp = None
+    return found
+
+
+def write_heap_delta(main: Path, marker: Path) -> int:
+    marked = snapshot_heaps(marker)
+    if not marked:
+        raise RuntimeError(f"missing marker snapshot {marker}")
+    mark_time, mark_heap = marked[-1]
+    after = [heap for when, heap in snapshot_heaps(main) if when >= mark_time]
+    peak = max(after) if after else mark_heap
+    return max(0, peak - mark_heap)
+
+
+def write_window(arm: str, name: str, marker: Path) -> None:
+    """Load the input, then measure only the write."""
     payload = load_for_write(arm, input_path(name))
-    out = WORK / "outs" / f"once-{arm}-{name}.extxyz"
+    library = vgmark()
+    library.watch_start()
+    if library.vg_monitor(f"detailed_snapshot {marker}".encode()) != 0:
+        raise RuntimeError("snapshot")
+    out = WORK / "outs" / f"window-{arm}-{name}.extxyz"
     write_arm(arm, payload, out)
-    print(json.dumps({"hwm_kib": hwm_kib()}))
+    print(json.dumps({"rss_kib": int(library.watch_delta_kib())}))
 
 
 def write_rss(arm: str, name: str) -> int:
+    """Fresh process. The load sits outside the measured resident window."""
     out = WORK / "outs" / f"rss-{arm}-{name}.extxyz"
+    marker = WORK / "massif" / f"{arm}-write-rss-{name}.mark"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    library = ensure_vgmark()
     if arm == "readcon_rust":
         completed = support.run_binary(
             rust_binary(),
-            ["write-once", support.rel(input_path(name)), support.rel(out)],
+            [
+                "write-once",
+                support.rel(input_path(name)),
+                support.rel(out),
+                str(library),
+                str(marker),
+            ],
         )
-        if completed.returncode != 0:
-            raise RuntimeError(
-                support.sanitize(completed.stderr or "rust write-once failed")
-            )
-        payload = json.loads(completed.stdout.strip().splitlines()[-1])
-        return int(payload["hwm_kib"])
-    completed = subprocess.run(
-        [sys.executable, str(SCRIPT), "write-once", arm, name],
-        check=False,
-        capture_output=True,
-        text=True,
-        env=support.thread_env(),
-    )
+    else:
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), "write-window", arm, name, str(marker)],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=support.thread_env(),
+        )
     if completed.returncode != 0:
         raise RuntimeError(
             support.sanitize(completed.stderr or completed.stdout or "write rss failed")
         )
     payload = json.loads(completed.stdout.strip().splitlines()[-1])
-    return int(payload["hwm_kib"])
+    return int(payload["rss_kib"])
 
 
 def massif_write(arm: str, name: str) -> int:
+    """Fresh process. Heap growth after the post-load snapshot."""
     out = WORK / "massif" / f"{arm}-write-{name}.out"
+    marker = WORK / "massif" / f"{arm}-write-{name}.mark"
     out.parent.mkdir(parents=True, exist_ok=True)
+    library = ensure_vgmark()
     dest = WORK / "outs" / f"massif-{arm}-{name}.extxyz"
     if arm == "readcon_rust":
         command = [
@@ -790,15 +860,26 @@ def massif_write(arm: str, name: str) -> int:
             "write-once",
             str(input_path(name)),
             str(dest),
+            str(library),
+            str(marker),
         ]
     else:
-        command = [sys.executable, str(SCRIPT), "write-once", arm, name]
+        command = [
+            sys.executable,
+            str(SCRIPT),
+            "write-window",
+            arm,
+            name,
+            str(marker),
+        ]
     completed = subprocess.run(
         [
             "valgrind",
             "--tool=massif",
             f"--massif-out-file={out}",
             "--time-unit=B",
+            "--detailed-freq=1",
+            "--max-snapshots=200",
             *command,
         ],
         check=False,
@@ -810,11 +891,7 @@ def massif_write(arm: str, name: str) -> int:
         raise RuntimeError(
             support.sanitize(completed.stderr[-2000:] or "write massif failed")
         )
-    peak = 0
-    for line in out.read_text(encoding="utf-8", errors="replace").splitlines():
-        if line.startswith("mem_heap_B="):
-            peak = max(peak, int(line.split("=", 1)[1]))
-    return peak
+    return write_heap_delta(out, marker)
 
 
 def run_read(arm: str) -> None:
@@ -1204,6 +1281,62 @@ def run_session() -> None:
     report()
 
 
+def refresh_memory() -> None:
+    """Replace RSS and massif. Timed samples stay as they are."""
+    ensure_vgmark()
+    document = json.loads(RESULTS.read_text(encoding="utf-8"))
+    only_arm = sys.argv[2] if len(sys.argv) > 2 else ""
+    only_case = sys.argv[3] if len(sys.argv) > 3 else ""
+    rows = document["rows"]
+    for row in rows:
+        if not row.get("samples"):
+            continue
+        if only_arm and row["arm"] != only_arm:
+            continue
+        if only_case and row["case"] != only_case:
+            continue
+        arm = row["arm"]
+        name = row["case"]
+        if row["op"] == "read":
+            row["rss_kib"] = rss_of(arm, name)
+            row["massif_heap_bytes"] = (
+                massif_heap(arm, name) if name in MASSIF_CASES else None
+            )
+            row["memory_scope"] = "read"
+        elif row["op"] == "write":
+            row["rss_kib"] = write_rss(arm, name)
+            row["massif_heap_bytes"] = (
+                massif_write(arm, name) if name in MASSIF_CASES else None
+            )
+            row["memory_scope"] = "write"
+        print(
+            f"memory {row['op']} {arm} {name} "
+            f"rss={row['rss_kib']} massif={row['massif_heap_bytes']}",
+            file=sys.stderr,
+            flush=True,
+        )
+        (WORK / "memory-checkpoint.json").write_text(
+            json.dumps(document) + "\n", encoding="utf-8"
+        )
+    if only_arm or only_case:
+        return
+    document["environment"]["memory_scope"] = (
+        "read: fresh-process VmHWM and massif peak of a process that only reads; "
+        "write: fresh-process resident and heap increase above the post-load baseline"
+    )
+    document["environment"]["memory_git"] = support.git_line(["rev-parse", "HEAD"])
+    RESULTS.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    grouped: dict[tuple[str, str], list[dict]] = {}
+    for row in rows:
+        grouped.setdefault((row["arm"], row["op"]), []).append(row)
+    for (arm, op), group in grouped.items():
+        emit(
+            f"extxyz-{arm}-{op}",
+            ["taskset", "-c", "0", "python3", "bench/h2h/extxyz_h2h.py", "memory"],
+            group,
+        )
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         raise SystemExit("missing command")
@@ -1212,7 +1345,10 @@ def main() -> None:
         once(sys.argv[2], sys.argv[3])
         return
     if command == "write-once":
-        write_once(sys.argv[2], sys.argv[3])
+        write_window(sys.argv[2], sys.argv[3], Path(sys.argv[4]))
+        return
+    if command == "write-window":
+        write_window(sys.argv[2], sys.argv[3], Path(sys.argv[4]))
         return
     support.ensure_pinned()
     if command == "prepare":
@@ -1229,6 +1365,8 @@ def main() -> None:
         report()
     elif command == "session":
         run_session()
+    elif command == "memory":
+        refresh_memory()
     else:
         raise SystemExit(f"unknown command {command}")
 

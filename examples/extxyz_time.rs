@@ -7,11 +7,15 @@
 //! `extxyz_time serve` reads line commands so one process can time single
 //! reads and writes between other arms.
 
-use readcon_core::extxyz_scan::{XyzTables, tables_from_extxyz_path, write_extxyz_path};
+use readcon_core::extxyz_scan::{
+    XyzTables, tables_from_extxyz_path, tables_to_extxyz_bytes, write_extxyz_path,
+};
 use std::env;
+use std::ffi::CString;
 use std::fs::File;
 use std::hint::black_box;
 use std::io::{BufRead, Write};
+use std::os::raw::{c_char, c_int, c_long, c_void};
 use std::path::Path;
 use std::time::Instant;
 
@@ -52,9 +56,11 @@ fn main() {
         "write-once" => {
             let tables = tables_from_extxyz_path(Path::new(&path)).expect("read");
             let out = args.next().expect("out");
-            write_extxyz_path(Path::new(&out), &tables).expect("write");
+            let library = args.next().expect("vgmark");
+            let marker = args.next().expect("marker");
+            let delta = write_measured(&out, &library, &marker, &tables);
             black_box(&tables);
-            println!("{{\"hwm_kib\":{}}}", hwm_kib());
+            println!("{{\"rss_kib\":{delta}}}");
         }
         "once" => {
             let tables = tables_from_extxyz_path(Path::new(&path)).expect("read");
@@ -68,6 +74,46 @@ fn main() {
         }
         other => panic!("unknown mode {other}"),
     }
+}
+
+unsafe extern "C" {
+    fn dlopen(filename: *const c_char, flags: c_int) -> *mut c_void;
+    fn dlsym(handle: *mut c_void, symbol: *const c_char) -> *mut c_void;
+}
+
+fn symbol<T>(handle: *mut c_void, name: &str) -> T {
+    let c_name = CString::new(name).expect("symbol");
+    let pointer = unsafe { dlsym(handle, c_name.as_ptr()) };
+    if pointer.is_null() {
+        panic!("symbol {name}");
+    }
+    unsafe { std::mem::transmute_copy(&pointer) }
+}
+
+/// Load is already done. The returned value is the resident increase of the write.
+fn write_measured(dest: &str, library: &str, marker: &str, tables: &XyzTables) -> i64 {
+    let path = CString::new(library).expect("library");
+    let handle = unsafe { dlopen(path.as_ptr(), 2) };
+    if handle.is_null() {
+        panic!("vgmark");
+    }
+    let start: unsafe extern "C" fn() = symbol(handle, "watch_start");
+    let stop: unsafe extern "C" fn() -> c_long = symbol(handle, "watch_delta_kib");
+    let monitor: unsafe extern "C" fn(*const c_char) -> c_int = symbol(handle, "vg_monitor");
+    let command = CString::new(format!("detailed_snapshot {marker}")).expect("marker");
+    unsafe { start() };
+    if unsafe { monitor(command.as_ptr()) } != 0 {
+        panic!("snapshot");
+    }
+    let bytes = tables_to_extxyz_bytes(tables).expect("bytes");
+    if let Some(parent) = Path::new(dest).parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent).expect("dir");
+        }
+    }
+    std::fs::write(dest, &bytes).expect("write");
+    black_box(&bytes);
+    unsafe { stop() }
 }
 
 fn reply(line: &str) {
