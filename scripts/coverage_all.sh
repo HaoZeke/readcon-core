@@ -57,7 +57,11 @@ if export.is_file():
             for item in files
             if not str(item.get("filename", "")).endswith("python.rs")
         ]
-        files.extend(extra_files)
+        files.extend(
+            item
+            for item in extra_files
+            if str(item.get("filename", "")).endswith("python.rs")
+        )
     for item in files:
         name = item.get("filename", "")
         if not (name.startswith("src/") and name.endswith(".rs")):
