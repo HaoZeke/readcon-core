@@ -92,7 +92,7 @@ PY="$(find / -path "*cp312-cp312/bin/python" -type f -print -quit)"
 "$PY" -m maturin build --release --strip --features python --interpreter "$PY" --out /work/out/wheels-ci
 cargo build --release --lib --locked
 cp -f /work/target/release/libreadcon_core.so /work/out/libreadcon_core.so
-'
+' > "${stage}/out/ci-build.log" 2>&1
 sudo chown -R "$(id -u):$(id -g)" "$stage"
 
 host_build() {
@@ -121,8 +121,8 @@ host_build() {
   )
 }
 
-host_build ${stage}/head 1.88.0 ${stage}/cargo-188 ${stage}/target-188 ${stage}/out/wheels-188 ${stage}/out/rustflags-188.txt ${stage}/out/rustc-188.txt
-host_build ${stage}/r27 1.88.0 ${stage}/cargo-r27 ${stage}/target-r27 ${stage}/out/wheels-r27 ${stage}/out/rustflags-r27.txt ${stage}/out/rustc-r27.txt
+host_build ${stage}/head 1.88.0 ${stage}/cargo-188 ${stage}/target-188 ${stage}/out/wheels-188 ${stage}/out/rustflags-188.txt ${stage}/out/rustc-188.txt > "${stage}/out/host-188.log" 2>&1
+host_build ${stage}/r27 1.88.0 ${stage}/cargo-r27 ${stage}/target-r27 ${stage}/out/wheels-r27 ${stage}/out/rustflags-r27.txt ${stage}/out/rustc-r27.txt > "${stage}/out/host-r27.log" 2>&1
 
 install_target() {
   local wheel="$1"
@@ -135,9 +135,9 @@ install_target() {
 CI_WHEEL="$(printf '%s\n' ${stage}/out/wheels-ci/readcon-*.whl | head -n 1)"
 W188="$(printf '%s\n' ${stage}/out/wheels-188/readcon-*.whl | head -n 1)"
 WR27="$(printf '%s\n' ${stage}/out/wheels-r27/readcon-*.whl | head -n 1)"
-install_target "$CI_WHEEL" ${stage}/py-ci
-install_target "$W188" ${stage}/py-188
-install_target "$WR27" ${stage}/py-r27
+install_target "$CI_WHEEL" ${stage}/py-ci > "${stage}/out/install-ci.log" 2>&1
+install_target "$W188" ${stage}/py-188 > "${stage}/out/install-188.log" 2>&1
+install_target "$WR27" ${stage}/py-r27 > "${stage}/out/install-r27.log" 2>&1
 
 PIN=${stage}/out/readcon-published.txt
 cat > "$PIN" <<EOF
@@ -146,7 +146,7 @@ readcon==0.18.0 \\
 EOF
 rm -rf ${stage}/py-0180
 mkdir -p ${stage}/py-0180
-"$PY" -m pip install --no-deps --require-hashes --target ${stage}/py-0180 -r "$PIN"
+"$PY" -m pip install --no-deps --require-hashes --target ${stage}/py-0180 -r "$PIN" > "${stage}/out/install-published.log" 2>&1
 "$PY" -m pip uninstall -y readcon >/dev/null
 
 MAPS=(
@@ -166,7 +166,7 @@ MAPS=(
     bench/h2h_timed/native/time_read.f90 ${stage}/out/readcon.o \
     -L ${stage}/out -Wl,-rpath,'$ORIGIN' -lreadcon_core -ldl -lpthread -lm \
     -o ${stage}/out/h2h_fortran
-)
+) > "${stage}/out/native-build.log" 2>&1
 
 
 "$PY" - "$ROOT" "$stage" "$R27" "$PUBLISHED_SHA" "$CI_WHEEL" "$W188" "$WR27" <<'PY'
