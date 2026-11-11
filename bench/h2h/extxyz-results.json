@@ -21,7 +21,9 @@
     "warmup": 1,
     "quantile": "type-7",
     "pos_tol": 1e-09,
-    "cell_tol": 1e-06
+    "cell_tol": 1e-06,
+    "memory_scope": "read: fresh-process VmHWM and massif peak of a process that only reads; write: fresh-process resident and heap increase above the post-load baseline",
+    "memory_git": "c0653f7862494908d0bf184d83a910c6ba75f327"
   },
   "ng_file_limit": {
     "reads_bytes": 8168,
@@ -1076,8 +1078,9 @@
       "op": "read",
       "case": "small-1",
       "file": "bench/h2h/fixtures/small-1.extxyz",
-      "rss_kib": 82444,
-      "massif_heap_bytes": null
+      "rss_kib": 82616,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1119,8 +1122,9 @@
       "op": "read",
       "case": "small-n",
       "file": "bench/h2h/fixtures/small-n.extxyz",
-      "rss_kib": 82372,
-      "massif_heap_bytes": null
+      "rss_kib": 82652,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1162,8 +1166,9 @@
       "op": "read",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz",
-      "rss_kib": 82472,
-      "massif_heap_bytes": null
+      "rss_kib": 82704,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1205,8 +1210,9 @@
       "op": "read",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz",
-      "rss_kib": 83828,
-      "massif_heap_bytes": null
+      "rss_kib": 84068,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1248,8 +1254,9 @@
       "op": "read",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz",
-      "rss_kib": 255528,
-      "massif_heap_bytes": 197992654
+      "rss_kib": 255788,
+      "massif_heap_bytes": 198265279,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1291,8 +1298,9 @@
       "op": "read",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz",
-      "rss_kib": 243276,
-      "massif_heap_bytes": 162405629
+      "rss_kib": 243568,
+      "massif_heap_bytes": 162678318,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1334,9 +1342,10 @@
       "op": "write",
       "case": "small-1",
       "file": "bench/h2h/work/extxyz/outs/ase_cextxyz-small-1.extxyz",
-      "rss_kib": 82276,
+      "rss_kib": 220,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1378,9 +1387,10 @@
       "op": "write",
       "case": "small-n",
       "file": "bench/h2h/work/extxyz/outs/ase_cextxyz-small-n.extxyz",
-      "rss_kib": 82484,
+      "rss_kib": 272,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1422,9 +1432,10 @@
       "op": "write",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/outs/ase_cextxyz-medium-1.extxyz",
-      "rss_kib": 82680,
+      "rss_kib": 440,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1466,9 +1477,10 @@
       "op": "write",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/outs/ase_cextxyz-medium-n.extxyz",
-      "rss_kib": 84200,
+      "rss_kib": 1276,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1510,9 +1522,10 @@
       "op": "write",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/outs/ase_cextxyz-large-1.extxyz",
-      "rss_kib": 430604,
-      "massif_heap_bytes": 264890637,
-      "note": ""
+      "rss_kib": 245460,
+      "massif_heap_bytes": 179902220,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1554,9 +1567,10 @@
       "op": "write",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/outs/ase_cextxyz-large-n.extxyz",
-      "rss_kib": 164320,
-      "massif_heap_bytes": 88700668,
-      "note": ""
+      "rss_kib": 2260,
+      "massif_heap_bytes": 923399,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1598,8 +1612,9 @@
       "op": "read",
       "case": "small-1",
       "file": "bench/h2h/fixtures/small-1.extxyz",
-      "rss_kib": 82220,
-      "massif_heap_bytes": null
+      "rss_kib": 82592,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1641,8 +1656,9 @@
       "op": "read",
       "case": "small-n",
       "file": "bench/h2h/fixtures/small-n.extxyz",
-      "rss_kib": 82432,
-      "massif_heap_bytes": null
+      "rss_kib": 82492,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1684,8 +1700,9 @@
       "op": "read",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz",
-      "rss_kib": 82880,
-      "massif_heap_bytes": null
+      "rss_kib": 83096,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1727,8 +1744,9 @@
       "op": "read",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz",
-      "rss_kib": 84928,
-      "massif_heap_bytes": null
+      "rss_kib": 85300,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1770,8 +1788,9 @@
       "op": "read",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz",
-      "rss_kib": 670312,
-      "massif_heap_bytes": 221528790
+      "rss_kib": 670036,
+      "massif_heap_bytes": 221801399,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1813,8 +1832,9 @@
       "op": "read",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz",
-      "rss_kib": 328196,
-      "massif_heap_bytes": 229374653
+      "rss_kib": 328468,
+      "massif_heap_bytes": 229647246,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -1856,9 +1876,10 @@
       "op": "write",
       "case": "small-1",
       "file": "bench/h2h/work/extxyz/outs/ase_extxyz-small-1.extxyz",
-      "rss_kib": 82152,
+      "rss_kib": 212,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1900,9 +1921,10 @@
       "op": "write",
       "case": "small-n",
       "file": "bench/h2h/work/extxyz/outs/ase_extxyz-small-n.extxyz",
-      "rss_kib": 82184,
+      "rss_kib": 216,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1944,9 +1966,10 @@
       "op": "write",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/outs/ase_extxyz-medium-1.extxyz",
-      "rss_kib": 82636,
+      "rss_kib": 276,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -1988,9 +2011,10 @@
       "op": "write",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/outs/ase_extxyz-medium-n.extxyz",
-      "rss_kib": 83740,
+      "rss_kib": 244,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2032,9 +2056,10 @@
       "op": "write",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/outs/ase_extxyz-large-1.extxyz",
-      "rss_kib": 670340,
-      "massif_heap_bytes": 246071485,
-      "note": ""
+      "rss_kib": 110448,
+      "massif_heap_bytes": 121004830,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2076,9 +2101,10 @@
       "op": "write",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/outs/ase_extxyz-large-n.extxyz",
-      "rss_kib": 222464,
-      "massif_heap_bytes": 130552809,
-      "note": ""
+      "rss_kib": 208,
+      "massif_heap_bytes": 26367,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2120,8 +2146,9 @@
       "op": "read",
       "case": "small-1",
       "file": "bench/h2h/fixtures/small-1.extxyz",
-      "rss_kib": 35484,
-      "massif_heap_bytes": null
+      "rss_kib": 35756,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -2163,8 +2190,9 @@
       "op": "read",
       "case": "small-n",
       "file": "bench/h2h/fixtures/small-n.extxyz",
-      "rss_kib": 35584,
-      "massif_heap_bytes": null
+      "rss_kib": 35792,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -2206,8 +2234,9 @@
       "op": "read",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz",
-      "rss_kib": 35652,
-      "massif_heap_bytes": null
+      "rss_kib": 35940,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -2249,8 +2278,9 @@
       "op": "read",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz",
-      "rss_kib": 37676,
-      "massif_heap_bytes": null
+      "rss_kib": 37956,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -2292,8 +2322,9 @@
       "op": "read",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz",
-      "rss_kib": 232020,
-      "massif_heap_bytes": 160942797
+      "rss_kib": 232168,
+      "massif_heap_bytes": 161214230,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -2335,8 +2366,9 @@
       "op": "read",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz",
-      "rss_kib": 256740,
-      "massif_heap_bytes": 165192554
+      "rss_kib": 256984,
+      "massif_heap_bytes": 165463987,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -2378,9 +2410,10 @@
       "op": "write",
       "case": "small-1",
       "file": "bench/h2h/work/extxyz/outs/extxyz-small-1.extxyz",
-      "rss_kib": 35464,
+      "rss_kib": 288,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2422,9 +2455,10 @@
       "op": "write",
       "case": "small-n",
       "file": "bench/h2h/work/extxyz/outs/extxyz-small-n.extxyz",
-      "rss_kib": 35444,
+      "rss_kib": 340,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2466,9 +2500,10 @@
       "op": "write",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/outs/extxyz-medium-1.extxyz",
-      "rss_kib": 35740,
+      "rss_kib": 524,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2510,9 +2545,10 @@
       "op": "write",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/outs/extxyz-medium-n.extxyz",
-      "rss_kib": 37504,
+      "rss_kib": 1308,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2554,9 +2590,10 @@
       "op": "write",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/outs/extxyz-large-1.extxyz",
-      "rss_kib": 398996,
-      "massif_heap_bytes": 268394441,
-      "note": ""
+      "rss_kib": 277848,
+      "massif_heap_bytes": 171902988,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2598,9 +2635,10 @@
       "op": "write",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/outs/extxyz-large-n.extxyz",
-      "rss_kib": 139716,
-      "massif_heap_bytes": 99802998,
-      "note": ""
+      "rss_kib": 2344,
+      "massif_heap_bytes": 955940,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2642,8 +2680,9 @@
       "op": "read",
       "case": "small-1",
       "file": "bench/h2h/fixtures/small-1.extxyz",
-      "rss_kib": 36092,
-      "massif_heap_bytes": null
+      "rss_kib": 36368,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -2685,8 +2724,9 @@
       "op": "read",
       "case": "small-n",
       "file": "bench/h2h/fixtures/small-n.extxyz",
-      "rss_kib": 36168,
-      "massif_heap_bytes": null
+      "rss_kib": 36424,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [],
@@ -2836,9 +2876,10 @@
       "op": "write",
       "case": "small-1",
       "file": "bench/h2h/work/extxyz/outs/extxyz_ng-small-1.extxyz",
-      "rss_kib": 35892,
+      "rss_kib": 136,
       "massif_heap_bytes": null,
-      "note": "write_frame loop; write_frames rejects a Python iterator of Frame"
+      "note": "write_frame loop; write_frames rejects a Python iterator of Frame",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -2860,9 +2901,10 @@
       "op": "write",
       "case": "small-n",
       "file": "bench/h2h/work/extxyz/outs/extxyz_ng-small-n.extxyz",
-      "rss_kib": 35868,
+      "rss_kib": 144,
       "massif_heap_bytes": null,
-      "note": "write_frame loop; write_frames rejects a Python iterator of Frame"
+      "note": "write_frame loop; write_frames rejects a Python iterator of Frame",
+      "memory_scope": "write"
     },
     {
       "samples": [],
@@ -3012,8 +3054,9 @@
       "op": "read",
       "case": "small-1",
       "file": "bench/h2h/fixtures/small-1.extxyz",
-      "rss_kib": 35016,
-      "massif_heap_bytes": null
+      "rss_kib": 35312,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3055,8 +3098,9 @@
       "op": "read",
       "case": "small-n",
       "file": "bench/h2h/fixtures/small-n.extxyz",
-      "rss_kib": 35036,
-      "massif_heap_bytes": null
+      "rss_kib": 35324,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3098,8 +3142,9 @@
       "op": "read",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz",
-      "rss_kib": 35288,
-      "massif_heap_bytes": null
+      "rss_kib": 35696,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3141,8 +3186,9 @@
       "op": "read",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz",
-      "rss_kib": 38568,
-      "massif_heap_bytes": null
+      "rss_kib": 38968,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3184,8 +3230,9 @@
       "op": "read",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz",
-      "rss_kib": 394512,
-      "massif_heap_bytes": 234875764
+      "rss_kib": 394836,
+      "massif_heap_bytes": 235146629,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3227,8 +3274,9 @@
       "op": "read",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz",
-      "rss_kib": 412716,
-      "massif_heap_bytes": 228589537
+      "rss_kib": 413096,
+      "massif_heap_bytes": 228860402,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3270,9 +3318,10 @@
       "op": "write",
       "case": "small-1",
       "file": "bench/h2h/work/extxyz/outs/readcon_py-small-1.extxyz",
-      "rss_kib": 35132,
+      "rss_kib": 328,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3314,9 +3363,10 @@
       "op": "write",
       "case": "small-n",
       "file": "bench/h2h/work/extxyz/outs/readcon_py-small-n.extxyz",
-      "rss_kib": 35220,
+      "rss_kib": 336,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3358,9 +3408,10 @@
       "op": "write",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/outs/readcon_py-medium-1.extxyz",
-      "rss_kib": 35548,
+      "rss_kib": 360,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3402,9 +3453,10 @@
       "op": "write",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/outs/readcon_py-medium-n.extxyz",
-      "rss_kib": 38700,
+      "rss_kib": 456,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3446,9 +3498,10 @@
       "op": "write",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/outs/readcon_py-large-1.extxyz",
-      "rss_kib": 394468,
-      "massif_heap_bytes": 234875836,
-      "note": ""
+      "rss_kib": 332,
+      "massif_heap_bytes": 88391070,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3490,9 +3543,10 @@
       "op": "write",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/outs/readcon_py-large-n.extxyz",
-      "rss_kib": 414076,
-      "massif_heap_bytes": 228589609,
-      "note": ""
+      "rss_kib": 24848,
+      "massif_heap_bytes": 88391143,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3534,8 +3588,9 @@
       "op": "read",
       "case": "small-1",
       "file": "bench/h2h/fixtures/small-1.extxyz",
-      "rss_kib": 2540,
-      "massif_heap_bytes": null
+      "rss_kib": 2624,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3577,8 +3632,9 @@
       "op": "read",
       "case": "small-n",
       "file": "bench/h2h/fixtures/small-n.extxyz",
-      "rss_kib": 2568,
-      "massif_heap_bytes": null
+      "rss_kib": 2560,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3620,8 +3676,9 @@
       "op": "read",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz",
-      "rss_kib": 2864,
-      "massif_heap_bytes": null
+      "rss_kib": 2880,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3663,8 +3720,9 @@
       "op": "read",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz",
-      "rss_kib": 4848,
-      "massif_heap_bytes": null
+      "rss_kib": 4972,
+      "massif_heap_bytes": null,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3706,8 +3764,9 @@
       "op": "read",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz",
-      "rss_kib": 250260,
-      "massif_heap_bytes": 221141878
+      "rss_kib": 250212,
+      "massif_heap_bytes": 221141878,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3749,8 +3808,9 @@
       "op": "read",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz",
-      "rss_kib": 249632,
-      "massif_heap_bytes": 220378137
+      "rss_kib": 249496,
+      "massif_heap_bytes": 220378137,
+      "memory_scope": "read"
     },
     {
       "samples": [
@@ -3792,9 +3852,10 @@
       "op": "write",
       "case": "small-1",
       "file": "bench/h2h/work/extxyz/outs/readcon_rust-small-1.extxyz",
-      "rss_kib": 2584,
+      "rss_kib": 196,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3836,9 +3897,10 @@
       "op": "write",
       "case": "small-n",
       "file": "bench/h2h/work/extxyz/outs/readcon_rust-small-n.extxyz",
-      "rss_kib": 2640,
+      "rss_kib": 204,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3880,9 +3942,10 @@
       "op": "write",
       "case": "medium-1",
       "file": "bench/h2h/work/extxyz/outs/readcon_rust-medium-1.extxyz",
-      "rss_kib": 2880,
+      "rss_kib": 288,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3924,9 +3987,10 @@
       "op": "write",
       "case": "medium-n",
       "file": "bench/h2h/work/extxyz/outs/readcon_rust-medium-n.extxyz",
-      "rss_kib": 5004,
+      "rss_kib": 584,
       "massif_heap_bytes": null,
-      "note": ""
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -3968,9 +4032,10 @@
       "op": "write",
       "case": "large-1",
       "file": "bench/h2h/work/extxyz/outs/readcon_rust-large-1.extxyz",
-      "rss_kib": 250260,
-      "massif_heap_bytes": 230664856,
-      "note": ""
+      "rss_kib": 26668,
+      "massif_heap_bytes": 64000416,
+      "note": "",
+      "memory_scope": "write"
     },
     {
       "samples": [
@@ -4012,9 +4077,10 @@
       "op": "write",
       "case": "large-n",
       "file": "bench/h2h/work/extxyz/outs/readcon_rust-large-n.extxyz",
-      "rss_kib": 249552,
-      "massif_heap_bytes": 231451234,
-      "note": ""
+      "rss_kib": 24976,
+      "massif_heap_bytes": 64000410,
+      "note": "",
+      "memory_scope": "write"
     }
   ]
 }

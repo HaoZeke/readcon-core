@@ -456,8 +456,8 @@ extxyz-ng 0.0.2 reads a frame of 8168 bytes and rejects a frame of 8203 bytes, s
 On the reads it finishes, the 10-atom medians are \(8.46\times 10^{-5}\)~s and \(4.67\times 10^{-4}\)~s.
 It also cannot reread the 8-frame file it writes.
 The large writes in Table~\ref{tab:extxyz-h2h-write} take 0.487~s and 0.431~s for readcon Rust, 0.442~s and 0.411~s for readcon Python, 3.74~s and 4.26~s for ASE \texttt{extxyz}, 0.948~s and 1.47~s for ASE \texttt{cextxyz}, and 0.906~s and 1.19~s for extxyz 0.4.6, on the million-atom file and then the 10000-frame file.
-The massif heap peaks of those writes are 220.0 and 220.7~MiB, 224.0 and 218.0~MiB, 234.7 and 124.5~MiB, 252.6 and 84.6~MiB, and 256.0 and 95.2~MiB.
-Fresh-process high-water marks for those writes are 244.4 and 243.7~MiB, 385.2 and 404.4~MiB, 654.6 and 217.2~MiB, 420.5 and 160.5~MiB, and 389.6 and 136.4~MiB.
+The massif heap increases of those writes, above the loaded input, are 61.0 and 61.0~MiB, 84.3 and 84.3~MiB, 115.4 and 0.025~MiB, 171.6 and 0.9~MiB, and 163.9 and 0.9~MiB.
+The resident increases of those writes are 26.0 and 24.4~MiB, 0.3 and 24.3~MiB, 107.9 and 0.2~MiB, 239.7 and 2.2~MiB, and 271.3 and 2.3~MiB.
 extxyz-ng 0.0.2 writes the single 10-atom frame in \(1.03\times 10^{-4}\)~s and cannot reread the 8-frame file it writes.
 
 \begin{table}[tbp] \centering \scriptsize

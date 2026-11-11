@@ -1,11 +1,11 @@
 git rev-parse HEAD
-22189d596ba24c6b8f6459752818699cd164b29b
+8a86b667c212cb5208315db9732425934f31e851
 git rev-parse HEAD^{tree}
-b1128203949db8d1e0a5abd99d67963b8c23f6bd
+6443cd1473f4c127e086077e8c9aa391d0a3e38b
 git rev-parse HEAD:src
 5bbd588981812d448e5bf534f7f839d5262b3a9a
 command
-taskset -c 0 python3 bench/h2h/extxyz_h2h.py session
+taskset -c 0 python3 bench/h2h/extxyz_h2h.py memory
 hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
 pinned taskset -c 0
 repeat 6
@@ -34,9 +34,9 @@ arm extxyz
 op read
 case small-1
 file bench/h2h/fixtures/small-1.extxyz
-rss_kib 35484
+rss_kib 35756
 massif_heap_bytes None
-{"samples": [8.67629996719188e-05, 8.373399941774551e-05, 8.086300022114301e-05, 8.40559996504453e-05, 0.00010333299997000722, 8.682000043336302e-05], "n": 6, "median_s": 8.540949966118205e-05, "q25_s": 8.381449947592046e-05, "q75_s": 8.680575024300197e-05, "iqr_s": 2.9912507670815103e-06, "n_atoms": 10, "n_frames": 1, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "small-1", "file": "bench/h2h/fixtures/small-1.extxyz", "rss_kib": 35484, "massif_heap_bytes": null}
+{"samples": [8.67629996719188e-05, 8.373399941774551e-05, 8.086300022114301e-05, 8.40559996504453e-05, 0.00010333299997000722, 8.682000043336302e-05], "n": 6, "median_s": 8.540949966118205e-05, "q25_s": 8.381449947592046e-05, "q75_s": 8.680575024300197e-05, "iqr_s": 2.9912507670815103e-06, "n_atoms": 10, "n_frames": 1, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "small-1", "file": "bench/h2h/fixtures/small-1.extxyz", "rss_kib": 35756, "massif_heap_bytes": null, "memory_scope": "read"}
 repeat 6
 serial 1
 quantile type-7
@@ -63,9 +63,9 @@ arm extxyz
 op read
 case small-n
 file bench/h2h/fixtures/small-n.extxyz
-rss_kib 35584
+rss_kib 35792
 massif_heap_bytes None
-{"samples": [0.000411029000133567, 0.0004085489999852143, 0.00041814699943643063, 0.0005567170001086197, 0.000455307999800425, 0.0004158179999649292], "n": 6, "median_s": 0.0004169824997006799, "q25_s": 0.00041222625009140756, "q75_s": 0.0004460177497094264, "iqr_s": 3.379149961801886e-05, "n_atoms": 10, "n_frames": 8, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "small-n", "file": "bench/h2h/fixtures/small-n.extxyz", "rss_kib": 35584, "massif_heap_bytes": null}
+{"samples": [0.000411029000133567, 0.0004085489999852143, 0.00041814699943643063, 0.0005567170001086197, 0.000455307999800425, 0.0004158179999649292], "n": 6, "median_s": 0.0004169824997006799, "q25_s": 0.00041222625009140756, "q75_s": 0.0004460177497094264, "iqr_s": 3.379149961801886e-05, "n_atoms": 10, "n_frames": 8, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "small-n", "file": "bench/h2h/fixtures/small-n.extxyz", "rss_kib": 35792, "massif_heap_bytes": null, "memory_scope": "read"}
 repeat 6
 serial 1
 quantile type-7
@@ -92,9 +92,9 @@ arm extxyz
 op read
 case medium-1
 file bench/h2h/work/extxyz/inputs/medium-1.extxyz
-rss_kib 35652
+rss_kib 35940
 massif_heap_bytes None
-{"samples": [0.00030696599969814997, 0.0003061949992115842, 0.00030490300014207605, 0.00029972399988764664, 0.0003479850001895102, 0.00031354000020655803], "n": 6, "median_s": 0.0003065804994548671, "q25_s": 0.0003052259999094531, "q75_s": 0.000311896500079456, "iqr_s": 6.670500170002924e-06, "n_atoms": 1000, "n_frames": 1, "cell": [10.0, 10.0, 10.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "medium-1", "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz", "rss_kib": 35652, "massif_heap_bytes": null}
+{"samples": [0.00030696599969814997, 0.0003061949992115842, 0.00030490300014207605, 0.00029972399988764664, 0.0003479850001895102, 0.00031354000020655803], "n": 6, "median_s": 0.0003065804994548671, "q25_s": 0.0003052259999094531, "q75_s": 0.000311896500079456, "iqr_s": 6.670500170002924e-06, "n_atoms": 1000, "n_frames": 1, "cell": [10.0, 10.0, 10.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "medium-1", "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz", "rss_kib": 35940, "massif_heap_bytes": null, "memory_scope": "read"}
 repeat 6
 serial 1
 quantile type-7
@@ -121,9 +121,9 @@ arm extxyz
 op read
 case medium-n
 file bench/h2h/work/extxyz/inputs/medium-n.extxyz
-rss_kib 37676
+rss_kib 37956
 massif_heap_bytes None
-{"samples": [0.006803018000027805, 0.006850282000414154, 0.006825276000199665, 0.006861826999738696, 0.007055091999973229, 0.006902047000039602], "n": 6, "median_s": 0.006856054500076425, "q25_s": 0.006831527500253287, "q75_s": 0.006891991999964375, "iqr_s": 6.046449971108814e-05, "n_atoms": 100, "n_frames": 100, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "medium-n", "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz", "rss_kib": 37676, "massif_heap_bytes": null}
+{"samples": [0.006803018000027805, 0.006850282000414154, 0.006825276000199665, 0.006861826999738696, 0.007055091999973229, 0.006902047000039602], "n": 6, "median_s": 0.006856054500076425, "q25_s": 0.006831527500253287, "q75_s": 0.006891991999964375, "iqr_s": 6.046449971108814e-05, "n_atoms": 100, "n_frames": 100, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "medium-n", "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz", "rss_kib": 37956, "massif_heap_bytes": null, "memory_scope": "read"}
 repeat 6
 serial 1
 quantile type-7
@@ -150,9 +150,9 @@ arm extxyz
 op read
 case large-1
 file bench/h2h/work/extxyz/inputs/large-1.extxyz
-rss_kib 232020
-massif_heap_bytes 160942797
-{"samples": [0.2701068220003435, 0.2685761279999497, 0.2584121960007906, 0.26275766199978534, 0.2357983060001061, 0.2333479819999411], "n": 6, "median_s": 0.26058492900028796, "q25_s": 0.24145177850027721, "q75_s": 0.2671215114999086, "iqr_s": 0.02566973299963138, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "large-1", "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz", "rss_kib": 232020, "massif_heap_bytes": 160942797}
+rss_kib 232168
+massif_heap_bytes 161214230
+{"samples": [0.2701068220003435, 0.2685761279999497, 0.2584121960007906, 0.26275766199978534, 0.2357983060001061, 0.2333479819999411], "n": 6, "median_s": 0.26058492900028796, "q25_s": 0.24145177850027721, "q75_s": 0.2671215114999086, "iqr_s": 0.02566973299963138, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "large-1", "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz", "rss_kib": 232168, "massif_heap_bytes": 161214230, "memory_scope": "read"}
 repeat 6
 serial 1
 quantile type-7
@@ -179,7 +179,7 @@ arm extxyz
 op read
 case large-n
 file bench/h2h/work/extxyz/inputs/large-n.extxyz
-rss_kib 256740
-massif_heap_bytes 165192554
-{"samples": [0.7409634249997907, 0.7518223680008305, 0.738871678000578, 0.7138799140002448, 0.7633648129994981, 0.7204570499998226], "n": 6, "median_s": 0.7399175515001843, "q25_s": 0.7250607070000115, "q75_s": 0.7491076322505705, "iqr_s": 0.02404692525055907, "n_atoms": 100, "n_frames": 10000, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "large-n", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 256740, "massif_heap_bytes": 165192554}
+rss_kib 256984
+massif_heap_bytes 165463987
+{"samples": [0.7409634249997907, 0.7518223680008305, 0.738871678000578, 0.7138799140002448, 0.7633648129994981, 0.7204570499998226], "n": 6, "median_s": 0.7399175515001843, "q25_s": 0.7250607070000115, "q75_s": 0.7491076322505705, "iqr_s": 0.02404692525055907, "n_atoms": 100, "n_frames": 10000, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz", "op": "read", "case": "large-n", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 256984, "massif_heap_bytes": 165463987, "memory_scope": "read"}
 exit 0
