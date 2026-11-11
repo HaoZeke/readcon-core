@@ -22,6 +22,28 @@ def load(name: str):
     return module
 
 
+def test_each_draw_keeps_its_own_pid_and_timestamp():
+    bench = ROOT / "paper" / "cpc" / "bench"
+    sys.path.insert(0, str(bench))
+    sys.path.insert(0, str(ROOT / "paper" / "cpc" / "scripts"))
+    import interleave
+
+    seen = {"n": 0}
+
+    def cell():
+        seen["n"] += 1
+        return interleave.stamp_draw({"seconds": 0.01, "checksum": "1"}, 4000 + seen["n"])
+
+    record = interleave.campaign(
+        {"only": cell}, n_rounds=6, warmup=0, seed_value=1
+    )
+    cell_row = record["cells"]["only"]
+    assert cell_row["samples_pid"] == [4001, 4002, 4003, 4004, 4005, 4006]
+    stamps = cell_row["samples_timestamp"]
+    assert len(stamps) == 6
+    assert all(isinstance(item, str) and "T" in item for item in stamps)
+
+
 def test_logged_cmd_keeps_a_plain_line_and_drops_a_temp_path(tmp_path, monkeypatch):
     logged = load("logged_cmd.py")
     monkeypatch.setattr(sys, "argv", ["logged_cmd.py"])

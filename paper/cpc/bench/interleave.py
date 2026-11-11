@@ -32,6 +32,7 @@ period leaves slow take to come level with the others under that load.
 from __future__ import annotations
 
 import array
+import datetime
 import hashlib
 import os
 import random
@@ -211,6 +212,24 @@ def schedule(
     return order
 
 
+DRAW_KEYS = ("pid", "timestamp")
+
+
+def stamp_draw(row: dict, pid: int) -> dict:
+    """Attach the child pid and the wall time of one draw.
+
+    Both vary from draw to draw, so a campaign stores them beside the
+    samples and does not treat them as a repeated field.
+    """
+    stamped = dict(row)
+    stamped.setdefault("pid", int(pid))
+    stamped.setdefault(
+        "timestamp",
+        datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
+    )
+    return stamped
+
+
 def campaign(
     cells: dict[str, Callable[[], dict]],
     *,
@@ -240,13 +259,16 @@ def campaign(
         for name in names:
             if settle_ms:
                 settle(settle_ms)
-            out = cells[name]()
+            out = stamp_draw(cells[name](), os.getpid())
             if metric not in out:
                 raise SystemExit(f"{name}: the run printed no {metric}: {out}")
             fixed = {
                 key: value
                 for key, value in out.items()
-                if key != metric and key not in varying and not key.endswith("seconds")
+                if key != metric
+                and key not in varying
+                and key not in DRAW_KEYS
+                and not key.endswith("seconds")
             }
             if printed.setdefault(name, fixed) != fixed:
                 raise SystemExit(f"{name}: a run printed {fixed} after {printed[name]}")

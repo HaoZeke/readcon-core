@@ -67,7 +67,8 @@ def timed_run(argv: list[str], payload: Path, env: dict | None = None) -> dict:
     out, err = proc.communicate("\n")
     if proc.returncode != 0:
         raise SystemExit(f"{' '.join(argv)} exited {proc.returncode}: {err[-2000:]}")
-    return json.loads(out.strip().splitlines()[-1])
+    row = json.loads(out.strip().splitlines()[-1])
+    return interleave.stamp_draw(row, proc.pid)
 
 
 def python_cell(reader: str, threads: int):

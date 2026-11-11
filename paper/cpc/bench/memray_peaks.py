@@ -26,6 +26,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import interleave  # noqa: E402
 RESULTS = Path(os.environ.get("BENCH_RESULTS", HERE / "results" / "r0174"))
 
 
@@ -71,7 +72,8 @@ def capture(reader: str, threads: int):
                 text=True,
                 check=True,
             )
-        return json.loads(proc.stdout.strip().splitlines()[-1])
+        row = json.loads(proc.stdout.strip().splitlines()[-1])
+        return interleave.stamp_draw(row, proc.pid)
 
     return run
 

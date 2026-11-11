@@ -394,11 +394,14 @@ def printed_run(binary: Path, mode: str, path: Path):
         fields = dict(
             line.split(" ", 1) for line in proc.stdout.splitlines() if " " in line
         )
-        return {
-            "seconds": float(fields["seconds"]),
-            "frames": int(fields["frames"]),
-            "checksum": fields["checksum"],
-        }
+        return interleave.stamp_draw(
+            {
+                "seconds": float(fields["seconds"]),
+                "frames": int(fields["frames"]),
+                "checksum": fields["checksum"],
+            },
+            proc.pid,
+        )
 
     return run_once
 

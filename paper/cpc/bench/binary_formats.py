@@ -772,7 +772,9 @@ def timed_run(driver: str, mode: str, threads: int, file: str):
             raise SystemExit(
                 f"{driver} time {mode} {file} exited {proc.returncode}: {proc.stderr[-2000:]}"
             )
-        return summary(proc.stdout)
+        import interleave
+
+        return interleave.stamp_draw(summary(proc.stdout), proc.pid)
 
     return run_once
 
