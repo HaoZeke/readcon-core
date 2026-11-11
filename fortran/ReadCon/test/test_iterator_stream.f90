@@ -13,6 +13,7 @@ program test_iterator_stream
   call assert_failure_returns()
   call assert_every_public_reader()
   call assert_missing_read_and_handle_array()
+  call assert_blank_handles()
 contains
 
   subroutine assert_missing_file()
@@ -600,5 +601,126 @@ contains
     call owned(1)%free()
     call built%free()
     call builder%free()
+  end subroutine
+
+  subroutine assert_blank_handles()
+    type(frame_t) :: blank, nxt
+    type(builder_t) :: bblank
+    type(writer_t) :: wblank
+    type(iterator_t) :: iblank
+    type(c_ptr) :: tensor, block, raw
+    real(real64) :: one(3, 1), masses(1), cell(3), angles(3)
+    real(c_double), pointer :: xyz(:, :)
+    integer :: status, nmatch, nwritten, i, j, order, n
+    integer(int64) :: indices(1)
+    logical :: has_order
+    character(len=:), allocatable :: text
+    if (blank%valid()) error stop "blank frame is valid"
+    if (int(blank%atom_count()) /= 0) error stop "blank atom count"
+    text = blank%metadata_json()
+    if (len(text) /= 0) error stop "blank metadata"
+    text = blank%composition_formula()
+    if (len(text) /= 0) error stop "blank formula"
+    text = blank%potential_type()
+    if (len(text) /= 0) error stop "blank potential"
+    text = blank%index_projection_json()
+    if (text /= "{}") error stop "blank projection"
+    if (blank%energy() /= 0.0_real64) error stop "blank energy"
+    if (blank%index_energy() /= 0.0_real64) error stop "blank index energy"
+    if (blank%total_mass() /= 0.0_real64) error stop "blank mass"
+    if (blank%cell_volume() /= 0.0_real64) error stop "blank volume"
+    if (blank%fmax() /= 0.0_real64) error stop "blank fmax"
+    if (blank%sim_time() /= 0.0_real64) error stop "blank time"
+    if (blank%timestep() /= 0.0_real64) error stop "blank timestep"
+    if (blank%sections_mask() /= 0) error stop "blank sections"
+    if (blank%index_natoms() /= 0) error stop "blank index natoms"
+    if (blank%frame_index() /= -1_int64) error stop "blank frame index"
+    if (blank%neb_bead() /= -1_int64) error stop "blank bead"
+    if (blank%neb_band() /= -1_int64) error stop "blank band"
+    if (blank%spec_version() /= 0) error stop "blank spec"
+    if (blank%bond_count() /= 0) error stop "blank bonds"
+    if (blank%atom_index_by_id(1_int64) /= -1_int64) error stop "blank id"
+    if (blank%has_velocities()) error stop "blank velocities"
+    if (blank%has_forces()) error stop "blank forces"
+    call blank%cell_lengths(cell)
+    if (any(cell /= 0.0_real64)) error stop "blank cell"
+    call blank%cell_angles(angles)
+    if (any(angles /= 0.0_real64)) error stop "blank angles"
+    status = blank%copy_positions(one)
+    if (status /= rkr_status_null_pointer) error stop "blank positions"
+    status = blank%copy_velocities(one)
+    if (status /= rkr_status_null_pointer) error stop "blank copy vel"
+    status = blank%copy_forces(one)
+    if (status /= rkr_status_null_pointer) error stop "blank copy frc"
+    status = blank%copy_masses(masses)
+    if (status /= rkr_status_null_pointer) error stop "blank copy mass"
+    status = blank%bond_at(0, i, j, order, has_order)
+    if (status /= rkr_status_null_pointer) error stop "blank bond"
+    status = blank%select("name Cu", nmatch)
+    if (status /= rkr_status_null_pointer .or. nmatch /= 0) error stop "blank select"
+    status = blank%select_primary("name Cu", indices, nwritten)
+    if (status /= rkr_status_null_pointer .or. nwritten /= 0) error stop "blank primary"
+    status = blank%write_path("blank-unassociated.con")
+    if (status /= rkr_status_null_pointer) error stop "blank write"
+    call blank%xyz_ptr(xyz, n)
+    if (n /= 0) error stop "blank xyz ptr"
+    call blank%velocities_ptr(xyz, n)
+    if (n /= 0) error stop "blank vel ptr"
+    call blank%forces_ptr(xyz, n)
+    if (n /= 0) error stop "blank frc ptr"
+    raw = blank%handle_ptr()
+    if (c_associated(raw)) error stop "blank handle"
+    status = frame_metatensor_positions_block(blank, block)
+    if (status /= rkr_status_null_pointer) error stop "blank mts pos"
+    call mts_block_free_rkr(block)
+    status = frame_metatensor_velocities_block(blank, block)
+    if (status /= rkr_status_null_pointer) error stop "blank mts vel"
+    call mts_block_free_rkr(block)
+    status = frame_metatensor_forces_block(blank, block)
+    if (status /= rkr_status_null_pointer) error stop "blank mts frc"
+    call mts_block_free_rkr(block)
+    status = frame_metatensor_atom_energies_block(blank, block)
+    if (status /= rkr_status_null_pointer) error stop "blank mts energy"
+    call mts_block_free_rkr(block)
+    status = bblank%add_atom("Cu", 0.0_real64, 0.0_real64, 0.0_real64, &
+         1_int64, 63.5_real64, .false., .false., .false.)
+    if (status /= rkr_status_null_pointer) error stop "blank add"
+    status = bblank%set_energy(1.0_real64)
+    if (status /= rkr_status_null_pointer) error stop "blank set energy"
+    status = bblank%set_metadata_json("{}")
+    if (status /= rkr_status_null_pointer) error stop "blank meta"
+    status = bblank%copy_positions(one)
+    if (status /= rkr_status_null_pointer) error stop "blank builder positions"
+    status = bblank%copy_masses(masses)
+    if (status /= rkr_status_null_pointer) error stop "blank builder masses"
+    status = bblank%positions_dlpack(tensor)
+    if (status /= rkr_status_null_pointer .or. c_associated(tensor)) error stop "blank dlpack"
+    status = bblank%velocities_dlpack(tensor)
+    if (status /= rkr_status_null_pointer) error stop "blank vel dlpack"
+    status = bblank%forces_dlpack(tensor)
+    if (status /= rkr_status_null_pointer) error stop "blank frc dlpack"
+    status = bblank%atom_energies_dlpack(tensor)
+    if (status /= rkr_status_null_pointer) error stop "blank energy dlpack"
+    status = bblank%masses_dlpack(tensor)
+    if (status /= rkr_status_null_pointer) error stop "blank mass dlpack"
+    status = bblank%atom_ids_dlpack(tensor)
+    if (status /= rkr_status_null_pointer) error stop "blank id dlpack"
+    nxt = bblank%build()
+    if (nxt%valid()) error stop "blank build"
+    if (bblank%valid()) error stop "blank builder valid"
+    if (wblank%valid()) error stop "blank writer valid"
+    if (wblank%is_canonical()) error stop "blank canonical"
+    status = wblank%extend_one(blank)
+    if (status /= rkr_status_null_pointer) error stop "blank extend"
+    status = wblank%set_canonical(.false.)
+    if (status /= rkr_status_null_pointer) error stop "blank set canonical"
+    if (iblank%valid()) error stop "blank iterator"
+    nxt = iblank%next()
+    if (nxt%valid()) error stop "blank next"
+    status = iblank%forward()
+    if (status /= rkr_status_null_pointer) error stop "blank forward"
+    if (iblank%skip(1) /= 0_c_size_t) error stop "blank skip"
+    nxt = iblank%nth(0)
+    if (nxt%valid()) error stop "blank nth"
   end subroutine
 end program
