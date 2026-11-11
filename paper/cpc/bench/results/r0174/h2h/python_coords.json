@@ -1,0 +1,1097 @@
+{
+  "campaign": "coords",
+  "con": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_coords.con",
+  "con_bytes": 167710000,
+  "rcbin_bytes": 104644096,
+  "peers": {
+    "h5": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.h5",
+      "bytes": 52322432
+    },
+    "traj": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.traj",
+      "bytes": 101006447
+    },
+    "extxyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.extxyz",
+      "bytes": 182330000
+    },
+    "xyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.xyz",
+      "bytes": 157010000
+    }
+  },
+  "timed": "each call once untimed and once timed in a fresh h2h_child.py, from the call until what it read is released",
+  "protocol": {
+    "schedule": "paper/cpc/bench/interleave.py",
+    "seed": 20261104,
+    "rounds": 11,
+    "warmup_rounds": 1,
+    "metric": "seconds",
+    "quartiles": "statistics.quantiles(n=4, method='inclusive')",
+    "process": "a fresh process for every run of every cell",
+    "order": [
+      [
+        "ase_extxyz",
+        "read_arrays_low_memory",
+        "ase_traj",
+        "read_arrays",
+        "h5py_positions",
+        "read_rcbin_owned",
+        "read_rcbin_caller",
+        "read_con"
+      ],
+      [
+        "h5py_positions",
+        "read_con",
+        "ase_traj",
+        "read_rcbin_caller",
+        "read_arrays_low_memory",
+        "read_rcbin_owned",
+        "read_arrays",
+        "ase_extxyz"
+      ],
+      [
+        "read_arrays_low_memory",
+        "read_rcbin_caller",
+        "h5py_positions",
+        "ase_extxyz",
+        "read_rcbin_owned",
+        "ase_traj",
+        "read_arrays",
+        "read_con"
+      ],
+      [
+        "read_arrays_low_memory",
+        "read_rcbin_caller",
+        "h5py_positions",
+        "ase_traj",
+        "ase_extxyz",
+        "read_rcbin_owned",
+        "read_arrays",
+        "read_con"
+      ],
+      [
+        "ase_extxyz",
+        "h5py_positions",
+        "read_arrays_low_memory",
+        "read_arrays",
+        "ase_traj",
+        "read_con",
+        "read_rcbin_caller",
+        "read_rcbin_owned"
+      ],
+      [
+        "read_rcbin_caller",
+        "h5py_positions",
+        "read_con",
+        "read_rcbin_owned",
+        "read_arrays",
+        "read_arrays_low_memory",
+        "ase_traj",
+        "ase_extxyz"
+      ],
+      [
+        "read_arrays_low_memory",
+        "read_rcbin_caller",
+        "read_con",
+        "read_arrays",
+        "h5py_positions",
+        "ase_traj",
+        "read_rcbin_owned",
+        "ase_extxyz"
+      ],
+      [
+        "read_arrays_low_memory",
+        "ase_traj",
+        "read_arrays",
+        "read_con",
+        "read_rcbin_owned",
+        "read_rcbin_caller",
+        "h5py_positions",
+        "ase_extxyz"
+      ],
+      [
+        "read_con",
+        "read_rcbin_caller",
+        "ase_traj",
+        "read_arrays",
+        "h5py_positions",
+        "read_rcbin_owned",
+        "ase_extxyz",
+        "read_arrays_low_memory"
+      ],
+      [
+        "read_rcbin_caller",
+        "read_arrays",
+        "read_arrays_low_memory",
+        "read_rcbin_owned",
+        "h5py_positions",
+        "ase_traj",
+        "ase_extxyz",
+        "read_con"
+      ],
+      [
+        "read_rcbin_caller",
+        "read_con",
+        "read_rcbin_owned",
+        "h5py_positions",
+        "read_arrays_low_memory",
+        "ase_traj",
+        "ase_extxyz",
+        "read_arrays"
+      ]
+    ],
+    "warmup_order": [
+      [
+        "read_con",
+        "ase_traj",
+        "read_arrays_low_memory",
+        "ase_extxyz",
+        "read_rcbin_owned",
+        "read_rcbin_caller",
+        "h5py_positions",
+        "read_arrays"
+      ]
+    ],
+    "load_average_before": [
+      1.29150390625,
+      1.58544921875,
+      1.66357421875
+    ],
+    "load_average_after": [
+      1.6923828125,
+      1.6904296875,
+      1.693359375
+    ],
+    "boot_id_before": "f31346d1-d7b8-4c7d-985d-0ea429cd01ee",
+    "uptime_s_before": "209853.20",
+    "lscpu_before": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  8\nOn-line CPU(s) list:                     0-7\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Processor\nCPU family:                              6\nModel:                                   207\nThread(s) per core:                      1\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nBogoMIPS:                                4800.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               384 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                16 MiB (8 instances)\nL3 cache:                                320 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-7\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; TSX disabled\nVulnerability Vmscape:                   Not affected\n",
+    "per_core_before": "cpu0 3225484 213 459224 17259799 21123 0 128846 821 0 0\ncpu1 2216806 972 285695 18446250 17261 0 67588 794 0 0\ncpu2 1569113 1349 269805 19107168 19498 0 34124 1002 0 0\ncpu3 1664495 1113 279672 18992768 16724 0 20071 759 0 0\ncpu4 1626149 775 267128 19053527 17260 0 7902 771 0 0\ncpu5 1504387 1290 278639 19146000 25292 0 14740 946 0 0\ncpu6 1578164 819 260868 19096949 30520 0 2963 885 0 0\ncpu7 1665686 1279 288427 18988556 24151 0 2211 987 0 0",
+    "boot_id_after": "f31346d1-d7b8-4c7d-985d-0ea429cd01ee",
+    "uptime_s_after": "210040.34",
+    "lscpu_after": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  8\nOn-line CPU(s) list:                     0-7\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Processor\nCPU family:                              6\nModel:                                   207\nThread(s) per core:                      1\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nBogoMIPS:                                4800.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               384 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                16 MiB (8 instances)\nL3 cache:                                320 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-7\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; TSX disabled\nVulnerability Vmscape:                   Not affected\n",
+    "per_core_after": "cpu0 3227365 213 459424 17276410 21124 0 129183 821 0 0\ncpu1 2219802 972 286077 18461572 17261 0 67703 794 0 0\ncpu2 1573003 1349 270050 19121735 19499 0 34172 1002 0 0\ncpu3 1666308 1113 279856 19009474 16725 0 20092 759 0 0\ncpu4 1628564 775 267270 19069673 17261 0 7907 771 0 0\ncpu5 1507155 1290 278798 19161772 25308 0 14744 946 0 0\ncpu6 1581872 819 261086 19111720 30527 0 2966 885 0 0\ncpu7 1671069 1279 288752 19001554 24151 0 2212 987 0 0",
+    "artifact_sha256": {},
+    "campaign_s": 187.1
+  },
+  "hardware": {
+    "uname_m": "x86_64",
+    "nproc": 8,
+    "cpu_model": "Intel Xeon Processor family 6 model 207 stepping 2"
+  },
+  "timings": {
+    "ase_extxyz": {
+      "n": 11,
+      "median_s": 4.050892270024633,
+      "q1_s": 4.0448952814913355,
+      "q3_s": 4.059385172498878,
+      "iqr_s": 0.01448989100754261,
+      "samples_s": [
+        4.050892270024633,
+        4.061036995990435,
+        4.080769474996487,
+        4.055526269978145,
+        4.047397312009707,
+        4.043044209014624,
+        4.0461284359917045,
+        4.023650194983929,
+        4.0436621269909665,
+        4.1492417989938986,
+        4.0577333490073215
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:42+00:00",
+        "2026-11-11T01:13:05+00:00",
+        "2026-11-11T01:13:15+00:00",
+        "2026-11-11T01:13:33+00:00",
+        "2026-11-11T01:13:44+00:00",
+        "2026-11-11T01:14:07+00:00",
+        "2026-11-11T01:14:22+00:00",
+        "2026-11-11T01:14:38+00:00",
+        "2026-11-11T01:14:52+00:00",
+        "2026-11-11T01:15:08+00:00",
+        "2026-11-11T01:15:24+00:00"
+      ]
+    },
+    "ase_traj": {
+      "n": 11,
+      "median_s": 1.1786338560050353,
+      "q1_s": 1.1749494609975955,
+      "q3_s": 1.1815041964873672,
+      "iqr_s": 0.006554735489771701,
+      "samples_s": [
+        1.1747476769960485,
+        1.1770438569947146,
+        1.1847645899979398,
+        1.1786338560050353,
+        1.182073670992395,
+        1.1943851980031468,
+        1.1751512449991424,
+        1.1741410990071017,
+        1.1809347219823394,
+        1.1709807800070848,
+        1.1801255469908938
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:46+00:00",
+        "2026-11-11T01:12:53+00:00",
+        "2026-11-11T01:13:18+00:00",
+        "2026-11-11T01:13:25+00:00",
+        "2026-11-11T01:13:49+00:00",
+        "2026-11-11T01:13:58+00:00",
+        "2026-11-11T01:14:14+00:00",
+        "2026-11-11T01:14:26+00:00",
+        "2026-11-11T01:14:42+00:00",
+        "2026-11-11T01:15:00+00:00",
+        "2026-11-11T01:15:15+00:00"
+      ]
+    },
+    "h5py_positions": {
+      "n": 11,
+      "median_s": 0.013558840990299359,
+      "q1_s": 0.01339124450169038,
+      "q3_s": 0.01362509150931146,
+      "iqr_s": 0.00023384700762107968,
+      "samples_s": [
+        0.0138129859988112,
+        0.01379993898444809,
+        0.013459471025271341,
+        0.013378853007452562,
+        0.01312439699540846,
+        0.0129658019868657,
+        0.013564927998231724,
+        0.013574461016105488,
+        0.013675722002517432,
+        0.013403635995928198,
+        0.013558840990299359
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:47+00:00",
+        "2026-11-11T01:12:49+00:00",
+        "2026-11-11T01:13:06+00:00",
+        "2026-11-11T01:13:22+00:00",
+        "2026-11-11T01:13:45+00:00",
+        "2026-11-11T01:13:52+00:00",
+        "2026-11-11T01:14:11+00:00",
+        "2026-11-11T01:14:29+00:00",
+        "2026-11-11T01:14:44+00:00",
+        "2026-11-11T01:14:57+00:00",
+        "2026-11-11T01:15:11+00:00"
+      ]
+    },
+    "read_arrays": {
+      "n": 11,
+      "median_s": 0.24568358398391865,
+      "q1_s": 0.2449552699981723,
+      "q3_s": 0.24910528550390154,
+      "iqr_s": 0.004150015505729243,
+      "samples_s": [
+        0.2530025299929548,
+        0.25078694097464904,
+        0.24525065798661672,
+        0.24759721299051307,
+        0.24568358398391865,
+        0.2452682739822194,
+        0.24354918801691383,
+        0.24988388098427095,
+        0.24832669002353214,
+        0.24344412900973111,
+        0.24465988200972788
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:47+00:00",
+        "2026-11-11T01:12:56+00:00",
+        "2026-11-11T01:13:19+00:00",
+        "2026-11-11T01:13:35+00:00",
+        "2026-11-11T01:13:47+00:00",
+        "2026-11-11T01:13:54+00:00",
+        "2026-11-11T01:14:10+00:00",
+        "2026-11-11T01:14:27+00:00",
+        "2026-11-11T01:14:43+00:00",
+        "2026-11-11T01:14:55+00:00",
+        "2026-11-11T01:15:25+00:00"
+      ]
+    },
+    "read_arrays_low_memory": {
+      "n": 11,
+      "median_s": 0.33425258699571714,
+      "q1_s": 0.3319600145186996,
+      "q3_s": 0.3370547239901498,
+      "iqr_s": 0.005094709471450187,
+      "samples_s": [
+        0.3360334869939834,
+        0.33223876100964844,
+        0.33109177500591613,
+        0.333479050983442,
+        0.3356329759990331,
+        0.3380759609863162,
+        0.3316812680277508,
+        0.33425258699571714,
+        0.3384027389984112,
+        0.3458819960069377,
+        0.32223233798868023
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:43+00:00",
+        "2026-11-11T01:12:55+00:00",
+        "2026-11-11T01:13:06+00:00",
+        "2026-11-11T01:13:21+00:00",
+        "2026-11-11T01:13:46+00:00",
+        "2026-11-11T01:13:55+00:00",
+        "2026-11-11T01:14:08+00:00",
+        "2026-11-11T01:14:24+00:00",
+        "2026-11-11T01:14:54+00:00",
+        "2026-11-11T01:14:56+00:00",
+        "2026-11-11T01:15:13+00:00"
+      ]
+    },
+    "read_con": {
+      "n": 11,
+      "median_s": 0.2682249089994002,
+      "q1_s": 0.2654105094989063,
+      "q3_s": 0.26999853299639653,
+      "iqr_s": 0.004588023497490212,
+      "samples_s": [
+        0.26534993402310647,
+        0.2699761269905139,
+        0.2654710849747062,
+        0.2634923600126058,
+        0.2700209390022792,
+        0.2700756449776236,
+        0.26967229100409895,
+        0.2682249089994002,
+        0.2729997429996729,
+        0.2670818129845429,
+        0.2634192120167427
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:49+00:00",
+        "2026-11-11T01:12:50+00:00",
+        "2026-11-11T01:13:20+00:00",
+        "2026-11-11T01:13:36+00:00",
+        "2026-11-11T01:13:50+00:00",
+        "2026-11-11T01:13:53+00:00",
+        "2026-11-11T01:14:09+00:00",
+        "2026-11-11T01:14:28+00:00",
+        "2026-11-11T01:14:39+00:00",
+        "2026-11-11T01:15:09+00:00",
+        "2026-11-11T01:15:11+00:00"
+      ]
+    },
+    "read_rcbin_caller": {
+      "n": 11,
+      "median_s": 0.008746320003410801,
+      "q1_s": 0.008658800506964326,
+      "q3_s": 0.008880191016942263,
+      "iqr_s": 0.00022139050997793674,
+      "samples_s": [
+        0.008658002014271915,
+        0.009028235013829544,
+        0.008659598999656737,
+        0.008850809012074023,
+        0.008835021988488734,
+        0.008535097993444651,
+        0.008746320003410801,
+        0.008909573021810502,
+        0.00858834499376826,
+        0.008671170013258234,
+        0.00910987300449051
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:48+00:00",
+        "2026-11-11T01:12:53+00:00",
+        "2026-11-11T01:13:06+00:00",
+        "2026-11-11T01:13:22+00:00",
+        "2026-11-11T01:13:51+00:00",
+        "2026-11-11T01:13:52+00:00",
+        "2026-11-11T01:14:08+00:00",
+        "2026-11-11T01:14:29+00:00",
+        "2026-11-11T01:14:39+00:00",
+        "2026-11-11T01:14:54+00:00",
+        "2026-11-11T01:15:10+00:00"
+      ]
+    },
+    "read_rcbin_owned": {
+      "n": 11,
+      "median_s": 0.003170451003825292,
+      "q1_s": 0.0031316950044129044,
+      "q3_s": 0.0031889659876469523,
+      "iqr_s": 5.727098323404789e-05,
+      "samples_s": [
+        0.003132710000500083,
+        0.003122999012703076,
+        0.0031758569821249694,
+        0.003202074993168935,
+        0.0031295359949581325,
+        0.003166378999594599,
+        0.003172210999764502,
+        0.0032751699909567833,
+        0.0032054729817900807,
+        0.003130680008325726,
+        0.003170451003825292
+      ],
+      "printed": {
+        "frames": 10000
+      },
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:12:47+00:00",
+        "2026-11-11T01:12:55+00:00",
+        "2026-11-11T01:13:15+00:00",
+        "2026-11-11T01:13:34+00:00",
+        "2026-11-11T01:13:51+00:00",
+        "2026-11-11T01:13:53+00:00",
+        "2026-11-11T01:14:14+00:00",
+        "2026-11-11T01:14:29+00:00",
+        "2026-11-11T01:14:44+00:00",
+        "2026-11-11T01:14:56+00:00",
+        "2026-11-11T01:15:11+00:00"
+      ]
+    }
+  },
+  "memray_protocol": {
+    "schedule": "paper/cpc/bench/interleave.py",
+    "seed": 20261104,
+    "rounds": 11,
+    "warmup_rounds": 1,
+    "metric": "peak_bytes",
+    "quartiles": "statistics.quantiles(n=4, method='inclusive')",
+    "process": "a fresh process for every run of every cell",
+    "order": [
+      [
+        "read_con",
+        "read_arrays_low_memory",
+        "read_rcbin_owned",
+        "h5py_positions",
+        "read_arrays",
+        "ase_extxyz",
+        "ase_traj"
+      ],
+      [
+        "read_arrays_low_memory",
+        "read_arrays",
+        "read_rcbin_owned",
+        "ase_extxyz",
+        "read_con",
+        "ase_traj",
+        "h5py_positions"
+      ],
+      [
+        "read_rcbin_owned",
+        "ase_traj",
+        "read_arrays_low_memory",
+        "read_arrays",
+        "ase_extxyz",
+        "read_con",
+        "h5py_positions"
+      ],
+      [
+        "read_arrays",
+        "ase_extxyz",
+        "h5py_positions",
+        "read_rcbin_owned",
+        "ase_traj",
+        "read_arrays_low_memory",
+        "read_con"
+      ],
+      [
+        "read_arrays",
+        "h5py_positions",
+        "ase_extxyz",
+        "read_arrays_low_memory",
+        "read_rcbin_owned",
+        "read_con",
+        "ase_traj"
+      ],
+      [
+        "read_rcbin_owned",
+        "ase_traj",
+        "read_arrays",
+        "read_con",
+        "read_arrays_low_memory",
+        "h5py_positions",
+        "ase_extxyz"
+      ],
+      [
+        "ase_extxyz",
+        "ase_traj",
+        "read_con",
+        "read_arrays",
+        "read_arrays_low_memory",
+        "read_rcbin_owned",
+        "h5py_positions"
+      ],
+      [
+        "read_rcbin_owned",
+        "read_arrays",
+        "ase_traj",
+        "read_con",
+        "h5py_positions",
+        "ase_extxyz",
+        "read_arrays_low_memory"
+      ],
+      [
+        "read_arrays_low_memory",
+        "h5py_positions",
+        "ase_traj",
+        "read_rcbin_owned",
+        "ase_extxyz",
+        "read_arrays",
+        "read_con"
+      ],
+      [
+        "read_arrays_low_memory",
+        "read_arrays",
+        "read_rcbin_owned",
+        "ase_traj",
+        "read_con",
+        "h5py_positions",
+        "ase_extxyz"
+      ],
+      [
+        "ase_traj",
+        "read_rcbin_owned",
+        "read_arrays",
+        "read_con",
+        "ase_extxyz",
+        "read_arrays_low_memory",
+        "h5py_positions"
+      ]
+    ],
+    "warmup_order": [
+      [
+        "ase_extxyz",
+        "read_arrays",
+        "read_arrays_low_memory",
+        "h5py_positions",
+        "ase_traj",
+        "read_rcbin_owned",
+        "read_con"
+      ]
+    ],
+    "load_average_before": [
+      1.6923828125,
+      1.6904296875,
+      1.693359375
+    ],
+    "load_average_after": [
+      1.0224609375,
+      1.349609375,
+      1.55078125
+    ],
+    "boot_id_before": "f31346d1-d7b8-4c7d-985d-0ea429cd01ee",
+    "uptime_s_before": "210040.35",
+    "lscpu_before": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  8\nOn-line CPU(s) list:                     0-7\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Processor\nCPU family:                              6\nModel:                                   207\nThread(s) per core:                      1\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nBogoMIPS:                                4800.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               384 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                16 MiB (8 instances)\nL3 cache:                                320 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-7\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; TSX disabled\nVulnerability Vmscape:                   Not affected\n",
+    "per_core_before": "cpu0 3227365 213 459424 17276410 21124 0 129183 821 0 0\ncpu1 2219802 972 286077 18461573 17261 0 67703 794 0 0\ncpu2 1573003 1349 270050 19121736 19499 0 34172 1002 0 0\ncpu3 1666308 1113 279856 19009474 16725 0 20092 759 0 0\ncpu4 1628564 775 267270 19069674 17261 0 7907 771 0 0\ncpu5 1507156 1290 278798 19161772 25308 0 14744 946 0 0\ncpu6 1581872 819 261086 19111720 30527 0 2966 885 0 0\ncpu7 1671069 1279 288752 19001555 24151 0 2212 987 0 0",
+    "boot_id_after": "f31346d1-d7b8-4c7d-985d-0ea429cd01ee",
+    "uptime_s_after": "210243.95",
+    "lscpu_after": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  8\nOn-line CPU(s) list:                     0-7\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Processor\nCPU family:                              6\nModel:                                   207\nThread(s) per core:                      1\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nBogoMIPS:                                4800.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               384 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                16 MiB (8 instances)\nL3 cache:                                320 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-7\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; TSX disabled\nVulnerability Vmscape:                   Not affected\n",
+    "per_core_after": "cpu0 3229062 213 459496 17294975 21124 0 129688 821 0 0\ncpu1 2226378 972 286468 18474942 17268 0 67828 795 0 0\ncpu2 1576110 1349 270247 19138772 19502 0 34258 1003 0 0\ncpu3 1667657 1113 279942 19028381 16726 0 20116 760 0 0\ncpu4 1631405 775 267354 19087088 17263 0 7914 771 0 0\ncpu5 1509038 1290 278894 19180142 25311 0 14745 947 0 0\ncpu6 1587887 819 261452 19125663 30555 0 2967 885 0 0\ncpu7 1673327 1279 288903 19019491 24154 0 2212 987 0 0",
+    "artifact_sha256": {},
+    "campaign_s": 203.6
+  },
+  "memray": {
+    "ase_extxyz": {
+      "n": 11,
+      "median_bytes": 165497251.0,
+      "q1_bytes": 165497235.0,
+      "q3_bytes": 165497251.0,
+      "iqr_bytes": 16.0,
+      "samples_bytes": [
+        165497235.0,
+        165497251.0,
+        165497235.0,
+        165497235.0,
+        165497235.0,
+        165497251.0,
+        165497235.0,
+        165497251.0,
+        165497251.0,
+        165497251.0,
+        165497251.0
+      ],
+      "printed": {},
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:15:55+00:00",
+        "2026-11-11T01:16:11+00:00",
+        "2026-11-11T01:16:31+00:00",
+        "2026-11-11T01:16:43+00:00",
+        "2026-11-11T01:17:01+00:00",
+        "2026-11-11T01:17:24+00:00",
+        "2026-11-11T01:17:34+00:00",
+        "2026-11-11T01:17:57+00:00",
+        "2026-11-11T01:18:13+00:00",
+        "2026-11-11T01:18:31+00:00",
+        "2026-11-11T01:18:47+00:00"
+      ]
+    },
+    "ase_traj": {
+      "n": 11,
+      "median_bytes": 153404917.0,
+      "q1_bytes": 153404901.0,
+      "q3_bytes": 153404917.0,
+      "iqr_bytes": 16.0,
+      "samples_bytes": [
+        153404917.0,
+        153404901.0,
+        153404901.0,
+        153404901.0,
+        153404917.0,
+        153535989.0,
+        153404901.0,
+        153404917.0,
+        153404917.0,
+        153404917.0,
+        153404917.0
+      ],
+      "printed": {},
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:15:59+00:00",
+        "2026-11-11T01:16:15+00:00",
+        "2026-11-11T01:16:20+00:00",
+        "2026-11-11T01:16:48+00:00",
+        "2026-11-11T01:17:07+00:00",
+        "2026-11-11T01:17:11+00:00",
+        "2026-11-11T01:17:37+00:00",
+        "2026-11-11T01:17:45+00:00",
+        "2026-11-11T01:18:03+00:00",
+        "2026-11-11T01:18:20+00:00",
+        "2026-11-11T01:18:35+00:00"
+      ]
+    },
+    "h5py_positions": {
+      "n": 11,
+      "median_bytes": 61092540.0,
+      "q1_bytes": 60043964.0,
+      "q3_bytes": 61092540.0,
+      "iqr_bytes": 1048576.0,
+      "samples_bytes": [
+        61092540.0,
+        60043964.0,
+        61092540.0,
+        60043964.0,
+        61092540.0,
+        60043964.0,
+        61092540.0,
+        60043964.0,
+        61092540.0,
+        60043964.0,
+        61092540.0
+      ],
+      "printed": {},
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:15:45+00:00",
+        "2026-11-11T01:16:16+00:00",
+        "2026-11-11T01:16:33+00:00",
+        "2026-11-11T01:16:44+00:00",
+        "2026-11-11T01:16:51+00:00",
+        "2026-11-11T01:17:14+00:00",
+        "2026-11-11T01:17:41+00:00",
+        "2026-11-11T01:17:47+00:00",
+        "2026-11-11T01:17:59+00:00",
+        "2026-11-11T01:18:22+00:00",
+        "2026-11-11T01:18:48+00:00"
+      ]
+    },
+    "read_arrays": {
+      "n": 11,
+      "median_bytes": 220240743.0,
+      "q1_bytes": 220240743.0,
+      "q3_bytes": 220240743.0,
+      "iqr_bytes": 0.0,
+      "samples_bytes": [
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0,
+        220240743.0
+      ],
+      "printed": {},
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:15:46+00:00",
+        "2026-11-11T01:16:01+00:00",
+        "2026-11-11T01:16:22+00:00",
+        "2026-11-11T01:16:34+00:00",
+        "2026-11-11T01:16:51+00:00",
+        "2026-11-11T01:17:12+00:00",
+        "2026-11-11T01:17:39+00:00",
+        "2026-11-11T01:17:42+00:00",
+        "2026-11-11T01:18:14+00:00",
+        "2026-11-11T01:18:16+00:00",
+        "2026-11-11T01:18:36+00:00"
+      ]
+    },
+    "read_arrays_low_memory": {
+      "n": 11,
+      "median_bytes": 413381463.0,
+      "q1_bytes": 413381463.0,
+      "q3_bytes": 413381463.0,
+      "iqr_bytes": 0.0,
+      "samples_bytes": [
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0,
+        413381463.0
+      ],
+      "printed": {},
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:15:44+00:00",
+        "2026-11-11T01:16:00+00:00",
+        "2026-11-11T01:16:21+00:00",
+        "2026-11-11T01:16:49+00:00",
+        "2026-11-11T01:17:02+00:00",
+        "2026-11-11T01:17:13+00:00",
+        "2026-11-11T01:17:40+00:00",
+        "2026-11-11T01:17:57+00:00",
+        "2026-11-11T01:17:58+00:00",
+        "2026-11-11T01:18:16+00:00",
+        "2026-11-11T01:18:48+00:00"
+      ]
+    },
+    "read_con": {
+      "n": 11,
+      "median_bytes": 413451127.0,
+      "q1_bytes": 413451127.0,
+      "q3_bytes": 413451127.0,
+      "iqr_bytes": 0.0,
+      "samples_bytes": [
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0,
+        413451127.0
+      ],
+      "printed": {},
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:15:43+00:00",
+        "2026-11-11T01:16:12+00:00",
+        "2026-11-11T01:16:32+00:00",
+        "2026-11-11T01:16:50+00:00",
+        "2026-11-11T01:17:03+00:00",
+        "2026-11-11T01:17:12+00:00",
+        "2026-11-11T01:17:38+00:00",
+        "2026-11-11T01:17:46+00:00",
+        "2026-11-11T01:18:15+00:00",
+        "2026-11-11T01:18:21+00:00",
+        "2026-11-11T01:18:37+00:00"
+      ]
+    },
+    "read_rcbin_owned": {
+      "n": 11,
+      "median_bytes": 110086680.0,
+      "q1_bytes": 110086680.0,
+      "q3_bytes": 110086680.0,
+      "iqr_bytes": 0.0,
+      "samples_bytes": [
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0,
+        110086680.0
+      ],
+      "printed": {},
+      "samples_pid": [
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606,
+        1976606
+      ],
+      "samples_timestamp": [
+        "2026-11-11T01:15:44+00:00",
+        "2026-11-11T01:16:01+00:00",
+        "2026-11-11T01:16:16+00:00",
+        "2026-11-11T01:16:44+00:00",
+        "2026-11-11T01:17:02+00:00",
+        "2026-11-11T01:17:07+00:00",
+        "2026-11-11T01:17:40+00:00",
+        "2026-11-11T01:17:41+00:00",
+        "2026-11-11T01:18:03+00:00",
+        "2026-11-11T01:18:17+00:00",
+        "2026-11-11T01:18:35+00:00"
+      ]
+    }
+  },
+  "memray_peak_bytes": {
+    "ase_extxyz": 165497251,
+    "ase_traj": 153404917,
+    "h5py_positions": 61092540,
+    "read_arrays": 220240743,
+    "read_arrays_low_memory": 413381463,
+    "read_con": 413451127,
+    "read_rcbin_owned": 110086680
+  },
+  "provenance": {
+    "build": {
+      "readcon_version": "0.18.1",
+      "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+      "readcon_module_sha256": "0ecd4d1ed4c1ab3b5649c7bca22266311da1ad26cde33b512a8873896b228cc3",
+      "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+      "newer_sources": [],
+      "library_digest": "fcdb03c9e8ee8ce434bdab4185088e2cf202f2fec3ff88a3870e46a5d49ab9ed",
+      "source_files": 48,
+      "source_tag": null,
+      "source_commit": "774f2d138e4b219a9f795194011dbfb80ee15512"
+    },
+    "host": {
+      "kernel": "6.12.113+",
+      "uname_m": "x86_64",
+      "nproc": 8,
+      "hostname": "bench",
+      "family": "6",
+      "model": "207",
+      "model_name": "Intel(R) Xeon(R) Processor",
+      "stepping": "2",
+      "mhz": 2400.0,
+      "mem_kb": 49342816,
+      "cpu_model": "Intel Xeon Processor family 6 model 207 stepping 2"
+    },
+    "peers": {
+      "ase": "3.29.0",
+      "chemfiles": "0.10.4",
+      "MDAnalysis": "2.10.0",
+      "h5py": "3.16.0",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "ovito": "3.16.1",
+      "openbabel": "3.2.1",
+      "python": "3.12.16"
+    },
+    "HEAD": "774f2d138e4b219a9f795194011dbfb80ee15512",
+    "TREE": "f59a2a65e2e44ce04b7a6f2fb1895d6fa8b5f25a"
+  }
+}

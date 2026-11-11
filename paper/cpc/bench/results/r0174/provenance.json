@@ -1,0 +1,60 @@
+{
+  "build": {
+    "release": "0.18.1",
+    "commit": "774f2d138e4b219a9f795194011dbfb80ee15512",
+    "tag": null,
+    "base": "df7ae1d19b05f2dc1a2ee4b1be0cfa7006f08aff",
+    "commits_after_base": 316,
+    "library_digest": "fcdb03c9e8ee8ce434bdab4185088e2cf202f2fec3ff88a3870e46a5d49ab9ed",
+    "library_digest_of_source": "fcdb03c9e8ee8ce434bdab4185088e2cf202f2fec3ff88a3870e46a5d49ab9ed",
+    "library_digest_at_commit": "fcdb03c9e8ee8ce434bdab4185088e2cf202f2fec3ff88a3870e46a5d49ab9ed",
+    "source_files": 48,
+    "readcon_version": "0.18.1",
+    "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+    "readcon_module_sha256": "0ecd4d1ed4c1ab3b5649c7bca22266311da1ad26cde33b512a8873896b228cc3",
+    "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+    "newer_sources": []
+  },
+  "host": {
+    "kernel": "6.12.113+",
+    "uname_m": "x86_64",
+    "nproc": 8,
+    "hostname": "bench",
+    "family": "6",
+    "model": "207",
+    "model_name": "Intel(R) Xeon(R) Processor",
+    "stepping": "2",
+    "mhz": 2400.0,
+    "mem_kb": 49342816,
+    "cpu_model": "Intel Xeon Processor family 6 model 207 stepping 2",
+    "threads_per_core": "1",
+    "hypervisor_vendor": "KVM",
+    "l2_cache": "16 MiB (8 instances)",
+    "l3_cache": "320 MiB (1 instance)",
+    "os": "Ubuntu 24.04.5 LTS"
+  },
+  "hardware": {
+    "uname_m": "x86_64",
+    "nproc": 8,
+    "cpu_model": "Intel Xeon Processor family 6 model 207 stepping 2"
+  },
+  "peers": {
+    "ase": "3.29.0",
+    "chemfiles": "0.10.4",
+    "MDAnalysis": "2.10.0",
+    "h5py": "3.16.0",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "ovito": "3.16.1",
+    "openbabel": "3.2.1",
+    "python": "3.12.16"
+  },
+  "tools": {
+    "python": "3.12.16",
+    "memray": "1.20.0",
+    "valgrind": "valgrind-3.27.1",
+    "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)"
+  },
+  "HEAD": "774f2d138e4b219a9f795194011dbfb80ee15512",
+  "TREE": "f59a2a65e2e44ce04b7a6f2fb1895d6fa8b5f25a"
+}

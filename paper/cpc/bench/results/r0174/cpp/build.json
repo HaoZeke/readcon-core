@@ -1,0 +1,111 @@
+{
+  "readcon_src": "$REPO",
+  "library_digest": "fcdb03c9e8ee8ce434bdab4185088e2cf202f2fec3ff88a3870e46a5d49ab9ed",
+  "cargo_features": [
+    "parallel"
+  ],
+  "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+  "cxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "cxxflags": [
+    "-O3",
+    "-std=c++17",
+    "-DNDEBUG"
+  ],
+  "chemfiles_version": "0.10.4",
+  "cells": [
+    {
+      "name": "readcon_cpp_moc_1",
+      "program": "readcon_read",
+      "contract": "moc",
+      "payload": "traj.con",
+      "warm": "warm.con",
+      "threads": 1
+    },
+    {
+      "name": "readcon_cpp_moc_8",
+      "program": "readcon_read",
+      "contract": "moc",
+      "payload": "traj.con",
+      "warm": "warm.con",
+      "threads": 8
+    },
+    {
+      "name": "chemfiles_cpp_moc_1",
+      "program": "chemfiles_read",
+      "contract": "moc",
+      "payload": "traj.extxyz",
+      "warm": "warm.extxyz",
+      "threads": 1
+    },
+    {
+      "name": "readcon_cpp_coords_1",
+      "program": "readcon_read",
+      "contract": "coords",
+      "payload": "traj_coords.con",
+      "warm": "warm_coords.con",
+      "threads": 1
+    },
+    {
+      "name": "chemfiles_cpp_coords_1",
+      "program": "chemfiles_read",
+      "contract": "coords",
+      "payload": "traj.xyz",
+      "warm": "warm.xyz",
+      "threads": 1
+    }
+  ],
+  "commands": [
+    [
+      "$ENV/bin/cargo",
+      "build",
+      "--release",
+      "--lib",
+      "--features",
+      "parallel",
+      "--manifest-path",
+      "$REPO/Cargo.toml"
+    ],
+    [
+      "/usr/bin/g++",
+      "-O3",
+      "-std=c++17",
+      "-DNDEBUG",
+      "-I$REPO/paper/cpc/bench/native",
+      "-I$REPO/include",
+      "$REPO/paper/cpc/bench/native/readcon_read.cpp",
+      "$REPO/paper/cpc/bench/work/native0174/target-capi/release/libreadcon_core.a",
+      "-lpthread",
+      "-ldl",
+      "-lm",
+      "-Wl,-rpath,$ENV/lib",
+      "-o",
+      "$REPO/paper/cpc/bench/work/native0174/readcon_read"
+    ],
+    [
+      "/usr/bin/g++",
+      "-O3",
+      "-std=c++17",
+      "-DNDEBUG",
+      "-I$REPO/paper/cpc/bench/native",
+      "-I$REPO/paper/cpc/bench/work/native0174/chemfiles/include",
+      "$REPO/paper/cpc/bench/native/chemfiles_read.cpp",
+      "-L$REPO/paper/cpc/bench/work/native0174/chemfiles/lib",
+      "-lchemfiles",
+      "-Wl,-rpath,$REPO/paper/cpc/bench/work/native0174/chemfiles/lib",
+      "-Wl,-rpath,$ENV/lib",
+      "-o",
+      "$REPO/paper/cpc/bench/work/native0174/chemfiles_read"
+    ]
+  ],
+  "sources": {
+    "protocol.hpp": "2feb63b1e34a76e735729d146c3254f1d9ac57e2f938761a9ce0e06c48d922dd",
+    "readcon_read.cpp": "d52be395964941c7a39173f1c39ea39429ba00079cad9644e2d2db406b9c1057",
+    "chemfiles_read.cpp": "d20cc73902bd3dcc518e0b533761217b99d9691a220df25f37ecd6f7dc99727f",
+    "cpp_reads.py": "ab14b4b66997fb330608d8fc30818bf08a492aef686a6480cef1c2bc02169bd2"
+  },
+  "artifacts": {
+    "readcon_read": "63daaa7aaeeb9b1c834d5dcb5c7794d61d269ac220034a26f327e998ca82ed22",
+    "chemfiles_read": "328cde5fd5488970d0f784ed74d9056be717565f12522870ed15245b1adfb88e",
+    "libreadcon_core.a": "b9a289e5e0b7f6703c8271e221cc674176ca6f6c5cf08d0b15b3fb3924217f61"
+  }
+}

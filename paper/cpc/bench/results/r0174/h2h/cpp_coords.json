@@ -1,0 +1,910 @@
+{
+  "campaign": "coords",
+  "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+  "cargo_profile_release": "lto = \"thin\"\ncodegen-units = 1\n\n# The profile that 'dist' / cargo-c builds use for shipping binaries.",
+  "readcon_library": "$REPO/paper/cpc/bench/work/r0174/h2h/target/release/libreadcon_core.so",
+  "cargo_features": [
+    "parallel"
+  ],
+  "inputs": {
+    "con_coordinates": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_coords.con",
+    "con_bytes": 167710000,
+    "xyz": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.xyz",
+    "xyz_bytes": 157010000,
+    "frames": 10000
+  },
+  "timed_readcon_call": "readcon::CoordinateBlocks::read(path, 1, positions_only=true) then sum of x",
+  "timed_readcon_frames_call": "readcon::ConFrameIterator, one frame at a time, sum of x of each frame",
+  "timed_chemfiles_call": "chemfiles::Trajectory::read every step, sum of positions[][0]",
+  "protocol": {
+    "schedule": "paper/cpc/bench/interleave.py",
+    "seed": 20261104,
+    "rounds": 11,
+    "warmup_rounds": 1,
+    "metric": "seconds",
+    "quartiles": "statistics.quantiles(n=4, method='inclusive')",
+    "process": "a fresh process for every run of every cell",
+    "order": [
+      [
+        "clang -O3 readcon_coordinates",
+        "clang -O2 chemfiles_xyz",
+        "gcc -O2 chemfiles_xyz",
+        "gcc -O3 readcon_frames",
+        "gcc -O3 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "clang -O2 readcon_coordinates",
+        "gcc -O2 readcon_frames",
+        "gcc -O2 readcon_coordinates",
+        "clang -O3 chemfiles_xyz",
+        "clang -O3 readcon_frames",
+        "gcc -O3 readcon_coordinates"
+      ],
+      [
+        "clang -O2 readcon_frames",
+        "clang -O2 readcon_coordinates",
+        "gcc -O2 readcon_frames",
+        "clang -O3 readcon_frames",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O3 readcon_coordinates",
+        "clang -O3 chemfiles_xyz",
+        "gcc -O2 readcon_coordinates",
+        "gcc -O3 chemfiles_xyz",
+        "clang -O2 chemfiles_xyz",
+        "gcc -O3 readcon_frames",
+        "gcc -O3 readcon_coordinates"
+      ],
+      [
+        "gcc -O3 readcon_coordinates",
+        "clang -O2 readcon_frames",
+        "clang -O2 chemfiles_xyz",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O2 readcon_coordinates",
+        "clang -O3 readcon_frames",
+        "gcc -O3 readcon_frames",
+        "gcc -O2 readcon_frames",
+        "clang -O3 readcon_coordinates",
+        "gcc -O2 readcon_coordinates",
+        "gcc -O3 chemfiles_xyz",
+        "clang -O3 chemfiles_xyz"
+      ],
+      [
+        "gcc -O2 readcon_coordinates",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "clang -O2 chemfiles_xyz",
+        "gcc -O3 readcon_frames",
+        "clang -O3 chemfiles_xyz",
+        "clang -O2 readcon_coordinates",
+        "gcc -O2 readcon_frames",
+        "clang -O3 readcon_frames",
+        "clang -O3 readcon_coordinates",
+        "gcc -O3 readcon_coordinates",
+        "gcc -O3 chemfiles_xyz"
+      ],
+      [
+        "gcc -O2 readcon_frames",
+        "gcc -O3 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O3 readcon_coordinates",
+        "clang -O3 chemfiles_xyz",
+        "gcc -O3 readcon_frames",
+        "gcc -O2 readcon_coordinates",
+        "clang -O3 readcon_frames",
+        "gcc -O3 readcon_coordinates",
+        "clang -O2 chemfiles_xyz",
+        "clang -O2 readcon_coordinates"
+      ],
+      [
+        "clang -O3 chemfiles_xyz",
+        "clang -O2 readcon_coordinates",
+        "clang -O3 readcon_coordinates",
+        "gcc -O3 readcon_coordinates",
+        "gcc -O2 readcon_coordinates",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "clang -O3 readcon_frames",
+        "gcc -O3 chemfiles_xyz",
+        "gcc -O2 readcon_frames",
+        "gcc -O3 readcon_frames",
+        "clang -O2 chemfiles_xyz"
+      ],
+      [
+        "clang -O3 readcon_frames",
+        "gcc -O3 readcon_frames",
+        "clang -O3 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "gcc -O2 readcon_frames",
+        "gcc -O3 readcon_coordinates",
+        "gcc -O3 chemfiles_xyz",
+        "gcc -O2 readcon_coordinates",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O2 chemfiles_xyz",
+        "clang -O3 readcon_coordinates",
+        "clang -O2 readcon_coordinates"
+      ],
+      [
+        "clang -O2 chemfiles_xyz",
+        "gcc -O2 readcon_coordinates",
+        "clang -O3 chemfiles_xyz",
+        "clang -O3 readcon_frames",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O3 readcon_coordinates",
+        "gcc -O3 readcon_coordinates",
+        "clang -O2 readcon_coordinates",
+        "gcc -O3 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "gcc -O2 readcon_frames",
+        "gcc -O3 readcon_frames"
+      ],
+      [
+        "gcc -O2 readcon_frames",
+        "clang -O2 chemfiles_xyz",
+        "clang -O3 readcon_coordinates",
+        "clang -O3 chemfiles_xyz",
+        "clang -O2 readcon_coordinates",
+        "clang -O3 readcon_frames",
+        "gcc -O3 readcon_coordinates",
+        "gcc -O3 readcon_frames",
+        "gcc -O2 chemfiles_xyz",
+        "gcc -O3 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "gcc -O2 readcon_coordinates"
+      ],
+      [
+        "clang -O2 chemfiles_xyz",
+        "gcc -O2 readcon_coordinates",
+        "clang -O3 readcon_coordinates",
+        "gcc -O2 readcon_frames",
+        "gcc -O3 chemfiles_xyz",
+        "gcc -O3 readcon_coordinates",
+        "gcc -O3 readcon_frames",
+        "clang -O3 readcon_frames",
+        "clang -O3 chemfiles_xyz",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "clang -O2 readcon_coordinates"
+      ],
+      [
+        "clang -O3 chemfiles_xyz",
+        "clang -O2 readcon_frames",
+        "gcc -O3 readcon_coordinates",
+        "gcc -O3 readcon_frames",
+        "clang -O3 readcon_frames",
+        "gcc -O2 readcon_coordinates",
+        "gcc -O2 readcon_frames",
+        "gcc -O2 chemfiles_xyz",
+        "gcc -O3 chemfiles_xyz",
+        "clang -O2 chemfiles_xyz",
+        "clang -O3 readcon_coordinates",
+        "clang -O2 readcon_coordinates"
+      ]
+    ],
+    "warmup_order": [
+      [
+        "clang -O2 readcon_frames",
+        "gcc -O2 readcon_coordinates",
+        "gcc -O2 chemfiles_xyz",
+        "clang -O2 readcon_coordinates",
+        "clang -O2 chemfiles_xyz",
+        "clang -O3 readcon_coordinates",
+        "gcc -O3 chemfiles_xyz",
+        "gcc -O2 readcon_frames",
+        "clang -O3 readcon_frames",
+        "clang -O3 chemfiles_xyz",
+        "gcc -O3 readcon_coordinates",
+        "gcc -O3 readcon_frames"
+      ]
+    ],
+    "load_average_before": [
+      1.203125,
+      1.30712890625,
+      1.4326171875
+    ],
+    "load_average_after": [
+      1.07275390625,
+      1.24853515625,
+      1.4033203125
+    ],
+    "boot_id_before": "f31346d1-d7b8-4c7d-985d-0ea429cd01ee",
+    "uptime_s_before": "210891.04",
+    "lscpu_before": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  8\nOn-line CPU(s) list:                     0-7\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Processor\nCPU family:                              6\nModel:                                   207\nThread(s) per core:                      1\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nBogoMIPS:                                4800.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               384 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                16 MiB (8 instances)\nL3 cache:                                320 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-7\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; TSX disabled\nVulnerability Vmscape:                   Not affected\n",
+    "per_core_before": "cpu0 3249759 213 461019 17337395 21151 0 130684 822 0 0\ncpu1 2235086 972 287098 18530269 17278 0 68590 796 0 0\ncpu2 1584432 1349 270837 19194508 19507 0 34497 1003 0 0\ncpu3 1672233 1113 280285 19088121 16732 0 20195 760 0 0\ncpu4 1636299 775 267834 19146383 17267 0 7941 772 0 0\ncpu5 1515728 1290 279238 19237747 25340 0 14766 947 0 0\ncpu6 1593585 819 261582 19184506 30564 0 2972 886 0 0\ncpu7 1688774 1279 289952 19067656 24169 0 2212 988 0 0",
+    "boot_id_after": "f31346d1-d7b8-4c7d-985d-0ea429cd01ee",
+    "uptime_s_after": "210950.56",
+    "lscpu_after": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  8\nOn-line CPU(s) list:                     0-7\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Processor\nCPU family:                              6\nModel:                                   207\nThread(s) per core:                      1\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nBogoMIPS:                                4800.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               384 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                16 MiB (8 instances)\nL3 cache:                                320 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-7\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; TSX disabled\nVulnerability Vmscape:                   Not affected\n",
+    "per_core_after": "cpu0 3251092 213 461577 17341450 21155 0 130783 822 0 0\ncpu1 2236651 972 287672 18534078 17281 0 68618 796 0 0\ncpu2 1585034 1349 271120 19199574 19507 0 34523 1003 0 0\ncpu3 1672428 1113 280386 19093772 16732 0 20201 760 0 0\ncpu4 1636526 775 267943 19151995 17267 0 7942 772 0 0\ncpu5 1515761 1290 279266 19243631 25345 0 14767 947 0 0\ncpu6 1593663 819 261643 19190311 30569 0 2972 886 0 0\ncpu7 1688961 1279 290058 19073311 24169 0 2212 988 0 0",
+    "artifact_sha256": {},
+    "campaign_s": 59.5
+  },
+  "hardware": {
+    "uname_m": "x86_64",
+    "nproc": 8,
+    "cpu_model": "Intel Xeon Processor family 6 model 207 stepping 2"
+  },
+  "cells": [
+    {
+      "compiler": "gcc",
+      "cxx": "g++",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "cxx_flags": [
+        "-O2",
+        "-std=c++17"
+      ],
+      "chemfiles_build_dir": "gcc-o2",
+      "chemfiles_cmake_cxx_flags_release": "-O2",
+      "chemfiles_version": "0.10.4",
+      "readcon_coordinates": {
+        "n": 11,
+        "median_s": 0.385808,
+        "q1_s": 0.38050249999999997,
+        "q3_s": 0.390131,
+        "iqr_s": 0.00962850000000004,
+        "samples_s": [
+          0.379181,
+          0.380773,
+          0.381455,
+          0.388523,
+          0.389992,
+          0.380232,
+          0.378425,
+          0.385808,
+          0.431071,
+          0.462895,
+          0.39027
+        ],
+        "samples_pid": [
+          1991201,
+          1991252,
+          1991326,
+          1991339,
+          1991434,
+          1991483,
+          1991558,
+          1991584,
+          1991697,
+          1991709,
+          1991795
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:44+00:00",
+          "2026-11-11T01:29:49+00:00",
+          "2026-11-11T01:29:54+00:00",
+          "2026-11-11T01:29:56+00:00",
+          "2026-11-11T01:30:03+00:00",
+          "2026-11-11T01:30:07+00:00",
+          "2026-11-11T01:30:13+00:00",
+          "2026-11-11T01:30:16+00:00",
+          "2026-11-11T01:30:25+00:00",
+          "2026-11-11T01:30:26+00:00",
+          "2026-11-11T01:30:33+00:00"
+        ]
+      },
+      "readcon_coordinates_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "readcon_frames": {
+        "n": 11,
+        "median_s": 0.386191,
+        "q1_s": 0.3837975,
+        "q3_s": 0.38847299999999996,
+        "iqr_s": 0.004675499999999944,
+        "samples_s": [
+          0.386191,
+          0.386645,
+          0.383798,
+          0.391816,
+          0.382827,
+          0.383827,
+          0.380941,
+          0.388316,
+          0.383797,
+          0.401164,
+          0.38863
+        ],
+        "samples_pid": [
+          1991190,
+          1991227,
+          1991314,
+          1991376,
+          1991397,
+          1991508,
+          1991535,
+          1991633,
+          1991635,
+          1991721,
+          1991796
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:44+00:00",
+          "2026-11-11T01:29:47+00:00",
+          "2026-11-11T01:29:54+00:00",
+          "2026-11-11T01:29:58+00:00",
+          "2026-11-11T01:30:00+00:00",
+          "2026-11-11T01:30:09+00:00",
+          "2026-11-11T01:30:12+00:00",
+          "2026-11-11T01:30:19+00:00",
+          "2026-11-11T01:30:20+00:00",
+          "2026-11-11T01:30:27+00:00",
+          "2026-11-11T01:30:33+00:00"
+        ]
+      },
+      "readcon_frames_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "chemfiles_xyz": {
+        "n": 11,
+        "median_s": 0.445803,
+        "q1_s": 0.4394745,
+        "q3_s": 0.45449399999999995,
+        "iqr_s": 0.015019499999999963,
+        "samples_s": [
+          0.433135,
+          0.456574,
+          0.43239,
+          0.43553,
+          0.445272,
+          0.451393,
+          0.445803,
+          0.443419,
+          0.494363,
+          0.462198,
+          0.452414
+        ],
+        "samples_pid": [
+          1991165,
+          1991239,
+          1991290,
+          1991341,
+          1991410,
+          1991484,
+          1991559,
+          1991597,
+          1991684,
+          1991757,
+          1991807
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:42+00:00",
+          "2026-11-11T01:29:47+00:00",
+          "2026-11-11T01:29:52+00:00",
+          "2026-11-11T01:29:56+00:00",
+          "2026-11-11T01:30:02+00:00",
+          "2026-11-11T01:30:07+00:00",
+          "2026-11-11T01:30:14+00:00",
+          "2026-11-11T01:30:17+00:00",
+          "2026-11-11T01:30:24+00:00",
+          "2026-11-11T01:30:29+00:00",
+          "2026-11-11T01:30:33+00:00"
+        ]
+      },
+      "chemfiles_xyz_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "ratio_readcon_over_chemfiles": 0.8654226194081241,
+      "ratio_frames_over_chemfiles": 0.8662817432812251
+    },
+    {
+      "compiler": "gcc",
+      "cxx": "g++",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "cxx_flags": [
+        "-O3",
+        "-std=c++17"
+      ],
+      "chemfiles_build_dir": "gcc-o3",
+      "chemfiles_cmake_cxx_flags_release": "-O3",
+      "chemfiles_version": "0.10.4",
+      "readcon_coordinates": {
+        "n": 11,
+        "median_s": 0.38776,
+        "q1_s": 0.3808025,
+        "q3_s": 0.3889945,
+        "iqr_s": 0.008192000000000033,
+        "samples_s": [
+          0.378244,
+          0.38776,
+          0.37953,
+          0.383119,
+          0.388451,
+          0.389538,
+          0.378827,
+          0.382075,
+          0.417263,
+          0.399647,
+          0.38776
+        ],
+        "samples_pid": [
+          1991214,
+          1991276,
+          1991277,
+          1991389,
+          1991446,
+          1991472,
+          1991546,
+          1991609,
+          1991672,
+          1991733,
+          1991782
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:45+00:00",
+          "2026-11-11T01:29:50+00:00",
+          "2026-11-11T01:29:51+00:00",
+          "2026-11-11T01:30:00+00:00",
+          "2026-11-11T01:30:04+00:00",
+          "2026-11-11T01:30:07+00:00",
+          "2026-11-11T01:30:12+00:00",
+          "2026-11-11T01:30:18+00:00",
+          "2026-11-11T01:30:23+00:00",
+          "2026-11-11T01:30:28+00:00",
+          "2026-11-11T01:30:31+00:00"
+        ]
+      },
+      "readcon_coordinates_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "readcon_frames": {
+        "n": 11,
+        "median_s": 0.386454,
+        "q1_s": 0.3843375,
+        "q3_s": 0.389576,
+        "iqr_s": 0.005238499999999979,
+        "samples_s": [
+          0.385166,
+          0.387372,
+          0.379769,
+          0.386454,
+          0.390852,
+          0.3883,
+          0.386067,
+          0.377724,
+          0.423039,
+          0.396787,
+          0.383509
+        ],
+        "samples_pid": [
+          1991176,
+          1991265,
+          1991313,
+          1991363,
+          1991423,
+          1991509,
+          1991522,
+          1991634,
+          1991673,
+          1991734,
+          1991783
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:42+00:00",
+          "2026-11-11T01:29:50+00:00",
+          "2026-11-11T01:29:53+00:00",
+          "2026-11-11T01:29:57+00:00",
+          "2026-11-11T01:30:03+00:00",
+          "2026-11-11T01:30:09+00:00",
+          "2026-11-11T01:30:11+00:00",
+          "2026-11-11T01:30:20+00:00",
+          "2026-11-11T01:30:23+00:00",
+          "2026-11-11T01:30:28+00:00",
+          "2026-11-11T01:30:32+00:00"
+        ]
+      },
+      "readcon_frames_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "chemfiles_xyz": {
+        "n": 11,
+        "median_s": 0.418709,
+        "q1_s": 0.413957,
+        "q3_s": 0.42612799999999995,
+        "iqr_s": 0.012170999999999932,
+        "samples_s": [
+          0.403039,
+          0.410142,
+          0.418383,
+          0.424656,
+          0.431144,
+          0.418709,
+          0.417772,
+          0.420426,
+          0.443021,
+          0.4276,
+          0.409476
+        ],
+        "samples_pid": [
+          1991177,
+          1991263,
+          1991327,
+          1991396,
+          1991398,
+          1991497,
+          1991547,
+          1991621,
+          1991685,
+          1991722,
+          1991808
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:43+00:00",
+          "2026-11-11T01:29:49+00:00",
+          "2026-11-11T01:29:55+00:00",
+          "2026-11-11T01:30:00+00:00",
+          "2026-11-11T01:30:01+00:00",
+          "2026-11-11T01:30:09+00:00",
+          "2026-11-11T01:30:13+00:00",
+          "2026-11-11T01:30:19+00:00",
+          "2026-11-11T01:30:24+00:00",
+          "2026-11-11T01:30:27+00:00",
+          "2026-11-11T01:30:34+00:00"
+        ]
+      },
+      "chemfiles_xyz_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "ratio_readcon_over_chemfiles": 0.9260847032187032,
+      "ratio_frames_over_chemfiles": 0.9229655918549637
+    },
+    {
+      "compiler": "clang",
+      "cxx": "clang++",
+      "compiler_version": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+      "cxx_flags": [
+        "-O2",
+        "-std=c++17"
+      ],
+      "chemfiles_build_dir": "clang-o2",
+      "chemfiles_cmake_cxx_flags_release": "-O2",
+      "chemfiles_version": "0.10.4",
+      "readcon_coordinates": {
+        "n": 11,
+        "median_s": 0.387483,
+        "q1_s": 0.38542699999999996,
+        "q3_s": 0.3910485,
+        "iqr_s": 0.005621500000000057,
+        "samples_s": [
+          0.387483,
+          0.410821,
+          0.386778,
+          0.381291,
+          0.387432,
+          0.380352,
+          0.391167,
+          0.384076,
+          0.417086,
+          0.39093,
+          0.387705
+        ],
+        "samples_pid": [
+          1991189,
+          1991226,
+          1991301,
+          1991375,
+          1991448,
+          1991460,
+          1991572,
+          1991616,
+          1991660,
+          1991759,
+          1991821
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:43+00:00",
+          "2026-11-11T01:29:46+00:00",
+          "2026-11-11T01:29:52+00:00",
+          "2026-11-11T01:29:58+00:00",
+          "2026-11-11T01:30:05+00:00",
+          "2026-11-11T01:30:06+00:00",
+          "2026-11-11T01:30:15+00:00",
+          "2026-11-11T01:30:18+00:00",
+          "2026-11-11T01:30:22+00:00",
+          "2026-11-11T01:30:30+00:00",
+          "2026-11-11T01:30:35+00:00"
+        ]
+      },
+      "readcon_coordinates_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "readcon_frames": {
+        "n": 11,
+        "median_s": 0.386448,
+        "q1_s": 0.38296050000000004,
+        "q3_s": 0.389803,
+        "iqr_s": 0.006842499999999974,
+        "samples_s": [
+          0.381653,
+          0.386448,
+          0.3815,
+          0.387204,
+          0.382604,
+          0.388394,
+          0.385876,
+          0.383317,
+          0.414361,
+          0.397035,
+          0.391212
+        ],
+        "samples_pid": [
+          1991188,
+          1991215,
+          1991288,
+          1991351,
+          1991409,
+          1991485,
+          1991534,
+          1991622,
+          1991696,
+          1991758,
+          1991771
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:43+00:00",
+          "2026-11-11T01:29:46+00:00",
+          "2026-11-11T01:29:51+00:00",
+          "2026-11-11T01:29:56+00:00",
+          "2026-11-11T01:30:01+00:00",
+          "2026-11-11T01:30:08+00:00",
+          "2026-11-11T01:30:12+00:00",
+          "2026-11-11T01:30:19+00:00",
+          "2026-11-11T01:30:24+00:00",
+          "2026-11-11T01:30:30+00:00",
+          "2026-11-11T01:30:31+00:00"
+        ]
+      },
+      "readcon_frames_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "chemfiles_xyz": {
+        "n": 11,
+        "median_s": 0.43159,
+        "q1_s": 0.41963550000000005,
+        "q3_s": 0.436543,
+        "iqr_s": 0.016907499999999964,
+        "samples_s": [
+          0.436167,
+          0.415616,
+          0.436919,
+          0.422812,
+          0.442706,
+          0.43159,
+          0.41207,
+          0.422642,
+          0.43233,
+          0.48753,
+          0.416629
+        ],
+        "samples_pid": [
+          1991164,
+          1991264,
+          1991289,
+          1991352,
+          1991447,
+          1991510,
+          1991560,
+          1991583,
+          1991646,
+          1991708,
+          1991809
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:41+00:00",
+          "2026-11-11T01:29:50+00:00",
+          "2026-11-11T01:29:52+00:00",
+          "2026-11-11T01:29:57+00:00",
+          "2026-11-11T01:30:05+00:00",
+          "2026-11-11T01:30:10+00:00",
+          "2026-11-11T01:30:14+00:00",
+          "2026-11-11T01:30:15+00:00",
+          "2026-11-11T01:30:21+00:00",
+          "2026-11-11T01:30:25+00:00",
+          "2026-11-11T01:30:34+00:00"
+        ]
+      },
+      "chemfiles_xyz_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "ratio_readcon_over_chemfiles": 0.8978034708867213,
+      "ratio_frames_over_chemfiles": 0.8954053615700086
+    },
+    {
+      "compiler": "clang",
+      "cxx": "clang++",
+      "compiler_version": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+      "cxx_flags": [
+        "-O3",
+        "-std=c++17"
+      ],
+      "chemfiles_build_dir": "clang-o3",
+      "chemfiles_cmake_cxx_flags_release": "-O3",
+      "chemfiles_version": "0.10.4",
+      "readcon_coordinates": {
+        "n": 11,
+        "median_s": 0.383696,
+        "q1_s": 0.3803125,
+        "q3_s": 0.39572399999999996,
+        "iqr_s": 0.015411499999999967,
+        "samples_s": [
+          0.378705,
+          0.400517,
+          0.375648,
+          0.375244,
+          0.383011,
+          0.383696,
+          0.390555,
+          0.396024,
+          0.38192,
+          0.414902,
+          0.395424
+        ],
+        "samples_pid": [
+          1991153,
+          1991240,
+          1991315,
+          1991388,
+          1991421,
+          1991471,
+          1991571,
+          1991608,
+          1991647,
+          1991720,
+          1991820
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:41+00:00",
+          "2026-11-11T01:29:48+00:00",
+          "2026-11-11T01:29:54+00:00",
+          "2026-11-11T01:29:59+00:00",
+          "2026-11-11T01:30:02+00:00",
+          "2026-11-11T01:30:06+00:00",
+          "2026-11-11T01:30:14+00:00",
+          "2026-11-11T01:30:17+00:00",
+          "2026-11-11T01:30:21+00:00",
+          "2026-11-11T01:30:26+00:00",
+          "2026-11-11T01:30:35+00:00"
+        ]
+      },
+      "readcon_coordinates_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "readcon_frames": {
+        "n": 11,
+        "median_s": 0.39071,
+        "q1_s": 0.3868065,
+        "q3_s": 0.3947095,
+        "iqr_s": 0.007902999999999993,
+        "samples_s": [
+          0.380321,
+          0.431803,
+          0.39071,
+          0.393186,
+          0.393082,
+          0.390024,
+          0.382878,
+          0.389352,
+          0.4329,
+          0.396233,
+          0.384261
+        ],
+        "samples_pid": [
+          1991213,
+          1991238,
+          1991302,
+          1991377,
+          1991435,
+          1991496,
+          1991521,
+          1991596,
+          1991671,
+          1991745,
+          1991784
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:45+00:00",
+          "2026-11-11T01:29:47+00:00",
+          "2026-11-11T01:29:53+00:00",
+          "2026-11-11T01:29:59+00:00",
+          "2026-11-11T01:30:04+00:00",
+          "2026-11-11T01:30:08+00:00",
+          "2026-11-11T01:30:10+00:00",
+          "2026-11-11T01:30:16+00:00",
+          "2026-11-11T01:30:22+00:00",
+          "2026-11-11T01:30:28+00:00",
+          "2026-11-11T01:30:32+00:00"
+        ]
+      },
+      "readcon_frames_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "chemfiles_xyz": {
+        "n": 11,
+        "median_s": 0.451705,
+        "q1_s": 0.44643900000000003,
+        "q3_s": 0.4548795,
+        "iqr_s": 0.008440499999999962,
+        "samples_s": [
+          0.454491,
+          0.451705,
+          0.438136,
+          0.445204,
+          0.455268,
+          0.447674,
+          0.452987,
+          0.445168,
+          0.450601,
+          0.458766,
+          0.456028
+        ],
+        "samples_pid": [
+          1991202,
+          1991251,
+          1991338,
+          1991364,
+          1991422,
+          1991459,
+          1991533,
+          1991585,
+          1991658,
+          1991746,
+          1991770
+        ],
+        "samples_timestamp": [
+          "2026-11-11T01:29:45+00:00",
+          "2026-11-11T01:29:48+00:00",
+          "2026-11-11T01:29:55+00:00",
+          "2026-11-11T01:29:58+00:00",
+          "2026-11-11T01:30:03+00:00",
+          "2026-11-11T01:30:05+00:00",
+          "2026-11-11T01:30:11+00:00",
+          "2026-11-11T01:30:16+00:00",
+          "2026-11-11T01:30:21+00:00",
+          "2026-11-11T01:30:29+00:00",
+          "2026-11-11T01:30:31+00:00"
+        ]
+      },
+      "chemfiles_xyz_printed": {
+        "frames": 10000,
+        "checksum": "16740600.0"
+      },
+      "ratio_readcon_over_chemfiles": 0.8494393464761293,
+      "ratio_frames_over_chemfiles": 0.8649671799072403
+    }
+  ],
+  "provenance": {
+    "library": {
+      "binary": "paper/cpc/bench/work/r0174/h2h/target/release/libreadcon_core.so",
+      "binary_sha256": "a2653f7db09ac3d33aaaf270d2e960772b19567306a1d6daa02de06b4b977913",
+      "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+      "newer_sources": [],
+      "library_digest": "fcdb03c9e8ee8ce434bdab4185088e2cf202f2fec3ff88a3870e46a5d49ab9ed",
+      "source_files": 48,
+      "source_tag": null,
+      "source_commit": "774f2d138e4b219a9f795194011dbfb80ee15512"
+    },
+    "host": {
+      "kernel": "6.12.113+",
+      "uname_m": "x86_64",
+      "nproc": 8,
+      "hostname": "bench",
+      "family": "6",
+      "model": "207",
+      "model_name": "Intel(R) Xeon(R) Processor",
+      "stepping": "2",
+      "mhz": 2400.0,
+      "mem_kb": 49342816,
+      "cpu_model": "Intel Xeon Processor family 6 model 207 stepping 2"
+    },
+    "HEAD": "774f2d138e4b219a9f795194011dbfb80ee15512",
+    "TREE": "f59a2a65e2e44ce04b7a6f2fb1895d6fa8b5f25a"
+  }
+}

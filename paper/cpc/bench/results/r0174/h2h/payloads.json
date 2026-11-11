@@ -1,0 +1,125 @@
+{
+  "frames": 10000,
+  "fixture": "resources/test/cuh2.con",
+  "velocity_campaign_rerun_identical": {
+    "con": true,
+    "xyz": true,
+    "gro": true
+  },
+  "files": {
+    "coords.con": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_coords.con",
+      "bytes": 167710000,
+      "sha256": "4130865bd198b471f6986f5b46066d12b223fad0c8326820f4ac78f1da714747"
+    },
+    "coords.rcbin": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_coords.rcbin",
+      "bytes": 104644096,
+      "sha256": "522cf50032437a9c5dcc0cea4210920369ee08bb48ab056cac042a0ac44ed17d"
+    },
+    "coords.xyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.xyz",
+      "bytes": 157010000,
+      "sha256": "27e27a8de309190308b8a0c87002cb02cbb4222402a055f696036cffeafb5409"
+    },
+    "coords.peer.extxyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.extxyz",
+      "bytes": 182330000,
+      "sha256": "1ad26b5506be5b04d0b8d1d8fdc3d92bf3d68a621591b652defd6ede7b88ab37"
+    },
+    "coords.peer.h5": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.h5",
+      "bytes": 52322432,
+      "sha256": "2b3737616186f6ac8bb8ea2452c824806f5cdff4d68490559237da51276c4084"
+    },
+    "coords.peer.traj": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.traj",
+      "bytes": 101006447,
+      "sha256": "869cde01fceb8de8090c6c5a5e68693860d0473fb2f999a47ae890be37181de1"
+    },
+    "coords.peer.xyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/coords/traj.xyz",
+      "bytes": 157010000,
+      "sha256": "27e27a8de309190308b8a0c87002cb02cbb4222402a055f696036cffeafb5409"
+    },
+    "vel.con": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_vel_206.con",
+      "bytes": 142980000,
+      "sha256": "1918d78dfeb7b44f359fc1cc3c4a10cd3d5bc10f15b940d9e4411015e5f0ab39"
+    },
+    "vel.rcbin": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_vel_206.rcbin",
+      "bytes": 104644096,
+      "sha256": "150338ae961e33d71859106ebadae9516107df205b238520c3d9106a2d326797"
+    },
+    "vel.xyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_vel_206.xyz",
+      "bytes": 53220000,
+      "sha256": "8adac37b584fc67bdea9102768cfba2c71c1262a962037ed52a7bcb519b60b73"
+    },
+    "vel.gro": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/traj_vel_206.gro",
+      "bytes": 151090000,
+      "sha256": "6fb4b5e15c5ee6dc447d8e19137451749d779455b710228f34ff9d5aedaba1c3"
+    },
+    "vel.peer.extxyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/vel/traj.extxyz",
+      "bytes": 293630000,
+      "sha256": "5f60a0a0618bd8aba83647dff2ced18aaa471885b540916313bfe88ed0080238"
+    },
+    "vel.peer.h5": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/vel/traj.h5",
+      "bytes": 52322432,
+      "sha256": "2b3737616186f6ac8bb8ea2452c824806f5cdff4d68490559237da51276c4084"
+    },
+    "vel.peer.traj": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/vel/traj.traj",
+      "bytes": 153914834,
+      "sha256": "96288c9334602a76badc91dab3fd51e19250f6d3c68f97a7ce22a7f4e809cae8"
+    },
+    "vel.peer.xyz": {
+      "path": "$REPO/paper/cpc/bench/work/r0174/h2h/vel/traj.xyz",
+      "bytes": 157010000,
+      "sha256": "27e27a8de309190308b8a0c87002cb02cbb4222402a055f696036cffeafb5409"
+    }
+  },
+  "provenance": {
+    "build": {
+      "readcon_version": "0.18.1",
+      "readcon_module": "paper/cpc/.pixi/envs/default/lib/python3.12/site-packages/readcon/readcon.cpython-312-x86_64-linux-gnu.so",
+      "readcon_module_sha256": "0ecd4d1ed4c1ab3b5649c7bca22266311da1ad26cde33b512a8873896b228cc3",
+      "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+      "newer_sources": [],
+      "library_digest": "fcdb03c9e8ee8ce434bdab4185088e2cf202f2fec3ff88a3870e46a5d49ab9ed",
+      "source_files": 48,
+      "source_tag": null,
+      "source_commit": "774f2d138e4b219a9f795194011dbfb80ee15512"
+    },
+    "host": {
+      "kernel": "6.12.113+",
+      "uname_m": "x86_64",
+      "nproc": 8,
+      "hostname": "bench",
+      "family": "6",
+      "model": "207",
+      "model_name": "Intel(R) Xeon(R) Processor",
+      "stepping": "2",
+      "mhz": 2400.0,
+      "mem_kb": 49342816,
+      "cpu_model": "Intel Xeon Processor family 6 model 207 stepping 2"
+    },
+    "peers": {
+      "ase": "3.29.0",
+      "chemfiles": "0.10.4",
+      "MDAnalysis": "2.10.0",
+      "h5py": "3.16.0",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "ovito": "3.16.1",
+      "openbabel": "3.2.1",
+      "python": "3.12.16"
+    },
+    "HEAD": "774f2d138e4b219a9f795194011dbfb80ee15512",
+    "TREE": "f59a2a65e2e44ce04b7a6f2fb1895d6fa8b5f25a"
+  }
+}
