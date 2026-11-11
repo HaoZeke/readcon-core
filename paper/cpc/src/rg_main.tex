@@ -370,6 +370,7 @@ the Open Visualization Tool (OVITO)
 Of the four, none opens a version-1 CON file or a CON 3.1 file, and the
 eon module of ASE opens both but stops at the velocity section of the
 frame of Section~\ref{sec:worked}.
+% TODO h2h: convel read, one session, one input. Arms: readcon, ASE io.read format='eon', eOn loadcons, eOn C++ client on every frame. Inputs: the survey-frame velocities as a sibling .convel, and Listing lst:frame with its declared velocity section. ASE is the arm that stops at that section.
 
 Most atomistic formats have no specification apart from the code that
 reads them, so that code is the de facto definition of the format.
@@ -1103,6 +1104,7 @@ ASE writes that file with eight decimals, a shift of
 \(\num{\surveyAseXyzShiftNum}\,\text{\AA}\); chemfiles 0.10.4 moves the
 coordinates by \(\num{\surveyChemXyzShiftNum}\,\text{\AA}\), rounds the
 cell lengths to six significant digits and drops the velocities.
+% TODO h2h: one survey frame written as extended XYZ and reread in one session. Arms, each as writer and reader: readcon, ASE format='extxyz', chemfiles 0.10.4 XYZ, OVITO 3.17.2. Record velocities kept or dropped, cell digits, and periodicity.
 The tag chemfiles 0.11.0-rc1, commit \texttt{a2319946} of 2025-10-06,
 is not the release on PyPI \cite{frauxChemfiles0110rc12025}.
 That tag stores one cell vector per row of the cell matrix, and
@@ -1348,6 +1350,7 @@ A ratio in this section is the ratio of two type-7 medians.
 The CON peer is ASE \texttt{get\_positions} on every frame.
 chemfiles, OVITO, MDAnalysis and pymatgen do not read CON.
 Their rows in the exchange log are XYZ, HDF5 or PDB, not this table.
+% TODO h2h: same 32-atom 100000-frame CON as reader-exchange-public.log, one interleaved session. Arms that read every frame: readcon C, readcon Fortran, readcon Python, ASE format='eon', eOn loadcons, eOn C++ client on every frame. Arms attempted on those same bytes: chemfiles 0.10.4 and OVITO 3.17.2, with the open error in the raw log. The exchange log runs chemfiles and OVITO on XYZ, and its eon arm is one frame.
 eOn \texttt{loadcons} does read CON.
 The commit named by that log is tag v0.18.0.
 The raw log does not record a module sha256.
@@ -1447,6 +1450,7 @@ The tag is an ancestor, and the commit includes
 round-trip spelling of readcon-core at commit \texttt{694e808}
 \cite{goswamiEonRoundtripWriter2026}.
 Tag v3.6.0 does not contain that writer.
+% TODO h2h: CON and convel write, one session. Inputs: the survey frame and the 32-atom 100000-frame geometry. Writers: readcon, ASE io.write format='eon', eOn commit 579738a, eOn tag v3.6.0. Reread every output with readcon, ASE format='eon', and loadcons. The r233 ASE-write row is a different file and a different commit.
 % TODO (head-to-head): eOn commit 579738a9387e8d0ea55496f45dd057812cfab892, the commit the build log names, against tag v3.6.0.
 % The later commit includes e5b658813 (2026-10-14), merged by pull request 776 on 2026-10-15.
 % Write one survey frame and the 100000-frame copper file with each writer.
@@ -1464,6 +1468,7 @@ and the same cell.
 NumPy reads an npy coordinate array, which has no cell.
 ASE and chemfiles read extended xyz.
 OVITO reads extended xyz.
+% TODO h2h: chemfiles 0.10.4 and OVITO 3.17.2 read and write the copper-grid files of the extxyz session (10 atoms, 1000 atoms, 10^6 atoms, 10000 frames), interleaved with readcon, ASE extxyz, ASE cextxyz and extxyz 0.4.6. That session's raw logs do not include chemfiles or OVITO.
 pymatgen reads a POSCAR.
 MDAnalysis reads a protein data bank file with a crystal record.
 That panel is separate from the con table.
