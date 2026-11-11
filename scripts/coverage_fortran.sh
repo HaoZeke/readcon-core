@@ -34,6 +34,7 @@ export GFORTRAN_ERROR_BACKTRACE=0
 ( cd "$WORK" && ./test_iterator_stream )
 gcov -b -c -o "$WORK" fortran/ReadCon/src/readcon.f90 fortran/ReadCon/test/test_iterator_stream.f90
 gcov -f -b -c -o "$WORK" fortran/ReadCon/src/readcon.f90 > "$WORK/gcov-functions.txt"
+cp "$WORK/gcov-functions.txt" "$OUT/gcov-functions.txt"
 
 python3 - "$ROOT" "$HOME" "$OUT" <<'PY'
 import re
@@ -63,7 +64,7 @@ def blocks(text: str) -> dict[str, str]:
     return found
 
 summary = {}
-function_text = Path("gcov-functions.txt").read_text(encoding="utf-8", errors="replace")
+function_text = (out / "gcov-functions.txt").read_text(encoding="utf-8", errors="replace")
 for match in re.finditer(
     r"Function '__readcon_MOD_(\w+)'\nLines executed:([0-9.]+)% of (\d+)",
     function_text,
@@ -111,4 +112,5 @@ for name, executed, executable, taken, branches, returned, calls in rows:
 (out / "fortran-procedures.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 print("\n".join(lines))
 PY
+rm -f readcon.f90.gcov test_iterator_stream.f90.gcov gcov-functions.txt
 echo "wrote fortran coverage"
