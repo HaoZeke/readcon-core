@@ -1549,7 +1549,8 @@ contains
     integer(c_size_t) :: n
     call to_c(path, c)
     n = c_rkr_chemfiles_nsteps(c)
-    if (n == huge(n)) then
+    ! Same signed c_size_t sentinel as count_frames.
+    if (n < 0_c_size_t) then
       chemfiles_nsteps = -1
     else
       chemfiles_nsteps = int(n)

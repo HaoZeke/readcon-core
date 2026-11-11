@@ -8,6 +8,9 @@ PREFIXES = (
     ("/usr/local/cargo/registry", "cargo-registry"),
     ("/usr/local/cargo", "cargo"),
     ("/usr/local/rustup", "rustup"),
+    ("/usr/bin", "usr/bin"),
+    ("/usr/lib", "usr/lib"),
+    ("/usr/include", "usr/include"),
 )
 
 
@@ -24,9 +27,10 @@ def rewrite(text: str, root: str) -> tuple[str, list[str]]:
     if "/home/ubuntu" in text:
         text = text.replace("/home/ubuntu", "home")
         used.append("/home/ubuntu -> home")
-    if "/src/" in text:
-        text = text.replace("/src/", "src/")
-        used.append("/src/ -> src/")
+    for old in ("/src/py-ci", "/src/out"):
+        if old in text:
+            text = text.replace(old, old[1:])
+            used.append(f"{old} -> {old[1:]}")
     return text, used
 
 
