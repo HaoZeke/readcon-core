@@ -4,12 +4,14 @@
 //! `extxyz_time time PATH REPEATS` warms up once, then prints one JSON object.
 //! `extxyz_time check PATH DUMP` writes the arrays from one read.
 //! `extxyz_time once PATH` reads once and prints the high-water mark.
+//! `extxyz_time serve` reads line commands so one process can time single
+//! reads and writes between other arms.
 
-use readcon_core::extxyz_scan::{tables_from_extxyz_path, write_extxyz_path};
+use readcon_core::extxyz_scan::{XyzTables, tables_from_extxyz_path, write_extxyz_path};
 use std::env;
 use std::fs::File;
 use std::hint::black_box;
-use std::io::Write;
+use std::io::{BufRead, Write};
 use std::path::Path;
 use std::time::Instant;
 
@@ -31,6 +33,10 @@ fn hwm_kib() -> u64 {
 fn main() {
     let mut args = env::args().skip(1);
     let mode = args.next().expect("mode");
+    if mode == "serve" {
+        serve();
+        return;
+    }
     let path = args.next().expect("path");
     match mode.as_str() {
         "time" => time(
@@ -61,6 +67,67 @@ fn main() {
             );
         }
         other => panic!("unknown mode {other}"),
+    }
+}
+
+fn reply(line: &str) {
+    println!("{line}");
+    let _ = std::io::stdout().flush();
+}
+
+/// One warm process. Each `read` or `write` line is one timed call.
+///
+/// `warmup-write SRC DST` reads `SRC` outside the clock. Later `write` lines
+/// for that same `SRC` time only the write.
+fn serve() {
+    let stdin = std::io::stdin();
+    let mut tables: Option<XyzTables> = None;
+    let mut loaded = String::new();
+    for line in stdin.lock().lines() {
+        let line = line.expect("stdin");
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let mut parts = line.splitn(3, ' ');
+        let command = parts.next().expect("command");
+        match command {
+            "exit" => {
+                reply("ok");
+                break;
+            }
+            "warmup-read" | "read" => {
+                let path = parts.next().expect("path");
+                let started = Instant::now();
+                let parsed = tables_from_extxyz_path(Path::new(path)).expect("read");
+                let elapsed = started.elapsed().as_secs_f64();
+                black_box(&parsed);
+                if command == "read" {
+                    reply(&format!("{elapsed:.9}"));
+                } else {
+                    reply("ok");
+                }
+            }
+            "warmup-write" | "write" => {
+                let src = parts.next().expect("src");
+                let dest = parts.next().expect("dest");
+                if loaded != src || tables.is_none() {
+                    tables = Some(tables_from_extxyz_path(Path::new(src)).expect("read"));
+                    loaded = src.to_string();
+                }
+                let parsed = tables.as_ref().expect("tables");
+                let started = Instant::now();
+                write_extxyz_path(Path::new(dest), parsed).expect("write");
+                let elapsed = started.elapsed().as_secs_f64();
+                black_box(parsed);
+                if command == "write" {
+                    reply(&format!("{elapsed:.9}"));
+                } else {
+                    reply("ok");
+                }
+            }
+            other => panic!("unknown serve command {other}"),
+        }
     }
 }
 

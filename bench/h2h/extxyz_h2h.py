@@ -3,7 +3,9 @@
 
 Every arm sees the same files. Small files live in bench/h2h/fixtures.
 Medium and large files are written under bench/h2h/work and are not committed.
-One warmup read is excluded. The six timed repeats are serial, on one core.
+One warmup call is excluded. The six timed repeats are serial, on one core.
+``session`` runs every read arm and every write arm in one process, interleaved
+inside each case, then records massif and a fresh-process high-water mark.
 """
 
 from __future__ import annotations
@@ -502,6 +504,14 @@ def package_version(name: str) -> str:
         return "missing"
 
 
+def cpu_governor() -> str:
+    path = Path("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
+    if not path.is_file():
+        return "not visible"
+    text = path.read_text(encoding="utf-8").strip()
+    return text or "not visible"
+
+
 def environment() -> dict:
     rustc = subprocess.check_output(
         ["rustup", "run", "1.91.0", "rustc", "--version"], text=True
@@ -509,6 +519,9 @@ def environment() -> dict:
     valgrind = subprocess.check_output(["valgrind", "--version"], text=True).strip()
     readcon_version = package_version("readcon")
     return {
+        "host": support.hardware_line(),
+        "kernel": os.uname().release,
+        "cpu_governor": cpu_governor(),
         "hardware": support.hardware_line(),
         "python": sys.version.split()[0],
         "rustc": rustc,
@@ -521,6 +534,7 @@ def environment() -> dict:
         "readcon": readcon_version,
         "git": support.git_line(["rev-parse", "HEAD"]),
         "pin": "taskset -c 0",
+        "session": "one process; arms interleaved within each case",
         "threads": 1,
         "repeats": REPEATS,
         "warmup": 1,
@@ -966,6 +980,230 @@ def report() -> None:
     RESULTS.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
 
 
+class RustPipe:
+    """One warm ``extxyz_time serve`` process for single timed calls."""
+
+    def __init__(self) -> None:
+        self.proc = subprocess.Popen(
+            [str(rust_binary()), "serve"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=ROOT,
+            env=support.thread_env(),
+        )
+
+    def call(self, command: str) -> str:
+        if self.proc.stdin is None or self.proc.stdout is None:
+            raise RuntimeError("rust serve is closed")
+        self.proc.stdin.write(command + "\n")
+        self.proc.stdin.flush()
+        line = self.proc.stdout.readline()
+        if not line:
+            err = ""
+            if self.proc.stderr is not None:
+                err = self.proc.stderr.read()
+            raise RuntimeError(
+                support.sanitize(err or f"rust serve closed on {command}")
+            )
+        return line.strip()
+
+    def close(self) -> None:
+        try:
+            self.call("exit")
+        except (OSError, RuntimeError):
+            pass
+        if self.proc.poll() is None:
+            self.proc.kill()
+        self.proc.wait()
+
+
+def _rotate(items: list, shift: int) -> list:
+    if not items:
+        return items
+    shift %= len(items)
+    return items[shift:] + items[:shift]
+
+
+def _time_read(arm: str, path: Path, rust: RustPipe) -> float:
+    if arm == "readcon_rust":
+        return float(rust.call(f"read {support.rel(path)}"))
+    started = time.perf_counter()
+    read_arm(arm, path)
+    return time.perf_counter() - started
+
+
+def _time_write(arm: str, payload, dest: Path, src: Path, rust: RustPipe) -> float:
+    if arm == "readcon_rust":
+        return float(rust.call(f"write {support.rel(src)} {support.rel(dest)}"))
+    started = time.perf_counter()
+    write_arm(arm, payload, dest)
+    return time.perf_counter() - started
+
+
+def _attach_memory(rows: list[dict], op: str) -> None:
+    for row in rows:
+        if not row["samples"]:
+            continue
+        name = row["case"]
+        arm = row["arm"]
+        row["rss_kib"] = write_rss(arm, name) if op == "write" else rss_of(arm, name)
+        if name in MASSIF_CASES:
+            row["massif_heap_bytes"] = (
+                massif_write(arm, name) if op == "write" else massif_heap(arm, name)
+            )
+
+
+def run_session() -> None:
+    """Time every read and write arm in one process, then measure memory."""
+    prepare()
+    rust = RustPipe()
+    read_rows = {arm: [] for arm in READ_ARMS}
+    write_rows = {arm: [] for arm in WRITE_ARMS}
+    try:
+        for name, atoms, frames, _fixture in CASES:
+            path = input_path(name)
+            expect = reference(atoms, frames)
+            live = []
+            for arm in READ_ARMS:
+                got, error = safe_read(arm, path)
+                if error is not None:
+                    read_rows[arm].append(failed_row(arm, "read", name, path, error))
+                    continue
+                check = compare(got, expect)
+                del got
+                if check["hard_fail"] and arm.startswith("readcon"):
+                    raise RuntimeError(f"{arm} {name}: {check['reason']}")
+                if arm == "readcon_rust":
+                    rust.call(f"warmup-read {support.rel(path)}")
+                else:
+                    read_arm(arm, path)
+                live.append((arm, check))
+            samples = {arm: [] for arm, _check in live}
+            for repeat in range(REPEATS):
+                for arm, _check in _rotate(live, repeat):
+                    samples[arm].append(_time_read(arm, path, rust))
+            for arm, check in live:
+                row = support.stats_block(samples[arm])
+                row.update(check)
+                row.update(
+                    {
+                        "arm": arm,
+                        "op": "read",
+                        "case": name,
+                        "file": support.rel(path),
+                        "rss_kib": None,
+                        "massif_heap_bytes": None,
+                    }
+                )
+                read_rows[arm].append(row)
+            print(f"read {name} done", file=sys.stderr, flush=True)
+
+        for name, atoms, frames, _fixture in CASES:
+            path = input_path(name)
+            expect = reference(atoms, frames)
+            live = []
+            for arm in WRITE_ARMS:
+                dest = WORK / "outs" / f"{arm}-{name}.extxyz"
+                try:
+                    payload = load_for_write(arm, path)
+                except (KeyboardInterrupt, SystemExit):
+                    raise
+                except BaseException as exc:  # noqa: BLE001  pyo3 panics are not Exception
+                    reason = f"{type(exc).__name__}: {exc}".splitlines()[0][:500]
+                    write_rows[arm].append(failed_row(arm, "write", name, path, reason))
+                    continue
+                if arm == "readcon_rust":
+                    rust.call(f"warmup-write {support.rel(path)} {support.rel(dest)}")
+                else:
+                    write_arm(arm, payload, dest)
+                note = ""
+                if arm == "extxyz_ng":
+                    note = "write_frame loop; write_frames rejects a Python iterator of Frame"
+                live.append((arm, payload, dest, note))
+            samples = {arm: [] for arm, _payload, _dest, _note in live}
+            for repeat in range(REPEATS):
+                for arm, payload, dest, _note in _rotate(live, repeat):
+                    samples[arm].append(_time_write(arm, payload, dest, path, rust))
+            for arm, _payload, dest, note in live:
+                got, error = safe_read(arm, dest)
+                if error is not None:
+                    row = support.stats_block(samples[arm])
+                    row.update(
+                        {
+                            "correct": False,
+                            "reason": "wrote; reread " + error,
+                            "arm": arm,
+                            "op": "write",
+                            "case": name,
+                            "file": support.rel(dest),
+                            "rss_kib": None,
+                            "massif_heap_bytes": None,
+                            "note": note,
+                        }
+                    )
+                    write_rows[arm].append(row)
+                    continue
+                check = compare(got, expect)
+                del got
+                if check["hard_fail"] and arm.startswith("readcon"):
+                    raise RuntimeError(f"{arm} write {name}: {check['reason']}")
+                row = support.stats_block(samples[arm])
+                row.update(check)
+                row.update(
+                    {
+                        "arm": arm,
+                        "op": "write",
+                        "case": name,
+                        "file": support.rel(dest),
+                        "rss_kib": None,
+                        "massif_heap_bytes": None,
+                        "note": note,
+                    }
+                )
+                write_rows[arm].append(row)
+            print(f"write {name} done", file=sys.stderr, flush=True)
+    finally:
+        rust.close()
+
+    (WORK / "session-rows.json").write_text(
+        json.dumps({"read": read_rows, "write": write_rows}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    for arm, rows in read_rows.items():
+        _attach_memory(rows, "read")
+        emit(
+            f"extxyz-{arm}-read",
+            [
+                "taskset",
+                "-c",
+                "0",
+                "python3",
+                "bench/h2h/extxyz_h2h.py",
+                "session",
+            ],
+            rows,
+        )
+        print(f"memory read {arm} done", file=sys.stderr, flush=True)
+    for arm, rows in write_rows.items():
+        _attach_memory(rows, "write")
+        emit(
+            f"extxyz-{arm}-write",
+            [
+                "taskset",
+                "-c",
+                "0",
+                "python3",
+                "bench/h2h/extxyz_h2h.py",
+                "session",
+            ],
+            rows,
+        )
+        print(f"memory write {arm} done", file=sys.stderr, flush=True)
+    report()
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         raise SystemExit("missing command")
@@ -989,6 +1227,8 @@ def main() -> None:
                 write_extxyz(FIXTURES / f"{name}.extxyz", atoms, frames)
     elif command == "report":
         report()
+    elif command == "session":
+        run_session()
     else:
         raise SystemExit(f"unknown command {command}")
 
