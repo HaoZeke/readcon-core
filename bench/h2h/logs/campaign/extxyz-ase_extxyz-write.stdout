@@ -1,0 +1,185 @@
+git rev-parse HEAD
+ec9879000d9b9c7bd97c01752a2a7423b3cab299
+git rev-parse HEAD^{tree}
+178e25ac9ab5df70a86b92b350f2734beb2c82bf
+git rev-parse HEAD:src
+b5b6e904c5f7c9563316011a4abb371109f8979f
+command
+taskset -c 0 python3 bench/h2h/extxyz_h2h.py write ase_extxyz
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.000259096
+sample 0.000210437
+sample 0.000194298
+sample 0.000187602
+sample 0.000182230
+sample 0.000183364
+median_s 0.000190950
+q25_s 0.000184424
+q75_s 0.000206402
+iqr_s 0.000021979
+n_atoms 10
+n_frames 1
+cell 3.000000000 3.000000000 3.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op write
+case small-1
+file bench/h2h/work/extxyz/outs/ase_extxyz-small-1.extxyz
+rss_kib 81960
+massif_heap_bytes None
+{"samples": [0.00025909600003615196, 0.00021043699985057174, 0.0001942979999967065, 0.0001876019998690026, 0.00018222999983663613, 0.00018336400012231024], "n": 6, "median_s": 0.00019094999993285455, "q25_s": 0.00018442350005898334, "q75_s": 0.00020640224988710543, "iqr_s": 2.197874982812209e-05, "n_atoms": 10, "n_frames": 1, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "write", "case": "small-1", "file": "bench/h2h/work/extxyz/outs/ase_extxyz-small-1.extxyz", "rss_kib": 79524, "massif_heap_bytes": null, "note": ""}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000938767
+sample 0.000899345
+sample 0.000888223
+sample 0.000872526
+sample 0.000886654
+sample 0.000899374
+median_s 0.000893784
+q25_s 0.000887046
+q75_s 0.000899367
+iqr_s 0.000012320
+n_atoms 10
+n_frames 8
+cell 3.000000000 3.000000000 3.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op write
+case small-n
+file bench/h2h/work/extxyz/outs/ase_extxyz-small-n.extxyz
+rss_kib 82036
+massif_heap_bytes None
+{"samples": [0.0009387669999796344, 0.0008993450001071324, 0.0008882229999471747, 0.0008725259999664559, 0.0008866539999417, 0.0008993739998004457], "n": 6, "median_s": 0.0008937840000271535, "q25_s": 0.0008870462499430687, "q75_s": 0.0008993667498771174, "iqr_s": 1.2320499934048712e-05, "n_atoms": 10, "n_frames": 8, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "write", "case": "small-n", "file": "bench/h2h/work/extxyz/outs/ase_extxyz-small-n.extxyz", "rss_kib": 79508, "massif_heap_bytes": null, "note": ""}
+repeat 6
+serial 1
+quantile type-7
+sample 0.004476222
+sample 0.004476920
+sample 0.004208742
+sample 0.004119389
+sample 0.004195613
+sample 0.004326776
+median_s 0.004267759
+q25_s 0.004198895
+q75_s 0.004438860
+iqr_s 0.000239965
+n_atoms 1000
+n_frames 1
+cell 10.000000000 10.000000000 10.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op write
+case medium-1
+file bench/h2h/work/extxyz/outs/ase_extxyz-medium-1.extxyz
+rss_kib 82912
+massif_heap_bytes None
+{"samples": [0.004476221999993868, 0.0044769200001155696, 0.004208741999946142, 0.004119389000152296, 0.004195613000092635, 0.004326775999970778], "n": 6, "median_s": 0.00426775899995846, "q25_s": 0.004198895250056012, "q75_s": 0.004438860499988095, "iqr_s": 0.00023996524993208368, "n_atoms": 1000, "n_frames": 1, "cell": [10.0, 10.0, 10.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "write", "case": "medium-1", "file": "bench/h2h/work/extxyz/outs/ase_extxyz-medium-1.extxyz", "rss_kib": 80036, "massif_heap_bytes": null, "note": ""}
+repeat 6
+serial 1
+quantile type-7
+sample 0.043018701
+sample 0.042285698
+sample 0.042476696
+sample 0.042537603
+sample 0.042585185
+sample 0.042837009
+median_s 0.042561394
+q25_s 0.042491923
+q75_s 0.042774053
+iqr_s 0.000282130
+n_atoms 100
+n_frames 100
+cell 5.000000000 5.000000000 5.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op write
+case medium-n
+file bench/h2h/work/extxyz/outs/ase_extxyz-medium-n.extxyz
+rss_kib 87212
+massif_heap_bytes None
+{"samples": [0.04301870100016458, 0.04228569800011428, 0.04247669599999426, 0.04253760300002796, 0.042585185000007186, 0.04283700900009535], "n": 6, "median_s": 0.04256139400001757, "q25_s": 0.042491922750002686, "q75_s": 0.04277405300007331, "iqr_s": 0.0002821302500706224, "n_atoms": 100, "n_frames": 100, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "write", "case": "medium-n", "file": "bench/h2h/work/extxyz/outs/ase_extxyz-medium-n.extxyz", "rss_kib": 81184, "massif_heap_bytes": null, "note": ""}
+repeat 6
+serial 1
+quantile type-7
+sample 3.747010530
+sample 4.119493512
+sample 4.018681244
+sample 3.922538554
+sample 3.859250064
+sample 3.759767529
+median_s 3.890894309
+q25_s 3.784638163
+q75_s 3.994645571
+iqr_s 0.210007409
+n_atoms 1000000
+n_frames 1
+cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op write
+case large-1
+file bench/h2h/work/extxyz/outs/ase_extxyz-large-1.extxyz
+rss_kib 776008
+massif_heap_bytes None
+{"samples": [3.747010530000125, 4.119493511999963, 4.018681243999936, 3.9225385540000843, 3.85925006399998, 3.7597675289998733], "n": 6, "median_s": 3.890894309000032, "q25_s": 3.7846381627499, "q75_s": 3.994645571499973, "iqr_s": 0.21000740875007295, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "write", "case": "large-1", "file": "bench/h2h/work/extxyz/outs/ase_extxyz-large-1.extxyz", "rss_kib": 667980, "massif_heap_bytes": null, "note": ""}
+repeat 6
+serial 1
+quantile type-7
+sample 4.319446895
+sample 4.293065282
+sample 4.709931520
+sample 4.377677444
+sample 4.388708801
+sample 4.338415296
+median_s 4.358046370
+q25_s 4.324188995
+q75_s 4.385950962
+iqr_s 0.061761967
+n_atoms 100
+n_frames 10000
+cell 5.000000000 5.000000000 5.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op write
+case large-n
+file bench/h2h/work/extxyz/outs/ase_extxyz-large-n.extxyz
+rss_kib 776008
+massif_heap_bytes None
+{"samples": [4.3194468950000555, 4.293065282000043, 4.709931520000055, 4.377677444000028, 4.388708801000121, 4.338415295999994], "n": 6, "median_s": 4.358046370000011, "q25_s": 4.32418899525004, "q75_s": 4.385950961750098, "iqr_s": 0.0617619665000575, "n_atoms": 100, "n_frames": 10000, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "write", "case": "large-n", "file": "bench/h2h/work/extxyz/outs/ase_extxyz-large-n.extxyz", "rss_kib": 219876, "massif_heap_bytes": null, "note": ""}
+exit 0

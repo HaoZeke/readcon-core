@@ -1,0 +1,13 @@
+arm,op,case,repeat,seconds
+extxyz_ng,read,small-1,0,0.000086304
+extxyz_ng,read,small-1,1,0.000102288
+extxyz_ng,read,small-1,2,0.000082531
+extxyz_ng,read,small-1,3,0.000074078
+extxyz_ng,read,small-1,4,0.000070976
+extxyz_ng,read,small-1,5,0.000069802
+extxyz_ng,read,small-n,0,0.000504325
+extxyz_ng,read,small-n,1,0.000427331
+extxyz_ng,read,small-n,2,0.000421135
+extxyz_ng,read,small-n,3,0.000410050
+extxyz_ng,read,small-n,4,0.000441489
+extxyz_ng,read,small-n,5,0.000461824

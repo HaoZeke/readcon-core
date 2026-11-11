@@ -1,0 +1,185 @@
+git rev-parse HEAD
+ec9879000d9b9c7bd97c01752a2a7423b3cab299
+git rev-parse HEAD^{tree}
+178e25ac9ab5df70a86b92b350f2734beb2c82bf
+git rev-parse HEAD:src
+b5b6e904c5f7c9563316011a4abb371109f8979f
+command
+taskset -c 0 python3 bench/h2h/extxyz_h2h.py read ase_extxyz
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.000351751
+sample 0.000316359
+sample 0.000323182
+sample 0.000299433
+sample 0.000313150
+sample 0.000296924
+median_s 0.000314755
+q25_s 0.000302862
+q75_s 0.000321476
+iqr_s 0.000018614
+n_atoms 10
+n_frames 1
+cell 3.000000000 3.000000000 3.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op read
+case small-1
+file bench/h2h/fixtures/small-1.extxyz
+rss_kib 81468
+massif_heap_bytes None
+{"samples": [0.0003517509999255708, 0.00031635900018045504, 0.0003231820001019514, 0.00029943300000923045, 0.00031315000001086446, 0.0002969239999401907], "n": 6, "median_s": 0.00031475450009565975, "q25_s": 0.00030286225000963896, "q75_s": 0.0003214762501215773, "iqr_s": 1.8614000111938367e-05, "n_atoms": 10, "n_frames": 1, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "read", "case": "small-1", "file": "bench/h2h/fixtures/small-1.extxyz", "rss_kib": 81468, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 0.002005310
+sample 0.001829908
+sample 0.001827330
+sample 0.001882983
+sample 0.001855098
+sample 0.001781783
+median_s 0.001842503
+q25_s 0.001827974
+q75_s 0.001876012
+iqr_s 0.000048037
+n_atoms 10
+n_frames 8
+cell 3.000000000 3.000000000 3.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op read
+case small-n
+file bench/h2h/fixtures/small-n.extxyz
+rss_kib 81484
+massif_heap_bytes None
+{"samples": [0.0020053099999586266, 0.0018299079999906098, 0.0018273299999691517, 0.0018829830000868242, 0.001855097999850841, 0.0017817829998421075], "n": 6, "median_s": 0.0018425029999207254, "q25_s": 0.0018279744999745162, "q75_s": 0.0018760117500278284, "iqr_s": 4.8037250053312164e-05, "n_atoms": 10, "n_frames": 8, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "read", "case": "small-n", "file": "bench/h2h/fixtures/small-n.extxyz", "rss_kib": 81484, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 0.001942086
+sample 0.001905516
+sample 0.002389465
+sample 0.001952176
+sample 0.002082838
+sample 0.001901746
+median_s 0.001947131
+q25_s 0.001914659
+q75_s 0.002050172
+iqr_s 0.000135514
+n_atoms 1000
+n_frames 1
+cell 10.000000000 10.000000000 10.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op read
+case medium-1
+file bench/h2h/work/extxyz/inputs/medium-1.extxyz
+rss_kib 82052
+massif_heap_bytes None
+{"samples": [0.0019420859998717788, 0.0019055160000789328, 0.0023894650000784168, 0.0019521760000316135, 0.0020828379999784374, 0.0019017459999304265], "n": 6, "median_s": 0.0019471309999516961, "q25_s": 0.0019146585000271443, "q75_s": 0.0020501724999917315, "iqr_s": 0.00013551399996458713, "n_atoms": 1000, "n_frames": 1, "cell": [10.0, 10.0, 10.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "read", "case": "medium-1", "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz", "rss_kib": 82052, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 0.034264282
+sample 0.034214755
+sample 0.034396662
+sample 0.033303296
+sample 0.033739208
+sample 0.033901036
+median_s 0.034057896
+q25_s 0.033779665
+q75_s 0.034251900
+iqr_s 0.000472235
+n_atoms 100
+n_frames 100
+cell 5.000000000 5.000000000 5.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op read
+case medium-n
+file bench/h2h/work/extxyz/inputs/medium-n.extxyz
+rss_kib 84192
+massif_heap_bytes None
+{"samples": [0.03426428199986731, 0.0342147549999936, 0.03439666200006286, 0.033303295999985494, 0.03373920800004271, 0.033901036000088425], "n": 6, "median_s": 0.03405789550004101, "q25_s": 0.03377966500005414, "q75_s": 0.03425190024989888, "iqr_s": 0.0004722352498447435, "n_atoms": 100, "n_frames": 100, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "read", "case": "medium-n", "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz", "rss_kib": 84192, "massif_heap_bytes": null}
+repeat 6
+serial 1
+quantile type-7
+sample 1.807989097
+sample 1.815597814
+sample 1.797301456
+sample 1.851802050
+sample 1.801589940
+sample 1.904546033
+median_s 1.811793455
+q25_s 1.803189729
+q75_s 1.842750991
+iqr_s 0.039561262
+n_atoms 1000000
+n_frames 1
+cell 100.000000000 100.000000000 100.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op read
+case large-1
+file bench/h2h/work/extxyz/inputs/large-1.extxyz
+rss_kib 669636
+massif_heap_bytes 220768545
+{"samples": [1.8079890970000179, 1.8155978139998297, 1.7973014560000138, 1.8518020500000603, 1.8015899399999853, 1.9045460329998605], "n": 6, "median_s": 1.8117934554999238, "q25_s": 1.8031897292499934, "q75_s": 1.8427509910000026, "iqr_s": 0.03956126175000918, "n_atoms": 1000000, "n_frames": 1, "cell": [100.0, 100.0, 100.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "read", "case": "large-1", "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz", "rss_kib": 669636, "massif_heap_bytes": 220768545}
+repeat 6
+serial 1
+quantile type-7
+sample 4.278386541
+sample 4.560414859
+sample 4.780624389
+sample 4.397282786
+sample 4.096220630
+sample 3.959689798
+median_s 4.337834664
+q25_s 4.141762108
+q75_s 4.519631841
+iqr_s 0.377869733
+n_atoms 100
+n_frames 10000
+cell 5.000000000 5.000000000 5.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_extxyz
+op read
+case large-n
+file bench/h2h/work/extxyz/inputs/large-n.extxyz
+rss_kib 327312
+massif_heap_bytes 228614392
+{"samples": [4.278386541000145, 4.560414859000048, 4.780624388999968, 4.397282786000005, 4.096220630000062, 3.9596897979999994], "n": 6, "median_s": 4.337834663500075, "q25_s": 4.141762107750083, "q75_s": 4.519631840750037, "iqr_s": 0.3778697329999545, "n_atoms": 100, "n_frames": 10000, "cell": [5.0, 5.0, 5.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "ase_extxyz", "op": "read", "case": "large-n", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 327312, "massif_heap_bytes": 228614392}
+exit 0

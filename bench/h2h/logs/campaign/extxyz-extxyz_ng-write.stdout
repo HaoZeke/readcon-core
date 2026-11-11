@@ -1,0 +1,73 @@
+git rev-parse HEAD
+ec9879000d9b9c7bd97c01752a2a7423b3cab299
+git rev-parse HEAD^{tree}
+178e25ac9ab5df70a86b92b350f2734beb2c82bf
+git rev-parse HEAD:src
+b5b6e904c5f7c9563316011a4abb371109f8979f
+command
+taskset -c 0 python3 bench/h2h/extxyz_h2h.py write extxyz_ng
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.000106951
+sample 0.000085775
+sample 0.000078636
+sample 0.000075906
+sample 0.000075373
+sample 0.000075800
+median_s 0.000077271
+q25_s 0.000075826
+q75_s 0.000083990
+iqr_s 0.000008164
+n_atoms 10
+n_frames 1
+cell 3.000000000 3.000000000 3.000000000 90.000000000 90.000000000 90.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm extxyz_ng
+op write
+case small-1
+file bench/h2h/work/extxyz/outs/extxyz_ng-small-1.extxyz
+rss_kib 35832
+massif_heap_bytes None
+{"samples": [0.00010695100013435876, 8.577500011597294e-05, 7.863599989832437e-05, 7.59059998927114e-05, 7.537300007243175e-05, 7.57999998768355e-05], "n": 6, "median_s": 7.727099989551789e-05, "q25_s": 7.582649988080448e-05, "q75_s": 8.39902500615608e-05, "iqr_s": 8.163750180756324e-06, "n_atoms": 10, "n_frames": 1, "cell": [3.0, 3.0, 3.0, 90.0, 90.0, 90.0], "max_abs": 0.0, "mass_max_abs": 0.0, "force_max_abs": 0.0, "n_atoms_ok": true, "cell_ok": true, "coords_ok": true, "masses_ok": true, "species_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "reason": "ok", "arm": "extxyz_ng", "op": "write", "case": "small-1", "file": "bench/h2h/work/extxyz/outs/extxyz_ng-small-1.extxyz", "rss_kib": 33228, "massif_heap_bytes": null, "note": "write_frame loop; write_frames rejects a Python iterator of Frame"}
+repeat 6
+serial 1
+quantile type-7
+sample 0.000442121
+sample 0.000427455
+sample 0.000448379
+sample 0.000451046
+sample 0.000467887
+sample 0.000435368
+median_s 0.000445250
+q25_s 0.000437056
+q75_s 0.000450379
+iqr_s 0.000013323
+n_atoms None
+n_frames None
+cell missing
+max_abs missing
+n_atoms_ok 0
+cell_ok 0
+coords_ok 0
+correct 0
+reason wrote; reread OSError: Digit: Cu          1.00000000       1.00000000       0.00000000      63.54600000       1.00000000       0.50000000       0.00000000
+arm extxyz_ng
+op write
+case small-n
+file bench/h2h/work/extxyz/outs/extxyz_ng-small-n.extxyz
+rss_kib 35844
+massif_heap_bytes None
+{"samples": [0.0004421210001055442, 0.00042745499990815006, 0.0004483790000904264, 0.0004510460000801686, 0.00046788700001343386, 0.00043536800012589083], "n": 6, "median_s": 0.0004452500000979853, "q25_s": 0.0004370562501208042, "q75_s": 0.00045037925008273305, "iqr_s": 1.3322999961928872e-05, "correct": false, "reason": "wrote; reread OSError: Digit: Cu          1.00000000       1.00000000       0.00000000      63.54600000       1.00000000       0.50000000       0.00000000", "arm": "extxyz_ng", "op": "write", "case": "small-n", "file": "bench/h2h/work/extxyz/outs/extxyz_ng-small-n.extxyz", "rss_kib": 33220, "massif_heap_bytes": null, "note": "write_frame loop; write_frames rejects a Python iterator of Frame"}
+{"samples": [], "n": 0, "median_s": null, "q25_s": null, "q75_s": null, "iqr_s": null, "n_atoms": null, "n_frames": null, "cell": null, "max_abs": null, "n_atoms_ok": false, "cell_ok": false, "coords_ok": false, "masses_ok": false, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "OSError: Digit: Cu 0.0 8.0 0.0 63.546 0.00 1.0 0.0", "arm": "extxyz_ng", "op": "write", "case": "medium-1", "file": "bench/h2h/work/extxyz/inputs/medium-1.extxyz", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "q25_s": null, "q75_s": null, "iqr_s": null, "n_atoms": null, "n_frames": null, "cell": null, "max_abs": null, "n_atoms_ok": false, "cell_ok": false, "coords_ok": false, "masses_ok": false, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "OSError: Digit: Cu 4.0 0.0 0.0 63.546 1.00 0.5 0.0", "arm": "extxyz_ng", "op": "write", "case": "medium-n", "file": "bench/h2h/work/extxyz/inputs/medium-n.extxyz", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "q25_s": null, "q75_s": null, "iqr_s": null, "n_atoms": null, "n_frames": null, "cell": null, "max_abs": null, "n_atoms_ok": false, "cell_ok": false, "coords_ok": false, "masses_ok": false, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "OSError: Digit: Cu 64.0 0.0 0.0 63.546 1.00 0.5 0.0", "arm": "extxyz_ng", "op": "write", "case": "large-1", "file": "bench/h2h/work/extxyz/inputs/large-1.extxyz", "rss_kib": null, "massif_heap_bytes": null}
+{"samples": [], "n": 0, "median_s": null, "q25_s": null, "q75_s": null, "iqr_s": null, "n_atoms": null, "n_frames": null, "cell": null, "max_abs": null, "n_atoms_ok": false, "cell_ok": false, "coords_ok": false, "masses_ok": false, "species_ok": false, "forces_ok": false, "correct": false, "hard_fail": false, "reason": "OSError: Digit: Cu 4.0 0.0 0.0 63.546 1.00 0.5 0.0", "arm": "extxyz_ng", "op": "write", "case": "large-n", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": null, "massif_heap_bytes": null}
+exit 1
