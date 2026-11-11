@@ -192,8 +192,8 @@ def main() -> None:
     parser.add_argument("--new-extension", type=Path, required=True)
     parser.add_argument("--log", type=Path, required=True)
     parser.add_argument("--expect", type=Path, required=True)
-    parser.add_argument("--label", default="r2.10")
-    parser.add_argument("--baseline", default="r2.9")
+    parser.add_argument("--label", default="later")
+    parser.add_argument("--baseline", default="earlier")
     args = parser.parse_args()
 
     expect = load_expect(args.expect)
@@ -338,8 +338,8 @@ def main() -> None:
 
     spelled = {"ovito": False, "ase": False, "ci": False}
 
-    def shift_list(arms: list[str]) -> str:
-        parts = []
+    def shift_sentences(arms: list[str], word: str) -> list[str]:
+        found = []
         for arm, change in shifts:
             if arm not in arms:
                 continue
@@ -353,8 +353,8 @@ def main() -> None:
             elif arm == "readcon_extxyz" and not spelled["ci"]:
                 name = "continuous integration (CI) readcon"
                 spelled["ci"] = True
-            parts.append(f"{name} {change:+.1f} percent")
-        return "; ".join(parts)
+            found.append(f"{name} is {abs(change):.1f} percent {word}.")
+        return found
 
     session = f"the {args.label} session (commit {new['commit'][:8]})"
     opening = [
@@ -363,11 +363,9 @@ def main() -> None:
         f"The baseline run is {args.baseline}.",
         "A negative percent means the median time got faster.",
     ]
-    if quickened:
-        opening.append(f"Faster medians: {shift_list(quickened)}.")
-    if slowed:
-        opening.append(f"Slower medians: {shift_list(slowed)}.")
-    paragraphs = [" ".join(opening)]
+    opening.extend(shift_sentences(quickened, "faster"))
+    opening.extend(shift_sentences(slowed, "slower"))
+    paragraphs = list(opening)
     if set(slowed) == set(changed) and same_hash and slowed:
         paragraphs.append(
             "The slower medians belong to the arms whose extension hash changed between the sessions. "
@@ -380,16 +378,19 @@ def main() -> None:
         repeat_sentence = (
             f"The earlier cells use {old_n} repeats and the later cells use {new_n} repeats."
         )
+    paragraphs.append("The interquartile range (IQR) is a descriptive screen.")
+    paragraphs.append(repeat_sentence)
+    paragraphs.append("A cell is outside the screen when its paired ratio moves too far.")
+    paragraphs.append("The limit is the larger of the two interquartile ranges.")
     paragraphs.append(
-        "The interquartile range (IQR) is a descriptive screen. "
-        + repeat_sentence
-        + " A cell is outside the screen when the median paired ratio moves by more than the larger of the two interquartile ranges."
+        f"A permutation test uses the {old_n} and {new_n} paired ratios."
     )
+    paragraphs.append("The statistic is the difference of the mean log ratios.")
     paragraphs.append(
-        f"An exact two-sided permutation test uses the {old_n}+{new_n} paired ratios in each cell. "
-        f"The statistic is the difference of the mean log ratios. "
-        f"The smallest p this design can give is {floor:.6f} ({floor_extreme}/{floor_total}). "
-        f"Uncorrected cells at p<=0.05: {len(uncorrected)}. "
+        f"The smallest p this design can give is {floor:.6f} ({floor_extreme}/{floor_total})."
+    )
+    paragraphs.append(f"Uncorrected cells at p<=0.05: {len(uncorrected)}.")
+    paragraphs.append(
         f"Cells below the Bonferroni level {corrected:.6f}: {len(survivors)}."
     )
     if same_hash and noise:
@@ -440,16 +441,9 @@ def main() -> None:
             f"{old_count} instructions in the {args.baseline} file and {new_count} instructions in the {args.label} file."
         )
     if other_rows:
-        count = len(other_rows)
-        listed = ", ".join(row["name"] for row in other_rows).replace(
-            "CON read", "eOn configuration (CON) read", 1
-        )
-        if count == 1:
-            paragraphs.append(f"The interquartile range also flags {listed}.")
-        else:
-            paragraphs.append(
-                f"The interquartile range also flags {count} cells. The cells are {listed}."
-            )
+        paragraphs.append("The interquartile range also flags more cells.")
+        for row in other_rows:
+            paragraphs.append(f"It flags {row['size']} {row['peer']}.")
 
     bench_names = []
     label_names = []
@@ -466,16 +460,16 @@ def main() -> None:
         if row["peer"] == "ovito" or (
             row["format"] == "con" and row["peer"] == "ase_eon"
         ):
-            bench_names.append(row["name"])
+            bench_names.append(f"{row['size']} {row['peer']}")
         elif row["peer"] in readcon_peers:
             old_hash = old["build"]["arms"][row["peer"]]["binary_sha256"]
             new_hash = new["build"]["arms"][row["peer"]]["binary_sha256"]
             if old_hash != new_hash:
                 label_names.append(row["name"])
             else:
-                session_names.append(row["name"])
+                session_names.append(f"{row['size']} {row['peer']}")
         else:
-            session_names.append(row["name"])
+            session_names.append(f"{row['size']} {row['peer']}")
 
     def joined(names: list[str]) -> str:
         if not names:
@@ -484,16 +478,19 @@ def main() -> None:
 
     ovito_name = "OVITO" if spelled["ovito"] else "Open Visualization Tool (OVITO)"
     paragraphs.append("Bench code accounts for " + joined(bench_names) + ".")
-    paragraphs.append(
-        f"{ovito_name} builds its type table once per file."
-    )
-    paragraphs.append("The eOn reader maps each distinct symbol once.")
+    if any(name.endswith(" ovito") for name in bench_names):
+        paragraphs.append(f"{ovito_name} builds its type table once per file.")
+    if any(name.endswith(" ase_eon") for name in bench_names):
+        paragraphs.append("The eOn reader maps each distinct symbol once.")
     paragraphs.append(
         "A changed readcon archive label accounts for " + joined(label_names) + "."
     )
-    paragraphs.append(
-        "The session moved " + joined(session_names) + "."
-    )
+    if session_names:
+        paragraphs.append("The session moved these cells.")
+        for name in session_names:
+            paragraphs.append(f"It moved {name}.")
+    else:
+        paragraphs.append("The session moved none.")
 
     ci_hash = new["build"]["arms"]["readcon_extxyz"]["binary_sha256"]
     ci_unchanged = ci_hash == old["build"]["arms"]["readcon_extxyz"]["binary_sha256"]
@@ -519,44 +516,45 @@ def main() -> None:
             side = "the Atomic Simulation Environment (ASE)"
         else:
             side = "both readers equally"
-        con_notes.append(
-            f"At {row['size']}, readcon changes by {readcon_change:+.1f} percent and is {direction_word(readcon_change)}."
-        )
-        con_notes.append(
-            "The Atomic Simulation Environment (ASE) changes by "
-            f"{ase_change:+.1f} percent and is {direction_word(ase_change)}."
-        )
-        con_notes.append(f"The larger change is on {side}.")
-        if ci_unchanged and (flagged or headline):
-            con_notes.append(
-                "The paired ratio moves by "
-                f"{percent(row['old'], row['new']):+.2f} percent."
-            )
+        move = percent(row["old"], row["new"])
+        con_notes.append(f"At {row['size']} the larger change is on {side}.")
+        con_notes.append(f"The paired ratio moves by {move:+.2f} percent.")
     if con_notes:
         paragraphs.append("The eOn configuration (CON) reads move as follows.")
         paragraphs.extend(con_notes)
     if screen_only or test_only:
-        flagged = ", ".join(f"{row['name']} p={row['p']:.3f}" for row in screen_only)
-        missed = ", ".join(f"{row['name']} p={row['p']:.3f}" for row in test_only)
-        text = "Across both sessions, the screen and the test disagree. "
-        if screen_only:
-            text += f"The screen flags {flagged}. "
-        if test_only:
-            text += f"The test marks {missed}, which the screen leaves inside one IQR."
-        if wheel_omits_types and ci_has_types:
-            if text and not text.endswith(" "):
-                text += " "
-            text += (
-                "That published-wheel ratio is time only and not equal work, "
-                "because the 0.18.0 wheel returns no atomic numbers."
+        def p_text(value: float) -> str:
+            if value >= 0.001:
+                return f"{value:.3f}"
+            return f"{value:.6f}"
+
+        if screen_only or test_only:
+            paragraphs.append("The screen and the test disagree.")
+        for row in screen_only:
+            paragraphs.append(
+                f"The screen flags {row['size']} {row['peer']} at p={p_text(row['p'])}."
             )
-        paragraphs.append(text.strip())
+        for row in test_only:
+            paragraphs.append(
+                f"The test marks {row['size']} {row['peer']} at p={p_text(row['p'])}."
+            )
+            paragraphs.append("The screen leaves that cell inside one IQR.")
+        cited = screen_only + test_only
+        if wheel_omits_types and ci_has_types and any(
+            row["peer"] == "readcon_pypi" for row in cited
+        ):
+            paragraphs.append(
+                "That published-wheel ratio is time only and not equal work."
+            )
+            paragraphs.append(
+                "The 0.18.0 wheel returns no atomic numbers."
+            )
 
     header = f"| cell | {args.baseline} | {args.label} | screen | x IQR | p |"
     rule = "| --- | ---: | ---: | --- | ---: | ---: |"
     body = []
     for row in rows:
-        screen = "more than one IQR" if row["outside"] else "inside one IQR"
+        screen = "outside" if row["outside"] else "inside"
         old_text = f"{row['old']:.2f}" if row["old"] >= 10 else f"{row['old']:.3f}"
         new_text = f"{row['new']:.2f}" if row["new"] >= 10 else f"{row['new']:.3f}"
         if row["p"] >= 0.001:
@@ -564,12 +562,11 @@ def main() -> None:
         else:
             p_text = f"{row['p']:.6f}"
         body.append(
-            f"| {row['name']} | {old_text} | {new_text} | {screen} | {row['factor']:.2f} | {p_text} |"
+            f"| {row['size']} {row['peer']} | {old_text} | {new_text} | {screen} | {row['factor']:.2f} | {p_text} |"
         )
     table = "\n".join([header, rule, *body])
-    paragraphs.append(
-        "Every cell is in this table. The p column is the permutation test."
-    )
+    paragraphs.append("Every cell is in this table.")
+    paragraphs.append("The p column is the permutation test.")
     paragraphs.append(f"run.log carries all {blocks} per-sample blocks.")
 
     blocks_out = []
