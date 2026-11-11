@@ -1,9 +1,11 @@
 // Time the eOn client's CON and convel path.
 // A read loads every frame with readcon::read_all_frames and copies each
 // frame into Matter through eonc::io::con2matter, which is the client load.
-// A write loads the frames first, then times con2matter plus matter2con
-// (append) or matter2convel. matter2convel writes one frame, so a convel
-// trajectory is those single-frame files concatenated.
+// A write streams one frame at a time. matter2con is called with append
+// after the first frame, and the frame is dropped before the next read.
+// The 100000-frame vector is not retained. matter2convel still replaces
+// its file, so a convel trajectory is those single-frame files concatenated.
+// Parameters outlive the Matter: the client stores the address.
 
 #include "eon/ConFileIO.h"
 #include "eon/Matter.h"
@@ -33,9 +35,17 @@ long status_kb(const char *key) {
     return 0;
 }
 
+eonc::Parameters &live_parameters() {
+    static eonc::Parameters params = [] {
+        eonc::Parameters made;
+        eonc::ParametersLoadAccess::potential_options(made).potential = eonc::PotType::LJ;
+        return made;
+    }();
+    return params;
+}
+
 eonc::Matter make_matter() {
-    eonc::Parameters params;
-    eonc::ParametersLoadAccess::potential_options(params).potential = eonc::PotType::LJ;
+    auto &params = live_parameters();
     auto pot = eonc::helpers::sharePotential(
         eonc::helpers::makePotential(eonc::PotType::LJ, params));
     return eonc::Matter(pot, params);
@@ -53,14 +63,6 @@ void load_all(eonc::Matter &matter, const std::string &path) {
     }
 }
 
-std::vector<readcon::ConFrame> load_frames(const std::string &path) {
-    auto frames = readcon::read_all_frames(path);
-    if (frames.empty()) {
-        throw std::runtime_error("no frames");
-    }
-    return frames;
-}
-
 void append_file(const std::filesystem::path &dest, const std::filesystem::path &part) {
     std::ifstream in(part, std::ios::binary);
     std::ofstream out(dest, std::ios::binary | std::ios::app);
@@ -73,16 +75,17 @@ void append_file(const std::filesystem::path &dest, const std::filesystem::path 
     }
 }
 
-void write_trajectory(eonc::Matter &matter, const std::vector<readcon::ConFrame> &frames,
-                      const std::string &out, bool convel) {
+void write_trajectory(eonc::Matter &matter, const std::string &src, const std::string &out,
+                      bool convel) {
     std::error_code ignored;
     std::filesystem::remove(out, ignored);
+    std::size_t n = 0;
     if (convel) {
         const std::filesystem::path dest(out);
         const std::filesystem::path part = dest.string() + ".part.convel";
         std::filesystem::remove(part, ignored);
         bool first = true;
-        for (const auto &frame : frames) {
+        for (auto &&frame : readcon::ConFrameIterator(src)) {
             if (!eonc::io::io_ok(eonc::io::con2matter(matter, frame, nullptr))) {
                 throw std::runtime_error("con2matter");
             }
@@ -91,27 +94,34 @@ void write_trajectory(eonc::Matter &matter, const std::vector<readcon::ConFrame>
                     throw std::runtime_error("matter2convel");
                 }
                 first = false;
-                continue;
+            } else {
+                std::filesystem::remove(part, ignored);
+                if (!eonc::io::io_ok(eonc::io::matter2convel(matter, part.string()))) {
+                    throw std::runtime_error("matter2convel");
+                }
+                append_file(dest, part);
             }
-            std::filesystem::remove(part, ignored);
-            if (!eonc::io::io_ok(eonc::io::matter2convel(matter, part.string()))) {
-                throw std::runtime_error("matter2convel");
-            }
-            append_file(dest, part);
+            ++n;
         }
         std::filesystem::remove(part, ignored);
-        return;
+    } else {
+        eonc::io::resetConAppendState();
+        bool append = false;
+        for (auto &&frame : readcon::ConFrameIterator(src)) {
+            if (!eonc::io::io_ok(eonc::io::con2matter(matter, frame, nullptr))) {
+                throw std::runtime_error("con2matter");
+            }
+            // eOn appends through matter2con. OpenMode::Append is not in
+            // this readcon revision; the client append flag is the stream.
+            if (!eonc::io::io_ok(eonc::io::matter2con(matter, out, append))) {
+                throw std::runtime_error("matter2con");
+            }
+            append = true;
+            ++n;
+        }
     }
-    eonc::io::resetConAppendState();
-    bool append = false;
-    for (const auto &frame : frames) {
-        if (!eonc::io::io_ok(eonc::io::con2matter(matter, frame, nullptr))) {
-            throw std::runtime_error("con2matter");
-        }
-        if (!eonc::io::io_ok(eonc::io::matter2con(matter, out, append))) {
-            throw std::runtime_error("matter2con");
-        }
-        append = true;
+    if (n == 0) {
+        throw std::runtime_error("no frames");
     }
 }
 
@@ -167,16 +177,27 @@ int main(int argc, char **argv) {
             const std::string out = argv[3];
             const int repeats = std::stoi(argv[4]);
             const bool convel = mode == "write-convel";
-            auto frames = load_frames(path);
             auto matter = make_matter();
-            write_trajectory(matter, frames, out, convel);
+            const long base = status_kb("VmRSS");
+            write_trajectory(matter, path, out, convel);
             std::vector<double> samples;
             for (int i = 0; i < repeats; ++i) {
                 const auto t0 = std::chrono::steady_clock::now();
-                write_trajectory(matter, frames, out, convel);
+                write_trajectory(matter, path, out, convel);
                 samples.push_back(seconds_since(t0));
             }
-            print_samples(samples);
+            const long after = status_kb("VmRSS");
+            std::cout << "{\"samples\":[";
+            for (size_t i = 0; i < samples.size(); ++i) {
+                if (i) {
+                    std::cout << ',';
+                }
+                std::cout.setf(std::ios::fixed);
+                std::cout.precision(9);
+                std::cout << samples[i];
+            }
+            std::cout << "],\"base_kib\":" << base << ",\"after_kib\":" << after
+                      << ",\"hwm_kib\":" << status_kb("VmHWM") << "}\n";
             return 0;
         }
         if (mode == "write-once") {
@@ -184,7 +205,6 @@ int main(int argc, char **argv) {
             const std::string kind = argv[4];
             const std::string library = argv[5];
             const std::string marker = argv[6];
-            auto frames = load_frames(path);
             auto matter = make_matter();
             void *handle = dlopen(library.c_str(), RTLD_NOW);
             if (handle == nullptr) {
@@ -201,7 +221,7 @@ int main(int argc, char **argv) {
             if (monitor(command.c_str()) != 0) {
                 throw std::runtime_error("snapshot");
             }
-            write_trajectory(matter, frames, out, kind == "convel");
+            write_trajectory(matter, path, out, kind == "convel");
             std::cout << "{\"rss_kib\":" << stop() << "}\n";
             return 0;
         }
