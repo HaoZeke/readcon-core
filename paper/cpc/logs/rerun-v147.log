@@ -1,0 +1,25 @@
+rustc -V
+rustc 1.88.0 (6b00bc388 2025-06-23)
+cargo -V
+cargo 1.88.0 (873a06493 2025-05-10)
+boot_id a1b40186-b13d-47b6-a011-375d3355eaff
+nproc 8
+cpu_model Intel(R) Xeon(R) Processor
+cpu_mhz 2400.000
+mem_total_kib 49342816
+kernel 6.12.113+
+os Ubuntu 24.04.5 LTS
+hypervisor_vendor KVM
+virtual_machine yes
+tip v14.7
+commit 0b8a0bc4a9f1bd07dae92748db34cfe2e5b58ffe
+workload frames=500 atoms=32 repeats=6 serial read_all_frames
+session_start 2026-11-11T03:54:12Z
+command /tmp/rc-time/target/release/rc-time /tmp/frames-500.con 6
+sample arm=readcon_tip repeat=0 frames=500 seconds=3.874419000e-3
+sample arm=readcon_tip repeat=1 frames=500 seconds=2.502402000e-3
+sample arm=readcon_tip repeat=2 frames=500 seconds=2.097593000e-3
+sample arm=readcon_tip repeat=3 frames=500 seconds=2.002291000e-3
+sample arm=readcon_tip repeat=4 frames=500 seconds=2.212237000e-3
+sample arm=readcon_tip repeat=5 frames=500 seconds=2.241264000e-3
+session_end 2026-11-11T03:54:12Z

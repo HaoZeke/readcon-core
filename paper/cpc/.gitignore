@@ -13,6 +13,8 @@
 !logs/install.log
 !logs/reader-exchange.log
 !logs/reader-exchange-public.log
+!logs/rerun-v147.log
+!logs/rerun-v149.log
 !logs/dlpack-exchange.log
 !logs/build.log
 !logs/eon-build.log

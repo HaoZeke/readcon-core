@@ -1294,20 +1294,44 @@ eOn \texttt{loadcons} is \rcEonOverAse{} times that median.
 \toprule
 Reader & File & Median (s) & / ASE median \\
 \midrule
-chemfiles & not CON & --- & --- \\
-OVITO & not CON & --- & --- \\
-MDAnalysis & not CON & --- & --- \\
-pymatgen & not CON & --- & --- \\
+chemfiles & CON & n/a: does not read CON\footnotemark & n/a \\
+OVITO & CON & n/a: does not read CON\footnotemark & n/a \\
+MDAnalysis & CON & n/a: does not read CON\footnotemark & n/a \\
+pymatgen & CON & n/a: does not read CON\footnotemark & n/a \\
 ASE \texttt{get\_positions} & CON & \rcAseMedian & 1 \\
 eOn \texttt{loadcons} & CON & \rcEonMedian & \rcEonOverAse \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table} \footnotetext{The reader has no CON parser in this exchange.
+The cell is not a time.}
 
 ASE \texttt{get\_positions} takes \rcAseMedian~s and matches 100000 of
 100000 frames.
 eOn \texttt{loadcons} takes \rcEonMedian~s on the same file and the same
 scope.
+
+\begin{table}[tbp] \centering \footnotesize
+\caption{XYZ and CON ratios from h2h-r233-results.json. Commit aefc6350, ten repeats, ratio of medians. The readcon arm is readcon\_extxyz on XYZ and readcon\_py on CON.}
+\label{tab:peers-r233}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Reader & File & Median (s) & / readcon \\
+\midrule
+ASE & extxyz cu32\_f100k & 11.49 & 23.51 \\
+chemfiles & extxyz cu32\_f100k & 14.41 & 29.51 \\
+OVITO & extxyz cu32\_f100k & 6.854 & 14.03 \\
+ASE read & CON cu32\_f100k & 12.13 & 4.479 \\
+ASE write & CON cu1000\_f1k & 2.458 & 3.430 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:peers} and Table~\ref{tab:peers-r233} do not share an
+arm.
+The public log divides ASE \texttt{get\_positions} by
+\texttt{readcon\_tip}, six type-7 medians, and that ratio is 61.68.
+The r2.33 CON read divides ASE by \texttt{readcon\_py}, ten medians, and
+that ratio is 4.479.
 
 \paragraph{Regression of readcon against itself} This note is not
 Table~\ref{tab:peers}.
@@ -1316,8 +1340,10 @@ On the 32-atom, 100000-frame CON file in
 \texttt{arm=readcon\_tip scope=all\_frames} is \rcTipMedian~s.
 The summary line \texttt{arm=readcon\_v0173 scope=all\_frames} is
 \rcFullOneMedian~s.
-That second arm is not 0.18.0 \texttt{read\_con}.
-The first arm is not \texttt{read\_positions}.
+That arm is v0.17.3 \texttt{read\_con}.
+It is not v0.18.0.
+The tip arm is \texttt{read\_con} of the measured commit, all frames.
+It is not \texttt{read\_positions}.
 The untagged 0.17.3 baseline, \texttt{arm=readcon\_base}, takes
 \rcReleaseMedian~s, which is \rcTipOverRelease{} times the tip arm.
 ASE \texttt{get\_positions} is \texttt{arm=ase\_eon scope=all\_frames}

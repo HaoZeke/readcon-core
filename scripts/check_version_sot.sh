@@ -220,6 +220,9 @@ allow_exact = {
     "paper/cpc/logs/reader-exchange-public.log",
     "paper/cpc/logs/mutant-differential.txt",
     "paper/cpc/variants/NUMBERS.txt",
+    # The program summary and the trace table quote the crate version.
+    "paper/cpc/PROGRAM_SUMMARY.md",
+    "paper/cpc/data/trace/numbers.csv",
 }
 skip_dirs = {
     ".git",
@@ -243,6 +246,8 @@ skip_prefixes = (
     # Measured campaign records. Each file quotes the package version
     # that produced that run, the same way the reader-exchange logs do.
     "paper/cpc/bench/results/",
+    # The imported h2h campaign names the version that produced it.
+    "paper/cpc/logs/h2h-",
 )
 bad = []
 listed = subprocess.check_output(["git", "ls-files", "-z"])

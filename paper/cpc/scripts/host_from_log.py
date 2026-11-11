@@ -16,7 +16,8 @@ LABELS = {
     "readcon_full_t8": r"readcon \texttt{read\_con}, 8 threads",
     "readcon_pos_t1": r"readcon \texttt{read\_positions}, 1 thread",
     "readcon_pos_t8": r"readcon \texttt{read\_positions}, 8 threads",
-    "readcon_v0173": r"readcon-core \texttt{read\_con}, 1 thread",
+    "readcon_v0173": r"0.17.3 \texttt{read\_con}, all frames",
+    "readcon_tip": r"tip \texttt{read\_con}, all frames",
     "readcon_base": r"baseline \texttt{read\_con}, 1 thread",
     "ase_eon": r"ASE \texttt{get\_positions}, 1 thread",
     "eon_py": r"eOn \texttt{loadcons}, 1 thread",
@@ -199,24 +200,12 @@ def main() -> int:
             return f"{version}, tag {tag}"
         return f"{version}, untagged"
 
-    # summary lines name the arm and the scope. readcon_tip is an
-    # all-frames arm. It is not read_positions. readcon_v0173 is an
-    # all-frames arm. It is not 0.18.0 read_con.
-    tip_scope = found["readcon_tip"]["scope"].replace("_", " ")
-    v0173_scope = found["readcon_v0173"]["scope"].replace("_", " ")
-    LABELS["readcon_v0173"] = (
-        f"\\texttt{{readcon\\_v0173}}, {v0173_scope}"
-    )
-    LABELS["readcon_tip"] = (
-        f"\\texttt{{readcon\\_tip}}, {tip_scope}"
-    )
+    # Labels stay on the arm the log names. readcon_v0173 is the
+    # v0.17.3 read_con arm. It is never labelled v0.18.0.
     LABELS["readcon_base"] = (
         f"{arm_label(baseline, baseline_version)} \\texttt{{readcon\\_base}}, "
         f"{found['readcon_base']['scope'].replace('_', ' ')}"
     )
-    for name in ("chemfiles", "ovito", "mdanalysis"):
-        scope = found[name]["scope"].replace("_", " ")
-        LABELS[name] = f"{name}, {scope}"
     full = arm_s(found, "readcon_v0173")
     pos1 = arm_s(found, "readcon_tip")
     base = arm_s(found, "readcon_base")

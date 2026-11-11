@@ -110,3 +110,19 @@ cargo llvm-cov report --branch --summary-only | tee "$OUT/summary.txt"
 cargo llvm-cov report --branch --lcov --output-path "$OUT/coverage.lcov"
 cargo llvm-cov report --branch --json --output-path "$OUT/coverage.json"
 echo "wrote $OUT/summary.txt"
+# Receipt paths come from this process, not from names stored in the script.
+cargo_bin=$(command -v cargo || true)
+rustup_bin=$(command -v rustup || true)
+cargo_prefix=""
+rustup_prefix=""
+if [ -n "$cargo_bin" ]; then
+  cargo_prefix=$(CDPATH= cd -- "$(dirname "$cargo_bin")/.." && pwd)
+fi
+if [ -n "$rustup_bin" ]; then
+  rustup_prefix=$(CDPATH= cd -- "$(dirname "$rustup_bin")/.." && pwd)
+fi
+export H2H_REPO_ROOT="$ROOT"
+export H2H_PATH_PREFIXES="${cargo_prefix}/registry=cargo-registry,${cargo_prefix}=cargo,${rustup_prefix}=rustup,${HOME}=home"
+if [ -f "$OUT/summary.txt" ]; then
+  python3 "$ROOT/scripts/rewrite_receipt.py" "$OUT/summary.txt" "$ROOT"
+fi

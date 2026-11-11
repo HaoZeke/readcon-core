@@ -280,6 +280,7 @@ READCON_ARMS = {
     "readcon_pos_t8": ("read_positions", 8),
     "readcon_base": ("read_con", 1),
     "readcon_v0173": ("read_con", 1),
+    "readcon_tip": ("read_con", 1),
     "readcon_first": ("read_first_frame", 1),
 }
 def module_identity(mod):
@@ -606,6 +607,7 @@ def main() -> int:
         "arm_api readcon_pos_t8 read_positions 8 positions",
         "arm_api readcon_base read_con 1 all_frames",
         "arm_api readcon_v0173 read_con 1 all_frames",
+        "arm_api readcon_tip read_con 1 all_frames",
         "arm_api readcon_first read_first_frame 1 first_frame",
         "arm_api ase_eon ase.io.read format=eon get_positions 1 all_frames",
         "arm_api eon_py eon.fileio.loadcons 1 all_frames",
@@ -639,6 +641,7 @@ def main() -> int:
         ("readcon_pos_t8", con),
         ("readcon_base", con),
         ("readcon_v0173", con),
+        ("readcon_tip", con),
         ("readcon_first", con),
         ("readcon_db", con),
         ("ase_eon", con),

@@ -1608,3 +1608,111 @@ fn section_frames_cover_dtype_and_trajectory_exports() {
     }
     unsafe { free_rkr_frame(frame) };
 }
+
+fn one_atom_con(dir: &std::path::Path, name: &str, header: &str, tail: &str) -> *mut RKRConFrame {
+    let path = dir.join(name);
+    let text = format!(
+        "\
+user
+{header}
+10.0 10.0 10.0
+90.0 90.0 90.0
+0 0
+1 0
+1
+1
+63.546
+Cu
+Coordinates of Component 1
+   0.250000   0.500000   0.750000 0  0
+
+{tail}"
+    );
+    std::fs::write(&path, text).unwrap();
+    let c_path = CString::new(path.to_str().unwrap()).unwrap();
+    let frame = unsafe { rkr_read_first_frame(c_path.as_ptr()) };
+    assert!(!frame.is_null(), "parse {name}");
+    frame
+}
+
+#[test]
+fn null_energies_view_rejects_a_null_out_pointer() {
+    let path =
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/test/tiny_cuh2.con");
+    let name = CString::new(path.to_str().unwrap()).unwrap();
+    let frame = unsafe { rkr_read_first_frame(name.as_ptr()) };
+    assert!(!frame.is_null());
+    assert_eq!(
+        unsafe { rkr_frame_energies_view(frame, ptr::null_mut()) },
+        RKRStatus::RKR_STATUS_NULL_POINTER
+    );
+    unsafe { free_rkr_frame(frame) };
+}
+
+#[test]
+fn null_copy_atom_energies_rejects_a_null_out_pointer() {
+    let path =
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/test/tiny_cuh2.con");
+    let name = CString::new(path.to_str().unwrap()).unwrap();
+    let frame = unsafe { rkr_read_first_frame(name.as_ptr()) };
+    assert!(!frame.is_null());
+    assert_eq!(
+        unsafe { rkr_frame_copy_atom_energies(frame, ptr::null_mut(), 4) },
+        RKRStatus::RKR_STATUS_NULL_POINTER
+    );
+    unsafe { free_rkr_frame(frame) };
+}
+
+#[test]
+fn velocities_f64_null_frame_zeroes_the_count() {
+    let mut count = 7_usize;
+    let ptr = unsafe { rkr_frame_velocities_f64(ptr::null(), &mut count) };
+    assert!(ptr.is_null());
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn float32_forces_copy_back() {
+    let dir = tempfile::tempdir().unwrap();
+    let frame = one_atom_con(
+        dir.path(),
+        "f32-forces.con",
+        "{\"con_spec_version\":2,\"sections\":[\"forces\"],\"storage_dtypes\":{\"forces\":\"float32\"}}",
+        "\
+Cu
+Forces of Component 1
+   0.100000   0.000000   0.000000 0  0
+",
+    );
+    let mut force = [0.0_f64; 3];
+    assert_eq!(
+        unsafe { rkr_frame_copy_forces(frame, force.as_mut_ptr(), force.len()) },
+        RKRStatus::RKR_STATUS_SUCCESS
+    );
+    assert!((force[0] - 0.1).abs() < 1e-5, "force[0]={}", force[0]);
+    assert!(force[1].abs() < 1e-5);
+    assert!(force[2].abs() < 1e-5);
+    unsafe { free_rkr_frame(frame) };
+}
+
+#[test]
+fn float32_energies_copy_back() {
+    let dir = tempfile::tempdir().unwrap();
+    let frame = one_atom_con(
+        dir.path(),
+        "f32-energies.con",
+        "{\"con_spec_version\":2,\"sections\":[\"energies\"],\"storage_dtypes\":{\"energies\":\"float32\"}}",
+        "\
+Cu
+Energies of Component 1
+   -1.500000 0  0
+",
+    );
+    let mut energy = [0.0_f64; 1];
+    assert_eq!(
+        unsafe { rkr_frame_copy_atom_energies(frame, energy.as_mut_ptr(), energy.len()) },
+        RKRStatus::RKR_STATUS_SUCCESS
+    );
+    assert!((energy[0] + 1.5).abs() < 1e-5, "energy={}", energy[0]);
+    unsafe { free_rkr_frame(frame) };
+}
