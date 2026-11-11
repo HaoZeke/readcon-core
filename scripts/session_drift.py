@@ -149,7 +149,7 @@ def status_ok_blocks(path: Path) -> int:
             text = archive.extractfile(member).read().decode("utf-8", "replace")
     else:
         text = path.read_text(encoding="utf-8", errors="replace")
-    return sum(1 for line in text.splitlines() if line == "status ok")
+    return sum(1 for line in text.splitlines() if line.startswith("command taskset"))
 
 
 def mean_log(values: list[float]) -> float:
