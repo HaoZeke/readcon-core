@@ -4,6 +4,7 @@ extxyz==0.4.6
 extxyz-ng==0.0.2
 chemfiles==0.10.4
 MDAnalysis==2.11.0
+mdtraj==1.11.2
 ovito==3.17.2
 gemmi==0.7.5
 pymatgen==2026.10.24

@@ -675,3 +675,79 @@ rule h2h_con_report:
 rule h2h_con:
     input:
         "bench/h2h/con-results.json",
+
+
+# XYZ trajectory head-to-head. One rule and one asv class per comparison.
+# The three rules share one session: the first invocation writes every log.
+
+
+rule h2h_traj_grid_atoms:
+    output:
+        "bench/h2h/logs/campaign/traj-grid-1e6.stdout",
+        "bench/h2h/traj-logs/traj-grid-1e6.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        if [ ! -f bench/h2h/traj-results.json ]; then
+            taskset -c 0 python3 bench/h2h/asv/drive.py traj_session
+        fi
+        test -s bench/h2h/logs/campaign/traj-grid-1e6.stdout
+        test -s bench/h2h/traj-logs/traj-grid-1e6.csv
+        """
+
+
+rule h2h_traj_grid_frames:
+    input:
+        "bench/h2h/logs/campaign/traj-grid-1e6.stdout",
+    output:
+        "bench/h2h/logs/campaign/traj-grid-10000.stdout",
+        "bench/h2h/traj-logs/traj-grid-10000.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        if [ ! -f bench/h2h/traj-results.json ]; then
+            taskset -c 0 python3 bench/h2h/asv/drive.py traj_session
+        fi
+        test -s bench/h2h/logs/campaign/traj-grid-10000.stdout
+        test -s bench/h2h/traj-logs/traj-grid-10000.csv
+        """
+
+
+rule h2h_traj_frames_100000:
+    input:
+        "bench/h2h/logs/campaign/traj-grid-10000.stdout",
+    output:
+        "bench/h2h/logs/campaign/traj-frames-100000.stdout",
+        "bench/h2h/traj-logs/traj-frames-100000.csv",
+    shell:
+        """
+        set -euo pipefail
+        export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+        if [ ! -f bench/h2h/traj-results.json ]; then
+            taskset -c 0 python3 bench/h2h/asv/drive.py traj_session
+        fi
+        test -s bench/h2h/logs/campaign/traj-frames-100000.stdout
+        test -s bench/h2h/traj-logs/traj-frames-100000.csv
+        """
+
+
+rule h2h_traj_report:
+    input:
+        "bench/h2h/logs/campaign/traj-grid-1e6.stdout",
+        "bench/h2h/logs/campaign/traj-grid-10000.stdout",
+        "bench/h2h/logs/campaign/traj-frames-100000.stdout",
+    output:
+        "bench/h2h/traj-results.json",
+    shell:
+        """
+        set -euo pipefail
+        taskset -c 0 python3 bench/h2h/asv/drive.py traj_report
+        """
+
+
+rule h2h_traj:
+    input:
+        "bench/h2h/traj-results.json",
+

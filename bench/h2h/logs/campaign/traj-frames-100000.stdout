@@ -1,0 +1,221 @@
+git rev-parse HEAD
+0258cb1f861c10abfc642457ed2171a0949fa9c8
+git rev-parse HEAD^{tree}
+18ed88719d680dcb82d0e4050851367b03108c17
+git rev-parse HEAD:src
+5bbd588981812d448e5bf534f7f839d5262b3a9a
+command
+taskset -c 0 python3 bench/h2h/asv/drive.py traj_session
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.916913638
+sample 0.918144734
+sample 0.911879529
+sample 0.921046474
+sample 0.973679992
+sample 1.015310657
+median_s 0.919595604
+q25_s 0.917221412
+q75_s 0.960521613
+iqr_s 0.043300201
+n_atoms 32
+n_frames 100000
+cell 4.000000000 4.000000000 4.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_rust
+label readcon Rust
+op read
+case traj-32
+rss_kib 805904
+massif_heap_bytes 810654701
+skipped 
+{"samples": [0.916913638, 0.918144734, 0.911879529, 0.921046474, 0.973679992, 1.015310657], "n": 6, "median_s": 0.919595604, "q25_s": 0.917221412, "q75_s": 0.9605216125, "iqr_s": 0.04330020050000005, "n_frames": 100000, "n_atoms": 32, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [4.0, 4.0, 4.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": true, "masses_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "skipped": "", "reason": "ok", "arm": "readcon_rust", "label": "readcon Rust", "op": "read", "case": "traj-32", "file": "bench/h2h/work/traj/inputs/frames-100000x32.xyz", "rss_kib": 805904, "massif_heap_bytes": 810654701}
+repeat 6
+serial 1
+quantile type-7
+sample 2.158142337
+sample 1.992630946
+sample 2.050062108
+sample 2.057499889
+sample 2.132820884
+sample 2.237522535
+median_s 2.095160386
+q25_s 2.051921553
+q75_s 2.151811974
+iqr_s 0.099890421
+n_atoms 32
+n_frames 100000
+cell 4.000000000 4.000000000 4.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_py
+label readcon Python
+op read
+case traj-32
+rss_kib 1204328
+massif_heap_bytes 818352683
+skipped 
+{"samples": [2.158142337000072, 1.992630945999963, 2.05006210800002, 2.057499888999928, 2.1328208840000116, 2.2375225349999255], "n": 6, "median_s": 2.0951603864999697, "q25_s": 2.051921553249997, "q75_s": 2.151811973750057, "iqr_s": 0.09989042050005992, "n_frames": 100000, "n_atoms": 32, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [4.0, 4.0, 4.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": true, "masses_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "skipped": "", "reason": "ok", "arm": "readcon_py", "label": "readcon Python", "op": "read", "case": "traj-32", "file": "bench/h2h/work/traj/inputs/frames-100000x32.xyz", "rss_kib": 1204328, "massif_heap_bytes": 818352683}
+repeat 6
+serial 1
+quantile type-7
+sample 25.913727464
+sample 25.248980546
+sample 25.330040210
+sample 25.044861786
+sample 25.821943712
+sample 27.588779529
+median_s 25.575991961
+q25_s 25.269245462
+q75_s 25.890781526
+iqr_s 0.621536064
+n_atoms 32
+n_frames 100000
+cell 4.000000000 4.000000000 4.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_iread
+label ASE iread
+op read
+case traj-32
+rss_kib 556116
+massif_heap_bytes 405136548
+skipped 
+{"samples": [25.913727463999976, 25.248980545999984, 25.330040210000107, 25.044861786000183, 25.821943711999893, 27.58877952900002], "n": 6, "median_s": 25.575991961, "q25_s": 25.269245462000015, "q75_s": 25.890781525999955, "iqr_s": 0.6215360639999403, "n_frames": 100000, "n_atoms": 32, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [4.0, 4.0, 4.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": true, "masses_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "skipped": "", "reason": "ok", "arm": "ase_iread", "label": "ASE iread", "op": "read", "case": "traj-32", "file": "bench/h2h/work/traj/inputs/frames-100000x32.xyz", "rss_kib": 556116, "massif_heap_bytes": 405136548}
+repeat 6
+serial 1
+quantile type-7
+sample 2.630222565
+sample 2.571322209
+sample 2.545582546
+sample 2.535638369
+sample 2.893887435
+sample 3.157682431
+median_s 2.600772387
+q25_s 2.552017462
+q75_s 2.827971218
+iqr_s 0.275953756
+n_atoms 32
+n_frames 100000
+cell 4.000000000 4.000000000 4.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm chemfiles_010
+label chemfiles 0.10.4
+op read
+case traj-32
+rss_kib 238584
+massif_heap_bytes 178375134
+skipped timed call copies positions and cell lengths; species, masses and forces are not copied
+{"samples": [2.6302225650001674, 2.5713222090000727, 2.5455825459998778, 2.5356383690000257, 2.8938874350001242, 3.157682431000012], "n": 6, "median_s": 2.60077238700012, "q25_s": 2.5520174617499265, "q75_s": 2.827971217500135, "iqr_s": 0.27595375575020853, "n_frames": 100000, "n_atoms": 32, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [4.0, 4.0, 4.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "timed call copies positions and cell lengths; species, masses and forces are not copied", "reason": "ok", "arm": "chemfiles_010", "label": "chemfiles 0.10.4", "op": "read", "case": "traj-32", "file": "bench/h2h/work/traj/inputs/frames-100000x32.xyz", "rss_kib": 238584, "massif_heap_bytes": 178375134}
+repeat 6
+serial 1
+quantile type-7
+sample 2.292629833
+sample 2.246969600
+sample 2.205502573
+sample 2.197013655
+sample 2.240278305
+sample 2.602648185
+median_s 2.243623953
+q25_s 2.214196506
+q75_s 2.281214775
+iqr_s 0.067018269
+n_atoms 32
+n_frames 100000
+cell 4.000000000 4.000000000 4.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm chemfiles_011
+label chemfiles 0.11.0-rc1
+op read
+case traj-32
+rss_kib 238472
+massif_heap_bytes 178374873
+skipped timed call copies positions and cell lengths; species, masses and forces are not copied
+{"samples": [2.292629833, 2.2469696, 2.205502573, 2.197013655, 2.240278305, 2.602648185], "n": 6, "median_s": 2.2436239525, "q25_s": 2.214196506, "q75_s": 2.28121477475, "iqr_s": 0.06701826875000005, "n_frames": 100000, "n_atoms": 32, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [4.0, 4.0, 4.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "timed call copies positions and cell lengths; species, masses and forces are not copied", "reason": "ok", "arm": "chemfiles_011", "label": "chemfiles 0.11.0-rc1", "op": "read", "case": "traj-32", "file": "bench/h2h/work/traj/inputs/frames-100000x32.xyz", "rss_kib": 238472, "massif_heap_bytes": 178374873}
+repeat 6
+serial 1
+quantile type-7
+sample 1.846105199
+sample 1.869536661
+sample 1.869351883
+sample 1.802025044
+sample 1.884215830
+sample 2.076536510
+median_s 1.869444272
+q25_s 1.851916870
+q75_s 1.880546038
+iqr_s 0.028629168
+n_atoms 32
+n_frames 100000
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 0
+coords_ok 1
+correct 1
+reason ok
+arm mdanalysis
+label MDAnalysis XYZReader
+op read
+case traj-32
+rss_kib 274200
+massif_heap_bytes 186493795
+skipped positions only; species, masses, forces and the cell are not returned
+{"samples": [1.846105198999794, 1.8695366609999837, 1.8693518830000357, 1.8020250439999472, 1.8842158299999028, 2.076536509999869], "n": 6, "median_s": 1.8694442720000097, "q25_s": 1.8519168699998545, "q75_s": 1.880546037749923, "iqr_s": 0.028629167750068518, "n_frames": 100000, "n_atoms": 32, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": null, "cell_ok": false, "cell_max_abs": null, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "positions only; species, masses, forces and the cell are not returned", "reason": "ok", "arm": "mdanalysis", "label": "MDAnalysis XYZReader", "op": "read", "case": "traj-32", "file": "bench/h2h/work/traj/inputs/frames-100000x32.xyz", "rss_kib": 274200, "massif_heap_bytes": 186493795}
+repeat 6
+serial 1
+quantile type-7
+sample 2.649209619
+sample 2.581143853
+sample 2.605858628
+sample 2.622547566
+sample 2.688456844
+sample 3.007759495
+median_s 2.635878592
+q25_s 2.610030863
+q75_s 2.678645038
+iqr_s 0.068614175
+n_atoms 32
+n_frames 100000
+cell missing
+max_abs 1.192e-07
+n_atoms_ok 1
+cell_ok 0
+coords_ok 1
+correct 1
+reason ok
+arm mdtraj
+label MDTraj load_xyz
+op read
+case traj-32
+rss_kib 215796
+massif_heap_bytes 168250552
+skipped positions only, converted from the caller topology; species tokens, masses, forces and the cell are not returned; stored coordinates are nanometres
+{"samples": [2.6492096189999756, 2.581143853000185, 2.605858628000078, 2.6225475659998665, 2.688456843999802, 3.007759495000073], "n": 6, "median_s": 2.635878592499921, "q25_s": 2.6100308625000253, "q75_s": 2.6786450377498454, "iqr_s": 0.06861417524982016, "n_frames": 100000, "n_atoms": 32, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 1.1920928955078125e-07, "cell": null, "cell_ok": false, "cell_max_abs": null, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "positions only, converted from the caller topology; species tokens, masses, forces and the cell are not returned; stored coordinates are nanometres", "reason": "ok", "arm": "mdtraj", "label": "MDTraj load_xyz", "op": "read", "case": "traj-32", "file": "bench/h2h/work/traj/inputs/frames-100000x32.xyz", "rss_kib": 215796, "massif_heap_bytes": 168250552}
+exit 0

@@ -1,0 +1,221 @@
+git rev-parse HEAD
+0258cb1f861c10abfc642457ed2171a0949fa9c8
+git rev-parse HEAD^{tree}
+18ed88719d680dcb82d0e4050851367b03108c17
+git rev-parse HEAD:src
+5bbd588981812d448e5bf534f7f839d5262b3a9a
+command
+taskset -c 0 python3 bench/h2h/asv/drive.py traj_session
+hardware Intel Xeon Processor uname_m x86_64 nproc 8 memory_kib 49342816
+pinned taskset -c 0
+repeat 6
+serial 1
+quantile type-7
+sample 0.278468001
+sample 0.257746544
+sample 0.272932168
+sample 0.272176954
+sample 0.292191783
+sample 0.278834356
+median_s 0.275700084
+q25_s 0.272365758
+q75_s 0.278742767
+iqr_s 0.006377010
+n_atoms 100
+n_frames 10000
+cell 5.000000000 5.000000000 5.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_rust
+label readcon Rust
+op read
+case grid-10000
+rss_kib 249620
+massif_heap_bytes 220378137
+skipped 
+{"samples": [0.278468001, 0.257746544, 0.272932168, 0.272176954, 0.292191783, 0.278834356], "n": 6, "median_s": 0.2757000845, "q25_s": 0.2723657575, "q75_s": 0.27874276725, "iqr_s": 0.006377009749999996, "n_frames": 10000, "n_atoms": 100, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [5.0, 5.0, 5.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": true, "masses_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "skipped": "", "reason": "ok", "arm": "readcon_rust", "label": "readcon Rust", "op": "read", "case": "grid-10000", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 249620, "massif_heap_bytes": 220378137}
+repeat 6
+serial 1
+quantile type-7
+sample 0.446691850
+sample 0.426768896
+sample 0.459121694
+sample 0.445839734
+sample 0.509392359
+sample 0.463802652
+median_s 0.452906772
+q25_s 0.446052763
+q75_s 0.462632412
+iqr_s 0.016579649
+n_atoms 100
+n_frames 10000
+cell 5.000000000 5.000000000 5.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm readcon_py
+label readcon Python
+op read
+case grid-10000
+rss_kib 411884
+massif_heap_bytes 228076159
+skipped 
+{"samples": [0.44669184999997924, 0.42676889600011236, 0.4591216940000322, 0.44583973400017385, 0.5093923590000031, 0.463802651999913], "n": 6, "median_s": 0.45290677200000573, "q25_s": 0.4460527630001252, "q75_s": 0.4626324124999428, "iqr_s": 0.016579649499817606, "n_frames": 10000, "n_atoms": 100, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [5.0, 5.0, 5.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": true, "masses_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "skipped": "", "reason": "ok", "arm": "readcon_py", "label": "readcon Python", "op": "read", "case": "grid-10000", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 411884, "massif_heap_bytes": 228076159}
+repeat 6
+serial 1
+quantile type-7
+sample 3.574662574
+sample 3.560169844
+sample 3.617974603
+sample 3.566440937
+sample 3.665140167
+sample 3.635649950
+median_s 3.596318589
+q25_s 3.568496346
+q75_s 3.631231113
+iqr_s 0.062734767
+n_atoms 100
+n_frames 10000
+cell 5.000000000 5.000000000 5.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm ase_iread
+label ASE iread
+op read
+case grid-10000
+rss_kib 217916
+massif_heap_bytes 144400098
+skipped 
+{"samples": [3.574662574000058, 3.560169844000029, 3.6179746029999933, 3.566440937000152, 3.6651401669998904, 3.6356499500000155], "n": 6, "median_s": 3.5963185885000257, "q25_s": 3.5684963462501287, "q75_s": 3.63123111325001, "iqr_s": 0.06273476699988123, "n_frames": 10000, "n_atoms": 100, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [5.0, 5.0, 5.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": true, "masses_ok": true, "forces_ok": true, "correct": true, "hard_fail": false, "skipped": "", "reason": "ok", "arm": "ase_iread", "label": "ASE iread", "op": "read", "case": "grid-10000", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 217916, "massif_heap_bytes": 144400098}
+repeat 6
+serial 1
+quantile type-7
+sample 0.487072626
+sample 0.490112724
+sample 0.490282822
+sample 0.487905711
+sample 0.492095491
+sample 0.493401831
+median_s 0.490197773
+q25_s 0.488457464
+q75_s 0.491642324
+iqr_s 0.003184859
+n_atoms 100
+n_frames 10000
+cell 5.000000000 5.000000000 5.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm chemfiles_010
+label chemfiles 0.10.4
+op read
+case grid-10000
+rss_kib 87784
+massif_heap_bytes 57692590
+skipped timed call copies positions and cell lengths; species, masses and forces are not copied
+{"samples": [0.48707262600009926, 0.4901127240000278, 0.49028282200015383, 0.4879057109999394, 0.4920954909998727, 0.4934018310000283], "n": 6, "median_s": 0.4901977730000908, "q25_s": 0.4884574642499615, "q75_s": 0.491642323749943, "iqr_s": 0.003184859499981485, "n_frames": 10000, "n_atoms": 100, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [5.0, 5.0, 5.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "timed call copies positions and cell lengths; species, masses and forces are not copied", "reason": "ok", "arm": "chemfiles_010", "label": "chemfiles 0.10.4", "op": "read", "case": "grid-10000", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 87784, "massif_heap_bytes": 57692590}
+repeat 6
+serial 1
+quantile type-7
+sample 0.412168323
+sample 0.412335175
+sample 0.422489085
+sample 0.408551514
+sample 0.411993417
+sample 0.418531898
+median_s 0.412251749
+q25_s 0.412037143
+q75_s 0.416982717
+iqr_s 0.004945574
+n_atoms 100
+n_frames 10000
+cell 5.000000000 5.000000000 5.000000000
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 1
+coords_ok 1
+correct 1
+reason ok
+arm chemfiles_011
+label chemfiles 0.11.0-rc1
+op read
+case grid-10000
+rss_kib 87596
+massif_heap_bytes 57698653
+skipped timed call copies positions and cell lengths; species, masses and forces are not copied
+{"samples": [0.412168323, 0.412335175, 0.422489085, 0.408551514, 0.411993417, 0.418531898], "n": 6, "median_s": 0.412251749, "q25_s": 0.4120371435, "q75_s": 0.41698271725, "iqr_s": 0.004945573750000043, "n_frames": 10000, "n_atoms": 100, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": [5.0, 5.0, 5.0], "cell_ok": true, "cell_max_abs": 0.0, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "timed call copies positions and cell lengths; species, masses and forces are not copied", "reason": "ok", "arm": "chemfiles_011", "label": "chemfiles 0.11.0-rc1", "op": "read", "case": "grid-10000", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 87596, "massif_heap_bytes": 57698653}
+repeat 6
+serial 1
+quantile type-7
+sample 0.549591687
+sample 0.516958817
+sample 0.520369847
+sample 0.515689351
+sample 0.518761249
+sample 0.523751069
+median_s 0.519565548
+q25_s 0.517409425
+q75_s 0.522905764
+iqr_s 0.005496339
+n_atoms 100
+n_frames 10000
+cell missing
+max_abs 0.000e+00
+n_atoms_ok 1
+cell_ok 0
+coords_ok 1
+correct 1
+reason ok
+arm mdanalysis
+label MDAnalysis XYZReader
+op read
+case grid-10000
+rss_kib 139744
+massif_heap_bytes 70105359
+skipped positions only; species, masses, forces and the cell are not returned
+{"samples": [0.5495916869999746, 0.5169588169999315, 0.5203698469999836, 0.5156893509999918, 0.5187612490001356, 0.5237510690001272], "n": 6, "median_s": 0.5195655480000596, "q25_s": 0.5174094249999825, "q75_s": 0.5229057635000913, "iqr_s": 0.005496338500108777, "n_frames": 10000, "n_atoms": 100, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 0.0, "cell": null, "cell_ok": false, "cell_max_abs": null, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "positions only; species, masses, forces and the cell are not returned", "reason": "ok", "arm": "mdanalysis", "label": "MDAnalysis XYZReader", "op": "read", "case": "grid-10000", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 139744, "massif_heap_bytes": 70105359}
+repeat 6
+serial 1
+quantile type-7
+sample 0.801443316
+sample 0.786961297
+sample 0.772257363
+sample 0.764377995
+sample 0.775387025
+sample 0.796616979
+median_s 0.781174161
+q25_s 0.773039779
+q75_s 0.794203059
+iqr_s 0.021163280
+n_atoms 100
+n_frames 10000
+cell missing
+max_abs 1.192e-07
+n_atoms_ok 1
+cell_ok 0
+coords_ok 1
+correct 1
+reason ok
+arm mdtraj
+label MDTraj load_xyz
+op read
+case grid-10000
+rss_kib 100340
+massif_heap_bytes 59056780
+skipped positions only, converted from the caller topology; species tokens, masses, forces and the cell are not returned; stored coordinates are nanometres
+{"samples": [0.8014433159999044, 0.7869612969998343, 0.7722573630001079, 0.7643779950001317, 0.7753870249998727, 0.7966169790001913], "n": 6, "median_s": 0.7811741609998535, "q25_s": 0.7730397785000491, "q75_s": 0.7942030585001021, "iqr_s": 0.021163280000052964, "n_frames": 10000, "n_atoms": 100, "n_frames_ok": true, "n_atoms_ok": true, "coords_ok": true, "max_abs": 1.1920928955078125e-07, "cell": null, "cell_ok": false, "cell_max_abs": null, "species_ok": null, "masses_ok": null, "forces_ok": null, "correct": true, "hard_fail": false, "skipped": "positions only, converted from the caller topology; species tokens, masses, forces and the cell are not returned; stored coordinates are nanometres", "reason": "ok", "arm": "mdtraj", "label": "MDTraj load_xyz", "op": "read", "case": "grid-10000", "file": "bench/h2h/work/extxyz/inputs/large-n.extxyz", "rss_kib": 100340, "massif_heap_bytes": 59056780}
+exit 0

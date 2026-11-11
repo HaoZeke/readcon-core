@@ -16,6 +16,7 @@ import con_h2h
 import extxyz_h2h
 import measure
 import support
+import traj_h2h
 
 _LOCK = None
 
@@ -79,6 +80,12 @@ def main() -> None:
         "con_survey_extxyz": lambda: con_h2h.main_command("survey-extxyz"),
         "con_grid": lambda: con_h2h.main_command("grid"),
         "con_report": con_h2h.report,
+        "traj_prepare": traj_h2h.ensure_inputs,
+        "traj_session": lambda: traj_h2h.run_cases(None, True),
+        "traj_grid_1e6": lambda: traj_h2h.run_cases({"grid-1e6"}, True),
+        "traj_grid_10000": lambda: traj_h2h.run_cases({"grid-10000"}, True),
+        "traj_frames_100000": lambda: traj_h2h.run_cases({"traj-32"}, True),
+        "traj_report": traj_h2h.report,
     }
     if arm not in runners:
         raise SystemExit(f"unknown arm {arm}")
