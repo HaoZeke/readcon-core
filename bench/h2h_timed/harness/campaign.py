@@ -28,7 +28,7 @@ from common import (
     thread_env,
 )
 
-KIT = Path(__file__).resolve().parents[1]
+BENCH = Path(__file__).resolve().parents[1]
 LOG_ROOT = Path(os.environ.get("H2H_OUT", str(Path.home() / "h2h-work" / "h2h-logs")))
 SIZES = ("cu32_f1k", "cu32_f10k", "cu32_f100k", "cu1000_f1k")
 ARMS = (
@@ -112,7 +112,7 @@ def run_sample(
         "-c",
         "0",
         str(PYTHON),
-        str(KIT / "harness" / "sample.py"),
+        str(BENCH / "harness" / "sample.py"),
         "--op",
         op,
         "--arm",
@@ -459,7 +459,7 @@ def main() -> None:
         "inputs": {"before": inputs_before, "after": inputs_after},
         "session": {"start": session_start, "end": session_end},
     }
-    out = Path(os.environ.get("H2H_RESULTS", str(KIT / "results.json")))
+    out = Path(os.environ.get("H2H_RESULTS", str(BENCH / "results.json")))
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {recorded_path(out)}", flush=True)
 

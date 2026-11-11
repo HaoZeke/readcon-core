@@ -13,8 +13,8 @@ python -m pip install --require-hashes -r bench/requirements.lock
 # The repeat count is 10.
 H2H_REPEATS=10 scripts/run_timings.sh
 
-# Session drift against the r2.19 results.
-python3 scripts/session_drift.py drift/r2.19-results.json results.json --old-extension drift/r2.19-188.so --new-extension timed/readcon-188.so --log logs.tar.xz --expect drift/SHA256 --label r2.27 --baseline r2.19
+# Session drift against the baseline results.
+python3 scripts/session_drift.py drift/baseline-results.json results.json --old-extension drift/baseline-188.so --new-extension timed/readcon-188.so --log samples.tar --expect drift/SHA256 --label later --baseline earlier
 
 # Coverage of the Rust library, the Python tests, and readcon.f90.
 scripts/coverage_all.sh coverage
