@@ -247,6 +247,7 @@ skip_prefixes = (
     "paper/cpc/bench/results/",
     # The imported h2h campaign names the version that produced it.
     "paper/cpc/logs/h2h-",
+    "paper/cpc/data/h2h-",
 )
 bad = []
 listed = subprocess.check_output(["git", "ls-files", "-z"])
