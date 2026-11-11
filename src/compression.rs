@@ -398,7 +398,7 @@ pub fn zstd_writer(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Write;
+    use std::io::{Read, Write};
 
     fn text_of_at_least(len: usize) -> Vec<u8> {
         let frame = include_bytes!("../resources/test/tiny_cuh2.con");
@@ -634,5 +634,103 @@ mod tests {
         let mid = dir.path().join("skip-between.con.zst");
         std::fs::write(&mid, &between).unwrap();
         assert_eq!(read_file_text(&mid).unwrap(), format!("{text}{text}"));
+    }
+
+    #[test]
+    #[test]
+    fn extension_and_byte_readers_cover_plain_and_gzip() {
+        assert_eq!(
+            detect_compression_from_extension(Path::new("a.gz")),
+            Compression::Gzip
+        );
+        assert_eq!(
+            detect_compression_from_extension(Path::new("a.zst")),
+            Compression::Zstd
+        );
+        assert_eq!(
+            detect_compression_from_extension(Path::new("a.con")),
+            Compression::None
+        );
+        let dir = tempfile::tempdir().expect("tempdir");
+        let plain = dir.path().join("plain.con");
+        std::fs::write(&plain, b"plain-text").expect("write");
+        assert_eq!(read_file_text(&plain).unwrap(), "plain-text");
+        assert_eq!(read_file_bytes(&plain).unwrap(), b"plain-text");
+        let gz_path = dir.path().join("plain.con.gz");
+        let mut enc = flate2::write::GzEncoder::new(
+            std::fs::File::create(&gz_path).expect("create"),
+            flate2::Compression::default(),
+        );
+        enc.write_all(b"gzip-text").expect("write");
+        enc.finish().expect("finish");
+        assert_eq!(read_file_bytes(&gz_path).unwrap(), b"gzip-text");
+        let contents = read_file_contents(&plain).unwrap();
+        assert_eq!(contents.as_str().unwrap(), "plain-text");
+    }
+
+    #[test]
+    fn open_decoded_plain_gzip_missing_and_zstd() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let plain = dir.path().join("plain.con");
+        std::fs::write(&plain, b"plain-bytes").expect("write");
+        let mut got = Vec::new();
+        open_decoded(&plain)
+            .expect("plain")
+            .read_to_end(&mut got)
+            .expect("read plain");
+        assert_eq!(got, b"plain-bytes");
+
+        let gz_path = dir.path().join("plain.con.gz");
+        let mut enc = flate2::write::GzEncoder::new(
+            std::fs::File::create(&gz_path).expect("create gz"),
+            flate2::Compression::default(),
+        );
+        enc.write_all(b"gzip-bytes").expect("gzip write");
+        enc.finish().expect("gzip finish");
+        got.clear();
+        open_decoded(&gz_path)
+            .expect("gzip")
+            .read_to_end(&mut got)
+            .expect("read gzip");
+        assert_eq!(got, b"gzip-bytes");
+
+        let missing = open_decoded(&dir.path().join("missing.con"));
+        assert!(missing.is_err());
+
+        match open_decoded(dir.path()) {
+            Err(err) => {
+                let msg = err.to_string();
+                assert!(
+                    msg.contains("Is a directory") || msg.contains("os error 21"),
+                    "{msg}"
+                );
+            }
+            Ok(_) => panic!("a directory opened as a file"),
+        }
+
+        let zst = dir.path().join("frame.zst");
+        std::fs::write(&zst, [0x28, 0xb5, 0x2f, 0xfd]).expect("zst magic");
+        #[cfg(not(feature = "zstd"))]
+        match open_decoded(&zst) {
+            Err(err) => assert!(err.to_string().contains("zstd"), "{err}"),
+            Ok(_) => panic!("zstd magic opened without an error"),
+        }
+        #[cfg(feature = "zstd")]
+        {
+            let mut reader = open_decoded(&zst).expect("zstd 0.13 Decoder::new does not read");
+            let mut got = Vec::new();
+            let err = reader
+                .read_to_end(&mut got)
+                .expect_err("a four-byte frame fails on the first read");
+            let msg = err.to_string();
+            assert!(
+                msg.contains("zstd")
+                    || msg.contains("frame")
+                    || msg.contains("magic")
+                    || msg.contains("unknown")
+                    || msg.contains("unexpected"),
+                "{msg}"
+            );
+        }
     }
 }
