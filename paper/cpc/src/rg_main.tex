@@ -1037,6 +1037,16 @@ The package ase-extxyz 0.1.2 registers the C parser with ASE as the
 format \texttt{cextxyz} \cite{kermodeAseExtxyz0122026}.
 The ASE extended XYZ arm uses \texttt{format='extxyz'}, the reader that
 ships in ASE, not \texttt{cextxyz}.
+extxyz-ng 0.0.2 is a separate Rust parser of the same text.
+Its repository compares that parser with the C parser of libAtoms on
+one frame of more than twenty thousand atoms, and it records a massif
+peak for one file of about twenty thousand lines
+\cite{yuExtxyzNg0022026}.
+This paper has not repeated that comparison.
+% TODO (head-to-head): extxyz-ng 0.0.2 (crates.io extxyz-ng, git commit 83a5b290c, 2026-04-29) against libAtoms extxyz 0.4.6 read_dicts(use_cextxyz=True, use_regex=False).
+% The published comparison parses one structure of more than 20000 atoms and reports the Rust parser nearly four times as fast, and a massif peak of 2.53 MB against 4.74 MB for the C parser on one file of about 20000 lines and 758 kB.
+% Repeat both arms on that file if it is released with the repository, and on the seven drift files of scripts/drift.py, and on the 100000-frame extended XYZ file of the host table.
+% Six fresh processes, one thread. Report positions, periodicity and the id column, not only the time.
 % TODO (head-to-head): extxyz 0.4.6 read_dicts on the seven drift files of scripts/drift.py.
 % Arm A: use_cextxyz=True, use_regex=False, the default since v0.4.2 (tag v0.4.2, 2026-06-11).
 % Arm B: use_cextxyz=True, use_regex=True.
@@ -1431,6 +1441,18 @@ frame.
 frame.
 The eOn build log is \path{paper/cpc/logs/eon-build.log}, and it names
 eOn commit \texttt{\seqsplit{579738a9387e8d0ea55496f45dd057812cfab892}}.
+That commit is not tag v3.6.0.
+The tag is an ancestor, and the commit includes
+\texttt{e5b658813}, which writes CON and convel with the binary64
+round-trip spelling of readcon-core at commit \texttt{694e808}
+\cite{goswamiEonRoundtripWriter2026}.
+Tag v3.6.0 does not contain that writer.
+% TODO (head-to-head): eOn commit 579738a9387e8d0ea55496f45dd057812cfab892, the commit the build log names, against tag v3.6.0.
+% The later commit includes e5b658813 (2026-10-14), merged by pull request 776 on 2026-10-15.
+% Write one survey frame and the 100000-frame copper file with each writer.
+% The later writer spells CON and convel through readcon-core commit 694e808.
+% Read both outputs with loadcons at 1 thread and with readcon.
+% Match coordinates, masks and the grammar version. Six fresh processes, the host-table settings.
 
 \subsection{Same-file and nearest-native panel}\label{sec:h2h} The
 same-file comparison reads one con file.
