@@ -367,9 +367,17 @@ MDAnalysis
 the Open Visualization Tool (OVITO)
 \cite{stukowskiVisualizationAnalysisAtomistic2010} and Open Babel
 \cite{oboyleOpenBabelOpen2011}.
-Of the four, none opens a version-1 CON file or a CON 3.1 file, and the
-eon module of ASE opens both but stops at the velocity section of the
-frame of Section~\ref{sec:worked}.
+Of the four, at the versions run in
+Section~\ref*{sec:supp-versions}, none opens a version-1 CON file or a
+CON 3.1 file: chemfiles 0.10.4, MDAnalysis 2.10.0, OVITO 3.16.1 and
+Open Babel 3.2.1.
+The eon module of ASE 3.29.0 opens both but stops at the velocity
+section of the frame of Section~\ref{sec:worked}.
+The input-format table of the OVITO 3.17.2 manual, the table of
+supported coordinate formats in the MDAnalysis 2.11.0 documentation,
+and the format sources of the chemfiles tag 0.11.0-rc1 still name no
+CON reader
+\cite{ovitoManual3172,gowersMdanalysisCoords2110,frauxChemfiles0110rc12025}.
 % TODO h2h: convel read, one session, one input. Arms: readcon, ASE io.read format='eon', eOn loadcons, eOn C++ client on every frame. Inputs: the survey-frame velocities as a sibling .convel, and Listing lst:frame with its declared velocity section. ASE is the arm that stops at that section.
 
 Most atomistic formats have no specification apart from the code that
@@ -1121,15 +1129,21 @@ convel reader \cite{frauxChemfilesConIssue2025}.
 % Read it with the native XTC parser in that tag and with libxtc commit 58f40e1e9d392ec607e775772658eb1b748be549, frame-at-a-time and all-frames, one thread and eight threads, the modes that bench already times.
 % TRR arm: the same generator's traj.trr, and check that forces come back as atom properties.
 % CON arm: the version-1 and CON 3.1 probes of scripts/con_openers.py. The open issue 522 (2025-07-19) asks for a CON reader and was still open on 2026-11-11; the tag changelog does not add one.
-MDAnalysis returns single precision, which changes a coordinate by up to
-\(\num{\surveyMdaShiftNum}\,\text{\AA}\), and Open Babel keeps the
-identifiers only inside the site labels of a Crystallographic
-Information File (CIF).
-That MDAnalysis route is the H5MD reader of release 2.10.0.
+MDAnalysis 2.10.0 returns single precision, which changes a coordinate
+by up to \(\num{\surveyMdaShiftNum}\,\text{\AA}\).
+That printed shift is the measurement on the H5MD reader of release
+2.10.0, and Open Babel keeps the identifiers only inside the site
+labels of a Crystallographic Information File (CIF).
 Release 2.11.0, of 2026-10-21, reads one PDBx/mmCIF frame through gemmi
 and converts the positions and velocities of a GROMACS TPR file into its
 base units, which release 2.10.0 left in the native units of GROMACS
 \cite{gowersMdanalysis21102026}.
+The H5MD module of that release still reads each position, velocity and
+force frame with \texttt{read\_direct} into a timestep whose dtype is
+hardcoded to \texttt{numpy.float32}, and the writer in the same module
+creates those datasets, the box edges and the time as
+\texttt{numpy.float32}
+\cite{gowersMdanalysis21102026,gowersMdanalysisH5md2110}.
 % TODO (head-to-head): MDAnalysis 2.11.0 (Zenodo 10.5281/zenodo.23534588, 2026-10-21) against the 2.10.0 routes this paper timed.
 % TPR arm: one GROMACS 2026 TPR, Universe with the TPR reader and convert_units=True. Positions in angstrom and velocities in angstrom per picosecond, the MDAnalysis base units. Repeat with 2.10.0, which the 2.11.0 notes say left those values in GROMACS native units (PR 5374).
 % mmCIF arm: one single-frame PDBx/mmCIF file of the survey geometry, MMCIFReader through gemmi, against Open Babel 3.2.1 on the CIF route already in the survey. Match atom count, cell and coordinates. Identifiers are site labels, as in the Open Babel row.

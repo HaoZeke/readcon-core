@@ -1262,7 +1262,7 @@
   author = {{chemfiles developers}},
   year = {2025},
   howpublished = {GitHub tag 0.11.0-rc1},
-  note = {Commit a2319946dcd0a96b055e803e59affed52e83bfb1, 2025-10-06, message ``Release chemfiles v0.11.0-rc1''. Not the PyPI release, which remains 0.10.4. The changelog at that tag records native XTC, TRR and DCD parsers, an XTC decoder taken from the routine proposed by libxtc, TRR forces stored as atom properties, and a unit-cell matrix with one vector per row. \url{https://github.com/chemfiles/chemfiles/tree/0.11.0-rc1}. Accessed 2026-11-11}
+  note = {Commit a2319946dcd0a96b055e803e59affed52e83bfb1, 2025-10-06, message ``Release chemfiles v0.11.0-rc1''. Not the PyPI release, which remains 0.10.4. The changelog at that tag records native XTC, TRR and DCD parsers, an XTC decoder taken from the routine proposed by libxtc, TRR forces stored as atom properties, and a unit-cell matrix with one vector per row. The format factory in src/FormatFactory.cpp at that tag registers no CON format. \url{https://github.com/chemfiles/chemfiles/tree/0.11.0-rc1}. Accessed 2026-11-12}
 }
 
 @misc{frauxChemfilesConIssue2025,
@@ -1350,4 +1350,50 @@
   year = {2026},
   howpublished = {\url{https://docs.ovito.org/reference/file_formats/file_formats_input.html}},
   note = {Manual heading OVITO 3.17.2. The input-format table lists XYZ, extended XYZ, POSCAR and PDBx/mmCIF, and it does not list CON, convel or H5MD. PyPI version 3.17.2. Accessed 2026-11-11}
+}
+
+@misc{ovitoChangelog3170,
+  title = {{OVITO} user manual: changelog entry for version 3.17.0},
+  author = {{OVITO developers}},
+  year = {2026},
+  howpublished = {\url{https://docs.ovito.org/new_features.html}},
+  note = {Manual heading OVITO 3.17.2. The section Version 3.17.0 is dated 21-Oct-2026. It says that the XYZ file reader and writer follow the current extended XYZ specification, that the reader accepts whitespace around the equal sign, escape sequences in quoted strings and array values, and that the XYZ writer now always outputs the periodic boundary conditions of the simulation cell. Accessed 2026-11-12}
+}
+
+@misc{gowersMdanalysisCoords2110,
+  title = {{MDAnalysis} 2.11.0 documentation: trajectory readers and writers},
+  author = {{MDAnalysis developers}},
+  year = {2026},
+  howpublished = {\url{https://docs.mdanalysis.org/2.11.0/documentation_pages/coordinates/init.html}},
+  note = {Page heading MDAnalysis 2.11.0 documentation. The table of supported coordinate formats does not name CON. Accessed 2026-11-12}
+}
+
+@misc{gowersMdanalysisH5md2110,
+  title = {{MDAnalysis} 2.11.0 {H5MD} reader and writer},
+  author = {{MDAnalysis developers}},
+  year = {2026},
+  howpublished = {\url{https://github.com/MDAnalysis/mdanalysis/blob/package-2.11.0/package/MDAnalysis/coordinates/H5MD.py}},
+  note = {Tag package-2.11.0, the file of release 2.11.0, doi 10.5281/zenodo.23534588. The reader copies each position, velocity and force frame with read\_direct into the timestep array. The writer creates the position, velocity and force datasets, the box edges and the time with dtype numpy.float32. At the same tag, package/MDAnalysis/coordinates/timestep.pyx hardcodes the timestep dtype to numpy.float32. Accessed 2026-11-12}
+}
+
+@misc{thirumalaiswamyStreamingMd2026,
+  title = {Streaming Molecular Dynamics Simulation Data for On-the-fly Processing and Analysis},
+  author = {Amruthesh Thirumalaiswamy and Lawson J. Woods and Heekun Cho and Hugo MacDermott-Opeskin and Jennifer Clark and Irfan Alibay and Yuxuan Zhuang and Oliver Beckstein and Matthias Heyden},
+  year = {2026},
+  eprint = {2605.24271},
+  archivePrefix = {arXiv},
+  primaryClass = {cond-mat.stat-mech},
+  doi = {10.48550/arXiv.2605.24271},
+  url = {https://arxiv.org/abs/2605.24271}
+}
+
+@misc{dinaniReaxkit2026,
+  title = {{ReaxKit}: A Modular {Python} Toolkit for Preparing, Parsing, and Analyzing {ReaxFF} Molecular Dynamics Simulations},
+  author = {Ali Mohammadi Dinani and Alireza Sepehrinezhad and Anirban Phukan and Asma Ul Hosna and Jupjeet Dhingra and Mozhdeh Mirakhory and Seyed Mahmoud Mortazavi and Yun Kyung Shin and Swarit Dwivedi and Adri C. T. van Duin},
+  year = {2026},
+  eprint = {2609.22019},
+  archivePrefix = {arXiv},
+  primaryClass = {physics.chem-ph},
+  doi = {10.48550/arXiv.2609.22019},
+  url = {https://arxiv.org/abs/2609.22019}
 }
