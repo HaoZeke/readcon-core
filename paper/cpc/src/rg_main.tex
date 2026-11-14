@@ -339,6 +339,25 @@ trajectory (DCD) format of CHARMM
 generation (TNG) format
 \cite{spangbergTrajectoryNgPortable2011,lundborgEfficientExtensibleFormat2014}
 store molecular dynamics output with neither a mask nor a velocity unit.
+MDCompress compresses such a trajectory into its own archive.
+Release 2.0.0, of 26 May 2026, adds DCD as an input of
+\texttt{compress} \cite{kokotMdcompress2002026}.
+The notes of that release say that the old archive format and the new
+one are not compatible, and they recommend recompressing with 2.0.0.
+The release before that tag is 1.0.0, of 25 March 2026.
+The current release is 2.0.5, of 21 August 2026
+\cite{kokotMdcompress2052026}.
+The C reader frame of 2.0.5 holds float coordinates, the box, a step, a
+time and a precision, and it has no velocity, force or energy array
+\cite{kokotMdcompressFrame2052026}.
+A restart from that frame loses the velocities, the forces and the
+energies.
+The coordinates come back as float values at the stored precision, so
+they do not come back as the written binary64 values.
+% TODO (head-to-head): MDCompress 2.0.5 (GitHub release v2.0.5, 2026-08-21, commit 41b600313c1a8265dbaa639651ed0124610d1bbb) against CON on XTC and on DCD.
+% Inputs: traj.xtc and traj.dcd from paper/cpc/bench/binary_formats.py, and the same geometry written as CON 3.1.
+% Loss column: velocities, forces, energies, the per-component mask, the atom id and binary64 coordinates.
+% The 2.0.5 C frame mdc_frame holds float coordinates, the box, a step, a time and a precision, and no velocity, force or energy array.
 GROMACS deprecates TNG and states that H5MD will replace it, and the
 release of 2026-01-19 writes an experimental H5MD trajectory from
 \texttt{mdrun} \cite{gromacsManual2026}.
@@ -1123,12 +1142,27 @@ The tag records native XTC, TRR and DCD parsers and an XTC decoder
 taken from the routine proposed by libxtc
 \cite{krylovLibxtcEfficientLibrary2021}, and it does not add a CON or
 convel reader \cite{frauxChemfilesConIssue2025}.
+CHARMM, and NAMD after version 2.5, record the DCD frame interval in
+AKMA units \cite{gowersMdanalysisDcd2110}.
+chemfiles 0.10.4 and the tag 0.11.0-rc1 store that header field, DELTA,
+as the timestep and set the frame time from it, with no unit conversion
+\cite{frauxChemfilesDcd0104,frauxChemfiles0110rc12025}.
+On master, version 0.12.0-dev, the reader multiplies DELTA by
+\(4.888821\times 10^{-2}\)
+\cite{frauxChemfilesDcd012dev,frauxChemfilesPr5322026}.
+The DCD rows of Table~\ref*{tab:binary-formats} are the molfile reader.
+The chemfiles release of the timed chemfiles rows stays 0.10.4.
 % TODO (head-to-head): chemfiles tag 0.11.0-rc1, commit a2319946dcd0a96b055e803e59affed52e83bfb1 (2025-10-06), against chemfiles 0.10.4.
 % XYZ arm: the survey frame, Trajectory opened with format XYZ, the same property names as scripts/drift.py (id, move_mask_0..2, pbc). Compare positions and the 3x3 cell matrix, not only the cell lengths. 0.10.4 is column vectors; the tag is row vectors.
 % XTC arm: paper/cpc/bench/binary_formats.py traj.xtc, the file gen.c writes at 0.001 nm, positions only.
 % Read it with the native XTC parser in that tag and with libxtc commit 58f40e1e9d392ec607e775772658eb1b748be549, frame-at-a-time and all-frames, one thread and eight threads, the modes that bench already times.
 % TRR arm: the same generator's traj.trr, and check that forces come back as atom properties.
 % CON arm: the version-1 and CON 3.1 probes of scripts/con_openers.py. The open issue 522 (2025-07-19) asks for a CON reader and was still open on 2026-11-11; the tag changelog does not add one.
+% TODO (head-to-head): chemfiles master, version 0.12.0-dev (commit b399c9d44b93df53b9b20c4ff80986ca5f98ea1f on 2026-11-14; pull request 532, merged 2026-06-19), DCD against chemfiles 0.10.4.
+% One CHARMM or NAMD DCD, and traj.dcd from paper/cpc/bench/binary_formats.py.
+% Loss column: masses, velocities, constraints, precision and the interval unit.
+% 0.10.4 and tag 0.11.0-rc1 store DELTA with no conversion. 0.12.0-dev multiplies DELTA by 4.888821e-2.
+% The timed DCD rows stay the molfile reader of Table tab:binary-formats. The timed chemfiles rows stay on 0.10.4.
 MDAnalysis 2.10.0 returns single precision, which changes a coordinate
 by up to \(\num{\surveyMdaShiftNum}\,\text{\AA}\).
 That printed shift is the measurement on the H5MD reader of release

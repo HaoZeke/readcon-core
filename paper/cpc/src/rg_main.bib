@@ -1262,7 +1262,7 @@
   author = {{chemfiles developers}},
   year = {2025},
   howpublished = {GitHub tag 0.11.0-rc1},
-  note = {Commit a2319946dcd0a96b055e803e59affed52e83bfb1, 2025-10-06, message ``Release chemfiles v0.11.0-rc1''. Not the PyPI release, which remains 0.10.4. The changelog at that tag records native XTC, TRR and DCD parsers, an XTC decoder taken from the routine proposed by libxtc, TRR forces stored as atom properties, and a unit-cell matrix with one vector per row. The format factory in src/FormatFactory.cpp at that tag registers no CON format. \url{https://github.com/chemfiles/chemfiles/tree/0.11.0-rc1}. Accessed 2026-11-12}
+  note = {Commit a2319946dcd0a96b055e803e59affed52e83bfb1, 2025-10-06, message ``Release chemfiles v0.11.0-rc1''. Not the PyPI release, which remains 0.10.4. The changelog at that tag records native XTC, TRR and DCD parsers, an XTC decoder taken from the routine proposed by libxtc, TRR forces stored as atom properties, and a unit-cell matrix with one vector per row. The format factory in src/FormatFactory.cpp at that tag registers no CON format. src/formats/DCD.cpp at that tag stores the header interval in timesteps\_.dt with no scale, from a binary32 field on the CHARMM path and a binary64 field on the X-PLOR path, and sets the frame time from that timestep. \url{https://github.com/chemfiles/chemfiles/blob/0.11.0-rc1/src/formats/DCD.cpp}. \url{https://github.com/chemfiles/chemfiles/tree/0.11.0-rc1}. Accessed 2026-11-12. The DCD lines were read on 2026-11-14}
 }
 
 @misc{frauxChemfilesConIssue2025,
@@ -1396,4 +1396,60 @@
   primaryClass = {physics.chem-ph},
   doi = {10.48550/arXiv.2609.22019},
   url = {https://arxiv.org/abs/2609.22019}
+}
+
+@misc{kokotMdcompress2002026,
+  title = {{MDCompress} 2.0.0},
+  author = {Kokot, Marek},
+  year = {2026},
+  howpublished = {GitHub release v2.0.0},
+  note = {Published 2026-05-26. Commit 0d65f3a795fb127f9caa0ea00be312a236c5ca58. The changelog adds DCD support for compress. The same notes say that, because of the int32 overflow fix in dist2\_3d, the old format and the new format are not compatible, and they recommend recompressing with mdcompress 2.0.0. The previous release is v1.0.0, published 2026-03-25, commit 72b4531b5529a64b5abdfdd8d7e27677995ffab8, \url{https://github.com/refresh-bio/mdcompress/releases/tag/v1.0.0}. \url{https://github.com/refresh-bio/mdcompress/releases/tag/v2.0.0}. Accessed 2026-11-14}
+}
+
+@misc{kokotMdcompress2052026,
+  title = {{MDCompress} 2.0.5},
+  author = {Kokot, Marek},
+  year = {2026},
+  howpublished = {GitHub release v2.0.5},
+  note = {Published 2026-08-21. Commit 41b600313c1a8265dbaa639651ed0124610d1bbb. The latest release listed on 2026-11-14. \url{https://github.com/refresh-bio/mdcompress/releases/tag/v2.0.5}. Accessed 2026-11-14}
+}
+
+@misc{kokotMdcompressFrame2052026,
+  title = {{MDCompress} 2.0.5 reader frame},
+  author = {Kokot, Marek},
+  year = {2026},
+  howpublished = {\url{https://github.com/refresh-bio/mdcompress/blob/v2.0.5/src/mdc_lib/mdc_reader.h}},
+  note = {Tag v2.0.5, commit 41b600313c1a8265dbaa639651ed0124610d1bbb. FOLLOW\_CHEMFILES is commented out, so mdc\_atom\_coords is three floats. The C frame mdc\_frame holds those coordinates, a count, an int step, a float time, a double box and a float precision. The C++ frame mdc::frame holds the same coordinates, step, time, box and precision, and also a float lambda and an int has\_prop. Neither frame has a velocity, force or energy array. Accessed 2026-11-14}
+}
+
+@misc{gowersMdanalysisDcd2110,
+  title = {{MDAnalysis} 2.11.0 {DCD} reader},
+  author = {{MDAnalysis developers}},
+  year = {2026},
+  howpublished = {\url{https://github.com/MDAnalysis/mdanalysis/blob/package-2.11.0/package/MDAnalysis/coordinates/DCD.py}},
+  note = {Tag package-2.11.0, commit ace84dde1363e32aa94cd3f29a42c2f590bd0575, tagged 2026-10-21. The DCDReader docstring says trajectories produced by CHARMM and by NAMD after version 2.5 record time in AKMA units. The reader and the writer set the time unit to AKMA, and the reader converts the header delta from that unit to picoseconds. Accessed 2026-11-14}
+}
+
+@misc{frauxChemfilesDcd0104,
+  title = {chemfiles 0.10.4 {DCD} reader},
+  author = {{chemfiles developers}},
+  year = {2023},
+  howpublished = {\url{https://github.com/chemfiles/chemfiles/blob/0.10.4/src/formats/DCD.cpp}},
+  note = {Tag 0.10.4, commit 843e5949db829dcf76bac1ca3521cc8e10f9ea4e. The VERSION file is 0.10.4. read\_header stores the header interval in timesteps\_.dt with no scale, from a binary32 field in the CHARMM header and from a binary64 field in the X-PLOR header. read\_step sets the frame property time to that timestep times the simulation step. Accessed 2026-11-14}
+}
+
+@misc{frauxChemfilesDcd012dev,
+  title = {chemfiles 0.12.0-dev {DCD} reader},
+  author = {{chemfiles developers}},
+  year = {2026},
+  howpublished = {\url{https://github.com/chemfiles/chemfiles/blob/b399c9d44b93df53b9b20c4ff80986ca5f98ea1f/src/formats/DCD.cpp}},
+  note = {Master commit b399c9d44b93df53b9b20c4ff80986ca5f98ea1f on 2026-11-14. The VERSION file at that commit is 0.12.0-dev. AKMA\_TO\_PS is the literal 4.888821e-2. The CHARMM and X-PLOR reads multiply the header interval by that constant, and the writer divides by it. Accessed 2026-11-14}
+}
+
+@misc{frauxChemfilesPr5322026,
+  title = {{DCD}: convert {DELTA} between {AKMA} and picoseconds},
+  author = {{chemfiles developers}},
+  year = {2026},
+  howpublished = {GitHub pull request 532},
+  note = {Merged into master on 2026-06-19. Merge commit fc1e93096b797ff4848dae57c03b7c9ef287cccd. The description says that DCD DELTA is in AKMA units and that the reader had stored it in the timestep and propagated it to the frame time. \url{https://github.com/chemfiles/chemfiles/pull/532}. Accessed 2026-11-14}
 }
