@@ -1,4 +1,4 @@
-% Created 2026-11-17 Tue 14:41
+% Created 2026-11-17 Tue 14:42
 % Intended LaTeX compiler: pdflatex
 \documentclass[preprint,12pt]{elsarticle}
 \usepackage{graphicx}
@@ -292,6 +292,8 @@ The published cxx tarball on the \texttt{v0.14.9} GitHub Release is the CMake Fe
 eOn and the amsel campaign stack consume CON as the checkpoint between potential evaluations and saddle searches.
 eOn develop now makes a \texttt{savecon} rewrite beside the destination and moves it into place with one \texttt{os.replace} after a successful write; retaining the destination suffix preserves gzip and zstd compression \cite{goswamiEonAtomicSavecon2026}.
 
+GPRidge is an independent downstream consumer: its path driver accepts reactant and product \texttt{.con} files, and its supporting information identifies readcon-core as the reader and writer behind that interface \cite{goswamiGpridgeGaussianprocessAccelerated2026}.
+The reported GPRidge campaigns used CON files written by readcon itself, so they demonstrate external use of the interface but not cross-writer compatibility.
 \texttt{readcon-db} indexes those files for energy, formula, and section presence.
 Table \ref{tab:fair-campaign} is the committed companion freeze on the same \texttt{tiny\_cuh2.con} ladder (\(N=10\), \(50\), \(100\), \(200\), \(500\)) in both stores.
 That table is companion appendix material.
