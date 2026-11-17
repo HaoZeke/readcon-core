@@ -1,4 +1,4 @@
-% Created 2026-11-17 Tue 14:38
+% Created 2026-11-17 Tue 14:39
 % Intended LaTeX compiler: pdflatex
 \documentclass[preprint,12pt]{elsarticle}
 \usepackage{graphicx}
@@ -150,6 +150,8 @@ It has no explicit per-axis freeze mask and no type-grouped atom-index recovery.
 The equal-geometry timings below treat H5MD as a peer load path, not as ``MD tape.''
 GROMACS XTC/TRR and CHARMM/NAMD DCD are engine tapes: masses and restraints live in the TPR or PSF, and restart is a separate checkpoint (\texttt{cpt}, \texttt{namdbin}) \cite{abrahamGromacsHighPerformance2015}.
 They are cited here and are not timed.
+MDCompress stores metadata and coordinates in its native MDC archive, with independent containers for parallel processing and random frame or atom access; its published comparison reports files 15--37$\backslash$% smaller than XTC and faster multithreaded compression and decompression \cite{kokotMdcompressBetterFaster2026}.
+That coordinates-only trajectory payload is not a CON restart.
 
 LAMMPS \texttt{dump custom} can store ids and optional forces on one row \cite{thompsonLammpsFlexibleSimulation2022}.
 It does not store a spec-versioned constraint bitmask and does not require type-grouped blocks.
