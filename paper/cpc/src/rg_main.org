@@ -137,7 +137,7 @@ times an explicit copy, the median of eight repeats.
 saddle search \sep conformance corpus \sep nudged elastic band
 \end{keyword}
 
-\begin{highlights} \item A versioned text grammar now defines the eOn
+\begin{highlights} \item A versioned text grammar defines the eOn
 saddle-search checkpoint format.
 \item Each coordinate row carries a mask of fixed components and an atom
 identifier.
@@ -353,7 +353,7 @@ Release 2.0.0, of 26 May 2026, adds DCD as an input of
 The notes of that release say that the old archive format and the new
 one are not compatible, and they recommend recompressing with 2.0.0.
 The release before that tag is 1.0.0, of 25 March 2026.
-The current release is 2.0.5, of 21 August 2026
+MDCompress 2.0.5 was released on 21 August 2026
 \cite{kokotMdcompress2052026}.
 The C reader frame of 2.0.5 holds float coordinates, the box, a step, a
 time and a precision, and it has no velocity, force or energy array
