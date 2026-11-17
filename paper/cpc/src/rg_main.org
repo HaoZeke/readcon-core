@@ -139,6 +139,8 @@ Chill et al. describe the eOn software and do not specify atom-line columns \cit
 Extended XYZ puts ~Lattice=~ and a
 ~Properties=~ column schema on the comment line; lean XYZ has neither.
 There is no journal specification of extXYZ; the living grammar is the ASE/libAtoms dialect \cite{larsenAtomicSimulationEnvironment2017}.
+libAtoms extxyz 0.4.6 adds an opt-in first-character dispatch parser for the comment line (=use_cleri=False=) and fixes an extra writer transpose that changed non-symmetric lattices on round trip \cite{kermodeLibatomsExtxyzV0462026}.
+# TODO (head-to-head): compare readcon's extended-XYZ reader with extxyz 0.4.6 on identical files using its fastest documented C path, read_dicts(use_cextxyz=True, use_regex=False, use_cleri=False), as well as the default use_cleri=True path. Include many-small-frame and large-frame inputs, fresh-process and steady-state timings, peak RSS, and a triclinic non-symmetric Lattice round trip checked element by element.
 CON uses a JSON object in the JSON header for the same job (machine metadata on a line that old tools treat as a comment) and keeps an explicit three-bit constraint mask and a pre-grouping =atom_id=.
 Lean XYZ, as timed in this paper, has no constraint mask.
 The library's ASE adapters convert a parsed =ConFrame= to =Atoms= and back; they do not register a =format='con'= plugin and do not replace =ase.io.eon=.

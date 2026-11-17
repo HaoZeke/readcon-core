@@ -1,4 +1,4 @@
-% Created 2026-11-17 Tue 14:39
+% Created 2026-11-17 Tue 14:40
 % Intended LaTeX compiler: pdflatex
 \documentclass[preprint,12pt]{elsarticle}
 \usepackage{graphicx}
@@ -137,6 +137,8 @@ Chill et al. describe the eOn software and do not specify atom-line columns \cit
 Extended XYZ puts \texttt{Lattice=} and a
 \texttt{Properties=} column schema on the comment line; lean XYZ has neither.
 There is no journal specification of extXYZ; the living grammar is the ASE/libAtoms dialect \cite{larsenAtomicSimulationEnvironment2017}.
+libAtoms extxyz 0.4.6 adds an opt-in first-character dispatch parser for the comment line (\texttt{use\_cleri=False}) and fixes an extra writer transpose that changed non-symmetric lattices on round trip \cite{kermodeLibatomsExtxyzV0462026}.
+
 CON uses a JSON object in the JSON header for the same job (machine metadata on a line that old tools treat as a comment) and keeps an explicit three-bit constraint mask and a pre-grouping \texttt{atom\_id}.
 Lean XYZ, as timed in this paper, has no constraint mask.
 The library's ASE adapters convert a parsed \texttt{ConFrame} to \texttt{Atoms} and back; they do not register a \texttt{format}'con'= plugin and do not replace \texttt{ase.io.eon}.
