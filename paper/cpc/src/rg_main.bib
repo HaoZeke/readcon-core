@@ -1344,6 +1344,14 @@
   note = {Rust parser of extended XYZ, release v0.0.2, commit 83a5b290c, 2026-04-29. The repository README compares it with the C parser of libAtoms/extxyz on one frame of more than 20000 atoms, and records a massif peak of 2.53 MB against 4.74 MB on one file of about 20000 lines. \url{https://github.com/extxyz/extxyz}. Accessed 2026-11-11}
 }
 
+@misc{mdanalysisNcdfMmap2026,
+  title = {Release net{CDF} memory-map pages after each frame},
+  author = {{MDAnalysis developers}},
+  year = {2026},
+  howpublished = {GitHub pull request 5463, MDAnalysis/mdanalysis},
+  note = {Merged 2026-11-16 as commit a72b0c2aff. Not in release 2.11.0. The 2.12.0 changelog says that on Linux, with mmap=True, NCDFReader no longer grows the resident set towards the size of the whole trajectory. Unchanged on macOS and Windows. \url{https://github.com/MDAnalysis/mdanalysis/pull/5463}. Accessed 2026-11-17}
+}
+
 @misc{ovitoManual3172,
   title = {{OVITO} user manual 3.17.2: input file formats},
   author = {{OVITO developers}},
