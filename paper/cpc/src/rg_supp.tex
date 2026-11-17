@@ -492,12 +492,12 @@ The table of supported coordinate formats in the MDAnalysis 2.11.0 documentation
 The format factory of the chemfiles tag 0.11.0-rc1 registers no CON reader \cite{frauxChemfiles0110rc12025}.
 The H5MD module of MDAnalysis 2.11.0 still reads each position, velocity and force frame with \texttt{read\_direct} into a timestep whose dtype is hardcoded to \texttt{numpy.float32}, and the writer in that module creates those datasets, the box edges and the time as \texttt{numpy.float32} \cite{gowersMdanalysis21102026,gowersMdanalysisH5md2110}.
 The coordinate shift printed in Section~\ref{sec:cases} is the release 2.10.0 measurement.
-The development changelog of ASE dated 2026-11-09 is not part of release 3.29.0, and it records a fix for extended XYZ reading when Python is run with the optimisation flag \cite{aseChangelog20261109}.
+The development changelog of ASE dated 2026-11-14 is not part of release 3.29.0. It retains the fix for extended XYZ reading under optimized Python and adds that the VASP writer now combines overlapping supported constraints on an atom in selective-dynamics flags and that \texttt{ase.db} now writes each blob with the dtype expected by \texttt{deblob}, avoiding reinterpretation of float32 force bytes as float64 \cite{aseChangelog20261114}.
 The survey and the drift files were not read under that flag.
 % TODO (head-to-head): OVITO 3.17.2 (PyPI 3.17.2; manual input-format table at docs.ovito.org, accessed 2026-11-11) against the OVITO 3.16.1 rows.
 % Same calls as scripts/drift.py r_ovito and scripts/con_openers.py: import_file on the seven drift files and on one version-1 CON file and one CON 3.1 file.
 % Match positions, pbc, move_mask and Particle Identifier. The 3.17.2 manual lists no CON, convel or H5MD reader; the opener has not been rerun.
-% TODO (head-to-head): ASE development tree that contains the 2026-11-09 changelog entry, which is not release 3.29.0 (PyPI on 2026-11-11 is 3.29.0).
+% TODO (head-to-head): ASE development tree that contains the 2026-11-14 changelog entry, which is not release 3.29.0 (PyPI on 2026-11-11 is 3.29.0).
 % ase.io.read(format='extxyz') on the seven drift files, once with python and once with python -O.
 % Release 3.29.0 is the survey reader. The changelog says extended XYZ reading under python -O was wrong until that entry.
 The drift files of Table~\ref{tab:drift} went to ASE 3.29.0, the libAtoms \texttt{extxyz} 0.4.6 package, chemfiles 0.10.4, OVITO 3.16.1, MDAnalysis 2.10.0 and Open Babel 3.2.1.

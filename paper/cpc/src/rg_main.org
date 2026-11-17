@@ -143,6 +143,8 @@ CON uses a JSON object in the JSON header for the same job (machine metadata on 
 Lean XYZ, as timed in this paper, has no constraint mask.
 The library's ASE adapters convert a parsed =ConFrame= to =Atoms= and back; they do not register a =format='con'= plugin and do not replace =ase.io.eon=.
 That reader treats leftover force-section lines after the coordinate parse as an error.
+ASE's development changelog dated 2026-11-14 is later than release 3.29.0 and is not the ASE measured here.
+Besides retaining the optimized-Python extended-XYZ fix, it records two relevant additions: the VASP writer merges overlapping supported constraints on an atom into its selective-dynamics flags, and =ase.db= writes each blob with the dtype that =deblob= will use rather than allowing float32 force bytes to be read as float64 \cite{aseChangelog20261114}.
 
 H5MD is the structured particle container in this journal \cite{deBuylH5MDStructuredEfficient2014}.
 It can carry per-particle mass, force, velocity, SI unit attributes, and an observables tree.

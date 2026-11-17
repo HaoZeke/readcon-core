@@ -1320,12 +1320,12 @@
   note = {ASE I/O plugin backed by the libextxyz C parser. Registers the format cextxyz. Git tag ase-extxyz-v0.1.2, 2026-10-02, and the pyproject version is 0.1.2. \url{https://pypi.org/project/ase-extxyz/0.1.2/}. Accessed 2026-11-11}
 }
 
-@misc{aseChangelog20261109,
-  title = {{ASE} development changelog dated 2026-11-09},
+@misc{aseChangelog20261114,
+  title = {{ASE} development changelog dated 2026-11-14},
   author = {{ASE developers}},
   year = {2026},
   howpublished = {\url{https://docs.ase-lib.org/changelog.html}},
-  note = {The section dated 2026-11-09 precedes the notes for release 3.29.0 and records a fix for extended XYZ reading when Python is run with -O. The PyPI release of ASE on 2026-11-11 is 3.29.0. Accessed 2026-11-11}
+  note = {Development notes, not release 3.29.0. They retain the fix for extended XYZ reading under python -O and add two relevant changes. Merge request 4196 makes blob cast each array to the dtype that deblob uses, preventing float32 force bytes from being reinterpreted as float64. Merge request 4331 combines overlapping supported constraints on one atom in selective-dynamics output instead of the last constraint replacing earlier fixed directions. \url{https://gitlab.com/ase/ase/-/merge_requests/4196}. \url{https://gitlab.com/ase/ase/-/merge_requests/4331}. Accessed 2026-11-17}
 }
 
 @misc{goswamiEonRoundtripWriter2026,
