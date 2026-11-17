@@ -17,6 +17,7 @@
 (setq org-latex-listings t)
 (setq org-latex-src-block-backend 'listings)
 (setq org-latex-prefer-user-labels t)
+(setq org-export-time-stamp-file nil)
 (setq org-latex-default-packages-alist
       '(("" "graphicx" t)
         ("" "rotating" nil)
